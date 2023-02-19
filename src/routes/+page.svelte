@@ -8,7 +8,7 @@
 		invalidateAll: false,
 		taintedMessage: undefined,
 		validators: {
-			name: (n) => (n.length >= 2 ? null : 'Name must be at least 2 characters long.')
+			email: (n) => (/[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email')
 		}
 	});
 </script>

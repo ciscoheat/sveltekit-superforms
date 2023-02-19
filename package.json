@@ -14,6 +14,7 @@
 		"format": "prettier --plugin-search-dir . --write ."
 	},
 	"exports": {
+		"types": "./dist/index.d.ts",
 		"client": "./dist/client/index.js",
 		"server": "./dist/server/index.js"
 	},

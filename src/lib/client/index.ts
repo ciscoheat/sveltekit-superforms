@@ -13,19 +13,19 @@ import { stringify } from 'devalue';
 import { deepEqual } from '..';
 
 enum FetchStatus {
-	Idle = 0,
-	Pending = 1,
-	Delayed = 2,
-	Timeout = 3
+  Idle = 0,
+  Pending = 1,
+  Delayed = 2,
+  Timeout = 3
 }
 
 export type FormUpdate = (
-	result: Exclude<ActionResult, { type: 'error' }>,
-	untaint?: boolean
+  result: Exclude<ActionResult, { type: 'error' }>,
+  untaint?: boolean
 ) => Promise<void>;
 
 export type Validators<T extends AnyZodObject> = Partial<{
-	[Property in keyof z.infer<T>]: (data: z.infer<T>[Property]) => string | null | undefined;
+  [Property in keyof z.infer<T>]: (data: z.infer<T>[Property]) => string | null | undefined;
 }>;
 
 /**
@@ -34,62 +34,62 @@ export type Validators<T extends AnyZodObject> = Partial<{
  * @param {boolean} applyAction If false, will not automatically update the form when $page updates. Useful for modal forms. In that case, use the onResult callback to update the form.
  */
 export type FormOptions<T extends AnyZodObject> = {
-	applyAction?: boolean;
-	invalidateAll?: boolean;
-	autoFocus?: boolean | 'detect';
-	errorSelector?: string;
-	stickyNavbar?: string;
-	taintedMessage?: string | null;
-	resetForm?: boolean;
-	onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
-	onResult?: (event: {
-		result: ActionResult;
-		update: FormUpdate;
-		formEl: HTMLFormElement;
-	}) => MaybePromise<unknown | void>;
-	onUpdate?: (event: { update: Validation<T>; cancel: () => void }) => MaybePromise<unknown | void>;
-	afterUpdate?: (event: { update: Validation<T> }) => MaybePromise<unknown | void>;
-	dataType?: 'form' | 'json' | 'formdata';
-	validators?: Validators<T>;
-	defaultValidator?: 'keep' | 'clear';
-	defaultValidatorMessage?: string;
-	clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
-	delayMs?: number;
-	timeoutMs?: number;
+  applyAction?: boolean;
+  invalidateAll?: boolean;
+  autoFocus?: boolean | 'detect';
+  errorSelector?: string;
+  stickyNavbar?: string;
+  taintedMessage?: string | null;
+  resetForm?: boolean;
+  onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
+  onResult?: (event: {
+    result: ActionResult;
+    update: FormUpdate;
+    formEl: HTMLFormElement;
+  }) => MaybePromise<unknown | void>;
+  onUpdate?: (event: { update: Validation<T>; cancel: () => void }) => MaybePromise<unknown | void>;
+  afterUpdate?: (event: { update: Validation<T> }) => MaybePromise<unknown | void>;
+  dataType?: 'form' | 'json' | 'formdata';
+  validators?: Validators<T>;
+  defaultValidator?: 'keep' | 'clear';
+  defaultValidatorMessage?: string;
+  clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
+  delayMs?: number;
+  timeoutMs?: number;
 };
 
 const defaultFormOptions: FormOptions<AnyZodObject> = {
-	applyAction: true,
-	invalidateAll: true,
-	autoFocus: 'detect',
-	errorSelector: '[data-invalid]',
-	stickyNavbar: undefined,
-	taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
-	resetForm: false,
-	onSubmit: undefined,
-	onResult: undefined,
-	onUpdate: undefined,
-	afterUpdate: undefined,
-	dataType: 'form',
-	validators: undefined,
-	defaultValidator: 'keep',
-	defaultValidatorMessage: 'Invalid',
-	clearOnSubmit: 'errors-and-message',
-	delayMs: 150,
-	timeoutMs: 8000
+  applyAction: true,
+  invalidateAll: true,
+  autoFocus: 'detect',
+  errorSelector: '[data-invalid]',
+  stickyNavbar: undefined,
+  taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
+  resetForm: false,
+  onSubmit: undefined,
+  onResult: undefined,
+  onUpdate: undefined,
+  afterUpdate: undefined,
+  dataType: 'form',
+  validators: undefined,
+  defaultValidator: 'keep',
+  defaultValidatorMessage: 'Invalid',
+  clearOnSubmit: 'errors-and-message',
+  delayMs: 150,
+  timeoutMs: 8000
 };
 
 export type EnhancedForm<T extends AnyZodObject> = {
-	form: Writable<Validation<T>['data']>;
-	errors: Writable<Validation<T>['errors']>;
-	submitting: Writable<boolean>;
-	delayed: Writable<boolean>;
-	timeout: Writable<boolean>;
-	firstError: Readable<{ key: string; value: string } | null>;
-	message: Writable<Validation<T>['message']>;
-	enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
-	update: FormUpdate;
-	reset: () => void;
+  form: Writable<Validation<T>['data']>;
+  errors: Writable<Validation<T>['errors']>;
+  submitting: Writable<boolean>;
+  delayed: Writable<boolean>;
+  timeout: Writable<boolean>;
+  firstError: Readable<{ key: string; value: string } | null>;
+  message: Writable<Validation<T>['message']>;
+  enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
+  update: FormUpdate;
+  reset: () => void;
 };
 
 /**
@@ -99,43 +99,43 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @param type 'int' | 'boolean'
  */
 export function stringProxy<T extends Record<string, unknown>, Type extends 'int' | 'boolean'>(
-	form: Writable<T>,
-	field: keyof T,
-	type: Type
+  form: Writable<T>,
+  field: keyof T,
+  type: Type
 ): Writable<string> {
-	function toValue(val: unknown) {
-		if (typeof val === 'string') {
-			if (type == 'int') return parseInt(val, 10);
-			if (type == 'boolean') return !!val;
-		}
-		throw new Error('stringProxy received a non-string value.');
-	}
+  function toValue(val: unknown) {
+    if (typeof val === 'string') {
+      if (type == 'int') return parseInt(val, 10);
+      if (type == 'boolean') return !!val;
+    }
+    throw new Error('stringProxy received a non-string value.');
+  }
 
-	const proxy = derived(form, ($form) => {
-		if (type == 'int') {
-			const num = $form[field] as number;
-			return isNaN(num) ? '' : String(num);
-		} else {
-			return $form[field] ? 'true' : '';
-		}
-	});
+  const proxy = derived(form, ($form) => {
+    if (type == 'int') {
+      const num = $form[field] as number;
+      return isNaN(num) ? '' : String(num);
+    } else {
+      return $form[field] ? 'true' : '';
+    }
+  });
 
-	return {
-		subscribe: proxy.subscribe,
-		set(val: string) {
-			form.update((f) => ({ ...f, [field]: toValue(val) }));
-		},
-		update(updater) {
-			form.update((f) => ({ ...f, [field]: toValue(updater(String(f[field]))) }));
-		}
-	};
+  return {
+    subscribe: proxy.subscribe,
+    set(val: string) {
+      form.update((f) => ({ ...f, [field]: toValue(val) }));
+    },
+    update(updater) {
+      form.update((f) => ({ ...f, [field]: toValue(updater(String(f[field]))) }));
+    }
+  };
 }
 
 interface IntArrayProxy extends Writable<number[]> {
-	toggle(id: number): void;
-	add(id: number): void;
-	remove(id: number): void;
-	length: number;
+  toggle(id: number): void;
+  add(id: number): void;
+  remove(id: number): void;
+  length: number;
 }
 
 /**
@@ -146,49 +146,49 @@ interface IntArrayProxy extends Writable<number[]> {
  * @param options allowNaN, separator
  */
 export function intArrayProxy<T extends Record<string, unknown>>(
-	form: Writable<T>,
-	field: keyof T,
-	options: {
-		allowNaN?: boolean;
-		separator?: string;
-	} = {}
+  form: Writable<T>,
+  field: keyof T,
+  options: {
+    allowNaN?: boolean;
+    separator?: string;
+  } = {}
 ): IntArrayProxy {
-	options = { allowNaN: false, separator: ',', ...options };
+  options = { allowNaN: false, separator: ',', ...options };
 
-	function toArray(val: unknown) {
-		if (typeof val !== 'string' || !val) return [];
-		return val
-			.split(',')
-			.map((s) => parseInt(s, 10))
-			.filter((n) => (options.allowNaN ? true : !isNaN(n)));
-	}
-	const proxy = derived(form, ($form) => {
-		return toArray($form[field]);
-	});
+  function toArray(val: unknown) {
+    if (typeof val !== 'string' || !val) return [];
+    return val
+      .split(',')
+      .map((s) => parseInt(s, 10))
+      .filter((n) => (options.allowNaN ? true : !isNaN(n)));
+  }
+  const proxy = derived(form, ($form) => {
+    return toArray($form[field]);
+  });
 
-	function update(updater: Updater<number[]>) {
-		form.update((f) => ({ ...f, [field]: updater(toArray(f[field])).join(',') }));
-	}
+  function update(updater: Updater<number[]>) {
+    form.update((f) => ({ ...f, [field]: updater(toArray(f[field])).join(',') }));
+  }
 
-	return {
-		subscribe: proxy.subscribe,
-		update,
-		set(val: number[]) {
-			form.update((f) => ({ ...f, [field]: val.join(options.separator) }));
-		},
-		toggle(id: number) {
-			update((r) => (r.includes(id) ? r.filter((i) => i !== id) : [...r, id]));
-		},
-		add(id: number) {
-			update((r) => [...r, id]);
-		},
-		remove(id: number) {
-			update((r) => r.filter((i) => i !== id));
-		},
-		get length() {
-			return get(proxy).length;
-		}
-	};
+  return {
+    subscribe: proxy.subscribe,
+    update,
+    set(val: number[]) {
+      form.update((f) => ({ ...f, [field]: val.join(options.separator) }));
+    },
+    toggle(id: number) {
+      update((r) => (r.includes(id) ? r.filter((i) => i !== id) : [...r, id]));
+    },
+    add(id: number) {
+      update((r) => [...r, id]);
+    },
+    remove(id: number) {
+      update((r) => r.filter((i) => i !== id));
+    },
+    get length() {
+      return get(proxy).length;
+    }
+  };
 }
 
 /**
@@ -198,178 +198,186 @@ export function intArrayProxy<T extends Record<string, unknown>>(
  * @returns {EnhancedForm} An object with properties for the form.
  */
 export function superForm<T extends AnyZodObject>(
-	form?: FormOptions<T> | Validation<T> | null | undefined,
-	options: FormOptions<T> = {}
+  form?: FormOptions<T> | Validation<T> | null | undefined,
+  options: FormOptions<T> = {}
 ): EnhancedForm<T> {
-	if (form && !('data' in form)) {
-		options = form;
-		form = null;
-	}
+  if (form && !('data' in form)) {
+    options = form;
+    form = null;
+  }
 
-	if (!form) {
-		form = { success: true, errors: {}, data: {}, empty: true, message: null };
-	}
+  options = { ...(defaultFormOptions as FormOptions<T>), ...options };
 
-	options = { ...(defaultFormOptions as FormOptions<T>), ...options };
+  const actionForm = get(page).form;
+  if (options.applyAction && actionForm && 'form' in actionForm) {
+    if (!('success' in actionForm.form) || typeof actionForm.form.success !== 'boolean') {
+      throw new Error(
+        "ActionData didn't return a Validation object. Make sure you return { form } from form actions."
+      );
+    }
+    form = actionForm.form as Validation<T>;
+  } else if (!form) {
+    form = { success: true, errors: {}, data: {}, empty: true, message: null };
+  }
 
-	const FormStore = writable(form.data);
-	const Errors = writable(form.errors);
-	const Message = writable(form.message);
+  const FormStore = writable(form.data);
+  const Errors = writable(form.errors);
+  const Message = writable(form.message);
 
-	const FirstError = derived(Errors, (errors) => {
-		if (!errors) return null;
-		const keys = Object.keys(errors);
-		if (!keys.length) return null;
-		const messages = errors[keys[0]];
-		return messages && messages[0] ? { key: keys[0], value: messages[0] } : null;
-	});
+  const FirstError = derived(Errors, (errors) => {
+    if (!errors) return null;
+    const keys = Object.keys(errors);
+    if (!keys.length) return null;
+    const messages = errors[keys[0]];
+    return messages && messages[0] ? { key: keys[0], value: messages[0] } : null;
+  });
 
-	const Submitting = writable(false);
-	const Delayed = writable(false);
-	const Timeout = writable(false);
+  const Submitting = writable(false);
+  const Delayed = writable(false);
+  const Timeout = writable(false);
 
-	// Must make a copy for the equality comparison to make sense
-	let savedForm = options.taintedMessage ? { ...form.data } : undefined;
+  // Must make a copy for the equality comparison to make sense
+  let savedForm = options.taintedMessage ? { ...form.data } : undefined;
 
-	function resetForm() {
-		FormStore.set({});
-		Errors.set({});
-		if (options.taintedMessage) savedForm = {};
-	}
+  function resetForm() {
+    FormStore.set({});
+    Errors.set({});
+    if (options.taintedMessage) savedForm = {};
+  }
 
-	const FormStore_update: FormUpdate = async (result, untaint?: boolean) => {
-		if (untaint === undefined) untaint = result.type == 'success' || result.type == 'redirect';
+  const FormStore_update: FormUpdate = async (result, untaint?: boolean) => {
+    if (untaint === undefined) untaint = result.type == 'success' || result.type == 'redirect';
 
-		Submitting.set(false);
-		Delayed.set(false);
-		Timeout.set(false);
+    Submitting.set(false);
+    Delayed.set(false);
+    Timeout.set(false);
 
-		function resultData(data: unknown) {
-			if (!data) return null;
-			else if (typeof data !== 'object') {
-				throw new Error('Non-object validation data returned from ActionResult.');
-			}
+    function resultData(data: unknown) {
+      if (!data) return null;
+      else if (typeof data !== 'object') {
+        throw new Error('Non-object validation data returned from ActionResult.');
+      }
 
-			if ('form' in data) return data.form as Validation<T>;
-			else if ('data' in data) return data as Validation<T>;
-			else if (result.type != 'redirect') {
-				throw new Error('Incorrect validation type returned from ActionResult.');
-			} else {
-				return null;
-			}
-		}
+      if ('form' in data) return data.form as Validation<T>;
+      else if ('data' in data) return data as Validation<T>;
+      else if (result.type != 'redirect') {
+        throw new Error('Incorrect validation type returned from ActionResult.');
+      } else {
+        return null;
+      }
+    }
 
-		const validation = resultData(result.type == 'redirect' ? get(page).data : result.data) ?? {
-			success: true,
-			errors: {},
-			data: {},
-			empty: true,
-			message: null
-		};
+    const validation = resultData(result.type == 'redirect' ? get(page).data : result.data) ?? {
+      success: true,
+      errors: {},
+      data: {},
+      empty: true,
+      message: null
+    };
 
-		let form = validation.data;
-		let formErrors = validation.errors;
-		let message = validation.message;
+    let form = validation.data;
+    let formErrors = validation.errors;
+    let message = validation.message;
 
-		if (options.onUpdate) {
-			let cancelled = false;
-			const updateStatus = await options.onUpdate({
-				update: validation,
-				cancel: () => (cancelled = true)
-			});
-			if (cancelled) return;
-			else if (
-				updateStatus &&
-				typeof updateStatus === 'object' &&
-				'data' in updateStatus &&
-				'errors' in updateStatus &&
-				'message' in updateStatus
-			) {
-				form = updateStatus.data as typeof form;
-				formErrors = updateStatus.errors as typeof formErrors;
-				message = updateStatus.message as typeof message;
-			}
-		}
+    if (options.onUpdate) {
+      let cancelled = false;
+      const updateStatus = await options.onUpdate({
+        update: validation,
+        cancel: () => (cancelled = true)
+      });
+      if (cancelled) return;
+      else if (
+        updateStatus &&
+        typeof updateStatus === 'object' &&
+        'data' in updateStatus &&
+        'errors' in updateStatus &&
+        'message' in updateStatus
+      ) {
+        form = updateStatus.data as typeof form;
+        formErrors = updateStatus.errors as typeof formErrors;
+        message = updateStatus.message as typeof message;
+      }
+    }
 
-		Message.set(message);
+    Message.set(message);
 
-		if (result.type != 'failure' && options.resetForm) {
-			resetForm();
-		} else {
-			FormStore.set(form);
-			Errors.set(formErrors);
+    if (result.type != 'failure' && options.resetForm) {
+      resetForm();
+    } else {
+      FormStore.set(form);
+      Errors.set(formErrors);
 
-			if (untaint && options.taintedMessage) {
-				savedForm = { ...form };
-			}
-		}
+      if (untaint && options.taintedMessage) {
+        savedForm = { ...form };
+      }
+    }
 
-		if (options.afterUpdate) {
-			await options.afterUpdate({ update: validation });
-		}
+    if (options.afterUpdate) {
+      await options.afterUpdate({ update: validation });
+    }
 
-		return;
-	};
+    return;
+  };
 
-	if (browser) {
-		beforeNavigate((nav) => {
-			if (options.taintedMessage && !get(Submitting)) {
-				const tainted = !deepEqual(get(FormStore), savedForm);
+  if (browser) {
+    beforeNavigate((nav) => {
+      if (options.taintedMessage && !get(Submitting)) {
+        const tainted = !deepEqual(get(FormStore), savedForm);
 
-				if (tainted && !window.confirm(options.taintedMessage)) {
-					nav.cancel();
-				}
-			}
-		});
-	}
+        if (tainted && !window.confirm(options.taintedMessage)) {
+          nav.cancel();
+        }
+      }
+    });
+  }
 
-	let previousForm = { ...form.data };
-	FormStore.subscribe((f) => {
-		for (const key of Object.keys(f)) {
-			if (f[key] !== previousForm[key]) {
-				const validator = options.validators && options.validators[key];
-				if (validator) {
-					const newError = validator(f[key]);
-					Errors.update((e) => {
-						if (!newError) delete e[key];
-						else e[key as keyof z.infer<T>] = [newError];
-						return e;
-					});
-				} else if (options.defaultValidator == 'clear') {
-					Errors.update((e) => {
-						delete e[key];
-						return e;
-					});
-				}
-			}
-		}
-		previousForm = { ...f };
-	});
+  let previousForm = { ...form.data };
+  FormStore.subscribe((f) => {
+    for (const key of Object.keys(f)) {
+      if (f[key] !== previousForm[key]) {
+        const validator = options.validators && options.validators[key];
+        if (validator) {
+          const newError = validator(f[key]);
+          Errors.update((e) => {
+            if (!newError) delete e[key];
+            else e[key as keyof z.infer<T>] = [newError];
+            return e;
+          });
+        } else if (options.defaultValidator == 'clear') {
+          Errors.update((e) => {
+            delete e[key];
+            return e;
+          });
+        }
+      }
+    }
+    previousForm = { ...f };
+  });
 
-	return {
-		form: FormStore,
-		errors: Errors,
-		submitting: Submitting,
-		delayed: Delayed,
-		timeout: Timeout,
-		enhance: (el: HTMLFormElement) =>
-			formEnhance(
-				el,
-				Submitting,
-				Delayed,
-				Timeout,
-				Errors,
-				FormStore_update,
-				options,
-				FormStore,
-				Message
-			),
-		update: FormStore_update,
-		firstError: FirstError,
-		message: Message,
-		reset: resetForm
-		//fieldChanged(field: keyof z.infer<T>) { return !!savedForm && !deepEqual(savedForm[field], get(formStore)[field]); },
-	};
+  return {
+    form: FormStore,
+    errors: Errors,
+    submitting: Submitting,
+    delayed: Delayed,
+    timeout: Timeout,
+    enhance: (el: HTMLFormElement) =>
+      formEnhance(
+        el,
+        Submitting,
+        Delayed,
+        Timeout,
+        Errors,
+        FormStore_update,
+        options,
+        FormStore,
+        Message
+      ),
+    update: FormStore_update,
+    firstError: FirstError,
+    message: Message,
+    reset: resetForm
+    //fieldChanged(field: keyof z.infer<T>) { return !!savedForm && !deepEqual(savedForm[field], get(formStore)[field]); },
+  };
 }
 
 /**
@@ -377,156 +385,156 @@ export function superForm<T extends AnyZodObject>(
  * @param formEl Form element from the use:formEnhance default parameter.
  */
 function formEnhance<T extends AnyZodObject>(
-	formEl: HTMLFormElement,
-	submitting: Writable<boolean>,
-	delayed: Writable<boolean>,
-	timeout: Writable<boolean>,
-	errors: Writable<Validation<T>['errors']>,
-	formUpdate: FormUpdate,
-	options: FormOptions<T>,
-	data: Writable<Validation<T>['data']>,
-	message: Writable<Validation<T>['message']>
+  formEl: HTMLFormElement,
+  submitting: Writable<boolean>,
+  delayed: Writable<boolean>,
+  timeout: Writable<boolean>,
+  errors: Writable<Validation<T>['errors']>,
+  formUpdate: FormUpdate,
+  options: FormOptions<T>,
+  data: Writable<Validation<T>['data']>,
+  message: Writable<Validation<T>['message']>
 ) {
-	/**
-	 * @DCI-context
-	 */
-	function Form(formEl: HTMLFormElement) {
-		function rebind() {
-			Form = formEl;
-		}
+  /**
+   * @DCI-context
+   */
+  function Form(formEl: HTMLFormElement) {
+    function rebind() {
+      Form = formEl;
+    }
 
-		let Form: {
-			querySelectorAll: (selector: string) => NodeListOf<HTMLElement>;
-			querySelector: (selector: string) => HTMLElement;
-			dataset: DOMStringMap;
-		};
+    let Form: {
+      querySelectorAll: (selector: string) => NodeListOf<HTMLElement>;
+      querySelector: (selector: string) => HTMLElement;
+      dataset: DOMStringMap;
+    };
 
-		function Form_shouldAutoFocus(userAgent: string) {
-			if (typeof options.autoFocus === 'boolean') return options.autoFocus;
-			else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
-		}
+    function Form_shouldAutoFocus(userAgent: string) {
+      if (typeof options.autoFocus === 'boolean') return options.autoFocus;
+      else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
+    }
 
-		const Form_scrollToFirstError = async () => {
-			const selector = options.errorSelector;
-			if (!selector) return;
+    const Form_scrollToFirstError = async () => {
+      const selector = options.errorSelector;
+      if (!selector) return;
 
-			// Wait for form to update with errors
-			await tick();
+      // Wait for form to update with errors
+      await tick();
 
-			// Scroll to first form message, if not visible
-			let el: HTMLElement | null;
-			el = Form.querySelector(selector) as HTMLElement | null;
-			if (!el) return;
-			// Find underlying element if it is a FormGroup element
-			el = el.querySelector(selector) ?? el;
+      // Scroll to first form message, if not visible
+      let el: HTMLElement | null;
+      el = Form.querySelector(selector) as HTMLElement | null;
+      if (!el) return;
+      // Find underlying element if it is a FormGroup element
+      el = el.querySelector(selector) ?? el;
 
-			//d('Validation error:', el);
+      //d('Validation error:', el);
 
-			const nav = options.stickyNavbar
-				? (document.querySelector(options.stickyNavbar) as HTMLElement)
-				: null;
+      const nav = options.stickyNavbar
+        ? (document.querySelector(options.stickyNavbar) as HTMLElement)
+        : null;
 
-			if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
-				scrollToAndCenter(el);
-			}
+      if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
+        scrollToAndCenter(el);
+      }
 
-			// Don't focus on the element if on mobile, it will open the keyboard
-			// and probably hide the error message.
-			if (!Form_shouldAutoFocus(navigator.userAgent)) return;
+      // Don't focus on the element if on mobile, it will open the keyboard
+      // and probably hide the error message.
+      if (!Form_shouldAutoFocus(navigator.userAgent)) return;
 
-			let focusEl;
-			focusEl = el;
+      let focusEl;
+      focusEl = el;
 
-			if (!['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)) {
-				focusEl = focusEl.querySelector<HTMLElement>(
-					'input:not([type="hidden"]):not(.flatpickr-input), select'
-				);
-			}
+      if (!['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)) {
+        focusEl = focusEl.querySelector<HTMLElement>(
+          'input:not([type="hidden"]):not(.flatpickr-input), select'
+        );
+      }
 
-			try {
-				focusEl?.focus({ preventScroll: true });
-			} catch (err) {
-				// Some hidden inputs like from flatpickr cannot be focused.
-			}
-		};
+      try {
+        focusEl?.focus({ preventScroll: true });
+      } catch (err) {
+        // Some hidden inputs like from flatpickr cannot be focused.
+      }
+    };
 
-		{
-			let state: FetchStatus = FetchStatus.Idle;
-			let delayedTimeout: number, timeoutTimeout: number;
+    {
+      let state: FetchStatus = FetchStatus.Idle;
+      let delayedTimeout: number, timeoutTimeout: number;
 
-			const setState = (s: typeof state) => {
-				state = s;
-				submitting.set(state != FetchStatus.Idle);
-				delayed.set(state >= FetchStatus.Delayed);
-				timeout.set(state >= FetchStatus.Timeout);
-			};
+      const setState = (s: typeof state) => {
+        state = s;
+        submitting.set(state != FetchStatus.Idle);
+        delayed.set(state >= FetchStatus.Delayed);
+        timeout.set(state >= FetchStatus.Timeout);
+      };
 
-			return {
-				submitting: () => {
-					rebind();
-					setState(state != FetchStatus.Delayed ? FetchStatus.Pending : FetchStatus.Delayed);
+      return {
+        submitting: () => {
+          rebind();
+          setState(state != FetchStatus.Delayed ? FetchStatus.Pending : FetchStatus.Delayed);
 
-					// https://www.nngroup.com/articles/response-times-3-important-limits/
-					if (delayedTimeout) clearTimeout(delayedTimeout);
-					if (timeoutTimeout) clearTimeout(timeoutTimeout);
+          // https://www.nngroup.com/articles/response-times-3-important-limits/
+          if (delayedTimeout) clearTimeout(delayedTimeout);
+          if (timeoutTimeout) clearTimeout(timeoutTimeout);
 
-					delayedTimeout = window.setTimeout(() => {
-						if (state == FetchStatus.Pending) setState(FetchStatus.Delayed);
-					}, options.delayMs);
-					timeoutTimeout = window.setTimeout(() => {
-						if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
-					}, options.timeoutMs);
-				},
-				completed: () => {
-					setState(FetchStatus.Idle);
-					Form_scrollToFirstError();
-				},
-				isSubmitting: () => state === FetchStatus.Pending || state === FetchStatus.Delayed
-			};
-		}
-	}
+          delayedTimeout = window.setTimeout(() => {
+            if (state == FetchStatus.Pending) setState(FetchStatus.Delayed);
+          }, options.delayMs);
+          timeoutTimeout = window.setTimeout(() => {
+            if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
+          }, options.timeoutMs);
+        },
+        completed: () => {
+          setState(FetchStatus.Idle);
+          Form_scrollToFirstError();
+        },
+        isSubmitting: () => state === FetchStatus.Pending || state === FetchStatus.Delayed
+      };
+    }
+  }
 
-	const form = Form(formEl);
+  const form = Form(formEl);
 
-	return enhance(formEl, async (submit) => {
-		let cancelled = false;
-		if (form.isSubmitting()) {
-			//d('Prevented form submission');
-			cancelled = true;
-			submit.cancel();
-		} else if (options.onSubmit) {
-			const submit2 = {
-				...submit,
-				cancel: () => {
-					cancelled = true;
-					return submit.cancel();
-				}
-			};
+  return enhance(formEl, async (submit) => {
+    let cancelled = false;
+    if (form.isSubmitting()) {
+      //d('Prevented form submission');
+      cancelled = true;
+      submit.cancel();
+    } else if (options.onSubmit) {
+      const submit2 = {
+        ...submit,
+        cancel: () => {
+          cancelled = true;
+          return submit.cancel();
+        }
+      };
 
-			options.onSubmit(submit2);
-		}
+      options.onSubmit(submit2);
+    }
 
-		if (!cancelled) {
-			switch (options.clearOnSubmit) {
-				case 'errors-and-message':
-					errors.set({});
-					message.set(null);
-					break;
+    if (!cancelled) {
+      switch (options.clearOnSubmit) {
+        case 'errors-and-message':
+          errors.set({});
+          message.set(null);
+          break;
 
-				case 'errors':
-					errors.set({});
-					break;
+        case 'errors':
+          errors.set({});
+          break;
 
-				case 'message':
-					message.set(null);
-					break;
-			}
+        case 'message':
+          message.set(null);
+          break;
+      }
 
-			form.submitting();
-			//d('Submitting');
+      form.submitting();
+      //d('Submitting');
 
-			// TODO: flash message
-			/*
+      // TODO: flash message
+      /*
 			try {
 				getFlash(page).set(undefined);
 			} catch (_) {
@@ -534,43 +542,43 @@ function formEnhance<T extends AnyZodObject>(
 			}
 			*/
 
-			switch (options.dataType) {
-				case 'json':
-					submit.data.set('json', stringify(get(data)));
-					break;
+      switch (options.dataType) {
+        case 'json':
+          submit.data.set('json', stringify(get(data)));
+          break;
 
-				case 'formdata':
-					for (const [key, value] of Object.entries(get(data))) {
-						submit.data.set(key, value instanceof Blob ? value : `${value || ''}`);
-					}
-					break;
-			}
-		}
+        case 'formdata':
+          for (const [key, value] of Object.entries(get(data))) {
+            submit.data.set(key, value instanceof Blob ? value : `${value || ''}`);
+          }
+          break;
+      }
+    }
 
-		return async ({ result }) => {
-			//d('Completed: ', result, options);
+    return async ({ result }) => {
+      //d('Completed: ', result, options);
 
-			if (result.type !== 'error') {
-				if (result.type === 'success') {
-					if (options.resetForm) formEl.reset();
-					if (options.invalidateAll) await invalidateAll();
-				}
+      if (result.type !== 'error') {
+        if (result.type === 'success') {
+          if (options.resetForm) formEl.reset();
+          if (options.invalidateAll) await invalidateAll();
+        }
 
-				if (options.applyAction) {
-					await applyAction(result);
-				}
-			} else if (options.applyAction) {
-				await applyAction({
-					type: 'failure',
-					status: Math.floor(result.status || 500)
-				});
-			}
+        if (options.applyAction) {
+          await applyAction(result);
+        }
+      } else if (options.applyAction) {
+        await applyAction({
+          type: 'failure',
+          status: Math.floor(result.status || 500)
+        });
+      }
 
-			if (options.applyAction && result.type != 'error') {
-				formUpdate(result);
-			}
+      if (options.applyAction && result.type != 'error') {
+        formUpdate(result);
+      }
 
-			/*
+      /*
 			// TODO: Flash message handling
 			function errorMessage(result: ActionResult): string | undefined {
 				if (result.type != 'error') return undefined;
@@ -592,11 +600,11 @@ function formEnhance<T extends AnyZodObject>(
 			}
 			*/
 
-			if (options.onResult) {
-				await options.onResult({ result, update: formUpdate, formEl });
-			}
+      if (options.onResult) {
+        await options.onResult({ result, update: formUpdate, formEl });
+      }
 
-			form.completed();
-		};
-	});
+      form.completed();
+    };
+  });
 }

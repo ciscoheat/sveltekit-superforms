@@ -36,11 +36,12 @@ export type Validators<T extends AnyZodObject> = Partial<{
 export type FormOptions<T extends AnyZodObject> = {
   applyAction?: boolean;
   invalidateAll?: boolean;
-  autoFocus?: boolean | 'detect';
+  resetForm?: boolean;
+  autoFocusOnError?: boolean | 'detect';
+  scrollToError?: 'auto' | 'smooth' | 'off';
   errorSelector?: string;
   stickyNavbar?: string;
-  taintedMessage?: string | null;
-  resetForm?: boolean;
+  taintedMessage?: string | false;
   onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
   onResult?: (event: {
     result: ActionResult;
@@ -61,7 +62,8 @@ export type FormOptions<T extends AnyZodObject> = {
 const defaultFormOptions: FormOptions<AnyZodObject> = {
   applyAction: true,
   invalidateAll: true,
-  autoFocus: 'detect',
+  autoFocusOnError: 'detect',
+  scrollToError: 'smooth',
   errorSelector: '[data-invalid]',
   stickyNavbar: undefined,
   taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
@@ -90,6 +92,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: () => void;
+  wipe: () => void;
 };
 
 /**
@@ -236,13 +239,22 @@ export function superForm<T extends AnyZodObject>(
   const Delayed = writable(false);
   const Timeout = writable(false);
 
+  const startData = form.data;
+  const startErrors = form.errors;
+
   // Must make a copy for the equality comparison to make sense
-  let savedForm = options.taintedMessage ? { ...form.data } : undefined;
+  let savedForm = options.taintedMessage ? { ...startData } : undefined;
 
   function resetForm() {
+    FormStore.set(startData);
+    Errors.set(startErrors);
+    savedForm = options.taintedMessage ? { ...startData } : undefined;
+  }
+
+  function wipeForm() {
     FormStore.set({});
     Errors.set({});
-    if (options.taintedMessage) savedForm = {};
+    savedForm = options.taintedMessage ? {} : undefined;
   }
 
   const FormStore_update: FormUpdate = async (result, untaint?: boolean) => {
@@ -375,7 +387,8 @@ export function superForm<T extends AnyZodObject>(
     update: FormStore_update,
     firstError: FirstError,
     message: Message,
-    reset: resetForm
+    reset: resetForm,
+    wipe: wipeForm
     //fieldChanged(field: keyof z.infer<T>) { return !!savedForm && !deepEqual(savedForm[field], get(formStore)[field]); },
   };
 }
@@ -410,11 +423,13 @@ function formEnhance<T extends AnyZodObject>(
     };
 
     function Form_shouldAutoFocus(userAgent: string) {
-      if (typeof options.autoFocus === 'boolean') return options.autoFocus;
+      if (typeof options.autoFocusOnError === 'boolean') return options.autoFocusOnError;
       else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
     }
 
     const Form_scrollToFirstError = async () => {
+      if (options.scrollToError == 'off') return;
+
       const selector = options.errorSelector;
       if (!selector) return;
 
@@ -435,7 +450,7 @@ function formEnhance<T extends AnyZodObject>(
         : null;
 
       if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
-        scrollToAndCenter(el);
+        scrollToAndCenter(el, undefined, options.scrollToError);
       }
 
       // Don't focus on the element if on mobile, it will open the keyboard
@@ -447,7 +462,7 @@ function formEnhance<T extends AnyZodObject>(
 
       if (!['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)) {
         focusEl = focusEl.querySelector<HTMLElement>(
-          'input:not([type="hidden"]):not(.flatpickr-input), select'
+          'input:not([type="hidden"]):not(.flatpickr-input), select, textarea'
         );
       }
 

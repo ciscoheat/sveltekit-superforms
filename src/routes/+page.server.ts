@@ -3,28 +3,37 @@ import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { Actions, PageServerLoad } from './$types';
 
-const defaultSchema = z.object({
-	name: z.string().min(2).default('Shigeru'),
+export const _dataTypeForm = z.object({
+	string: z.string().min(2).default('Shigeru'),
 	email: z.string().email(),
-	delay: z.number().int().min(0).default(0)
+	bool: z.boolean(),
+	number: z.number().default(0),
+	proxyNumber: z.number().min(10).default(0),
+	nullableString: z.string().nullable(),
+	nullishString: z.string().nullish(),
+	optionalString: z.string().optional(),
+	trimmedString: z.string().trim(),
+	date: z.date().default(new Date()),
+	coercedNumber: z.coerce.number().default(0),
+	coercedDate: z.coerce.date().default(new Date())
 });
 
 export const load = (async (event) => {
-	const form = await superValidate(event, defaultSchema);
+	const form = await superValidate(event, _dataTypeForm);
 
 	console.log('🚀 ~ LOAD', form);
 	return { form };
 }) satisfies PageServerLoad;
 
 export const actions = {
-	default: async (event) => {
-		const form = await superValidate(event, defaultSchema);
+	form: async (event) => {
+		const form = await superValidate(event, _dataTypeForm);
 		console.log('🚀 ~ POST', form);
 
 		if (!form.success) return fail(400, { form });
 		else form.message = 'Form posted!';
 
-		await new Promise((resolve) => setTimeout(resolve, form.data.delay));
+		await new Promise((resolve) => setTimeout(resolve, form.data.number));
 
 		return { form };
 	}

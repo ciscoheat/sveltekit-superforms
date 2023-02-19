@@ -14,6 +14,7 @@ specifiers:
   prettier-plugin-svelte: ^2.8.1
   publint: ^0.1.9
   sass: ^1.58.3
+  slugify: ^1.6.5
   svelte: ^3.54.0
   svelte-check: ^3.0.1
   sveltekit-flash-message: ^0.11.3
@@ -37,6 +38,7 @@ devDependencies:
   prettier-plugin-svelte: 2.9.0_jrsxveqmsx2uadbqiuq74wlc4u
   publint: 0.1.9
   sass: 1.58.3
+  slugify: 1.6.5
   svelte: 3.55.1
   svelte-check: 3.0.3_sass@1.58.3+svelte@3.55.1
   sveltekit-flash-message: 0.11.3_y6uk4p7npgk5rli32yshjxqacm
@@ -1670,6 +1672,11 @@ packages:
   /slash/3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
+    dev: true
+
+  /slugify/1.6.5:
+    resolution: {integrity: sha512-8mo9bslnBO3tr5PEVFzMPIWwWnipGS0xVbYf65zxDqfNwmzYn1LpiKNrR6DlClusuvo+hDHd1zKpmfAe83NQSQ==}
+    engines: {node: '>=8.0.0'}
     dev: true
 
   /sorcery/0.11.0:

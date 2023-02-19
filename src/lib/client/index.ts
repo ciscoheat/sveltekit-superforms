@@ -98,7 +98,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @param field Form field
  * @param type 'int' | 'boolean'
  */
-function stringProxy<T extends Record<string, unknown>, Type extends 'int' | 'boolean'>(
+export function stringProxy<T extends Record<string, unknown>, Type extends 'int' | 'boolean'>(
 	form: Writable<T>,
 	field: keyof T,
 	type: Type
@@ -110,7 +110,16 @@ function stringProxy<T extends Record<string, unknown>, Type extends 'int' | 'bo
 		}
 		throw new Error('stringProxy received a non-string value.');
 	}
-	const proxy = derived(form, ($form) => String($form[field]));
+
+	const proxy = derived(form, ($form) => {
+		if (type == 'int') {
+			const num = $form[field] as number;
+			return isNaN(num) ? '' : String(num);
+		} else {
+			return $form[field] ? 'true' : '';
+		}
+	});
+
 	return {
 		subscribe: proxy.subscribe,
 		set(val: string) {
@@ -136,7 +145,7 @@ interface IntArrayProxy extends Writable<number[]> {
  * @param field Form field
  * @param options allowNaN, separator
  */
-function intArrayProxy<T extends Record<string, unknown>>(
+export function intArrayProxy<T extends Record<string, unknown>>(
 	form: Writable<T>,
 	field: keyof T,
 	options: {

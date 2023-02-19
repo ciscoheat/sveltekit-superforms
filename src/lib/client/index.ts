@@ -53,7 +53,7 @@ export type FormOptions<T extends AnyZodObject> = {
 	validators?: Validators<T>;
 	defaultValidator?: 'keep' | 'clear';
 	defaultValidatorMessage?: string;
-	clearErrorsOnSubmit?: boolean;
+	clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
 	delayMs?: number;
 	timeoutMs?: number;
 };
@@ -74,7 +74,7 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
 	validators: undefined,
 	defaultValidator: 'keep',
 	defaultValidatorMessage: 'Invalid',
-	clearErrorsOnSubmit: true,
+	clearOnSubmit: 'errors-and-message',
 	delayMs: 150,
 	timeoutMs: 8000
 };
@@ -344,7 +344,17 @@ export function superForm<T extends AnyZodObject>(
 		delayed: Delayed,
 		timeout: Timeout,
 		enhance: (el: HTMLFormElement) =>
-			formEnhance(el, Submitting, Delayed, Timeout, Errors, FormStore_update, options, FormStore),
+			formEnhance(
+				el,
+				Submitting,
+				Delayed,
+				Timeout,
+				Errors,
+				FormStore_update,
+				options,
+				FormStore,
+				Message
+			),
 		update: FormStore_update,
 		firstError: FirstError,
 		message: Message,
@@ -365,7 +375,8 @@ function formEnhance<T extends AnyZodObject>(
 	errors: Writable<Validation<T>['errors']>,
 	formUpdate: FormUpdate,
 	options: FormOptions<T>,
-	data: Writable<Validation<T>['data']>
+	data: Writable<Validation<T>['data']>,
+	message: Writable<Validation<T>['message']>
 ) {
 	/**
 	 * @DCI-context
@@ -487,7 +498,20 @@ function formEnhance<T extends AnyZodObject>(
 		}
 
 		if (!cancelled) {
-			if (options.clearErrorsOnSubmit) errors.set({});
+			switch (options.clearOnSubmit) {
+				case 'errors-and-message':
+					errors.set({});
+					message.set(null);
+					break;
+
+				case 'errors':
+					errors.set({});
+					break;
+
+				case 'message':
+					message.set(null);
+					break;
+			}
 
 			form.submitting();
 			//d('Submitting');

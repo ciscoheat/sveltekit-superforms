@@ -1,38 +1,21 @@
-# create-svelte
+# sveltekit-superforms
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+Supercharge your SvelteKit forms with this powerhouse of a library.
 
-## Creating a project
+## Feature list
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+- Merging `PageData` and `ActionData` - Stop worrying about which one to use and how, just focus on your data structures.
+- Server-side data validation with error output that can be used directly on the client.
+- Auto-centering and auto-focusing on invalid form fields.
+- Tainted form detection, prevents the user from losing data if navigating away from an unsaved form.
+- Full support for progressive enhancement - No JS needed if you don't want to.
+- Coerces the strings from `FormData` into correct types.
+- For advanced data structures, forget about the limitations of `FormData` - Send your forms as devalued JSON, transparently.
+- Client-side validators for direct feedback.
+- Generate default form values from validation schemas.
+- Give feedback with auto-updating timers for long response times, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
+- Even more care for the user: No form data loss by preventing error page rendering.
+- Hook into a number of events for full control over submitting, result, updates...
+- Customize whether to use `applyAction`, `invalidateAll`, `autoFocus`, `resetForm`, etc...
+- Comes with a Super Form Debugging Svelte Component.
+- ...and probably a lot more!

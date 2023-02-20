@@ -37,8 +37,8 @@ export type FormOptions<T extends AnyZodObject> = {
   applyAction?: boolean;
   invalidateAll?: boolean;
   resetForm?: boolean;
-  autoFocusOnError?: boolean | 'detect';
   scrollToError?: 'auto' | 'smooth' | 'off';
+  autoFocusOnError?: boolean | 'detect';
   errorSelector?: string;
   stickyNavbar?: string;
   taintedMessage?: string | false;
@@ -47,9 +47,13 @@ export type FormOptions<T extends AnyZodObject> = {
     result: ActionResult;
     update: FormUpdate;
     formEl: HTMLFormElement;
+    cancel: () => void;
   }) => MaybePromise<unknown | void>;
-  onUpdate?: (event: { update: Validation<T>; cancel: () => void }) => MaybePromise<unknown | void>;
-  afterUpdate?: (event: { update: Validation<T> }) => MaybePromise<unknown | void>;
+  onUpdate?: (event: {
+    validation: Validation<T>;
+    cancel: () => void;
+  }) => MaybePromise<unknown | void>;
+  onUpdated?: (event: { validation: Validation<T> }) => MaybePromise<unknown | void>;
   dataType?: 'form' | 'json' | 'formdata';
   validators?: Validators<T>;
   defaultValidator?: 'keep' | 'clear';
@@ -57,28 +61,30 @@ export type FormOptions<T extends AnyZodObject> = {
   clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs?: number;
   timeoutMs?: number;
+  multipleSubmits?: 'prevent' | 'allow' | 'abort';
 };
 
 const defaultFormOptions: FormOptions<AnyZodObject> = {
   applyAction: true,
   invalidateAll: true,
+  resetForm: false,
   autoFocusOnError: 'detect',
   scrollToError: 'smooth',
   errorSelector: '[data-invalid]',
   stickyNavbar: undefined,
   taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
-  resetForm: false,
   onSubmit: undefined,
   onResult: undefined,
   onUpdate: undefined,
-  afterUpdate: undefined,
+  onUpdated: undefined,
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',
   defaultValidatorMessage: 'Invalid',
   clearOnSubmit: 'errors-and-message',
   delayMs: 150,
-  timeoutMs: 8000
+  timeoutMs: 8000,
+  multipleSubmits: 'prevent'
 };
 
 export type EnhancedForm<T extends AnyZodObject> = {
@@ -258,7 +264,13 @@ export function superForm<T extends AnyZodObject>(
   }
 
   const FormStore_update: FormUpdate = async (result, untaint?: boolean) => {
-    if (untaint === undefined) untaint = result.type == 'success' || result.type == 'redirect';
+    if ((result.type as string) == 'error') {
+      throw new Error('ActionResult of type "error" was passed to update function.');
+    }
+
+    if (untaint === undefined) {
+      untaint = result.type == 'success' || result.type == 'redirect';
+    }
 
     Submitting.set(false);
     Delayed.set(false);
@@ -293,22 +305,15 @@ export function superForm<T extends AnyZodObject>(
 
     if (options.onUpdate) {
       let cancelled = false;
-      const updateStatus = await options.onUpdate({
-        update: validation,
+      await options.onUpdate({
+        validation: validation,
         cancel: () => (cancelled = true)
       });
       if (cancelled) return;
-      else if (
-        updateStatus &&
-        typeof updateStatus === 'object' &&
-        'data' in updateStatus &&
-        'errors' in updateStatus &&
-        'message' in updateStatus
-      ) {
-        form = updateStatus.data as typeof form;
-        formErrors = updateStatus.errors as typeof formErrors;
-        message = updateStatus.message as typeof message;
-      }
+
+      form = validation.data as typeof form;
+      formErrors = validation.errors as typeof formErrors;
+      message = validation.message as typeof message;
     }
 
     Message.set(message);
@@ -324,8 +329,8 @@ export function superForm<T extends AnyZodObject>(
       }
     }
 
-    if (options.afterUpdate) {
-      await options.afterUpdate({ update: validation });
+    if (options.onUpdated) {
+      await options.onUpdated({ validation: validation });
     }
 
     return;
@@ -500,9 +505,9 @@ function formEnhance<T extends AnyZodObject>(
             if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
           }, options.timeoutMs);
         },
-        completed: () => {
+        completed: (cancelled: boolean) => {
           setState(FetchStatus.Idle);
-          Form_scrollToFirstError();
+          if (!cancelled) Form_scrollToFirstError();
         },
         isSubmitting: () => state === FetchStatus.Pending || state === FetchStatus.Delayed
       };
@@ -572,54 +577,60 @@ function formEnhance<T extends AnyZodObject>(
 
     return async ({ result }) => {
       //d('Completed: ', result, options);
-
-      if (result.type !== 'error') {
-        if (result.type === 'success') {
-          if (options.resetForm) formEl.reset();
-          if (options.invalidateAll) await invalidateAll();
-        }
-
-        if (options.applyAction) {
-          await applyAction(result);
-        }
-      } else if (options.applyAction) {
-        await applyAction({
-          type: 'failure',
-          status: Math.floor(result.status || 500)
+      let cancelled = false;
+      if (options.onResult) {
+        await options.onResult({
+          result,
+          update: formUpdate,
+          formEl,
+          cancel: () => (cancelled = true)
         });
       }
 
-      if (options.applyAction && result.type != 'error') {
-        formUpdate(result);
-      }
+      if (!cancelled) {
+        if (result.type !== 'error') {
+          if (result.type === 'success' && options.invalidateAll) {
+            await invalidateAll();
+          }
 
-      /*
-			// TODO: Flash message handling
-			function errorMessage(result: ActionResult): string | undefined {
-				if (result.type != 'error') return undefined;
-				return result.error;
-			}
+          if (options.applyAction) {
+            await applyAction(result);
+          }
+        } else if (options.applyAction) {
+          await applyAction({
+            type: 'failure',
+            status: Math.floor(result.status || 500)
+          });
+        }
 
-			const error = errorMessage(result);
-			if (error) {
-				getFlash(page).set({
-					status: 'error',
-					text: error
-				});
-			} else {
-				try {
-					await updateFlash(page);
-				} catch (_) {
-					//
+        if (options.applyAction && result.type != 'error') {
+          formUpdate(result);
+        }
+
+        /*
+				// TODO: Flash message handling
+				function errorMessage(result: ActionResult): string | undefined {
+					if (result.type != 'error') return undefined;
+					return result.error;
 				}
-			}
-			*/
 
-      if (options.onResult) {
-        await options.onResult({ result, update: formUpdate, formEl });
+				const error = errorMessage(result);
+				if (error) {
+					getFlash(page).set({
+						status: 'error',
+						text: error
+					});
+				} else {
+					try {
+						await updateFlash(page);
+					} catch (_) {
+						//
+					}
+				}
+				*/
       }
 
-      form.completed();
+      form.completed(cancelled);
     };
   });
 }

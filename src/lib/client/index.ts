@@ -1,10 +1,22 @@
-import { enhance, applyAction, type MaybePromise, type SubmitFunction } from '$app/forms';
+import {
+  enhance,
+  applyAction,
+  type MaybePromise,
+  type SubmitFunction
+} from '$app/forms';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
 //import { getFlash, updateFlash } from 'sveltekit-flash-message/client';
 import { isElementInViewport, scrollToAndCenter } from './elements';
-import { derived, get, writable, type Readable, type Updater, type Writable } from 'svelte/store';
+import {
+  derived,
+  get,
+  writable,
+  type Readable,
+  type Updater,
+  type Writable
+} from 'svelte/store';
 import { tick } from 'svelte';
 import { browser } from '$app/environment';
 import type { Validation } from '..';
@@ -55,7 +67,9 @@ export type FormOptions<T extends AnyZodObject> = {
     validation: Validation<T>;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
-  onUpdated?: (event: { validation: Validation<T> }) => MaybePromise<unknown | void>;
+  onUpdated?: (event: {
+    validation: Validation<T>;
+  }) => MaybePromise<unknown | void>;
   onError?:
     | ((
         result: Extract<ActionResult, { type: 'error' }>,
@@ -80,7 +94,8 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   scrollToError: 'smooth',
   errorSelector: '[data-invalid]',
   stickyNavbar: undefined,
-  taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
+  taintedMessage:
+    'Do you want to leave this page? Changes you made may not be saved.',
   onSubmit: undefined,
   onResult: undefined,
   onUpdate: undefined,
@@ -98,11 +113,18 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
 export type EnhancedForm<T extends AnyZodObject> = {
   form: Writable<Validation<T>['data']>;
   errors: Writable<Validation<T>['errors']>;
+  message: Writable<Validation<T>['message']>;
+
+  success: Readable<boolean>;
+  empty: Readable<boolean>;
+
   submitting: Readable<boolean>;
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
+
   firstError: Readable<{ key: string; value: string } | null>;
-  message: Writable<Validation<T>['message']>;
+  //initial: Validation<T>;
+
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: () => void;
@@ -115,11 +137,10 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @param field Form field
  * @param type 'int' | 'boolean'
  */
-export function stringProxy<T extends Record<string, unknown>, Type extends 'int' | 'boolean'>(
-  form: Writable<T>,
-  field: keyof T,
-  type: Type
-): Writable<string> {
+export function stringProxy<
+  T extends Record<string, unknown>,
+  Type extends 'int' | 'boolean'
+>(form: Writable<T>, field: keyof T, type: Type): Writable<string> {
   function toValue(val: unknown) {
     if (typeof val === 'string') {
       if (type == 'int') return parseInt(val, 10);
@@ -143,7 +164,10 @@ export function stringProxy<T extends Record<string, unknown>, Type extends 'int
       form.update((f) => ({ ...f, [field]: toValue(val) }));
     },
     update(updater) {
-      form.update((f) => ({ ...f, [field]: toValue(updater(String(f[field]))) }));
+      form.update((f) => ({
+        ...f,
+        [field]: toValue(updater(String(f[field])))
+      }));
     }
   };
 }
@@ -184,7 +208,10 @@ export function intArrayProxy<T extends Record<string, unknown>>(
   });
 
   function update(updater: Updater<number[]>) {
-    form.update((f) => ({ ...f, [field]: updater(toArray(f[field])).join(',') }));
+    form.update((f) => ({
+      ...f,
+      [field]: updater(toArray(f[field])).join(',')
+    }));
   }
 
   return {
@@ -194,7 +221,9 @@ export function intArrayProxy<T extends Record<string, unknown>>(
       form.update((f) => ({ ...f, [field]: val.join(options.separator) }));
     },
     toggle(id: number) {
-      update((r) => (r.includes(id) ? r.filter((i) => i !== id) : [...r, id]));
+      update((r) =>
+        r.includes(id) ? r.filter((i) => i !== id) : [...r, id]
+      );
     },
     add(id: number) {
       update((r) => [...r, id]);
@@ -218,6 +247,8 @@ export function superForm<T extends AnyZodObject>(
   form?: FormOptions<T> | Validation<T> | null | undefined,
   options: FormOptions<T> = {}
 ): EnhancedForm<T> {
+  console.log('🚀 ~ file: index.ts:268 ~ YELLO SUPERFORM!');
+
   if (form && !('data' in form)) {
     options = form;
     form = null;
@@ -225,55 +256,85 @@ export function superForm<T extends AnyZodObject>(
 
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
 
+  function emptyForm() {
+    return {
+      success: true,
+      errors: {},
+      data: {},
+      empty: true,
+      message: null
+    };
+  }
+
   const actionForm = get(page).form;
+
   if (options.applyAction && actionForm && 'form' in actionForm) {
-    if (!('success' in actionForm.form) || typeof actionForm.form.success !== 'boolean') {
+    if (
+      !('success' in actionForm.form) ||
+      typeof actionForm.form.success !== 'boolean'
+    ) {
       throw new Error(
         "ActionData didn't return a Validation object. Make sure you return { form } from form actions."
       );
     }
     form = actionForm.form as Validation<T>;
   } else if (!form) {
-    form = { success: true, errors: {}, data: {}, empty: true, message: null };
+    form = emptyForm();
   }
 
-  const FormStore = writable(form.data);
+  // Stores for the properties of Validation<T>
+  const Success = writable(form.success);
   const Errors = writable(form.errors);
+  const Data = writable(form.data);
+  const Empty = writable(form.empty);
   const Message = writable(form.message);
 
+  // Timers
+  const Submitting = writable(false);
+  const Delayed = writable(false);
+  const Timeout = writable(false);
+
+  // Utilities
   const FirstError = derived(Errors, (errors) => {
     if (!errors) return null;
     const keys = Object.keys(errors);
     if (!keys.length) return null;
     const messages = errors[keys[0]];
-    return messages && messages[0] ? { key: keys[0], value: messages[0] } : null;
+    return messages && messages[0]
+      ? { key: keys[0], value: messages[0] }
+      : null;
   });
 
-  const Submitting = writable(false);
-  const Delayed = writable(false);
-  const Timeout = writable(false);
-
-  const startData = form.data;
-  const startErrors = form.errors;
+  const initialData = { ...form };
 
   // Must make a copy for the equality comparison to make sense
-  let savedForm = options.taintedMessage ? { ...startData } : undefined;
+  let savedForm = options.taintedMessage ? { ...form.data } : undefined;
 
-  function resetForm() {
-    FormStore.set(startData);
-    Errors.set(startErrors);
-    savedForm = options.taintedMessage ? { ...startData } : undefined;
+  function _update(newData: Validation<T>, untaint: boolean) {
+    Success.set(newData.success);
+    Errors.set(newData.errors);
+    Data.set(newData.data);
+    Empty.set(newData.empty);
+    Message.set(newData.message);
+
+    if (untaint && options.taintedMessage) {
+      savedForm = { ...newData.data };
+    }
   }
 
-  function wipeForm() {
-    FormStore.set({});
-    Errors.set({});
-    savedForm = options.taintedMessage ? {} : undefined;
+  function _resetForm() {
+    _update(initialData, true);
   }
 
-  const FormStore_update: FormUpdate = async (result, untaint?: boolean) => {
+  function _wipeForm() {
+    _update(emptyForm(), true);
+  }
+
+  const Data_update: FormUpdate = async (result, untaint?: boolean) => {
     if ((result.type as string) == 'error') {
-      throw new Error('ActionResult of type "error" was passed to update function.');
+      throw new Error(
+        'ActionResult of type "error" was passed to update function.'
+      );
     }
 
     if (untaint === undefined) {
@@ -287,29 +348,31 @@ export function superForm<T extends AnyZodObject>(
     function resultData(data: unknown) {
       if (!data) return null;
       else if (typeof data !== 'object') {
-        throw new Error('Non-object validation data returned from ActionResult.');
+        throw new Error(
+          'Non-object validation data returned from ActionResult.'
+        );
       }
 
       if ('form' in data) return data.form as Validation<T>;
       else if ('data' in data) return data as Validation<T>;
       else if (result.type != 'redirect') {
-        throw new Error('Incorrect validation type returned from ActionResult.');
+        throw new Error(
+          'Incorrect validation type returned from ActionResult.'
+        );
       } else {
         return null;
       }
     }
 
-    const validation = resultData(result.type == 'redirect' ? get(page).data : result.data) ?? {
+    const validation = resultData(
+      result.type == 'redirect' ? get(page).data : result.data
+    ) ?? {
       success: true,
       errors: {},
       data: {},
       empty: true,
       message: null
     };
-
-    let form = validation.data;
-    let formErrors = validation.errors;
-    let message = validation.message;
 
     if (options.onUpdate) {
       let cancelled = false;
@@ -318,27 +381,16 @@ export function superForm<T extends AnyZodObject>(
         cancel: () => (cancelled = true)
       });
       if (cancelled) return;
-
-      form = validation.data as typeof form;
-      formErrors = validation.errors as typeof formErrors;
-      message = validation.message as typeof message;
     }
 
-    Message.set(message);
-
     if (result.type != 'failure' && options.resetForm) {
-      resetForm();
+      _resetForm();
     } else {
-      FormStore.set(form);
-      Errors.set(formErrors);
-
-      if (untaint && options.taintedMessage) {
-        savedForm = { ...form };
-      }
+      _update(validation, untaint);
     }
 
     if (options.onUpdated) {
-      await options.onUpdated({ validation: validation });
+      await options.onUpdated({ validation });
     }
 
     return;
@@ -347,7 +399,7 @@ export function superForm<T extends AnyZodObject>(
   if (browser) {
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
-        const tainted = !deepEqual(get(FormStore), savedForm);
+        const tainted = !deepEqual(get(Data), savedForm);
 
         if (tainted && !window.confirm(options.taintedMessage)) {
           nav.cancel();
@@ -357,7 +409,7 @@ export function superForm<T extends AnyZodObject>(
   }
 
   let previousForm = { ...form.data };
-  FormStore.subscribe(async (f) => {
+  Data.subscribe(async (f) => {
     for (const key of Object.keys(f)) {
       if (f[key] !== previousForm[key]) {
         const validator = options.validators && options.validators[key];
@@ -380,11 +432,16 @@ export function superForm<T extends AnyZodObject>(
   });
 
   return {
-    form: FormStore,
     errors: Errors,
-    submitting: Submitting,
-    delayed: Delayed,
-    timeout: Timeout,
+    form: Data,
+    message: Message,
+    success: derived(Success, ($s) => $s),
+    empty: derived(Empty, ($e) => $e),
+
+    submitting: derived(Submitting, ($s) => $s),
+    delayed: derived(Delayed, ($d) => $d),
+    timeout: derived(Timeout, ($t) => $t),
+
     enhance: (el: HTMLFormElement) =>
       formEnhance(
         el,
@@ -392,17 +449,17 @@ export function superForm<T extends AnyZodObject>(
         Delayed,
         Timeout,
         Errors,
-        FormStore_update,
+        Data_update,
         options,
-        FormStore,
+        Data,
         Message
       ),
-    update: FormStore_update,
+
+    //initial: initialData,
     firstError: FirstError,
-    message: Message,
-    reset: resetForm,
-    wipe: wipeForm
-    //fieldChanged(field: keyof z.infer<T>) { return !!savedForm && !deepEqual(savedForm[field], get(formStore)[field]); },
+    update: Data_update,
+    reset: _resetForm,
+    wipe: _wipeForm
   };
 }
 
@@ -436,7 +493,8 @@ function formEnhance<T extends AnyZodObject>(
     };
 
     function Form_shouldAutoFocus(userAgent: string) {
-      if (typeof options.autoFocusOnError === 'boolean') return options.autoFocusOnError;
+      if (typeof options.autoFocusOnError === 'boolean')
+        return options.autoFocusOnError;
       else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
     }
 
@@ -473,7 +531,11 @@ function formEnhance<T extends AnyZodObject>(
       let focusEl;
       focusEl = el;
 
-      if (!['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)) {
+      if (
+        !['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(
+          focusEl.tagName
+        )
+      ) {
         focusEl = focusEl.querySelector<HTMLElement>(
           'input:not([type="hidden"]):not(.flatpickr-input), select, textarea'
         );
@@ -500,24 +562,31 @@ function formEnhance<T extends AnyZodObject>(
       return {
         submitting: () => {
           rebind();
-          setState(state != FetchStatus.Delayed ? FetchStatus.Submitting : FetchStatus.Delayed);
+          setState(
+            state != FetchStatus.Delayed
+              ? FetchStatus.Submitting
+              : FetchStatus.Delayed
+          );
 
           // https://www.nngroup.com/articles/response-times-3-important-limits/
           if (delayedTimeout) clearTimeout(delayedTimeout);
           if (timeoutTimeout) clearTimeout(timeoutTimeout);
 
           delayedTimeout = window.setTimeout(() => {
-            if (state == FetchStatus.Submitting) setState(FetchStatus.Delayed);
+            if (state == FetchStatus.Submitting)
+              setState(FetchStatus.Delayed);
           }, options.delayMs);
           timeoutTimeout = window.setTimeout(() => {
-            if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
+            if (state == FetchStatus.Delayed)
+              setState(FetchStatus.Timeout);
           }, options.timeoutMs);
         },
         completed: (cancelled: boolean) => {
           setState(FetchStatus.Idle);
           if (!cancelled) Form_scrollToFirstError();
         },
-        isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed
+        isSubmitting: () =>
+          state === FetchStatus.Submitting || state === FetchStatus.Delayed
       };
     }
   }
@@ -587,7 +656,10 @@ function formEnhance<T extends AnyZodObject>(
 
         case 'formdata':
           for (const [key, value] of Object.entries(get(data))) {
-            submit.data.set(key, value instanceof Blob ? value : `${value || ''}`);
+            submit.data.set(
+              key,
+              value instanceof Blob ? value : `${value || ''}`
+            );
           }
           break;
       }
@@ -632,7 +704,10 @@ function formEnhance<T extends AnyZodObject>(
 
           if (options.onError == 'set-message') {
             const errorMessage = result.error.message;
-            message.set(errorMessage ?? `${result.status || 500} Internal Server Error`);
+            message.set(
+              errorMessage ??
+                `${result.status || 500} Internal Server Error`
+            );
           } else if (options.onError && options.onError != 'apply') {
             await options.onError(result.error, message);
           }

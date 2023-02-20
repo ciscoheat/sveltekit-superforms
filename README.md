@@ -409,17 +409,19 @@ If this bliss is too much to handle, setting `dataType` to `formdata`, posts the
 </style>
 ```
 
-# Back to the server
+# Designing a CRUD interface
 
 That was the client configuration, now how about the server? Fortunately it's much less work, the `superValidate` function handles most things you can throw at it, and of course [Zod](https://zod.dev/) is an immense help with the actual validation, so you can focus on business logic.
 
-As mentioned, a suitable use case for this library is backend interfaces, where you usually want to:
+As mentioned, a suitable use case for this library is backend interfaces, which can be summarized in the acronym **CRUD** (Create, Read, Update, Delete) where you usually want to:
 
-1. Fetch data from a database
+1. Create a new database entity **(Create)**
+1. Fetch it **(Read)**
 1. Display it in a form
-1. POST the form, validate it
-1. Transform to data if validation succeeded
-1. Update the database with the new data
+1. POST the form, validate the data
+1. Transform posted data if validation succeeded
+1. Update the entity with the transformed data **(Update)**
+1. Optionally delete the entity **(Delete)**
 1. ???
 1. ~~Profit!~~ `GOTO 1`
 
@@ -435,7 +437,7 @@ const users = [
   }
 ];
 
-export const load = (async () => {
+export const load = (async (event) => {
   const form = await superValidate(users[0], schema);
   return { form };
 }) satisfies PageServerLoad;

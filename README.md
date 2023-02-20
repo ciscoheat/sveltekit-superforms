@@ -78,6 +78,14 @@ export const load = (async (event) => {
 </form>
 ```
 
+**src/app.html**
+
+Add this to `<head>` for a much nicer visual experience:
+
+```html
+<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" />
+```
+
 This is rather basic though, and there is no form action to submit to, but we can at least see that the form is populated. To get deeper insight, let's add the Super Form Debugging Svelte Component:
 
 **src/routes/+page.svelte**

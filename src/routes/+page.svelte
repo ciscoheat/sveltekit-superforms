@@ -6,8 +6,8 @@
   export let data: PageData;
 
   const { form, errors, message, delayed, timeout, enhance } = superForm(data.form, {
-    invalidateAll: false,
     taintedMessage: undefined,
+    onError: 'Något gick fel.',
     validators: {
       email: (n) => (/[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email')
     }

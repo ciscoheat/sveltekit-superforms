@@ -1,6 +1,6 @@
 import { setError, superValidate } from '$lib/server';
 import { z } from 'zod';
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 // See https://zod.dev/?id=primitives for schema syntax
@@ -46,7 +46,6 @@ export const load = (async ({ url }) => {
   if (id > 0 && !user) throw error(404, 'User not found.');
 
   const form = await superValidate(user, crudSchema);
-  console.log('LOAD', form);
 
   return { form, users };
 }) satisfies PageServerLoad;

@@ -7,9 +7,7 @@
 
   export let data: PageData;
 
-  console.log('LOAD', data.form.data.id);
-
-  const { form, errors, enhance, delayed } = superForm(data.form, {
+  const { form, errors, enhance, message, delayed } = superForm(data.form, {
     dataType: 'formdata',
     async onUpdated({ validation }) {
       if (validation.success && data.form.empty) {
@@ -20,7 +18,9 @@
   });
 </script>
 
-<SuperDebug data={$page} />
+<SuperDebug data={$form} />
+
+{#if $message}<h3 class:error={$page.status >= 400} class="message">{$message}</h3>{/if}
 
 <h1>sveltekit-superforms</h1>
 
@@ -35,16 +35,15 @@
 <h2>{data.form.empty ? 'Create' : 'Update'} user</h2>
 
 <form method="POST" use:enhance>
+  <input type="hidden" name="id" value={$form.id} />
+
   <label>
-    Name<br /><input data-invalid={$errors.name} bind:value={$form.name} />
+    Name<br /><input name="name" data-invalid={$errors.name} bind:value={$form.name} />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
   </label>
 
   <label>
-    E-mail<br /><input
-      data-invalid={$errors.email}
-      bind:value={$form.email}
-    />
+    E-mail<br /><input name="email" data-invalid={$errors.email} bind:value={$form.email} />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
 
@@ -55,5 +54,15 @@
 <style lang="scss">
   .invalid {
     color: red;
+  }
+
+  .message {
+    color: white;
+    padding: 10px;
+    background-color: rgb(46, 168, 68);
+
+    &.error {
+      background-color: rgb(168, 60, 46);
+    }
   }
 </style>

@@ -1,6 +1,6 @@
 import { superValidate } from '$lib/server';
 import { z } from 'zod';
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const _dataTypeForm = z.object({
@@ -27,6 +27,7 @@ export const load = (async (event) => {
 
 export const actions = {
   form: async (event) => {
+    throw error(500);
     const form = await superValidate(event, _dataTypeForm);
     console.log('🚀 ~ POST', form);
 

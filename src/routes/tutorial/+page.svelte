@@ -10,8 +10,7 @@
   const { form, errors, enhance, message, delayed } = superForm(data.form, {
     dataType: 'formdata',
     async onUpdated({ validation }) {
-      if (validation.success && data.form.empty) {
-        console.log(validation.data);
+      if (validation.success) {
         await goto('/tutorial?id=' + validation.data.id);
       }
     }
@@ -29,7 +28,9 @@
   {#each data.users as user}
     | <a href="?id={user.id}">{user.name}</a> |
   {/each}
-  <a href="?">Create new</a>
+  {#if !data.form.empty}
+    <button on:click={() => goto('?')}>Create new</button>
+  {/if}
 </div>
 
 <h2>{data.form.empty ? 'Create' : 'Update'} user</h2>

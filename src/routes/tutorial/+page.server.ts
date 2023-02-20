@@ -1,29 +1,27 @@
 import { setError, superValidate } from '$lib/server';
 import { z } from 'zod';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
-  id: z.number().int().positive(), // Auto-increment id
+  id: z.string().regex(/^\d+$/),
   name: z.string(),
   email: z.string().email()
 });
 
-// A simple user "database"
-const userId = (function* () {
-  let i = 1;
-  while (true) yield i++;
-})();
+// Let's worry about id collisions later
+const userId = () => String(Math.random()).slice(2);
 
+// A simple user "database"
 const users: z.infer<typeof userSchema>[] = [
   {
-    id: userId.next().value,
+    id: userId(),
     name: 'Important Customer',
     email: 'important@example.com'
   },
   {
-    id: userId.next().value,
+    id: userId(),
     name: 'Super Customer',
     email: 'super@example.com'
   }
@@ -40,10 +38,12 @@ const crudSchema = userSchema.extend({
 
 export const load = (async ({ url }) => {
   // READ user
-  const id = parseInt(url.searchParams.get('id') ?? '0');
-  const user = users.find((u) => u.id == id);
+  const id = url.searchParams.get('id');
+  const user = id
+    ? users.find((u) => u.id == url.searchParams.get('id'))
+    : null;
 
-  if (id > 0 && !user) throw error(404, 'User not found.');
+  if (id && !user) throw error(404, 'User not found.');
 
   const form = await superValidate(user, crudSchema);
 
@@ -62,7 +62,7 @@ export const actions = {
 
     if (!form.data.id) {
       // CREATE user
-      const user = { ...form.data, id: userId.next().value };
+      const user = { ...form.data, id: userId() };
       users.push(user);
 
       form.data = user;

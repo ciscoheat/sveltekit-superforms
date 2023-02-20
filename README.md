@@ -424,3 +424,51 @@ As mentioned, a suitable use case for this library is backend interfaces, where 
 1. ~~Profit!~~ `GOTO 1`
 
 These steps can be almost trivial with `sveltekit-superforms`. Let's see how it works by modifying our initial `load` function:
+
+**src/routes/+page.server.ts**
+
+```ts
+const users = [
+  {
+    name: 'Important Customer',
+    email: 'rich@famous.com'
+  }
+];
+
+export const load = (async () => {
+  const form = await superValidate(users[0], schema);
+  return { form };
+}) satisfies PageServerLoad;
+```
+
+We've just created a lightning-fast user database! Now we can pass a user into the `superValidate` function, and it will be displayed in the form! See the potential? Let's update the form action too:
+
+**src/routes/+page.server.ts**
+
+```ts
+import { superValidate, setError } from 'sveltekit-superforms/server';
+
+export const actions = {
+  default: async (event) => {
+    const form = await superValidate(event, schema);
+    console.log('POST', form);
+
+    if (!form.success) {
+      return fail(400, { form });
+    }
+
+    const user = users.find((u) => u.name == form.data.name);
+
+    if (!user) return setError(form, 'name', 'User not found');
+    else user.email = form.data.email;
+
+    return { form };
+  }
+} satisfies Actions;
+```
+
+Here we use another convenient function, `setError`, in case something other than the actual form validation fails. It returns a `fail(400, { form })` so it can be returned immediately as in the example, or more errors can be added by calling it multiple times before returning.
+
+If the user is found, we will instead update the (definitely valid) new email of the user, and when the successful action result is sent to the client, it will `applyAction` and `invalidateAll`, and the circle is complete. Not bad for a few lines of code, eh?
+
+## Global/modal forms

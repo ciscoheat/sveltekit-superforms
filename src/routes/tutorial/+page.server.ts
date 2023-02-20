@@ -1,17 +1,24 @@
-import { superValidate } from '$lib/server';
+import { setError, superValidate } from '$lib/server';
 import { z } from 'zod';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 // See https://zod.dev/?id=primitives for schema syntax
 const schema = z.object({
+  id: z.number().int().optional(),
   name: z.string().default('Hello world!'),
   email: z.string().email()
 });
 
-export const load = (async (event) => {
-  const form = await superValidate(event, schema);
-  // Always return { form } and you'll be fine.
+const users = [
+  {
+    name: 'Important Customer',
+    email: 'rich@famous.com'
+  }
+];
+
+export const load = (async () => {
+  const form = await superValidate(users[0], schema);
   return { form };
 }) satisfies PageServerLoad;
 
@@ -20,13 +27,15 @@ export const actions = {
     const form = await superValidate(event, schema);
     console.log('POST', form);
 
-    // Convenient validation check:
     if (!form.success) {
-      // Again, always return { form } and you'll be fine.
       return fail(400, { form });
     }
 
-    // Yep, here too
+    const user = users.find((u) => u.name == form.data.name);
+
+    if (!user) return setError(form, 'name', 'User not found');
+    else user.email = form.data.email;
+
     return { form };
   }
 } satisfies Actions;

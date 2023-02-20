@@ -247,8 +247,6 @@ export function superForm<T extends AnyZodObject>(
   form?: FormOptions<T> | Validation<T> | null | undefined,
   options: FormOptions<T> = {}
 ): EnhancedForm<T> {
-  console.log('🚀 ~ file: index.ts:268 ~ YELLO SUPERFORM!');
-
   if (form && !('data' in form)) {
     options = form;
     form = null;
@@ -305,10 +303,21 @@ export function superForm<T extends AnyZodObject>(
       : null;
   });
 
-  const initialData = { ...form };
+  //////////////////////////////////////////////////////////////////////
 
-  // Must make a copy for the equality comparison to make sense
-  let savedForm = options.taintedMessage ? { ...form.data } : undefined;
+  const initialForm = form;
+
+  // Need to set this after use:enhance has run, to avoid showing the dialog
+  // when a form doesn't use it.
+  let savedForm: Validation<T>['data'] | undefined;
+
+  const _taintedMessage = options.taintedMessage;
+  options.taintedMessage = undefined;
+
+  function enableTaintedMessage() {
+    options.taintedMessage = _taintedMessage;
+    savedForm = options.taintedMessage ? { ...get(Data) } : undefined;
+  }
 
   function _update(newData: Validation<T>, untaint: boolean) {
     Success.set(newData.success);
@@ -323,7 +332,7 @@ export function superForm<T extends AnyZodObject>(
   }
 
   function _resetForm() {
-    _update(initialData, true);
+    _update(initialForm, true);
   }
 
   function _wipeForm() {
@@ -338,12 +347,12 @@ export function superForm<T extends AnyZodObject>(
     }
 
     if (untaint === undefined) {
-      untaint = result.type == 'success' || result.type == 'redirect';
+      untaint = result.status >= 200 && result.status < 400;
     }
 
-    Submitting.set(false);
-    Delayed.set(false);
-    Timeout.set(false);
+    //Submitting.set(false);
+    //Delayed.set(false);
+    //Timeout.set(false);
 
     function resultData(data: unknown) {
       if (!data) return null;
@@ -354,7 +363,6 @@ export function superForm<T extends AnyZodObject>(
       }
 
       if ('form' in data) return data.form as Validation<T>;
-      else if ('data' in data) return data as Validation<T>;
       else if (result.type != 'redirect') {
         throw new Error(
           'Incorrect validation type returned from ActionResult.'
@@ -406,30 +414,61 @@ export function superForm<T extends AnyZodObject>(
         }
       }
     });
-  }
 
-  let previousForm = { ...form.data };
-  Data.subscribe(async (f) => {
-    for (const key of Object.keys(f)) {
-      if (f[key] !== previousForm[key]) {
-        const validator = options.validators && options.validators[key];
-        if (validator) {
-          const newError = await validator(f[key]);
-          Errors.update((e) => {
-            if (!newError) delete e[key];
-            else e[key as keyof z.infer<T>] = [newError];
-            return e;
-          });
-        } else if (options.defaultValidator == 'clear') {
-          Errors.update((e) => {
-            delete e[key];
-            return e;
-          });
+    let previousForm = { ...form.data };
+    Data.subscribe(async (f) => {
+      for (const key of Object.keys(f)) {
+        if (f[key] !== previousForm[key]) {
+          const validator = options.validators && options.validators[key];
+          if (validator) {
+            const newError = await validator(f[key]);
+            Errors.update((e) => {
+              if (!newError) delete e[key];
+              else e[key as keyof z.infer<T>] = [newError];
+              return e;
+            });
+          } else if (options.defaultValidator == 'clear') {
+            Errors.update((e) => {
+              delete e[key];
+              return e;
+            });
+          }
         }
       }
+      previousForm = { ...f };
+    });
+
+    // Need to subscribe to catch page invalidation.
+    if (options.applyAction) {
+      page.subscribe((p) => {
+        // Skip the update if no new data is retrieved.
+        if (!p.form && !p.data.form)
+          throw new Error(
+            "No form data found in page update. Make sure you return { form } in the load function or a page's form actions."
+          );
+
+        if (p.form != initialForm || p.data.form != initialForm) {
+          let newData: Validation<T>;
+
+          if (p.form) {
+            if (!('form' in p.form))
+              throw new Error(
+                "No form data found in $page.form (ActionData). Make sure you return { form } in this page's form actions."
+              );
+            else newData = p.form.form;
+          } else if (!('form' in p.data)) {
+            throw new Error(
+              "No form data found in $page.data (PageData). Make sure you return { form } in this page's load function."
+            );
+          } else {
+            newData = p.data.form;
+          }
+
+          _update(newData, p.status >= 200 && p.status < 400);
+        }
+      });
     }
-    previousForm = { ...f };
-  });
+  }
 
   return {
     errors: Errors,
@@ -452,7 +491,8 @@ export function superForm<T extends AnyZodObject>(
         Data_update,
         options,
         Data,
-        Message
+        Message,
+        enableTaintedMessage
       ),
 
     //initial: initialData,
@@ -476,8 +516,11 @@ function formEnhance<T extends AnyZodObject>(
   formUpdate: FormUpdate,
   options: FormOptions<T>,
   data: Writable<Validation<T>['data']>,
-  message: Writable<Validation<T>['message']>
+  message: Writable<Validation<T>['message']>,
+  enableTaintedMessage: () => void
 ) {
+  enableTaintedMessage();
+
   /**
    * @DCI-context
    */
@@ -681,12 +724,18 @@ function formEnhance<T extends AnyZodObject>(
       if (!cancelled) {
         if (result.type !== 'error') {
           if (result.type === 'success' && options.invalidateAll) {
+            console.log(
+              '🚀 ~ file: index.ts:696 ~ return ~ options.invalidateAll'
+            );
+            // Here, load will be executed again, so no need to apply the result.
             await invalidateAll();
-          }
-
-          if (options.applyAction) {
+          } else if (options.applyAction) {
+            console.log(
+              '🚀 ~ file: index.ts:701 ~ return ~ options.applyAction:',
+              result
+            );
             await applyAction(result);
-            await formUpdate(result);
+            //await formUpdate(result);
           }
         } else {
           // Error result

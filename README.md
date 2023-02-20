@@ -5,19 +5,19 @@ Supercharge your SvelteKit forms with this powerhouse of a library.
 ## Feature list
 
 - Merging `PageData` and `ActionData` - Stop worrying about which one to use and how, just focus on your data structures.
-- Server-side data validation, with error output that can be used conveniently on the client.
+- Server-side data validation, with output that can be used directly on the client.
 - Auto-centering and auto-focusing on invalid form fields.
 - Tainted form detection, prevents the user from losing data if navigating away from an unsaved form.
-- Full support for progressive enhancement - No JS needed if you don't want to.
-- Coerces the strings from `FormData` into correct types.
+- No JS needed as default, but full support for progressive enhancement.
+- Automatically coerces the string data from `FormData` into correct types.
 - For advanced data structures, forget about the limitations of `FormData` - Send your forms as devalued JSON, transparently.
-- Client-side validators for direct feedback.
 - Generate default form values from validation schemas.
-- Proxy objects for handling data conversions to string and back again
-- Give feedback with auto-updating timers for long response times, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
-- Even more care for the user: No form data loss by preventing error page rendering.
-- Hook into a number of events for full control over submitting, result, updates...
-- Customize whether to use `applyAction`, `invalidateAll`, `autoFocus`, `resetForm`, etc...
+- Client-side validators for direct feedback.
+- Proxy objects for handling data conversions to string and back again.
+- Provide feedback unlike anything else with auto-updating timers for long response times, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
+- Even more care for the user: No form data loss by preventing error page rendering as default.
+- Hook into a number of events for full control over submitting, `ActionResult` and validation updates.
+- Complete customization with options like `applyAction`, `invalidateAll`, `autoFocus`, `resetForm`, etc...
 - Comes with a Super Form Debugging Svelte Component.
 - ...and probably a lot more!
 
@@ -34,9 +34,9 @@ Let's gradually build up a complete super form, starting with just displaying th
 **src/routes/+page.server.ts**
 
 ```ts
-import { superValidate } from 'sveltekit-superforms/server';
-import { z } from 'zod';
 import type { PageServerLoad } from './$types';
+import { z } from 'zod';
+import { superValidate } from 'sveltekit-superforms/server';
 
 // See https://zod.dev/?id=primitives for schema syntax
 const schema = z.object({
@@ -56,11 +56,12 @@ export const load = (async (event) => {
 
 ```svelte
 <script lang="ts">
-  import { superForm } from 'sveltekit-superforms/client';
   import type { PageData } from './$types';
+  import { superForm } from 'sveltekit-superforms/client';
 
   export let data: PageData;
 
+  // This is where the magic happens.
   const { form } = superForm(data.form);
 </script>
 
@@ -77,7 +78,7 @@ export const load = (async (event) => {
 </form>
 ```
 
-This is rather basic, and we can't even submit the form because there is no form action, but we can at least see that the form is populated. To get full insight, let's add the Super Form Debugging Svelte Component:
+This is rather basic though, and there is no form action to submit to, but we can at least see that the form is populated. To get deeper insight, let's add the Super Form Debugging Svelte Component:
 
 **src/routes/+page.svelte**
 
@@ -89,7 +90,7 @@ This is rather basic, and we can't even submit the form because there is no form
 <SuperDebug data={$form} />
 ```
 
-Edit the form and see how it's automatically updated. It even displays the current page status in the right corner.
+Edit the form and see how the `$form` store is automatically updated. It even displays the current page status in the right corner.
 
 ## Posting - Without any bells and whistles
 
@@ -98,8 +99,9 @@ Let's add a minimal form action:
 **src/routes/+page.server.ts**
 
 ```ts
-import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
+import { superValidate } from 'sveltekit-superforms/server';
 
 export const actions = {
   default: async (event) => {
@@ -156,6 +158,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
 ```svelte
 <script lang="ts">
   const { form, errors } = superForm(data.form);
+  //            ^^^^^^
 </script>
 
 <form method="POST">
@@ -192,6 +195,7 @@ Let's start with adding maybe simplest and most useful variable returned from `s
 ```svelte
 <script lang="ts">
   const { form, errors, enhance } = superForm(data.form);
+  //                    ^^^^^^^
 </script>
 
 <form method="POST" use:enhance>
@@ -213,7 +217,7 @@ Try to modify the form fields, then close the tab or open another page in the sa
 taintedMessage: string | false = '<A default message in english>'
 ```
 
-When a `success` or a `redirect` result is received, the form is automatically marked as untainted.
+When the page status changes to something between 200-299, the form is automatically marked as untainted.
 
 ## Auto-scroll and focus on errors
 
@@ -244,7 +248,7 @@ In order of micro-managing the result, from least to most.
 onUpdated: ({ validation }) => void
 ```
 
-If you just want to apply the default behaviour and do something additional depending on validation success, this is the simplest way.
+If you just want to apply the default behaviour and do something afterwards depending on validation success, this is the simplest way.
 
 ```ts
 onUpdate: ({ validation, cancel }) => void
@@ -259,12 +263,12 @@ onSubmit: SubmitFunction;
 See SvelteKit docs for the [SubmitFunction](https://kit.svelte.dev/docs/types#public-types-submitfunction) signature.
 
 ```ts
-onError: (({ result, message }) => void) | 'set-message' | 'apply' = 'set-message'
+onError: (({ result, message }) => void) | 'set-message' | 'apply' | string = 'set-message'
 ```
 
-It's later explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. This event gives you more control over the error than the default, which is to set the `message` store to the error value.
+It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. This event gives you more control over the error than the default, which is to set the `message` store to the error value.
 
-By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary.
+By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary. Or you can set it to a custom error message.
 
 ```ts
 onResult: ({ result, update, formEl, cancel }) => void
@@ -280,7 +284,7 @@ The `update(result, untaint?)` function takes an `ActionResult` which is **not**
 
 ## Differences from SvelteKit's use:enhance
 
-(Understanding [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) is useful before reading this section.)
+(Knowing about [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) is useful before reading this section.)
 
 The biggest difference is that unless `onError` is set to `apply`, any `error` result is transformed into `failure`, to avoid disaster when the nearest `+error.svelte` page is rendered, wiping out all the form data that was just entered.
 
@@ -292,11 +296,11 @@ invalidateAll: boolean = true;
 resetForm: boolean = false;
 ```
 
-Another slight difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted. Later on it will be explained how to integrate a database with the library.
+As you see, another slight difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted. Later on it will be explained how to integrate a database with the library.
 
 ## More options: Client-side validators
 
-Since there is already a standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the client-side validation of `sveltekit-superforms` is just doing the basics:
+Since there is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the client-side validation of `sveltekit-superforms` is just doing the basics:
 
 ```ts
 validators: {
@@ -313,7 +317,8 @@ Here's an example of how to validate a string length:
 ```ts
 const { form, errors, enhance } = superForm(data.form, {
   validators: {
-    name: (value) => (value.length < 3 ? 'Name must be at least 3 characters' : null)
+    name: (value) =>
+      value.length < 3 ? 'Name must be at least 3 characters' : null
   }
 });
 ```
@@ -336,7 +341,7 @@ delayMs: number = 500
 timeoutMs: number = 8000
 ```
 
-The `clearOnSubmit` option decides what to clear when submitting, apparently. It can clear all the `errors`, the `message`, both or none. The default is to clear both. If you don't want any jumping content, which could occur when error messages are removed from the DOM, setting it to `none` can be useful.
+The `clearOnSubmit` option decides what should happen to the form when submitting. It can clear all the `errors`, the `message`, both or none. The default is to clear both. If you don't want any jumping content, which could occur when error messages are removed from the DOM, setting it to `none` can be useful.
 
 The `delayMs` and `timeoutMs` decides how long before the submission changes state. The states are:
 
@@ -354,6 +359,7 @@ A perfect use for these is to show a loading indicator while the form is submitt
 ```svelte
 <script lang="ts">
   const { form, errors, enhance, delayed } = superForm(data.form);
+  //                             ^^^^^^^
 </script>
 
 <div>
@@ -384,7 +390,7 @@ dataType: 'form' | 'formdata' | 'json' = 'form'
 
 By simply setting the `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc!
 
-If this bliss is too much to handle, setting `dataType` to `formdata`, posts the data as a `FormData` instance, so you don't have to set names for the form fields anymore (this also applies when set to `json`). This can make the html for a form quite slim:
+If this bliss is too much to handle, setting `dataType` to `formdata`, posts the data as a `FormData` instance based on the data structure instead of the content of the `<form>` element, so you don't have to set names for the form fields anymore (this also applies when set to `json`). This can make the html for a form quite slim:
 
 ```svelte
 <form method="POST" use:enhance>
@@ -394,7 +400,10 @@ If this bliss is too much to handle, setting `dataType` to `formdata`, posts the
   </label>
 
   <label>
-    E-mail<br /><input data-invalid={$errors.email} bind:value={$form.email} />
+    E-mail<br /><input
+      data-invalid={$errors.email}
+      bind:value={$form.email}
+    />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
 
@@ -425,25 +434,46 @@ As mentioned, a suitable use case for this library is backend interfaces, which 
 1. ???
 1. ~~Profit!~~ `GOTO 1`
 
-These steps can be almost trivial with `sveltekit-superforms`. Let's see how it works by modifying our initial `load` function:
+These steps can be quite easy with `sveltekit-superforms`. Let's see how it works by starting over with the default route:
 
 **src/routes/+page.server.ts**
 
 ```ts
-const users = [
+import { setError, superValidate } from '$lib/server';
+import { z } from 'zod';
+import { error, fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+
+// See https://zod.dev/?id=primitives for schema syntax
+const userSchema = z.object({
+  id: z.number().int().positive(), // Auto-increment id
+  name: z.string(),
+  email: z.string().email()
+});
+
+// A simple user "database"
+const userId = (function* () {
+  let i = 1;
+  while (true) yield i++;
+})();
+
+const users: z.infer<typeof userSchema>[] = [
   {
+    id: userId.next().value,
     name: 'Important Customer',
-    email: 'rich@famous.com'
+    email: 'important@example.com'
+  },
+  {
+    id: userId.next().value,
+    name: 'Super Customer',
+    email: 'super@example.com'
   }
 ];
-
-export const load = (async (event) => {
-  const form = await superValidate(users[0], schema);
-  return { form };
-}) satisfies PageServerLoad;
 ```
 
-We've just created a lightning-fast user database! Now we can pass a user into the `superValidate` function, and it will be displayed in the form! See the potential? Let's update the form action too:
+We've just created a lightning-fast user database! It's just a simple addition
+
+Now we can pass a user into the `superValidate` function, and it will be displayed in the form! See the potential? Let's update the form action too:
 
 **src/routes/+page.server.ts**
 

@@ -14,7 +14,7 @@ import { deepEqual } from '..';
 
 enum FetchStatus {
   Idle = 0,
-  Pending = 1,
+  Submitting = 1,
   Delayed = 2,
   Timeout = 3
 }
@@ -63,7 +63,7 @@ export type FormOptions<T extends AnyZodObject> = {
       ) => MaybePromise<unknown | void>)
     | 'set-message'
     | 'apply';
-  dataType?: 'form' | 'json' | 'formdata';
+  dataType?: 'form' | 'formdata' | 'json';
   validators?: Validators<T>;
   defaultValidator?: 'keep' | 'clear';
   clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -90,7 +90,7 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   validators: undefined,
   defaultValidator: 'keep',
   clearOnSubmit: 'errors-and-message',
-  delayMs: 150,
+  delayMs: 500,
   timeoutMs: 8000,
   multipleSubmits: 'prevent'
 };
@@ -98,9 +98,9 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
 export type EnhancedForm<T extends AnyZodObject> = {
   form: Writable<Validation<T>['data']>;
   errors: Writable<Validation<T>['errors']>;
-  submitting: Writable<boolean>;
-  delayed: Writable<boolean>;
-  timeout: Writable<boolean>;
+  submitting: Readable<boolean>;
+  delayed: Readable<boolean>;
+  timeout: Readable<boolean>;
   firstError: Readable<{ key: string; value: string } | null>;
   message: Writable<Validation<T>['message']>;
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
@@ -500,14 +500,14 @@ function formEnhance<T extends AnyZodObject>(
       return {
         submitting: () => {
           rebind();
-          setState(state != FetchStatus.Delayed ? FetchStatus.Pending : FetchStatus.Delayed);
+          setState(state != FetchStatus.Delayed ? FetchStatus.Submitting : FetchStatus.Delayed);
 
           // https://www.nngroup.com/articles/response-times-3-important-limits/
           if (delayedTimeout) clearTimeout(delayedTimeout);
           if (timeoutTimeout) clearTimeout(timeoutTimeout);
 
           delayedTimeout = window.setTimeout(() => {
-            if (state == FetchStatus.Pending) setState(FetchStatus.Delayed);
+            if (state == FetchStatus.Submitting) setState(FetchStatus.Delayed);
           }, options.delayMs);
           timeoutTimeout = window.setTimeout(() => {
             if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
@@ -517,32 +517,42 @@ function formEnhance<T extends AnyZodObject>(
           setState(FetchStatus.Idle);
           if (!cancelled) Form_scrollToFirstError();
         },
-        isSubmitting: () => state === FetchStatus.Pending || state === FetchStatus.Delayed
+        isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed
       };
     }
   }
 
   const form = Form(formEl);
+  let currentRequest: AbortController | null;
 
   return enhance(formEl, async (submit) => {
     let cancelled = false;
-    if (form.isSubmitting()) {
+    if (form.isSubmitting() && options.multipleSubmits == 'prevent') {
       //d('Prevented form submission');
       cancelled = true;
       submit.cancel();
-    } else if (options.onSubmit) {
-      const submit2 = {
-        ...submit,
-        cancel: () => {
-          cancelled = true;
-          return submit.cancel();
-        }
-      };
+    } else {
+      if (form.isSubmitting() && options.multipleSubmits == 'abort') {
+        if (currentRequest) currentRequest.abort();
+      }
+      currentRequest = submit.controller;
 
-      options.onSubmit(submit2);
+      if (options.onSubmit) {
+        const submit2 = {
+          ...submit,
+          cancel: () => {
+            cancelled = true;
+            return submit.cancel();
+          }
+        };
+
+        options.onSubmit(submit2);
+      }
     }
 
-    if (!cancelled) {
+    if (cancelled) {
+      currentRequest = null;
+    } else {
       switch (options.clearOnSubmit) {
         case 'errors-and-message':
           errors.set({});
@@ -558,8 +568,8 @@ function formEnhance<T extends AnyZodObject>(
           break;
       }
 
-      form.submitting();
       //d('Submitting');
+      form.submitting();
 
       // TODO: flash message
       /*
@@ -585,6 +595,7 @@ function formEnhance<T extends AnyZodObject>(
 
     return async ({ result }) => {
       //d('Completed: ', result, options);
+      currentRequest = null;
       let cancelled = false;
       if (options.onResult) {
         await options.onResult({

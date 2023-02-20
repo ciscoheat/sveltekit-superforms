@@ -54,6 +54,13 @@ export type FormOptions<T extends AnyZodObject> = {
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated?: (event: { validation: Validation<T> }) => MaybePromise<unknown | void>;
+  onError?:
+    | ((
+        result: Extract<ActionResult, { type: 'error' }>,
+        message: Writable<Validation<T>['message']>
+      ) => MaybePromise<unknown | void>)
+    | 'set-message'
+    | 'apply';
   dataType?: 'form' | 'json' | 'formdata';
   validators?: Validators<T>;
   defaultValidator?: 'keep' | 'clear';
@@ -77,6 +84,7 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   onResult: undefined,
   onUpdate: undefined,
   onUpdated: undefined,
+  onError: 'set-message',
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',
@@ -595,16 +603,28 @@ function formEnhance<T extends AnyZodObject>(
 
           if (options.applyAction) {
             await applyAction(result);
+            await formUpdate(result);
           }
-        } else if (options.applyAction) {
-          await applyAction({
-            type: 'failure',
-            status: Math.floor(result.status || 500)
-          });
-        }
+        } else {
+          // Error result
+          if (options.applyAction) {
+            if (options.onError == 'apply') {
+              await applyAction(result);
+            } else {
+              // Transform to failure, to avoid data loss
+              await applyAction({
+                type: 'failure',
+                status: Math.floor(result.status || 500)
+              });
+            }
+          }
 
-        if (options.applyAction && result.type != 'error') {
-          formUpdate(result);
+          if (options.onError == 'set-message') {
+            const errorMessage = result.error.message;
+            message.set(errorMessage ?? `${result.status || 500} Internal Server Error`);
+          } else if (options.onError && options.onError != 'apply') {
+            await options.onError(result.error, message);
+          }
         }
 
         /*

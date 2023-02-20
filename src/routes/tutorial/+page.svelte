@@ -5,14 +5,14 @@
 
   export let data: PageData;
 
-  const { form, errors } = superForm(data.form);
+  const { form, errors, enhance } = superForm(data.form);
 </script>
 
 <SuperDebug data={$form} />
 
 <h1>sveltekit-superforms</h1>
 
-<form method="POST">
+<form method="POST" use:enhance>
   <label for="name">Name</label>
   <input type="text" name="name" bind:value={$form.name} />
   {#if $errors.name}

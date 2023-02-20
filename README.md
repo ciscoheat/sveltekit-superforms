@@ -292,4 +292,36 @@ invalidateAll: boolean = true;
 resetForm: boolean = false;
 ```
 
-Another slight difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss.
+Another slight difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted. Later on it will be explained how to integrate a database with the library.
+
+## More options: Client-side validators
+
+Validating client-side is tricky, since there can be somewhat advanced logic behind the validation of a field. Therefore the client-side validation of `sveltekit-superforms` is just doing the basics:
+
+```ts
+validators: {
+  field: (value) => string | null | undefined;
+}
+```
+
+An object with the same keys as the form, with a function that receives the field value and should return either a string as a "validation failed" message, or `null` or `undefined` if the field is valid.
+
+Here's an example of how to validate a string length:
+
+```ts
+const { form, errors, enhance } = superForm(data.form, {
+  validators: {
+    name: (value) => (value.length < 3 ? 'Name must be at least 3 characters' : null)
+  }
+});
+```
+
+There is one other options for specifying the default client validation behavior, when no custom validator exists for a field:
+
+```ts
+defaultValidator: 'keep' | 'clear' = 'keep'
+```
+
+If set to `keep`, validation errors will be kept displayed until the form submits (see next option). If `clear`, the field error will be removed when the value is modified.
+
+## Submit behavior

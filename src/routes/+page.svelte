@@ -43,13 +43,13 @@
   {#if $errors.email}<span data-invalid>{$errors.email}</span>{/if}
 
   <label for="bool">bool</label>
-  <select bind:value={$bool}>
+  <select name="bool" bind:value={$bool}>
     <option value="true">true</option>
     <option value="">false</option>
   </select>
   {#if $errors.bool}<span data-invalid>{$errors.bool}</span>{/if}
 
-  <label for="number">number</label> <input type="number" name="delay" bind:value={$form.number} />
+  <label for="number">number</label> <input type="number" name="number" bind:value={$form.number} />
   delay ms
   {#if $errors.number}<span data-invalid>{$errors.number}</span>{/if}
 

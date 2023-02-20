@@ -1,6 +1,6 @@
 import { superValidate } from '$lib/server';
 import { z } from 'zod';
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 // See https://zod.dev/?id=primitives for schema syntax

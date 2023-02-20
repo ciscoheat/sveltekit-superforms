@@ -56,7 +56,7 @@ export const load = (async (event) => {
 
 ```svelte
 <script lang="ts">
-  import { superForm } from '$lib/client';
+  import { superForm } from 'sveltekit-superforms/client';
   import type { PageData } from './$types';
 
   export let data: PageData;
@@ -83,7 +83,7 @@ This is rather basic, and we can't even submit the form because there is no form
 
 ```svelte
 <script lang="ts">
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
+  import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
 </script>
 
 <SuperDebug data={$form} />
@@ -175,7 +175,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
 </form>
 
 <style lang="scss">
-  [data-invalid] {
+  span[data-invalid] {
     color: red;
   }
 </style>
@@ -296,7 +296,7 @@ Another slight difference is that the form isn't resetted by default. This shoul
 
 ## More options: Client-side validators
 
-Validating client-side is tricky, since there can be somewhat advanced logic behind the validation of a field. Therefore the client-side validation of `sveltekit-superforms` is just doing the basics:
+Since there is already a standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the client-side validation of `sveltekit-superforms` is just doing the basics:
 
 ```ts
 validators: {
@@ -307,6 +307,8 @@ validators: {
 An object with the same keys as the form, with a function that receives the field value and should return either a string as a "validation failed" message, or `null` or `undefined` if the field is valid.
 
 Here's an example of how to validate a string length:
+
+**src/routes/+page.svelte**
 
 ```ts
 const { form, errors, enhance } = superForm(data.form, {
@@ -325,3 +327,100 @@ defaultValidator: 'keep' | 'clear' = 'keep'
 If set to `keep`, validation errors will be kept displayed until the form submits (see next option). If `clear`, the field error will be removed when the value is modified.
 
 ## Submit behavior
+
+Making the user understand that things are happening when they submit the form is imperative for a good user experience. Fortunately, there are plenty of options that facitilates that, with sensible defaults.
+
+```ts
+clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none' = 'errors-and-message'
+delayMs: number = 500
+timeoutMs: number = 8000
+```
+
+The `clearOnSubmit` option decides what to clear when submitting, apparently. It can clear all the `errors`, the `message`, both or none. The default is to clear both. If you don't want any jumping content, which could occur when error messages are removed from the DOM, setting it to `none` can be useful.
+
+The `delayMs` and `timeoutMs` decides how long before the submission changes state. The states are:
+
+```
+Idle -> Submitting -> Delayed -> Timeout
+        0 ms          delayMs    timeoutMs
+```
+
+These states affect the readable stores `submitting`, `delayed` and `timeout` returned from `superForm`. They are not mutually exclusive, so `submitting` won't change to `false` when `delayed` becomes `true`.
+
+A perfect use for these is to show a loading indicator while the form is submitting:
+
+**src/routes/+page.svelte**
+
+```svelte
+<script lang="ts">
+  const { form, errors, enhance, delayed } = superForm(data.form);
+</script>
+
+<div>
+  <button>Submit</button>
+  {#if $delayed}
+    <span class="delayed">Working...</span>
+  {/if}
+</div>
+```
+
+The reason for not using `submittting` here is based on the article [Response Times: The 3 Important Limits](https://www.nngroup.com/articles/response-times-3-important-limits/), which states that for short waiting periods, no feedback is required except to display the result. Therefore, `delayed` is used to show a loading indicator.
+
+Experimenting with these three timers and the delays between them, is certainly possible to prevent the feeling of unresponsiveness in many cases. Please share your results, if you do!
+
+```ts
+multipleSubmits: 'prevent' | 'allow' | 'abort' = 'prevent'
+```
+
+This one is more for the sake of the server than the user. When set to `prevent`, the form cannot be submitted again until a result is received, or the `timeout` state is reached. `abort` is the next sensible approach, which will cancel the previous request before submitting again. Finally, `allow` will allow any number of frenetic clicks on the submit button!
+
+## The last one: Breaking free from FormData
+
+I've been saving the best for last - If you're fine with JavaScript being a requirement for posting, you can bypass the annoyance that everything is a `string` when we are posting forms:
+
+```ts
+dataType: 'form' | 'formdata' | 'json' = 'form'
+```
+
+By simply setting the `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc!
+
+If this bliss is too much to handle, setting `dataType` to `formdata`, posts the data as a `FormData` instance, so you don't have to set names for the form fields anymore (this also applies when set to `json`). This can make the html for a form quite slim:
+
+```svelte
+<form method="POST" use:enhance>
+  <label>
+    Name<br /><input data-invalid={$errors.name} bind:value={$form.name} />
+    {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+  </label>
+
+  <label>
+    E-mail<br /><input data-invalid={$errors.email} bind:value={$form.email} />
+    {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
+  </label>
+
+  <button>Submit</button>
+  {#if $delayed}Working...{/if}
+</form>
+
+<style lang="scss">
+  .invalid {
+    color: red;
+  }
+</style>
+```
+
+# Back to the server
+
+That was the client configuration, now how about the server? Fortunately it's much less work, the `superValidate` function handles most things you can throw at it, and of course [Zod](https://zod.dev/) is an immense help with the actual validation, so you can focus on business logic.
+
+As mentioned, a suitable use case for this library is backend interfaces, where you usually want to:
+
+1. Fetch data from a database
+1. Display it in a form
+1. POST the form, validate it
+1. Transform to data if validation succeeded
+1. Update the database with the new data
+1. ???
+1. ~~Profit!~~ `GOTO 1`
+
+These steps can be almost trivial with `sveltekit-superforms`. Let's see how it works by modifying our initial `load` function:

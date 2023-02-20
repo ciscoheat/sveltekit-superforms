@@ -7,7 +7,7 @@ export const _dataTypeForm = z.object({
   string: z.string().min(2).default('Shigeru'),
   email: z.string().email(),
   bool: z.boolean(),
-  number: z.number().default(0),
+  number: z.number().default(900),
   proxyNumber: z.number().min(10).default(0),
   nullableString: z.string().nullable(),
   nullishString: z.string().nullish(),
@@ -30,10 +30,10 @@ export const actions = {
     const form = await superValidate(event, _dataTypeForm);
     console.log('🚀 ~ POST', form);
 
+    await new Promise((resolve) => setTimeout(resolve, form.data.number));
+
     if (!form.success) return fail(400, { form });
     else form.message = 'Form posted!';
-
-    await new Promise((resolve) => setTimeout(resolve, form.data.number));
 
     return { form };
   }

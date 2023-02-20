@@ -1,11 +1,11 @@
 <script lang="ts">
   import { superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import type { PageData, ActionData } from './$types';
+  import type { PageData } from './$types';
 
   export let data: PageData;
 
-  const { form, errors, enhance } = superForm(data.form);
+  const { form, errors, enhance, delayed } = superForm(data.form, { dataType: 'formdata' });
 </script>
 
 <SuperDebug data={$form} />
@@ -13,23 +13,22 @@
 <h1>sveltekit-superforms</h1>
 
 <form method="POST" use:enhance>
-  <label for="name">Name</label>
-  <input type="text" name="name" bind:value={$form.name} />
-  {#if $errors.name}
-    <span data-invalid>{$errors.name}</span>
-  {/if}
+  <label>
+    Name<br /><input data-invalid={$errors.name} bind:value={$form.name} />
+    {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+  </label>
 
-  <label for="email">E-mail</label>
-  <input type="text" name="email" bind:value={$form.email} />
-  {#if $errors.email}
-    <span data-invalid>{$errors.email}</span>
-  {/if}
+  <label>
+    E-mail<br /><input data-invalid={$errors.email} bind:value={$form.email} />
+    {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
+  </label>
 
-  <div><button>Submit</button></div>
+  <button>Submit</button>
+  {#if $delayed}Working...{/if}
 </form>
 
 <style lang="scss">
-  [data-invalid] {
+  .invalid {
     color: red;
   }
 </style>

@@ -32,7 +32,7 @@ enum FetchStatus {
 }
 
 export type FormUpdate = (
-  result: Exclude<ActionResult, { type: 'error' }>,
+  result: Exclude<ActionResult, { type: 'error' } | { type: 'redirect' }>,
   untaint?: boolean
 ) => Promise<void>;
 
@@ -76,7 +76,8 @@ export type FormOptions<T extends AnyZodObject> = {
         message: Writable<Validation<T>['message']>
       ) => MaybePromise<unknown | void>)
     | 'set-message'
-    | 'apply';
+    | 'apply'
+    | string;
   dataType?: 'form' | 'formdata' | 'json';
   validators?: Validators<T>;
   defaultValidator?: 'keep' | 'clear';
@@ -340,9 +341,9 @@ export function superForm<T extends AnyZodObject>(
   }
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
-    if ((result.type as string) == 'error') {
+    if (['error', 'redirect'].includes(result.type)) {
       throw new Error(
-        'ActionResult of type "error" was passed to update function.'
+        `ActionResult of type "${result.type}" was passed to update function. Only "success" and "failure" are allowed.`
       );
     }
 
@@ -355,32 +356,24 @@ export function superForm<T extends AnyZodObject>(
     //Timeout.set(false);
 
     function resultData(data: unknown) {
-      if (!data) return null;
-      else if (typeof data !== 'object') {
+      if (!data) return emptyForm();
+
+      if (typeof data !== 'object') {
         throw new Error(
           'Non-object validation data returned from ActionResult.'
         );
       }
 
-      if ('form' in data) return data.form as Validation<T>;
-      else if (result.type != 'redirect') {
+      if (!('form' in data)) {
         throw new Error(
-          'Incorrect validation type returned from ActionResult.'
+          'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
         );
-      } else {
-        return null;
       }
+
+      return data.form as Validation<T>;
     }
 
-    const validation = resultData(
-      result.type == 'redirect' ? get(page).data : result.data
-    ) ?? {
-      success: true,
-      errors: {},
-      data: {},
-      empty: true,
-      message: null
-    };
+    const validation = resultData(result.data) ?? emptyForm();
 
     if (options.onUpdate) {
       let cancelled = false;
@@ -400,8 +393,6 @@ export function superForm<T extends AnyZodObject>(
     if (options.onUpdated) {
       await options.onUpdated({ validation });
     }
-
-    return;
   };
 
   if (browser) {
@@ -724,18 +715,11 @@ function formEnhance<T extends AnyZodObject>(
       if (!cancelled) {
         if (result.type !== 'error') {
           if (result.type === 'success' && options.invalidateAll) {
-            console.log(
-              '🚀 ~ file: index.ts:696 ~ return ~ options.invalidateAll'
-            );
-            // Here, load will be executed again, so no need to apply the result.
             await invalidateAll();
-          } else if (options.applyAction) {
-            console.log(
-              '🚀 ~ file: index.ts:701 ~ return ~ options.applyAction:',
-              result
-            );
+          }
+
+          if (options.applyAction) {
             await applyAction(result);
-            //await formUpdate(result);
           }
         } else {
           // Error result
@@ -754,11 +738,14 @@ function formEnhance<T extends AnyZodObject>(
           if (options.onError == 'set-message') {
             const errorMessage = result.error.message;
             message.set(
-              errorMessage ??
-                `${result.status || 500} Internal Server Error`
+              errorMessage
+                ? String(errorMessage)
+                : `${result.status || 500} Internal Server Error`
             );
-          } else if (options.onError && options.onError != 'apply') {
-            await options.onError(result.error, message);
+          } else if (typeof options.onError === 'string') {
+            message.set(options.onError);
+          } else if (options.onError) {
+            await options.onError(result, message);
           }
         }
 

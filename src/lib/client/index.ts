@@ -320,24 +320,45 @@ export function superForm<T extends AnyZodObject>(
     savedForm = options.taintedMessage ? { ...get(Data) } : undefined;
   }
 
-  function _update(newData: Validation<T>, untaint: boolean) {
-    Success.set(newData.success);
-    Errors.set(newData.errors);
-    Data.set(newData.data);
-    Empty.set(newData.empty);
-    Message.set(newData.message);
+  function rebind(validation: Validation<T>, untaint: boolean) {
+    Success.set(validation.success);
+    Errors.set(validation.errors);
+    Data.set(validation.data);
+    Empty.set(validation.empty);
+    Message.set(validation.message);
 
     if (untaint && options.taintedMessage) {
-      savedForm = { ...newData.data };
+      savedForm = { ...validation.data };
+    }
+  }
+
+  async function _update(validation: Validation<T>, untaint: boolean) {
+    if (options.onUpdate) {
+      let cancelled = false;
+      await options.onUpdate({
+        validation,
+        cancel: () => (cancelled = true)
+      });
+      if (cancelled) return;
+    }
+
+    if (validation.success && options.resetForm) {
+      _resetForm();
+    } else {
+      rebind(validation, untaint);
+    }
+
+    if (options.onUpdated) {
+      await options.onUpdated({ validation });
     }
   }
 
   function _resetForm() {
-    _update(initialForm, true);
+    rebind(initialForm, true);
   }
 
   function _wipeForm() {
-    _update(emptyForm(), true);
+    rebind(emptyForm(), true);
   }
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
@@ -346,14 +367,6 @@ export function superForm<T extends AnyZodObject>(
         `ActionResult of type "${result.type}" was passed to update function. Only "success" and "failure" are allowed.`
       );
     }
-
-    if (untaint === undefined) {
-      untaint = result.status >= 200 && result.status < 400;
-    }
-
-    //Submitting.set(false);
-    //Delayed.set(false);
-    //Timeout.set(false);
 
     function resultData(data: unknown) {
       if (!data) return emptyForm();
@@ -374,25 +387,10 @@ export function superForm<T extends AnyZodObject>(
     }
 
     const validation = resultData(result.data) ?? emptyForm();
-
-    if (options.onUpdate) {
-      let cancelled = false;
-      await options.onUpdate({
-        validation: validation,
-        cancel: () => (cancelled = true)
-      });
-      if (cancelled) return;
-    }
-
-    if (result.type != 'failure' && options.resetForm) {
-      _resetForm();
-    } else {
-      _update(validation, untaint);
-    }
-
-    if (options.onUpdated) {
-      await options.onUpdated({ validation });
-    }
+    _update(
+      validation,
+      untaint ?? (result.status >= 200 && result.status < 400)
+    );
   };
 
   if (browser) {
@@ -433,29 +431,22 @@ export function superForm<T extends AnyZodObject>(
     if (options.applyAction) {
       page.subscribe((p) => {
         // Skip the update if no new data is retrieved.
-        if (!p.form && !p.data.form)
-          throw new Error(
-            "No form data found in page update. Make sure you return { form } in the load function or a page's form actions."
-          );
+        if (!p.form && !p.data.form) return;
 
-        if (p.form != initialForm || p.data.form != initialForm) {
-          let newData: Validation<T>;
-
-          if (p.form) {
-            if (!('form' in p.form))
-              throw new Error(
-                "No form data found in $page.form (ActionData). Make sure you return { form } in this page's form actions."
-              );
-            else newData = p.form.form;
-          } else if (!('form' in p.data)) {
+        if (p.form && p.form != initialForm) {
+          if (!p.form.form)
+            throw new Error(
+              "No form data found in $page.form (ActionData). Make sure you return { form } in this page's form actions."
+            );
+          _update(p.form.form, p.status >= 200 && p.status < 400);
+        } else if (p.data.form && p.data.form != initialForm) {
+          if (!p.data.form) {
             throw new Error(
               "No form data found in $page.data (PageData). Make sure you return { form } in this page's load function."
             );
-          } else {
-            newData = p.data.form;
           }
-
-          _update(newData, p.status >= 200 && p.status < 400);
+          // It's a page reload, so don't trigger any update events.
+          rebind(p.data.form, true);
         }
       });
     }
@@ -504,13 +495,14 @@ function formEnhance<T extends AnyZodObject>(
   delayed: Writable<boolean>,
   timeout: Writable<boolean>,
   errors: Writable<Validation<T>['errors']>,
-  formUpdate: FormUpdate,
+  Data_update: FormUpdate,
   options: FormOptions<T>,
   data: Writable<Validation<T>['data']>,
   message: Writable<Validation<T>['message']>,
-  enableTaintedMessage: () => void
+  enableTaintedForm: () => void
 ) {
-  enableTaintedMessage();
+  // Now we know that we are upgraded, so we can enable the tainted form option.
+  enableTaintedForm();
 
   /**
    * @DCI-context
@@ -706,7 +698,7 @@ function formEnhance<T extends AnyZodObject>(
       if (options.onResult) {
         await options.onResult({
           result,
-          update: formUpdate,
+          update: Data_update,
           formEl,
           cancel: () => (cancelled = true)
         });

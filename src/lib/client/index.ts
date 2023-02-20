@@ -25,7 +25,9 @@ export type FormUpdate = (
 ) => Promise<void>;
 
 export type Validators<T extends AnyZodObject> = Partial<{
-  [Property in keyof z.infer<T>]: (data: z.infer<T>[Property]) => string | null | undefined;
+  [Property in keyof z.infer<T>]: (
+    value: z.infer<T>[Property]
+  ) => MaybePromise<string | null | undefined>;
 }>;
 
 /**
@@ -64,7 +66,6 @@ export type FormOptions<T extends AnyZodObject> = {
   dataType?: 'form' | 'json' | 'formdata';
   validators?: Validators<T>;
   defaultValidator?: 'keep' | 'clear';
-  defaultValidatorMessage?: string;
   clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs?: number;
   timeoutMs?: number;
@@ -88,7 +89,6 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',
-  defaultValidatorMessage: 'Invalid',
   clearOnSubmit: 'errors-and-message',
   delayMs: 150,
   timeoutMs: 8000,
@@ -357,12 +357,12 @@ export function superForm<T extends AnyZodObject>(
   }
 
   let previousForm = { ...form.data };
-  FormStore.subscribe((f) => {
+  FormStore.subscribe(async (f) => {
     for (const key of Object.keys(f)) {
       if (f[key] !== previousForm[key]) {
         const validator = options.validators && options.validators[key];
         if (validator) {
-          const newError = validator(f[key]);
+          const newError = await validator(f[key]);
           Errors.update((e) => {
             if (!newError) delete e[key];
             else e[key as keyof z.infer<T>] = [newError];

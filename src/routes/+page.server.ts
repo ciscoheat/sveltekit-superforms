@@ -6,7 +6,7 @@ import type { Actions, PageServerLoad } from './$types';
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
   id: z.string().regex(/^\d+$/),
-  name: z.string(),
+  name: z.string().min(1),
   email: z
     .string()
     .email()

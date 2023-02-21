@@ -128,7 +128,6 @@ export type EnhancedForm<T extends AnyZodObject> = {
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: () => void;
-  wipe: () => void;
 };
 
 /**
@@ -356,9 +355,11 @@ export function superForm<T extends AnyZodObject>(
     rebind(initialForm, true);
   }
 
+  /*
   function _wipeForm() {
     rebind(emptyForm(), true);
   }
+  */
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
     if (['error', 'redirect'].includes(result.type)) {
@@ -476,11 +477,9 @@ export function superForm<T extends AnyZodObject>(
         enableTaintedMessage
       ),
 
-    //initial: initialData,
     firstError: FirstError,
     update: Data_update,
-    reset: _resetForm,
-    wipe: _wipeForm
+    reset: _resetForm
   };
 }
 

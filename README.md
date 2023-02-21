@@ -191,7 +191,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
   <div><button>Submit</button></div>
 </form>
 
-<style lang="scss">
+<style>
   .invalid {
     color: red;
   }
@@ -308,7 +308,7 @@ invalidateAll: boolean = true;
 resetForm: boolean = false;
 ```
 
-As you see, another slight difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted. Later on it will be explained how to integrate a database with the library.
+As you see, another difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted. In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms` resetting means going back to the initial state of the form data, usually the contents of `form` in `PageData`. If you're depending heavily on default values, this may not always be what you want.
 
 ## More options: Client-side validators
 
@@ -421,7 +421,7 @@ If this bliss is too much to handle, setting `dataType` to `formdata`, posts the
   {#if $delayed}Working...{/if}
 </form>
 
-<style lang="scss">
+<style>
   .invalid {
     color: red;
   }
@@ -560,7 +560,7 @@ The page component is quite similar to the previous example.
   {#if $delayed}Working...{/if}
 </form>
 
-<style lang="scss">
+<style>
   .invalid {
     color: red;
   }
@@ -776,7 +776,6 @@ type EnhancedForm<T extends AnyZodObject> = {
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   reset: () => void;
-  wipe: () => void;
 
   async update: (
     result: ActionResult<'success', 'failure'>,

@@ -7,14 +7,17 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, message, delayed } = superForm(data.form, {
-    dataType: 'formdata',
-    async onUpdate({ validation }) {
-      if (validation.success) {
-        await goto('?id=' + validation.data.id);
+  const { form, errors, enhance, message, delayed, reset } = superForm(
+    data.form,
+    {
+      dataType: 'formdata',
+      async onUpdate({ validation }) {
+        if (validation.success) {
+          await goto('?id=' + validation.data.id);
+        }
       }
     }
-  });
+  );
 </script>
 
 <SuperDebug data={$form} />
@@ -58,8 +61,16 @@
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
 
-  <button>Submit</button>
-  {#if $delayed}Working...{/if}
+  <div>
+    <button>Submit</button>
+    {#if $delayed}Working...{/if}
+  </div>
+
+  <div>&nbsp;</div>
+
+  <div>
+    <button on:click|preventDefault={reset}>Reset</button>
+  </div>
 </form>
 
 <style lang="scss">

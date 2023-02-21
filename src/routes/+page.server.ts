@@ -1,41 +1,79 @@
 import { superValidate } from '$lib/server';
 import { z } from 'zod';
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const _dataTypeForm = z.object({
-  string: z.string().min(2).default('Shigeru'),
-  email: z.string().email(),
-  bool: z.boolean(),
-  number: z.number().default(900),
-  proxyNumber: z.number().min(10).default(0),
-  nullableString: z.string().nullable(),
-  nullishString: z.string().nullish(),
-  optionalString: z.string().optional(),
-  trimmedString: z.string().trim(),
-  date: z.date().default(new Date()),
-  coercedNumber: z.coerce.number().default(0),
-  coercedDate: z.coerce.date().default(new Date())
+// See https://zod.dev/?id=primitives for schema syntax
+const userSchema = z.object({
+  id: z.string().regex(/^\d+$/),
+  name: z.string(),
+  email: z
+    .string()
+    .email()
+    .refine((email) => !email.includes('spam'), {
+      message: 'Email cannot contain spam.'
+    })
 });
 
-export const load = (async (event) => {
-  const form = await superValidate(event, _dataTypeForm);
+// Let's worry about id collisions later
+const userId = () => String(Math.random()).slice(2);
 
-  console.log('🚀 ~ LOAD', form);
-  return { form };
+// A simple user "database"
+const users: z.infer<typeof userSchema>[] = [
+  {
+    id: userId(),
+    name: 'Important Customer',
+    email: 'important@example.com'
+  },
+  {
+    id: userId(),
+    name: 'Super Customer',
+    email: 'super@example.com'
+  }
+];
+
+// The userSchema is for the database integrity, so an id must exist there.
+// But we want to use CRUD (Create, Read, Update, Delete)
+// and must therefore allow id not to exist when creating users.
+//
+// So we extend the user schema.
+const crudSchema = userSchema.extend({
+  id: userSchema.shape.id.optional()
+});
+
+export const load = (async ({ url }) => {
+  // READ user
+  const id = url.searchParams.get('id');
+  const user = id
+    ? users.find((u) => u.id == url.searchParams.get('id'))
+    : null;
+
+  if (id && !user) throw error(404, 'User not found.');
+
+  const form = await superValidate(user, crudSchema);
+  return { form, users };
 }) satisfies PageServerLoad;
 
 export const actions = {
-  form: async (event) => {
-    throw error(500);
-    const form = await superValidate(event, _dataTypeForm);
-    console.log('🚀 ~ POST', form);
-
-    await new Promise((resolve) => setTimeout(resolve, form.data.number));
-
+  edit: async (event) => {
+    const form = await superValidate(event, crudSchema);
+    console.log('POST', form);
     if (!form.success) return fail(400, { form });
-    else form.message = 'Form posted!';
 
-    return { form };
+    if (!form.data.id) {
+      // CREATE user
+      const user = { ...form.data, id: userId() };
+      users.push(user);
+      throw redirect(303, '?id=' + user.id);
+    } else {
+      // UPDATE user
+      const user = users.find((u) => u.id == form.data.id);
+      if (!user) throw error(404, 'User not found.');
+
+      users[users.indexOf(user)] = { ...form.data, id: user.id };
+
+      form.message = 'User updated!';
+      return { form };
+    }
   }
 } satisfies Actions;

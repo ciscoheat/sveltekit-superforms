@@ -1,79 +1,79 @@
 <script lang="ts">
-  import { stringProxy, superForm } from '$lib/client';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
 
   export let data: PageData;
 
-  const { form, errors, message, delayed, timeout, enhance } = superForm(data.form, {
-    taintedMessage: undefined,
-    onError: 'Något gick fel.',
-    validators: {
-      email: (n) => (/[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email')
+  const { form, errors, enhance, message, delayed } = superForm(data.form, {
+    dataType: 'formdata',
+    async onUpdate({ validation }) {
+      if (validation.success) {
+        await goto('?id=' + validation.data.id);
+      }
     }
   });
-
-  const bool = stringProxy(form, 'bool', 'boolean');
-  const proxyNumber = stringProxy(form, 'proxyNumber', 'int');
-  const fields = ['nullableString', 'nullishString', 'optionalString', 'trimmedString'] as const;
 </script>
 
 <SuperDebug data={$form} />
 
-<h1>sveltekit-superforms</h1>
-
 {#if $message}
-  <h3>{$message}</h3>
+  <h4 class:error={$page.status >= 400} class="message">{$message}</h4>
 {/if}
 
-<form method="POST" action="?/form" use:enhance>
-  <div>
-    <button>Submit</button>
-    {#if $timeout}
-      <span class="timeout">Timeout!</span>
-    {:else if $delayed}
-      <span class="delayed">Delayed...</span>
-    {/if}
-  </div>
+<h1>sveltekit-superforms</h1>
 
-  <label for="string">string</label> <input type="text" name="string" bind:value={$form.string} />
-  {#if $errors.string}<span data-invalid>{$errors.string}</span>{/if}
-
-  <label for="email">email</label> <input type="text" name="email" bind:value={$form.email} />
-  {#if $errors.email}<span data-invalid>{$errors.email}</span>{/if}
-
-  <label for="bool">bool</label>
-  <select name="bool" bind:value={$bool}>
-    <option value="true">true</option>
-    <option value="">false</option>
-  </select>
-  {#if $errors.bool}<span data-invalid>{$errors.bool}</span>{/if}
-
-  <label for="number">number</label> <input type="number" name="number" bind:value={$form.number} />
-  delay ms
-  {#if $errors.number}<span data-invalid>{$errors.number}</span>{/if}
-
-  <label for="proxyNumber">proxyNumber</label>
-  <input type="text" name="proxyNumber" bind:value={$proxyNumber} />
-  {#if $errors.proxyNumber}<span data-invalid>{$errors.proxyNumber}</span>{/if}
-
-  {#each fields as key}
-    <label for={key}>{key}</label> <input type="text" name={key} bind:value={$form[key]} />
-    {#if $errors[key]}<span data-invalid>{$errors[key]}</span>{/if}
+<div class="users">
+  <b>Select customer:</b>
+  {#each data.users as user}
+    | <a href="?id={user.id}">{user.name}</a> |
   {/each}
+  {#if !data.form.empty}
+    <button on:click={() => goto('?')}>Create new</button>
+  {/if}
+</div>
 
-  <div>
-    <button>Submit</button>
-    {#if $timeout}
-      <span class="timeout">Timeout!</span>
-    {:else if $delayed}
-      <span class="delayed">Delayed...</span>
-    {/if}
-  </div>
+<h2>{data.form.empty ? 'Create' : 'Update'} user</h2>
+
+<form method="POST" action="?/edit" use:enhance>
+  <input type="hidden" name="id" value={$form.id} />
+
+  <label>
+    Name<br /><input
+      name="name"
+      data-invalid={$errors.name}
+      bind:value={$form.name}
+    />
+    {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+  </label>
+
+  <label>
+    E-mail<br /><input
+      name="email"
+      data-invalid={$errors.email}
+      bind:value={$form.email}
+    />
+    {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
+  </label>
+
+  <button>Submit</button>
+  {#if $delayed}Working...{/if}
 </form>
 
 <style lang="scss">
-  [data-invalid] {
+  .invalid {
     color: red;
+  }
+
+  .message {
+    color: white;
+    padding: 10px;
+    background-color: rgb(46, 168, 68);
+
+    &.error {
+      background-color: rgb(168, 60, 46);
+    }
   }
 </style>

@@ -32,7 +32,7 @@ enum FetchStatus {
 }
 
 export type FormUpdate = (
-  result: Exclude<ActionResult, { type: 'error' } | { type: 'redirect' }>,
+  result: Extract<ActionResult, { type: 'success' } | { type: 'failure' }>,
   untaint?: boolean
 ) => Promise<void>;
 
@@ -124,7 +124,6 @@ export type EnhancedForm<T extends AnyZodObject> = {
   timeout: Readable<boolean>;
 
   firstError: Readable<{ key: string; value: string } | null>;
-  //initial: Validation<T>;
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
@@ -558,9 +557,7 @@ function formEnhance<T extends AnyZodObject>(
       focusEl = el;
 
       if (
-        !['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(
-          focusEl.tagName
-        )
+        !['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)
       ) {
         focusEl = focusEl.querySelector<HTMLElement>(
           'input:not([type="hidden"]):not(.flatpickr-input), select, textarea'
@@ -580,7 +577,7 @@ function formEnhance<T extends AnyZodObject>(
 
       const setState = (s: typeof state) => {
         state = s;
-        submitting.set(state != FetchStatus.Idle);
+        submitting.set(state >= FetchStatus.Submitting);
         delayed.set(state >= FetchStatus.Delayed);
         timeout.set(state >= FetchStatus.Timeout);
       };
@@ -602,15 +599,17 @@ function formEnhance<T extends AnyZodObject>(
             if (state == FetchStatus.Submitting)
               setState(FetchStatus.Delayed);
           }, options.delayMs);
+
           timeoutTimeout = window.setTimeout(() => {
-            if (state == FetchStatus.Delayed)
-              setState(FetchStatus.Timeout);
+            if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
           }, options.timeoutMs);
         },
+
         completed: (cancelled: boolean) => {
           setState(FetchStatus.Idle);
           if (!cancelled) Form_scrollToFirstError();
         },
+
         isSubmitting: () =>
           state === FetchStatus.Submitting || state === FetchStatus.Delayed
       };

@@ -19,8 +19,7 @@ import {
   ZodEffects,
   ZodBigInt,
   ZodObject,
-  ZodSymbol,
-  ZodFunction
+  ZodSymbol
 } from 'zod';
 
 type DefaultFields<T extends AnyZodObject> = Partial<{
@@ -33,7 +32,7 @@ type DefaultFields<T extends AnyZodObject> = Partial<{
 }>;
 
 function setValidationDefaults<T extends AnyZodObject>(
-  data: Validation<T>['data'],
+  data: z.infer<T>,
   fields: DefaultFields<T>
 ) {
   for (const stringField of Object.keys(fields)) {
@@ -117,7 +116,7 @@ export function defaultEntity<T extends AnyZodObject>(
 
 export function setError<T extends AnyZodObject>(
   form: Validation<T>,
-  field: keyof (typeof form)['data'],
+  field: keyof z.infer<T>,
   error: string | string[] | null
 ) {
   const errArr = Array.isArray(error) ? error : error ? [error] : [];

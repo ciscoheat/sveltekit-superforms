@@ -18,9 +18,14 @@
           return '#}#undefined';
         }
         if (typeof this === 'object' && this[key] instanceof Date) {
-          return `#}D#${value}`;
+          return '#}D#' + value;
         }
-        if (typeof value === 'number' && isNaN(value)) return '#}#NaN';
+        if (typeof value === 'number' && isNaN(value)) {
+          return '#}#NaN';
+        }
+        if (typeof value === 'bigint') {
+          return '#}BI#' + value;
+        }
         return value;
       },
       2
@@ -54,6 +59,9 @@
             } else if (match.startsWith('"#}D#')) {
               cls = 'date';
               match = match.slice(5, -1);
+            } else if (match.startsWith('"#}BI#')) {
+              cls = 'num';
+              match = match.slice(6, -1) + 'n';
             }
           }
         } else if (/true|false/.test(match)) {

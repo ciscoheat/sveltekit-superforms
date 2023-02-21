@@ -1,14 +1,13 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { date } from 'zod';
 
   export let display = true;
   export let status = true;
   export let data: any;
-  //export let wrapText = true;
-  export let maxLength = 120;
-  //export let expanded = false;
+  export let stringTruncate = 120;
   export let ref: HTMLPreElement | undefined = undefined;
+  //export let wrapText = true;
+  //export let expanded = false;
 
   function syntaxHighlight(json: any) {
     json = JSON.stringify(
@@ -44,10 +43,10 @@
           } else {
             cls = 'string';
             match =
-              match.length > maxLength
-                ? match.slice(0, maxLength / 2) +
+              match.length > stringTruncate
+                ? match.slice(0, stringTruncate / 2) +
                   `[..${match.length}..]` +
-                  match.slice(-maxLength / 2)
+                  match.slice(-stringTruncate / 2)
                 : match;
 
             if (match == '"#}#NaN"') {

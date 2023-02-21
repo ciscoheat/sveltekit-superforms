@@ -785,6 +785,22 @@ type EnhancedForm<T extends AnyZodObject> = {
 };
 ```
 
+## Components
+
+```ts
+import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
+```
+
+```svelte
+<SuperDebug
+  data={any}
+  display={true}
+  status={true}
+  stringTruncate={120}
+  ref={HTMLPreElement}
+/>
+```
+
 # Default entity values
 
 Used when returning default values from `superValidate` for an entity, or when converting `FormData`.

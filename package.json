@@ -1,78 +1,82 @@
 {
-	"name": "sveltekit-superforms",
-	"version": "0.0.1",
-	"author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
-	"description": "Supercharge your SvelteKit forms with this powerhouse of a library.",
-	"keywords": [
-		"sveltekit",
-		"svelte",
-		"forms",
-		"validation"
-	],
-	"license": "MIT",
-	"repository": {
-		"url": "https://github.com/ciscoheat/sveltekit-superforms"
-	},
-	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build && npm run package",
-		"preview": "vite preview",
-		"package": "svelte-kit sync && svelte-package && publint",
-		"prepublishOnly": "npm run package && publint",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test:unit": "vitest",
-		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write ."
-	},
-	"files": [
-		"dist"
-	],
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"svelte": "./dist/index.js"
-		},
-		"./client": {
-			"types": "./dist/client/index.d.ts",
-			"svelte": "./dist/client/index.js"
-		},
-		"./client/SuperDebug.svelte": {
-			"types": "./dist/client/SuperDebug.svelte.d.ts",
-			"svelte": "./dist/client/SuperDebug.svelte"
-		},
-		"./server": {
-			"types": "./dist/server/index.d.ts",
-			"svelte": "./dist/server/index.js"
-		}
-	},
-	"peerDependencies": {
-		"@sveltejs/kit": "1.x",
-		"svelte": "^3.54.0",
-		"zod": "3.x"
-	},
-	"devDependencies": {
-		"@sveltejs/adapter-auto": "^2.0.0",
-		"@sveltejs/kit": "^1.7.2",
-		"@sveltejs/package": "^2.0.1",
-		"@typescript-eslint/eslint-plugin": "^5.52.0",
-		"@typescript-eslint/parser": "^5.52.0",
-		"devalue": "^4.3.0",
-		"eslint": "^8.34.0",
-		"eslint-config-prettier": "^8.6.0",
-		"eslint-plugin-svelte3": "^4.0.0",
-		"prettier": "^2.8.4",
-		"prettier-plugin-svelte": "^2.9.0",
-		"publint": "^0.1.9",
-		"sass": "^1.58.3",
-		"slugify": "^1.6.5",
-		"svelte": "^3.55.1",
-		"svelte-check": "^3.0.3",
-		"tslib": "^2.5.0",
-		"typescript": "^4.9.5",
-		"vite": "^4.1.3",
-		"vitest": "^0.25.8",
-		"zod": "^3.20.6"
-	},
-	"type": "module"
+  "name": "sveltekit-superforms",
+  "version": "0.1.0",
+  "author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
+  "description": "Supercharge your SvelteKit forms with this powerhouse of a library!",
+  "keywords": [
+    "sveltekit",
+    "svelte",
+    "form",
+    "validation",
+    "zod",
+    "forms"
+  ],
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/ciscoheat/sveltekit-superforms"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build && npm run package",
+    "preview": "vite preview",
+    "package": "svelte-kit sync && svelte-package && publint",
+    "prepublishOnly": "npm run package && publint",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test:unit": "vitest",
+    "lint": "prettier --plugin-search-dir . --check . && eslint .",
+    "format": "prettier --plugin-search-dir . --write ."
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "svelte": "./dist/client/index.js"
+    },
+    "./client/SuperDebug.svelte": {
+      "types": "./dist/client/SuperDebug.svelte.d.ts",
+      "svelte": "./dist/client/SuperDebug.svelte"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "svelte": "./dist/server/index.js"
+    }
+  },
+  "svelte": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "peerDependencies": {
+    "@sveltejs/kit": "1.x",
+    "svelte": "3.x",
+    "zod": "3.x"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-auto": "^2.0.0",
+    "@sveltejs/kit": "^1.7.2",
+    "@sveltejs/package": "^2.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^5.52.0",
+    "devalue": "^4.3.0",
+    "eslint": "^8.34.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-svelte3": "^4.0.0",
+    "prettier": "^2.8.4",
+    "prettier-plugin-svelte": "^2.9.0",
+    "publint": "^0.1.9",
+    "sass": "^1.58.3",
+    "slugify": "^1.6.5",
+    "svelte": "^3.55.1",
+    "svelte-check": "^3.0.3",
+    "tslib": "^2.5.0",
+    "typescript": "^4.9.5",
+    "vite": "^4.1.3",
+    "vitest": "^0.25.8",
+    "zod": "^3.20.6"
+  },
+  "type": "module"
 }

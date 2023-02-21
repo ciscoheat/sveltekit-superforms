@@ -15,7 +15,12 @@ import {
   ZodDate,
   ZodLiteral,
   ZodUnion,
-  ZodArray
+  ZodArray,
+  ZodEffects,
+  ZodBigInt,
+  ZodObject,
+  ZodSymbol,
+  ZodFunction
 } from 'zod';
 
 type DefaultFields<T extends AnyZodObject> = Partial<{
@@ -58,7 +63,7 @@ export function defaultEntity<T extends AnyZodObject>(
   schema: T,
   options: {
     defaults?: DefaultFields<T>;
-    skip?: (keyof z.infer<T>)[];
+    implicitDefaults?: boolean;
   } = {}
 ): z.infer<T> {
   options = { ...options };
@@ -71,9 +76,7 @@ export function defaultEntity<T extends AnyZodObject>(
     return defaultEntityCache.get(schema) as z.infer<T>;
   }
 
-  const fields = Object.keys(schema.keyof().Values).filter(
-    (field) => !options.skip || !options.skip.includes(field)
-  );
+  const fields = Object.keys(schema.keyof().Values);
 
   let output: Record<string, unknown> = {};
   let defaultKeys: string[] | undefined;
@@ -89,7 +92,13 @@ export function defaultEntity<T extends AnyZodObject>(
       const value =
         defaultKeys && defaultKeys.includes(f)
           ? output[f]
-          : _valueOrDefault(schema, f, undefined).value;
+          : _valueOrDefault(
+              schema,
+              f,
+              undefined,
+              true,
+              options.implicitDefaults ?? true
+            ).value;
 
       return [f, value];
     })
@@ -146,7 +155,7 @@ function formDataToValidation<T extends AnyZodObject>(
   }
 
   function parseEntry(field: string, value: string | null): unknown {
-    const newValue = _valueOrDefault(schema, field, value, false);
+    const newValue = _valueOrDefault(schema, field, value, false, true);
 
     /*
       d(field, value, {
@@ -190,11 +199,17 @@ function formDataToValidation<T extends AnyZodObject>(
         return Boolean(value).valueOf();
       else {
         throw new Error(
-          'Unsupported ZodLiteral default type: ' + typeof zodType.value
+          'Unsupported ZodLiteral type: ' + typeof zodType.value
         );
       }
     } else if (zodType instanceof ZodUnion || zodType instanceof ZodAny) {
       return value;
+    } else if (zodType instanceof ZodBigInt) {
+      try {
+        return BigInt(value ?? '.');
+      } catch {
+        return NaN;
+      }
     }
 
     throw new Error(
@@ -210,7 +225,8 @@ function _valueOrDefault<T extends AnyZodObject>(
   schema: T,
   field: keyof z.infer<T>,
   value: unknown,
-  strict = true
+  strict: boolean,
+  implicitDefaults: boolean
 ) {
   let zodType = schema.shape[field];
   let wrapped = true;
@@ -231,6 +247,8 @@ function _valueOrDefault<T extends AnyZodObject>(
     } else if (zodType instanceof ZodOptional) {
       isOptional = true;
       zodType = zodType.unwrap();
+    } else if (zodType instanceof ZodEffects) {
+      zodType = zodType._def.schema;
     } else {
       wrapped = false;
     }
@@ -256,9 +274,16 @@ function _valueOrDefault<T extends AnyZodObject>(
     if (defaultValue !== undefined) return defaultValue;
     if (isNullable) return null;
     if (isOptional) return undefined;
-    if (zodType instanceof ZodString) return '';
-    if (zodType instanceof ZodBoolean) return false;
-    if (zodType instanceof ZodArray) return [];
+
+    if (implicitDefaults) {
+      if (zodType instanceof ZodString) return '';
+      if (zodType instanceof ZodNumber) return 0;
+      if (zodType instanceof ZodBoolean) return false;
+      if (zodType instanceof ZodArray) return [];
+      if (zodType instanceof ZodObject) return {};
+      if (zodType instanceof ZodBigInt) return BigInt(0);
+      if (zodType instanceof ZodSymbol) return Symbol();
+    }
 
     throw new Error(
       `Unsupported type for ${
@@ -300,6 +325,7 @@ export async function superValidate<T extends AnyZodObject>(
   schema: T,
   options: {
     defaults?: DefaultFields<T>;
+    implicitDefaults?: boolean;
     noErrors?: boolean;
   } = {}
 ): Promise<Validation<T>> {

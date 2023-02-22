@@ -8,7 +8,7 @@
   const { form, errors, message, delayed, timeout, enhance } = superForm(
     data.form,
     {
-      taintedMessage: undefined,
+      taintedMessage: null,
       onError: 'Något gick fel.',
       validators: {
         email: (n) =>
@@ -24,7 +24,7 @@
     delayed: modalDelayed,
     enhance: modalEnhance
   } = superForm({
-    taintedMessage: undefined,
+    taintedMessage: null,
     dataType: 'formdata',
     applyAction: false,
     invalidateAll: false

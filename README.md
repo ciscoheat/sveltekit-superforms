@@ -14,7 +14,7 @@ Supercharge your SvelteKit forms with this powerhouse of a library!
 - Generates default form values from validation schemas.
 - Client-side validators for direct feedback.
 - Proxy objects for handling data conversions to string and back again.
-- Provide feedback unlike anything else with auto-updating timers for long response times, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
+- Provide unparallelled feedback with auto-updating timers for long response times, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
 - Even more care for the user: No form data loss, by preventing error page rendering as default.
 - Hook into a number of events for full control over submitting, `ActionResult` and validation updates.
 - Complete customization with options like `applyAction`, `invalidateAll`, `autoFocus`, `resetForm`, etc...
@@ -228,7 +228,7 @@ const { form, errors, enhance } = superForm(data.form, { lotsOfOptions });
 Try to modify the form fields, then close the tab or open another page in the same tab. A confirmation dialog should prevent you from losing the changes.
 
 ```ts
-taintedMessage: string | false = '<A default message in english>'
+taintedMessage: string | null | false = '<A default message in english>'
 ```
 
 When the page status changes to something between 200-299, the form is automatically marked as untainted.
@@ -257,13 +257,13 @@ stickyNavbar: string | undefined = undefined
 In order of micro-managing the result, from least to most.
 
 ```ts
-onUpdated: ({ validation }) => void
+onUpdated: ({ form }) => void
 ```
 
 If you just want to apply the default behaviour and do something afterwards depending on validation success, this is the simplest way.
 
 ```ts
-onUpdate: ({ validation, cancel }) => void
+onUpdate: ({ form, cancel }) => void
 ```
 
 A bit more control, lets you enter just before the form update is being applied and gives you the option to modify the `validation` object, or `cancel()` the update altogether.
@@ -445,7 +445,7 @@ As mentioned, a suitable use case for this library is backend interfaces, which 
 1. ???
 1. ~~Profit!~~ `GOTO 1`
 
-This journey can be quite easy to take with `sveltekit-superforms`. Let's see how it works by starting over with the default route:
+This journey can be quite easy to take with `sveltekit-superforms`. Let's see how it works by starting over with the default route. The [Zod validation schema reference](https://zod.dev/?id=primitives) can be useful as well.
 
 **src/routes/+page.server.ts**
 
@@ -750,7 +750,7 @@ type FormOptions<T extends AnyZodObject> = {
   resetForm?: boolean;
   scrollToError?: 'auto' | 'smooth' | 'off';
   stickyNavbar?: string;
-  taintedMessage?: string | false;
+  taintedMessage?: string | null | false;
   timeoutMs?: number;
   validators?: Validators<T>;
 
@@ -767,12 +767,12 @@ type FormOptions<T extends AnyZodObject> = {
   })
 
   async onUpdate?: (event: {
-    validation: Validation<T>;
+    form: Validation<T>;
     cancel: () => void;
   })
 
   async onUpdated?: (event: {
-    validation: Validation<T>;
+    form: Validation<T>;
   })
 
   async onError?:
@@ -830,11 +830,11 @@ import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
 
 # Default entity values
 
-Used when returning default values from `superValidate` for an entity, or when converting `FormData`.
+Used when returning default values from `superValidate` for an entity, or when a `FormData` field is empty.
 
 | type            | value       |
 | --------------- | ----------- |
-| `string`        | `''`        |
+| `string`        | `""`        |
 | `number`        | `0`         |
 | `boolean`       | `false`     |
 | `object`        | `{}`        |
@@ -844,6 +844,6 @@ Used when returning default values from `superValidate` for an entity, or when c
 
 ## Feedback wanted!
 
-The library is quite stable so don't expect any major changes, but there could still be minor breaking changes until version 1.0.
+The library is quite stable so don't expect any major changes, but there could still be minor breaking changes until version 1.0, mostly variable naming.
 
 Ideas, feedback, bug reports, PR:s, etc, are very welcome as a [github issue](https://github.com/ciscoheat/sveltekit-superforms/issues).

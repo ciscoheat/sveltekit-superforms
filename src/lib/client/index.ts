@@ -45,7 +45,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
 /**
  * @param {string} taintedMessage If set, a confirm dialog will be shown when navigating away from the page if the form has been modified.
  * @param onUpdate Callback when the form is updated, by either a POST or a load function.
- * @param {boolean} applyAction If false, will not automatically update the form when $page updates. Useful for modal forms. In that case, use the onResult callback to update the form.
+ * @param {boolean} applyAction If false, will not automatically update the form when $page updates. Useful for modal forms.
  */
 export type FormOptions<T extends AnyZodObject> = {
   applyAction?: boolean;
@@ -55,7 +55,7 @@ export type FormOptions<T extends AnyZodObject> = {
   autoFocusOnError?: boolean | 'detect';
   errorSelector?: string;
   stickyNavbar?: string;
-  taintedMessage?: string | false;
+  taintedMessage?: string | false | null;
   onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
   onResult?: (event: {
     result: ActionResult;
@@ -64,11 +64,11 @@ export type FormOptions<T extends AnyZodObject> = {
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdate?: (event: {
-    validation: Validation<T>;
+    form: Validation<T>;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated?: (event: {
-    validation: Validation<T>;
+    form: Validation<T>;
   }) => MaybePromise<unknown | void>;
   onError?:
     | ((
@@ -318,36 +318,36 @@ export function superForm<T extends AnyZodObject>(
     savedForm = options.taintedMessage ? { ...get(Data) } : undefined;
   }
 
-  function rebind(validation: Validation<T>, untaint: boolean) {
-    Validated.set(validation.validated);
-    Errors.set(validation.errors);
-    Data.set(validation.data);
-    Empty.set(validation.empty);
-    Message.set(validation.message);
+  function rebind(form: Validation<T>, untaint: boolean) {
+    Validated.set(form.validated);
+    Errors.set(form.errors);
+    Data.set(form.data);
+    Empty.set(form.empty);
+    Message.set(form.message);
 
     if (untaint && options.taintedMessage) {
-      savedForm = { ...validation.data };
+      savedForm = { ...form.data };
     }
   }
 
-  async function _update(validation: Validation<T>, untaint: boolean) {
+  async function _update(form: Validation<T>, untaint: boolean) {
     if (options.onUpdate) {
       let cancelled = false;
       await options.onUpdate({
-        validation,
+        form,
         cancel: () => (cancelled = true)
       });
       if (cancelled) return;
     }
 
-    if (validation.validated && options.resetForm) {
+    if (form.validated && options.resetForm) {
       _resetForm();
     } else {
-      rebind(validation, untaint);
+      rebind(form, untaint);
     }
 
     if (options.onUpdated) {
-      await options.onUpdated({ validation });
+      await options.onUpdated({ form });
     }
   }
 
@@ -380,12 +380,9 @@ export function superForm<T extends AnyZodObject>(
       );
     }
 
-    const validation = (result.data.form as Validation<T>) ?? emptyForm();
+    const form = (result.data.form as Validation<T>) ?? emptyForm();
 
-    _update(
-      validation,
-      untaint ?? (result.status >= 200 && result.status < 300)
-    );
+    _update(form, untaint ?? (result.status >= 200 && result.status < 300));
   };
 
   if (browser) {

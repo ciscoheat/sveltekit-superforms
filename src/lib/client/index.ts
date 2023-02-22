@@ -704,7 +704,10 @@ function formEnhance<T extends AnyZodObject>(
           }
 
           if (options.applyAction) {
+            // This will call the page subscription in superForm
             await applyAction(result);
+          } else if (result.type !== 'redirect') {
+            Data_update(result);
           }
         } else {
           // Error result

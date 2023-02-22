@@ -10,6 +10,6 @@ const loginSchema = z.object({
 export const POST = (async (event) => {
   const form = await superValidate(event, loginSchema);
 
-  if (!form.success) return actionResult('failure', { form });
+  if (!form.validated) return actionResult('failure', { form });
   else return actionResult('success', { form });
 }) satisfies RequestHandler;

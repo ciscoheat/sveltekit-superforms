@@ -116,7 +116,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
   errors: Writable<Validation<T>['errors']>;
   message: Writable<Validation<T>['message']>;
 
-  success: Readable<boolean>;
+  validated: Readable<boolean>;
   empty: Readable<boolean>;
 
   submitting: Readable<boolean>;
@@ -256,7 +256,7 @@ export function superForm<T extends AnyZodObject>(
 
   function emptyForm() {
     return {
-      success: true,
+      validated: true,
       errors: {},
       data: {},
       empty: true,
@@ -281,7 +281,7 @@ export function superForm<T extends AnyZodObject>(
   }
 
   // Stores for the properties of Validation<T>
-  const Success = writable(form.success);
+  const Validated = writable(form.validated);
   const Errors = writable(form.errors);
   const Data = writable(form.data);
   const Empty = writable(form.empty);
@@ -319,7 +319,7 @@ export function superForm<T extends AnyZodObject>(
   }
 
   function rebind(validation: Validation<T>, untaint: boolean) {
-    Success.set(validation.success);
+    Validated.set(validation.validated);
     Errors.set(validation.errors);
     Data.set(validation.data);
     Empty.set(validation.empty);
@@ -340,7 +340,7 @@ export function superForm<T extends AnyZodObject>(
       if (cancelled) return;
     }
 
-    if (validation.success && options.resetForm) {
+    if (validation.validated && options.resetForm) {
       _resetForm();
     } else {
       rebind(validation, untaint);
@@ -451,7 +451,7 @@ export function superForm<T extends AnyZodObject>(
     errors: Errors,
     form: Data,
     message: Message,
-    success: derived(Success, ($s) => $s),
+    validated: derived(Validated, ($s) => $s),
     empty: derived(Empty, ($e) => $e),
 
     submitting: derived(Submitting, ($s) => $s),

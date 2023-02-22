@@ -58,7 +58,7 @@ export const actions = {
   edit: async (event) => {
     const form = await superValidate(event, crudSchema);
     console.log('POST', form);
-    if (!form.success) return fail(400, { form });
+    if (!form.validated) return fail(400, { form });
 
     if (!form.data.id) {
       // CREATE user

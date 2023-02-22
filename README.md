@@ -118,7 +118,7 @@ export const actions = {
     console.log('POST', form);
 
     // Convenient validation check:
-    if (!form.success) {
+    if (!form.validated) {
       // Again, always return { form } and you'll be fine.
       return fail(400, { form });
     }
@@ -133,7 +133,7 @@ Submit the form, and see what's happening on the server:
 
 ```js
 POST {
-  success: false,
+  validated: false,
   errors: { email: [ 'Invalid email' ] },
   data: { name: 'Hello world!', email: '' },
   empty: false,
@@ -143,7 +143,7 @@ POST {
 
 This is the validation object returned from `superValidate`, containing all you need to handle the rest of the logic:
 
-- `success` - A `boolean` which tells you whether the validation succeeded or not.
+- `validated` - A `boolean` which tells you whether the validation succeeded or not.
 - `errors` - A `Record<string, string[]>` of all validation errors.
 - `data` - The coerced posted data, in this case not valid, so it should be promptly returned to the client.
 - `empty` - A `boolean` which tells you if the data passed to `superValidate` was empty, as in the load function.
@@ -152,7 +152,7 @@ This is the validation object returned from `superValidate`, containing all you 
 And as you see in the example above, the logic for checking validation status is as simple as it gets:
 
 ```ts
-if (!form.success) {
+if (!form.validated) {
   return fail(400, { form });
 }
 ```
@@ -288,7 +288,7 @@ onResult: ({ result, update, formEl, cancel }) => void
 
 When you want detailed control, this event gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result` and an `update` function, so you can decide if you want to update the form at all.
 
-The `update(result, untaint?)` function takes an `ActionResult` which is **not** of type `error`, and an optional `untaint` parameter, which can be used to untaint the form, so the dialog won't appear when navigating away. If not specified, result types `success` and `redirect` will untaint the form.
+The `update(result, untaint?)` function takes an `ActionResult` of type `success` or `failure`, and an optional `untaint` parameter which can be used to untaint the form, so the dialog won't appear when navigating away. If `untaint` isn't specified, a result status between 200-299 will untaint the form.
 
 `formEl` is the `HTMLFormElement` of the form.
 
@@ -575,7 +575,7 @@ The form action looks similar to before, but will branch after validation is suc
 export const actions = {
   default: async (event) => {
     const form = await superValidate(event, crudSchema);
-    if (!form.success) return fail(400, { form });
+    if (!form.validated) return fail(400, { form });
 
     if (!form.data.id) {
       // CREATE user
@@ -625,7 +625,7 @@ export type ValidationErrors<T extends AnyZodObject> = Partial<
 
 ```ts
 export type Validation<T extends AnyZodObject> = {
-  success: boolean;
+  validated: boolean;
   errors: ValidationErrors<T>;
   data: z.infer<T>;
   empty: boolean;
@@ -667,7 +667,7 @@ If `data` is determined to be empty (`null`, `undefined` or no `FormData`), a va
 
 ```js
 {
-  success: true;
+  validated: true;
   errors: {};
   data: z.infer<T>; // See further down for default entity values.
   empty: true;
@@ -689,7 +689,7 @@ If you want to set an error on the form outside validation, use `setError`. It r
 
 **noErrors(form)**
 
-If you want to return a form with no validation errors. Only the `errors` property will be modified, so `success` still indicates the validation status. Useful for load functions where the entity is invalid, but as a initial state no errors should be displayed on the form.
+If you want to return a form with no validation errors. Only the `errors` property will be modified, so `validated` still indicates the validation status. Useful for load functions where the entity is invalid, but as a initial state no errors should be displayed on the form.
 
 ```ts
 noErrors(form: Validation<T>) : Validation<T>
@@ -713,7 +713,7 @@ const loginSchema = z.object({
 
 export const POST = (async (event) => {
   const form = await superValidate(event, loginSchema);
-  if (!form.success) return actionResult('failure', { form });
+  if (!form.validated) return actionResult('failure', { form });
 
   // Verify login here //
 

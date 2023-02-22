@@ -126,7 +126,7 @@ export function setError<T extends AnyZodObject>(
   } else {
     form.errors[field] = errArr;
   }
-  form.success = false;
+  form.validated = false;
   return fail(400, { form });
 }
 
@@ -311,7 +311,6 @@ function _valueOrDefault<T extends AnyZodObject>(
  * @param schema The Zod schema to validate against.
  * @param options.defaults An object with keys that can be a default value, or a function that will be called to get the default value.
  * @param options.noErrors For load requests, this is usually set to prevent validation errors from showing directly on a GET request.
- * @returns An object with success, errors and data properties.
  */
 export async function superValidate<T extends AnyZodObject>(
   data:
@@ -370,7 +369,7 @@ export async function superValidate<T extends AnyZodObject>(
 
   if (empty) {
     return {
-      success: true,
+      validated: true,
       errors: {},
       data: data as z.infer<T>,
       empty,
@@ -385,7 +384,7 @@ export async function superValidate<T extends AnyZodObject>(
       ? {}
       : (status.error.flatten().fieldErrors as ValidationErrors<T>);
     return {
-      success: false,
+      validated: false,
       errors,
       data: data as z.infer<T>,
       empty,
@@ -393,7 +392,7 @@ export async function superValidate<T extends AnyZodObject>(
     };
   } else {
     return {
-      success: true,
+      validated: true,
       errors: {},
       data: status.data,
       empty,

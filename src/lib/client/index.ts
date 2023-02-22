@@ -124,6 +124,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
   timeout: Readable<boolean>;
 
   firstError: Readable<{ key: string; value: string } | null>;
+  allErrors: Readable<{ key: string; value: string }[]>;
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
@@ -292,15 +293,14 @@ export function superForm<T extends AnyZodObject>(
   const Timeout = writable(false);
 
   // Utilities
-  const FirstError = derived(Errors, (errors) => {
-    if (!errors) return null;
-    const keys = Object.keys(errors);
-    if (!keys.length) return null;
-    const messages = errors[keys[0]];
-    return messages && messages[0]
-      ? { key: keys[0], value: messages[0] }
-      : null;
+  const AllErrors = derived(Errors, (errors) => {
+    if (!errors) return [];
+    return Object.entries(errors).flatMap(
+      ([key, errors]) => errors?.map((value) => ({ key, value })) ?? []
+    );
   });
+
+  const FirstError = derived(AllErrors, (allErrors) => allErrors[0] ?? null);
 
   //////////////////////////////////////////////////////////////////////
 
@@ -380,7 +380,7 @@ export function superForm<T extends AnyZodObject>(
       );
     }
 
-    const validation = (result.data as Validation<T>) ?? emptyForm();
+    const validation = (result.data.form as Validation<T>) ?? emptyForm();
 
     _update(
       validation,
@@ -473,6 +473,7 @@ export function superForm<T extends AnyZodObject>(
       ),
 
     firstError: FirstError,
+    allErrors: AllErrors,
     update: Data_update,
     reset: _resetForm
   };

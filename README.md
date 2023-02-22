@@ -639,7 +639,8 @@ export type Validation<T extends AnyZodObject> = {
 import {
   superValidate,
   setError,
-  noErrors
+  noErrors,
+  actionResult
 } from 'sveltekit-superforms/server';
 ```
 
@@ -692,6 +693,32 @@ If you want to return a form with no validation errors. Only the `errors` proper
 
 ```ts
 noErrors(form: Validation<T>) : Validation<T>
+```
+
+**actionResult(type, data?, status?)**
+
+When not using form actions, this constructs an action result in a `Response` object, so you can return `Validation<T>` from your API/endpoints, for example in a login request:
+
+**src/routes/login/+server.ts**
+
+```ts
+import { actionResult, superValidate } from '$lib/server';
+import { z } from 'zod';
+import type { RequestHandler } from './$types';
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(5)
+});
+
+export const POST = (async (event) => {
+  const form = await superValidate(event, loginSchema);
+  if (!form.success) return actionResult('failure', { form });
+
+  // Verify login here //
+
+  return actionResult('success', { form });
+}) satisfies RequestHandler;
 ```
 
 ## Client
@@ -773,6 +800,7 @@ type EnhancedForm<T extends AnyZodObject> = {
   timeout: Readable<boolean>;
 
   firstError: Readable<{ key: string; value: string } | null>;
+  allErrors: Readable<{ key: string; value: string }[]>;
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   reset: () => void;

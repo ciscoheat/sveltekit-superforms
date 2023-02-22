@@ -1,5 +1,5 @@
-import { fail, type RequestEvent } from '@sveltejs/kit';
-import { parse } from 'devalue';
+import { fail, json, type RequestEvent } from '@sveltejs/kit';
+import { parse, stringify } from 'devalue';
 import type { Validation, ValidationErrors } from '..';
 
 import {
@@ -399,5 +399,34 @@ export async function superValidate<T extends AnyZodObject>(
       empty,
       message: null
     };
+  }
+}
+
+export function actionResult<T extends Record<string, unknown> | string>(
+  type: T extends string ? 'redirect' : 'success' | 'failure' | 'error',
+  data?: T,
+  status?: number
+) {
+  const result = <T extends { status: number }>(struct: T) => {
+    return json({ type, ...struct }, { status: struct.status });
+  };
+
+  if (type == 'error') {
+    return result({
+      status: status || 500,
+      error: data
+    });
+  } else if (type == 'redirect') {
+    return result({
+      status: status || 303,
+      location: data
+    });
+  } else if (type == 'failure') {
+    return result({
+      status: status || 400,
+      data: stringify(data)
+    });
+  } else {
+    return result({ status: status || 200, data: stringify(data) });
   }
 }

@@ -368,28 +368,23 @@ export function superForm<T extends AnyZodObject>(
       );
     }
 
-    function resultData(data: unknown) {
-      if (!data) return emptyForm();
-
-      if (typeof data !== 'object') {
-        throw new Error(
-          'Non-object validation data returned from ActionResult.'
-        );
-      }
-
-      if (!('form' in data)) {
-        throw new Error(
-          'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
-        );
-      }
-
-      return data.form as Validation<T>;
+    if (typeof result.data !== 'object') {
+      throw new Error(
+        'Non-object validation data returned from ActionResult.'
+      );
     }
 
-    const validation = resultData(result.data) ?? emptyForm();
+    if (!('form' in result.data)) {
+      throw new Error(
+        'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
+      );
+    }
+
+    const validation = (result.data as Validation<T>) ?? emptyForm();
+
     _update(
       validation,
-      untaint ?? (result.status >= 200 && result.status < 400)
+      untaint ?? (result.status >= 200 && result.status < 300)
     );
   };
 

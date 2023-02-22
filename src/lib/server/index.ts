@@ -126,7 +126,7 @@ export function setError<T extends AnyZodObject>(
   } else {
     form.errors[field] = errArr;
   }
-  form.validated = false;
+  form.valid = false;
   return fail(400, { form });
 }
 
@@ -369,7 +369,7 @@ export async function superValidate<T extends AnyZodObject>(
 
   if (empty) {
     return {
-      validated: true,
+      valid: false,
       errors: {},
       data: data as z.infer<T>,
       empty,
@@ -384,7 +384,7 @@ export async function superValidate<T extends AnyZodObject>(
       ? {}
       : (status.error.flatten().fieldErrors as ValidationErrors<T>);
     return {
-      validated: false,
+      valid: false,
       errors,
       data: data as z.infer<T>,
       empty,
@@ -392,7 +392,7 @@ export async function superValidate<T extends AnyZodObject>(
     };
   } else {
     return {
-      validated: true,
+      valid: true,
       errors: {},
       data: status.data,
       empty,

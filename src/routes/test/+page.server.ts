@@ -32,7 +32,7 @@ export const actions = {
 
     await new Promise((resolve) => setTimeout(resolve, form.data.number));
 
-    if (!form.validated) return fail(400, { form });
+    if (!form.valid) return fail(400, { form });
     else form.message = 'Form posted!';
 
     return { form };

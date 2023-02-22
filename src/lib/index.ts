@@ -8,7 +8,7 @@ export type ValidationErrors<T extends AnyZodObject> = Partial<
 >;
 
 export type Validation<T extends AnyZodObject> = {
-  validated: boolean;
+  valid: boolean;
   errors: ValidationErrors<T>;
   data: z.infer<T>;
   empty: boolean;

@@ -68,7 +68,7 @@ test('Model validation', async () => {
   const validation = await superValidate(model, userForm);
   const data = validation.data;
 
-  expect(validation.validated).toEqual(true);
+  expect(validation.valid).toEqual(true);
   expect(validation.errors).toStrictEqual({});
   expect(data).toStrictEqual(model);
 });
@@ -78,7 +78,7 @@ test('Failed model validation', async () => {
   const validation = await superValidate(testData, userForm);
   const data = validation.data;
 
-  assert(!validation.validated, 'Validation should fail');
+  assert(!validation.valid, 'Validation should fail');
   expect(validation.errors).toStrictEqual(validationErrors);
   expect(data).toStrictEqual(testData);
 });
@@ -95,7 +95,7 @@ test('FormData validation', async () => {
   const validation = await superValidate(formData, userForm);
   const data = validation.data;
 
-  assert(validation.validated);
+  assert(validation.valid);
   expect(validation.errors).toStrictEqual({});
 
   // Date is transformed to string, so it cannot be compared directly.
@@ -119,7 +119,7 @@ test('Failed FormData validation', async () => {
   const validation = await superValidate(formData, userForm);
   const data = validation.data;
 
-  assert(!validation.validated, 'FormData validation should fail');
+  assert(!validation.valid, 'FormData validation should fail');
 
   expect(validation.errors).toStrictEqual(validationErrors);
 
@@ -172,7 +172,7 @@ test('Nullable values', async () => {
   // If not null and a key is missing, it should fail since
   // name is nullable but not optional.
   const output3 = await superValidate({ scopeId: 3 }, schema);
-  assert(!output3.validated);
+  assert(!output3.valid);
   expect(output3.data.scopeId).toEqual(3);
   expect(output3.data.name).toBeUndefined();
   expect(output3.errors.name?.length).toEqual(1);
@@ -186,7 +186,7 @@ test('Optional values', async () => {
   });
 
   const output = await superValidate({ other: 'Test' }, schema);
-  expect(output.validated).equals(true);
+  expect(output.valid).equals(true);
   expect(output.message).equals(null);
   expect(output.data.name).toBeUndefined();
   expect(output.data.other).equals('Test');
@@ -196,7 +196,7 @@ test('Optional values', async () => {
     { name: 'Name', other: 'Test' },
     schema
   );
-  expect(output2.validated).equals(true);
+  expect(output2.valid).equals(true);
   expect(output2.data.name).equals('Name');
   expect(output2.data.other).equals('Test');
   expect(output.errors).toStrictEqual({});
@@ -210,7 +210,7 @@ test('Adding errors with setError', async () => {
 
   const output = await superValidate({ scopeId: 3, name: null }, schema);
 
-  expect(output.validated).equals(true);
+  expect(output.valid).equals(true);
   expect(output.errors).toStrictEqual({});
   expect(output.data.scopeId).toEqual(3);
   expect(output.data.name).toBeNull();
@@ -218,13 +218,13 @@ test('Adding errors with setError', async () => {
   const err = { scopeId: ['This is an error'] };
   setError(output, 'scopeId', 'This is an error');
 
-  assert(!output.validated);
+  assert(!output.valid);
   expect(output.errors).toStrictEqual(err);
 
   // Should fail, since name does not exist.
   const output2 = await superValidate({ scopeId: 3 }, schema);
 
-  assert(!output2.validated);
+  assert(!output2.valid);
   expect(output2.errors.name?.length).toEqual(1);
   expect(output2.data.scopeId).toEqual(3);
   expect(output2.data.name).toBeUndefined();
@@ -238,7 +238,7 @@ test('Clearing errors with noErrors', async () => {
 
   const output = await superValidate({ scopeId: 0, name: 'abc' }, schema);
 
-  assert(!output.validated);
+  assert(!output.valid);
   expect(output.empty).toEqual(false);
   expect(output.errors.scopeId?.length).toEqual(1);
   expect(Object.keys(output.errors).length).toEqual(1);
@@ -246,7 +246,7 @@ test('Clearing errors with noErrors', async () => {
   expect(output.data.name).toEqual('abc');
 
   const cleared = noErrors(output);
-  assert(!cleared.validated);
+  assert(!cleared.valid);
   expect(cleared.empty).toEqual(false);
   expect(cleared.errors).toStrictEqual({});
   expect(cleared.data.scopeId).toEqual(output.data.scopeId);
@@ -259,13 +259,13 @@ test('File validation', async () => {
   });
 
   const output = await superValidate({ upload: new Date() }, schema);
-  expect(output.validated).equals(true);
+  expect(output.valid).equals(true);
   expect(output.empty).toEqual(false);
   expect(output.data.upload).instanceOf(Date);
   expect(output.errors).toStrictEqual({});
 
   const output2 = await superValidate({ upload: null }, schema);
-  expect(!output2.validated);
+  expect(!output2.valid);
   expect(output2.data.upload).toBeNull();
   expect(output2.errors).toStrictEqual({});
 });
@@ -299,7 +299,7 @@ test('Default values', () => {
   });
 });
 
-test('More default values', () => {
+test('More default values', async () => {
   const d = new Date();
   const e = defaultEntity(_dataTypeForm, {
     defaults: { date: d, coercedDate: d }
@@ -319,4 +319,10 @@ test('More default values', () => {
     coercedNumber: 0,
     coercedDate: d
   });
+
+  const form = await superValidate(null, _dataTypeForm);
+  expect(form.empty).toEqual(true);
+  expect(form.errors).toEqual({});
+  expect(form.message).toEqual(null);
+  expect(form.valid).toEqual(false);
 });

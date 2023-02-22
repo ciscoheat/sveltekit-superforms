@@ -256,7 +256,7 @@ export function superForm<T extends AnyZodObject>(
 
   function emptyForm() {
     return {
-      validated: true,
+      valid: false,
       errors: {},
       data: {},
       empty: true,
@@ -281,7 +281,7 @@ export function superForm<T extends AnyZodObject>(
   }
 
   // Stores for the properties of Validation<T>
-  const Validated = writable(form.validated);
+  const Validated = writable(form.valid);
   const Errors = writable(form.errors);
   const Data = writable(form.data);
   const Empty = writable(form.empty);
@@ -319,7 +319,7 @@ export function superForm<T extends AnyZodObject>(
   }
 
   function rebind(form: Validation<T>, untaint: boolean) {
-    Validated.set(form.validated);
+    Validated.set(form.valid);
     Errors.set(form.errors);
     Data.set(form.data);
     Empty.set(form.empty);
@@ -340,7 +340,7 @@ export function superForm<T extends AnyZodObject>(
       if (cancelled) return;
     }
 
-    if (form.validated && options.resetForm) {
+    if (form.valid && options.resetForm) {
       _resetForm();
     } else {
       rebind(form, untaint);

@@ -12,7 +12,7 @@
     {
       dataType: 'formdata',
       async onUpdate({ form }) {
-        if (form.validated) {
+        if (form.valid) {
           await goto('?id=' + form.data.id);
         }
       }

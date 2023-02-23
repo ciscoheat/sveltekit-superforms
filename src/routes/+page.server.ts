@@ -1,7 +1,8 @@
 import { superValidate } from '$lib/server';
 import { z } from 'zod';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { redirect } from 'sveltekit-flash-message/server';
 
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
@@ -60,11 +61,20 @@ export const actions = {
     console.log('POST', form);
     if (!form.valid) return fail(400, { form });
 
+    //throw error(500);
+
     if (!form.data.id) {
       // CREATE user
       const user = { ...form.data, id: userId() };
       users.push(user);
-      throw redirect(303, '?id=' + user.id);
+      throw redirect(
+        '?id=' + user.id,
+        {
+          type: 'success',
+          message: 'User created!'
+        },
+        event
+      );
     } else {
       // UPDATE user
       const user = users.find((u) => u.id == form.data.id);

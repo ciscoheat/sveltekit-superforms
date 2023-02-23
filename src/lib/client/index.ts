@@ -80,11 +80,16 @@ export type FormOptions<T extends AnyZodObject> = {
     | string;
   dataType?: 'form' | 'formdata' | 'json';
   validators?: Validators<T>;
-  defaultValidator?: 'keep' | 'clear';
+  defaultValidator?: 'clear' | 'keep';
   clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs?: number;
   timeoutMs?: number;
   multipleSubmits?: 'prevent' | 'allow' | 'abort';
+  flashMessage?: (errorResult: {
+    type: 'error';
+    status: number;
+    error: App.Error;
+  }) => App.PageData['flash'];
 };
 
 const defaultFormOptions: FormOptions<AnyZodObject> = {
@@ -104,7 +109,7 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   onError: 'set-message',
   dataType: 'form',
   validators: undefined,
-  defaultValidator: 'keep',
+  defaultValidator: 'clear',
   clearOnSubmit: 'errors-and-message',
   delayMs: 500,
   timeoutMs: 8000,
@@ -237,6 +242,8 @@ export function intArrayProxy<T extends Record<string, unknown>>(
   };
 }
 
+let flashLibrary: any;
+
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {Validation} form Usually data.form from PageData.
@@ -254,6 +261,14 @@ export function superForm<T extends AnyZodObject>(
 
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
 
+  if (options.flashMessage && !flashLibrary) {
+    import('sveltekit-flash-message/client')
+      .then((flash) => (flashLibrary = flash))
+      .catch(function () {
+        /**/
+      });
+  }
+
   function emptyForm() {
     return {
       valid: false,
@@ -264,10 +279,12 @@ export function superForm<T extends AnyZodObject>(
     };
   }
 
+  // Detect if a form is posted (without JavaScript).
   const actionForm = get(page).form;
 
-  if (options.applyAction && actionForm && 'form' in actionForm) {
+  if (options.applyAction && actionForm) {
     if (
+      !actionForm.form ||
       !('success' in actionForm.form) ||
       typeof actionForm.form.success !== 'boolean'
     ) {
@@ -654,17 +671,21 @@ function formEnhance<T extends AnyZodObject>(
           break;
       }
 
+      if (
+        flashLibrary &&
+        options.flashMessage &&
+        (options.clearOnSubmit == 'errors-and-message' ||
+          options.clearOnSubmit == 'message')
+      ) {
+        try {
+          flashLibrary.getFlash(page).set(undefined);
+        } catch {
+          //
+        }
+      }
+
       //d('Submitting');
       form.submitting();
-
-      // TODO: flash message
-      /*
-			try {
-				getFlash(page).set(undefined);
-			} catch (_) {
-				//
-			}
-			*/
 
       switch (options.dataType) {
         case 'json':
@@ -696,6 +717,9 @@ function formEnhance<T extends AnyZodObject>(
       }
 
       if (!cancelled) {
+        const status = Math.floor(result.status || 500);
+        let errorMessage: string | undefined = undefined;
+
         if (result.type !== 'error') {
           if (result.type === 'success' && options.invalidateAll) {
             await invalidateAll();
@@ -716,46 +740,50 @@ function formEnhance<T extends AnyZodObject>(
               // Transform to failure, to avoid data loss
               await applyAction({
                 type: 'failure',
-                status: Math.floor(result.status || 500)
+                status
               });
             }
           }
 
+          // Check if the error message should be replaced
           if (options.onError == 'set-message') {
-            const errorMessage = result.error.message;
             message.set(
-              errorMessage
-                ? String(errorMessage)
-                : `${result.status || 500} Internal Server Error`
+              (errorMessage =
+                result.error.message !== undefined
+                  ? result.error.message
+                  : `Error: ${status}`)
             );
           } else if (typeof options.onError === 'string') {
-            message.set(options.onError);
+            message.set((errorMessage = options.onError));
           } else if (options.onError) {
             await options.onError(result, message);
           }
         }
 
-        /*
-				// TODO: Flash message handling
-				function errorMessage(result: ActionResult): string | undefined {
-					if (result.type != 'error') return undefined;
-					return result.error;
-				}
-
-				const error = errorMessage(result);
-				if (error) {
-					getFlash(page).set({
-						status: 'error',
-						text: error
-					});
-				} else {
-					try {
-						await updateFlash(page);
-					} catch (_) {
-						//
-					}
-				}
-				*/
+        if (flashLibrary && options.flashMessage) {
+          if (result.type == 'error') {
+            if (
+              errorMessage &&
+              result.error &&
+              typeof result.error === 'object' &&
+              'message' in result.error
+            ) {
+              result.error.message = errorMessage;
+            }
+            flashLibrary.getFlash(page).set(
+              options.flashMessage({
+                ...result,
+                status: result.status ?? status
+              })
+            );
+          } else {
+            try {
+              await flashLibrary.updateFlash(page);
+            } catch {
+              //
+            }
+          }
+        }
       }
 
       form.completed(cancelled);

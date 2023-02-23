@@ -15,7 +15,11 @@
         if (form.valid) {
           await goto('?id=' + form.data.id);
         }
-      }
+      },
+      flashMessage: (errorResult) => ({
+        type: 'error',
+        message: errorResult.error.message
+      })
     }
   );
 </script>
@@ -60,6 +64,13 @@
     />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
+
+  <div>
+    <button>Submit</button>
+    {#if $delayed}Working...{/if}
+  </div>
+
+  <div style="height:1200px;">&nbsp;</div>
 
   <div>
     <button>Submit</button>

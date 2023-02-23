@@ -338,10 +338,10 @@ const { form, errors, enhance } = superForm(data.form, {
 There is one other options for specifying the default client validation behavior, when no custom validator exists for a field:
 
 ```ts
-defaultValidator: 'keep' | 'clear' = 'keep'
+defaultValidator: 'keep' | 'clear' = 'clear'
 ```
 
-If set to `keep`, validation errors will be kept displayed until the form submits (see next option). If `clear`, the field error will be removed when the value is modified.
+The default value `clear`, will remove the error when that field value is modified. If set to `keep`, validation errors will be kept displayed until the form submits (unless you change it, see next option).
 
 ## Submit behavior
 
@@ -389,6 +389,16 @@ multipleSubmits: 'prevent' | 'allow' | 'abort' = 'prevent'
 ```
 
 This one is more for the sake of the server than the user. When set to `prevent`, the form cannot be submitted again until a result is received, or the `timeout` state is reached. `abort` is the next sensible approach, which will cancel the previous request before submitting again. Finally, `allow` will allow any number of frenetic clicks on the submit button!
+
+## sveltekit-flash-message support
+
+The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property of `Validation<T>` doesn't persist when redirecting to a different page. If you have the library installed, you only need to specify this option to make things work:
+
+```ts
+flashMessage: (errorResult: ActionResult<'error'>) => App.PageData['flash'];
+```
+
+The flash message works automatically for every case except errors, so this is needed to transform the `ActionResult` `error` into your flash message type.
 
 ## The last one: Breaking free from FormData
 
@@ -742,7 +752,7 @@ type FormOptions<T extends AnyZodObject> = {
   autoFocusOnError?: boolean | 'detect';
   clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
   dataType?: 'form' | 'formdata' | 'json';
-  defaultValidator?: 'keep' | 'clear';
+  defaultValidator?: 'clear' | 'keep';
   delayMs?: number;
   errorSelector?: string;
   invalidateAll?: boolean;
@@ -759,7 +769,7 @@ type FormOptions<T extends AnyZodObject> = {
   async onResult?: (event: {
     result: ActionResult;
     update: async (
-      result: ActionResult<'success', 'failure'>,
+      result: ActionResult<'success' | 'failure'>,
       untaint?: boolean
     );
     formEl: HTMLFormElement;
@@ -806,7 +816,7 @@ type EnhancedForm<T extends AnyZodObject> = {
   reset: () => void;
 
   async update: (
-    result: ActionResult<'success', 'failure'>,
+    result: ActionResult<'success' | 'failure'>,
     untaint?: boolean
   )
 };

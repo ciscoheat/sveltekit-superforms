@@ -94,32 +94,28 @@
   </div>
 {/if}
 
-<style lang="scss">
-  $accent: #ffc800;
-  $accent-dark: #b98c00;
-  $secondary: #d20000;
-
+<style>
   .wrapper {
     margin: 0.5rem 0;
+  }
 
-    .page-status {
-      display: flex;
-      padding-right: 16px;
-      justify-content: right;
-      position: relative;
-      height: 0;
-      z-index: 1;
-      text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.25);
+  .wrapper .page-status {
+    display: flex;
+    padding-right: 16px;
+    justify-content: right;
+    position: relative;
+    height: 0;
+    z-index: 1;
+    text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.25);
+  }
 
-      & > div {
-        padding-top: 10px;
-      }
-    }
+  .wrapper .page-status > div {
+    padding-top: 10px;
+  }
 
-    pre {
-      color: #999;
-      background-color: #222;
-    }
+  .wrapper pre {
+    color: #999;
+    background-color: #222;
   }
 
   .green {
@@ -131,11 +127,11 @@
   }
 
   .red {
-    color: $secondary;
+    color: #d20000;
   }
 
   :global(.key) {
-    color: $accent;
+    color: #ffc800;
   }
 
   :global(.string) {

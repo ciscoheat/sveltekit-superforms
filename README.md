@@ -394,13 +394,13 @@ This one is more for the sake of the server than the user. When set to `prevent`
 
 ## sveltekit-flash-message support
 
-The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property of `Validation<T>` doesn't persist when redirecting to a different page. If you have the library installed, you only need to specify this option to make things work:
+The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property of `Validation<T>` doesn't persist when redirecting to a different page. If you have it installed and configured, you only need to specify this option to make things work:
 
 ```ts
 flashMessage: (errorResult: ActionResult<'error'>) => App.PageData['flash'];
 ```
 
-The flash message works automatically for every case except errors, so this is needed to transform the `ActionResult` `error` into your flash message type.
+The flash message works automatically for every case except errors, so this callback is needed to transform the `ActionResult` `error` into your flash message type.
 
 ## The last one: Breaking free from FormData
 

@@ -392,16 +392,6 @@ multipleSubmits: 'prevent' | 'allow' | 'abort' = 'prevent'
 
 This one is more for the sake of the server than the user. When set to `prevent`, the form cannot be submitted again until a result is received, or the `timeout` state is reached. `abort` is the next sensible approach, which will cancel the previous request before submitting again. Finally, `allow` will allow any number of frenetic clicks on the submit button!
 
-## sveltekit-flash-message support
-
-The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property of `Validation<T>` doesn't persist when redirecting to a different page. If you have it installed and configured, you only need to specify this option to make things work:
-
-```ts
-flashMessage: (errorResult: ActionResult<'error'>) => App.PageData['flash'];
-```
-
-The flash message works automatically for every case except errors, so this callback is needed to transform the `ActionResult` `error` into your flash message type.
-
 ## The last one: Breaking free from FormData
 
 I've been saving the best for last - If you're fine with JavaScript being a requirement for posting, you can bypass the annoyance that everything is a `string` when we are posting forms:

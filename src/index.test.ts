@@ -314,6 +314,7 @@ test('More default values', async () => {
     nullableString: null,
     nullishString: null,
     optionalString: undefined,
+    proxyString: [1, 9, 8],
     trimmedString: '',
     date: d,
     coercedNumber: 0,

@@ -22,7 +22,7 @@ import type { Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify, parse } from 'devalue';
 import { deepEqual } from '..';
-import { getFlash, updateFlash } from 'sveltekit-flash-message/client';
+//import { getFlash, updateFlash } from './sveltekit-flash-message/client';
 
 enum FetchStatus {
   Idle = 0,
@@ -89,7 +89,7 @@ export type FormOptions<T extends AnyZodObject> = {
     type: 'error';
     status: number;
     error: App.Error;
-  }) => App.PageData['flash'];
+  }) => any;
 };
 
 const defaultFormOptions: FormOptions<AnyZodObject> = {
@@ -217,6 +217,7 @@ export function fieldProxy<
   };
 }
 
+/*
 interface ArrayProxy<S> extends Writable<S[]> {
   toggle(id: S): void;
   add(id: S): void;
@@ -224,7 +225,6 @@ interface ArrayProxy<S> extends Writable<S[]> {
   length: number;
 }
 
-/*
 export function arrayProxy<
   T extends Record<string, unknown> = Record<string, unknown>,
   K extends keyof T = keyof T,
@@ -690,7 +690,7 @@ function formEnhance<T extends AnyZodObject>(
         (options.clearOnSubmit == 'errors-and-message' ||
           options.clearOnSubmit == 'message')
       ) {
-        getFlash(page).set(undefined);
+        //getFlash(page).set(undefined);
       }
 
       //d('Submitting');
@@ -779,14 +779,16 @@ function formEnhance<T extends AnyZodObject>(
             ) {
               result.error.message = errorMessage;
             }
+            /*
             getFlash(page).set(
               options.flashMessage({
                 ...result,
                 status: result.status ?? status
               })
             );
+            */
           } else {
-            updateFlash(page);
+            //updateFlash(page);
           }
         }
       } else {

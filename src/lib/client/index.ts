@@ -261,17 +261,19 @@ export function superForm<T extends AnyZodObject>(
 
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
 
+  /*
   if (options.flashMessage && !flashLibrary) {
     try {
       import('sveltekit-flash-message/client')
         .then((flash) => (flashLibrary = flash))
         .catch(function () {
-          /**/
+          //
         });
     } catch {
       //
     }
   }
+  */
 
   function emptyForm() {
     return {

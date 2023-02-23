@@ -12,6 +12,7 @@ export const _dataTypeForm = z.object({
   nullableString: z.string().nullable(),
   nullishString: z.string().nullish(),
   optionalString: z.string().optional(),
+  proxyString: z.number().array().default([1, 9, 8]),
   trimmedString: z.string().trim(),
   date: z.date().default(new Date()),
   coercedNumber: z.coerce.number().default(0),
@@ -19,9 +20,11 @@ export const _dataTypeForm = z.object({
 });
 
 export const load = (async (event) => {
-  const form = await superValidate(event, _dataTypeForm);
-
+  const form = await superValidate(event, _dataTypeForm, {
+    jsonFields: ['proxyString']
+  });
   console.log('🚀 ~ LOAD', form);
+
   return { form };
 }) satisfies PageServerLoad;
 

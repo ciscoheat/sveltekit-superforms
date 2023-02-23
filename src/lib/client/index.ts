@@ -20,7 +20,7 @@ import { tick } from 'svelte';
 import { browser } from '$app/environment';
 import type { Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
-import { stringify } from 'devalue';
+import { stringify, parse } from 'devalue';
 import { deepEqual } from '..';
 import { getFlash, updateFlash } from 'sveltekit-flash-message/client';
 
@@ -177,70 +177,80 @@ export function stringProxy<
   };
 }
 
-interface IntArrayProxy extends Writable<number[]> {
-  toggle(id: number): void;
-  add(id: number): void;
-  remove(id: number): void;
-  length: number;
-}
-
-/**
- * Creates a number[] store that will accept only integers and pass its values
- * to a string in the form, comma-separated as default.
- * @param form The form
- * @param field Form field
- * @param options allowNaN, separator
- */
-export function intArrayProxy<T extends Record<string, unknown>>(
-  form: Writable<T>,
-  field: keyof T,
-  options: {
-    allowNaN?: boolean;
-    separator?: string;
-  } = {}
-): IntArrayProxy {
-  options = { allowNaN: false, separator: ',', ...options };
-
-  function toArray(val: unknown) {
-    if (typeof val !== 'string' || !val) return [];
-    return val
-      .split(',')
-      .map((s) => parseInt(s, 10))
-      .filter((n) => (options.allowNaN ? true : !isNaN(n)));
+export function fieldProxy<
+  T extends Record<string, unknown>,
+  K extends keyof T,
+  S = T[K]
+>(form: Writable<T>, field: K): Writable<S> {
+  function unserialize(val: string) {
+    try {
+      return parse(val);
+    } catch {
+      return undefined;
+    }
   }
-  const proxy = derived(form, ($form) => {
-    return toArray($form[field]);
-  });
 
-  function update(updater: Updater<number[]>) {
+  const initialValue = stringify(get(form)[field]);
+  form.update((f) => ({ ...f, [field]: initialValue }));
+
+  const proxy = derived(
+    form,
+    ($form) => {
+      return unserialize($form[field] as string);
+    },
+    initialValue
+  );
+
+  function update(updater: Updater<S>) {
     form.update((f) => ({
       ...f,
-      [field]: updater(toArray(f[field])).join(',')
+      [field]: updater(unserialize(f[field] as string))
     }));
   }
 
   return {
     subscribe: proxy.subscribe,
     update,
-    set(val: number[]) {
-      form.update((f) => ({ ...f, [field]: val.join(options.separator) }));
-    },
-    toggle(id: number) {
-      update((r) =>
+    set(val: S) {
+      form.update((f) => ({ ...f, [field]: stringify(val) }));
+    }
+  };
+}
+
+interface ArrayProxy<S> extends Writable<S[]> {
+  toggle(id: S): void;
+  add(id: S): void;
+  remove(id: S): void;
+  length: number;
+}
+
+/*
+export function arrayProxy<
+  T extends Record<string, unknown> = Record<string, unknown>,
+  K extends keyof T = keyof T,
+  S = T[K]
+>(form: Writable<T>, field: keyof T): ArrayProxy<S> {
+  const proxy = fieldProxy(form, field);
+
+  return {
+    ...proxy,
+    toggle(id: S) {
+      proxy.update((r) =>
         r.includes(id) ? r.filter((i) => i !== id) : [...r, id]
       );
     },
-    add(id: number) {
-      update((r) => [...r, id]);
+    add(id: S) {
+      proxy.update((r) => [...r, id]);
     },
-    remove(id: number) {
-      update((r) => r.filter((i) => i !== id));
+    remove(id: S) {
+      proxy.update((r) => r.filter((i) => i !== id));
     },
     get length() {
       return get(proxy).length;
     }
   };
 }
+*/
 
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
@@ -688,7 +698,7 @@ function formEnhance<T extends AnyZodObject>(
 
       switch (options.dataType) {
         case 'json':
-          submit.data.set('json', stringify(get(data)));
+          submit.data.set('__superform_json', stringify(get(data)));
           break;
 
         case 'formdata':

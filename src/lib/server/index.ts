@@ -139,7 +139,8 @@ export function noErrors<T extends AnyZodObject>(
 function formDataToValidation<T extends AnyZodObject>(
   schema: T,
   fields: string[],
-  data: FormData
+  data: FormData,
+  jsonFields: string[]
 ) {
   const output: Record<string, unknown> = {};
 
@@ -148,6 +149,8 @@ function formDataToValidation<T extends AnyZodObject>(
     if (entry && typeof entry !== 'string') {
       // File object
       output[key] = entry;
+    } else if (jsonFields.includes(key)) {
+      output[key] = entry === null ? undefined : parse(entry);
     } else {
       output[key] = parseEntry(key, entry);
     }
@@ -325,6 +328,7 @@ export async function superValidate<T extends AnyZodObject>(
     defaults?: DefaultFields<T>;
     implicitDefaults?: boolean;
     noErrors?: boolean;
+    jsonFields?: (keyof z.infer<T>)[];
   } = {}
 ): Promise<Validation<T>> {
   options = { ...options };
@@ -332,18 +336,22 @@ export async function superValidate<T extends AnyZodObject>(
   const schemaKeys = Object.keys(schema.keyof().Values);
   let empty = false;
 
-  function parseJson(value: string | undefined) {
-    if (!value) return {};
-    try {
-      return parse(value);
-    } catch (_) {
-      return {};
-    }
-  }
-
   function parseFormData(data: FormData) {
-    if (data.has('json')) return parseJson(data.get('json')?.toString());
-    else return formDataToValidation(schema, schemaKeys, data);
+    if (data.has('__superform_json')) {
+      const value = data.get('__superform_json')?.toString();
+      if (!value) return {};
+      try {
+        return parse(value);
+      } catch (_) {
+        return {};
+      }
+    } else
+      return formDataToValidation(
+        schema,
+        schemaKeys,
+        data,
+        (options.jsonFields ?? []) as string[]
+      );
   }
 
   async function tryParseFormData(request: Request) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stringProxy, superForm } from '$lib/client';
+  import { fieldProxy, stringProxy, superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
 
@@ -30,6 +30,8 @@
     invalidateAll: false
   });
 
+  const arrayProxy = fieldProxy(form, 'proxyString');
+
   const bool = stringProxy(form, 'bool', 'boolean');
   const proxyNumber = stringProxy(form, 'proxyNumber', 'int');
   const fields = [
@@ -47,7 +49,10 @@
     {#each $modalErrors as error}• {error.value}<br />{/each}
   </div>
   <div>Email</div>
-  <input bind:value={$modalForm.name} />
+  <input
+    on:input={() => ($arrayProxy = [1, 2])}
+    bind:value={$modalForm.name}
+  />
   <div>Password</div>
   <input bind:value={$modalForm.password} />
   <button data-submit>Login</button>
@@ -60,6 +65,7 @@
 {/if}
 
 <form method="POST" action="?/form" use:enhance>
+  <input type="hidden" name="proxyString" bind:value={$arrayProxy} />
   <div>
     <button>Submit</button>
     {#if $timeout}

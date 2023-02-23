@@ -261,10 +261,10 @@ export function superForm<T extends AnyZodObject>(
 
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
 
-  /*
   if (options.flashMessage && !flashLibrary) {
     try {
-      import('sveltekit-flash-message/client')
+      const lib = ['sveltekit-flash-message', 'client'];
+      import(lib.join('/'))
         .then((flash) => (flashLibrary = flash))
         .catch(function () {
           //
@@ -273,7 +273,6 @@ export function superForm<T extends AnyZodObject>(
       //
     }
   }
-  */
 
   function emptyForm() {
     return {

@@ -292,8 +292,8 @@ export function superForm<T extends AnyZodObject>(
   if (options.applyAction && actionForm) {
     if (
       !actionForm.form ||
-      !('success' in actionForm.form) ||
-      typeof actionForm.form.success !== 'boolean'
+      !('valid' in actionForm.form) ||
+      typeof actionForm.form.valid !== 'boolean'
     ) {
       throw new Error(
         "ActionData didn't return a Validation object. Make sure you return { form } from form actions."

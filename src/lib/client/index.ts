@@ -7,7 +7,6 @@ import {
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
-//import { getFlash, updateFlash } from 'sveltekit-flash-message/client';
 import { isElementInViewport, scrollToAndCenter } from './elements';
 import {
   derived,
@@ -23,6 +22,7 @@ import type { Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual } from '..';
+import { getFlash, updateFlash } from 'sveltekit-flash-message/client';
 
 enum FetchStatus {
   Idle = 0,
@@ -242,8 +242,6 @@ export function intArrayProxy<T extends Record<string, unknown>>(
   };
 }
 
-let flashLibrary: any;
-
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {Validation} form Usually data.form from PageData.
@@ -260,21 +258,6 @@ export function superForm<T extends AnyZodObject>(
   }
 
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
-
-  /*
-  if (options.flashMessage && !flashLibrary) {
-    try {
-      const lib = ['sveltekit-flash-message', 'client'];
-      import(lib.join('/'))
-        .then((flash) => (flashLibrary = flash))
-        .catch(function () {
-          //
-        });
-    } catch {
-      //
-    }
-  }
-  */
 
   function emptyForm() {
     return {
@@ -679,16 +662,11 @@ function formEnhance<T extends AnyZodObject>(
       }
 
       if (
-        flashLibrary &&
         options.flashMessage &&
         (options.clearOnSubmit == 'errors-and-message' ||
           options.clearOnSubmit == 'message')
       ) {
-        try {
-          flashLibrary.getFlash(page).set(undefined);
-        } catch {
-          //
-        }
+        getFlash(page).set(undefined);
       }
 
       //d('Submitting');
@@ -767,7 +745,7 @@ function formEnhance<T extends AnyZodObject>(
           }
         }
 
-        if (flashLibrary && options.flashMessage) {
+        if (options.flashMessage) {
           if (result.type == 'error') {
             if (
               errorMessage &&
@@ -777,18 +755,14 @@ function formEnhance<T extends AnyZodObject>(
             ) {
               result.error.message = errorMessage;
             }
-            flashLibrary.getFlash(page).set(
+            getFlash(page).set(
               options.flashMessage({
                 ...result,
                 status: result.status ?? status
               })
             );
           } else {
-            try {
-              await flashLibrary.updateFlash(page);
-            } catch {
-              //
-            }
+            updateFlash(page);
           }
         }
       }

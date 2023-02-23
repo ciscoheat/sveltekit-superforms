@@ -157,7 +157,7 @@ function formDataToValidation<T extends AnyZodObject>(
     const newValue = _valueOrDefault(schema, field, value, false, true);
 
     /*
-      d(field, value, {
+      console.log(field, value, {
       ...newValue,
       type: newValue.type.constructor.name
     });
@@ -234,9 +234,9 @@ function _valueOrDefault<T extends AnyZodObject>(
   let defaultValue: unknown = undefined;
 
   //let i = 0;
-  //d(field);
+  //console.log(field);
   while (wrapped) {
-    //d(' '.repeat(++i * 2) + zodType.constructor.name);
+    //console.log(' '.repeat(++i * 2) + zodType.constructor.name);
     if (zodType instanceof ZodNullable) {
       isNullable = true;
       zodType = zodType.unwrap();
@@ -254,7 +254,7 @@ function _valueOrDefault<T extends AnyZodObject>(
   }
 
   /*
-  d(field, {
+  console.log(field, {
     zodType: zodType.constructor.name,
     isNullable,
     isOptional,

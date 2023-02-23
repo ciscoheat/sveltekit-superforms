@@ -308,7 +308,9 @@ invalidateAll: boolean = true;
 resetForm: boolean = false;
 ```
 
-As you see, another difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted. In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms` resetting means going back to the initial state of the form data, usually the contents of `form` in `PageData`. If you're depending heavily on default values, this may not always be what you want.
+As you see, another difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted.
+
+In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms` resetting means _going back to the initial state of the form data_, usually the contents of `form` in `PageData`. This may not be exactly what you needed, in which case you can use an event to clear the form instead.
 
 ## More options: Client-side validators
 
@@ -668,7 +670,7 @@ superValidate(
   schema: T,
   options?: {
     implicitDefaults = true; // See further down for default entity values
-    noErrors = false; // See noErrors() reference further down
+    noErrors = false; // See noErrors() reference
   }
 ): Promise<Validation<T>>
 ```
@@ -852,7 +854,21 @@ Used when returning default values from `superValidate` for an entity, or when a
 | `bigint`        | `BigInt(0)` |
 | `symbol`        | `Symbol()`  |
 
-## Feedback wanted!
+This whole behavior can be turned off if you pass `options.implicitDefaults = false` to `superValidate`, which means that you must add `default` to all required fields of your schema.
+
+## Non-supported defaults
+
+Some Zod types like `ZodEnum` and `ZodUnion` can't use the above default values, so an exception will be thrown if you don't set a default value for them yourself, for example:
+
+```ts
+const schema = z.object({
+  fish: z.enum(['Salmon', 'Tuna', 'Trout']).default('Salmon')
+});
+```
+
+Let me know if you find something that could or should be supported regarding this.
+
+# Feedback wanted!
 
 The library is quite stable so don't expect any major changes, but there could still be minor breaking changes until version 1.0, mostly variable naming.
 

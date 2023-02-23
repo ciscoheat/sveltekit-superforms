@@ -344,7 +344,11 @@ export function superForm<T extends AnyZodObject>(
         form,
         cancel: () => (cancelled = true)
       });
-      if (cancelled) return;
+
+      if (cancelled) {
+        cancelFlash();
+        return;
+      }
     }
 
     if (form.valid && options.resetForm) {
@@ -389,7 +393,10 @@ export function superForm<T extends AnyZodObject>(
 
     const form = (result.data.form as Validation<T>) ?? emptyForm();
 
-    _update(form, untaint ?? (result.status >= 200 && result.status < 300));
+    await _update(
+      form,
+      untaint ?? (result.status >= 200 && result.status < 300)
+    );
   };
 
   if (browser) {
@@ -428,7 +435,7 @@ export function superForm<T extends AnyZodObject>(
 
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
-      page.subscribe((p) => {
+      page.subscribe(async (p) => {
         // Skip the update if no new data is retrieved.
         if (!p.form && !p.data.form) return;
 
@@ -437,7 +444,7 @@ export function superForm<T extends AnyZodObject>(
             throw new Error(
               "No form data found in $page.form (ActionData). Make sure you return { form } in this page's form actions."
             );
-          _update(p.form.form, p.status >= 200 && p.status < 400);
+          await _update(p.form.form, p.status >= 200 && p.status < 400);
         } else if (p.data.form && p.data.form != initialForm) {
           if (!p.data.form) {
             throw new Error(
@@ -449,6 +456,11 @@ export function superForm<T extends AnyZodObject>(
         }
       });
     }
+  }
+
+  function cancelFlash() {
+    if (options.flashMessage && browser)
+      document.cookie = `flash=; Max-Age=0; Path=/;`;
   }
 
   return {
@@ -473,7 +485,8 @@ export function superForm<T extends AnyZodObject>(
         options,
         Data,
         Message,
-        enableTaintedMessage
+        enableTaintedMessage,
+        cancelFlash
       ),
 
     firstError: FirstError,
@@ -497,7 +510,8 @@ function formEnhance<T extends AnyZodObject>(
   options: FormOptions<T>,
   data: Writable<Validation<T>['data']>,
   message: Writable<Validation<T>['message']>,
-  enableTaintedForm: () => void
+  enableTaintedForm: () => void,
+  cancelFlash: () => void
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -644,7 +658,7 @@ function formEnhance<T extends AnyZodObject>(
     }
 
     if (cancelled) {
-      currentRequest = null;
+      cancelFlash();
     } else {
       switch (options.clearOnSubmit) {
         case 'errors-and-message':
@@ -714,7 +728,7 @@ function formEnhance<T extends AnyZodObject>(
             // This will call the page subscription in superForm
             await applyAction(result);
           } else if (result.type !== 'redirect') {
-            Data_update(result);
+            await Data_update(result);
           }
         } else {
           // Error result
@@ -765,6 +779,8 @@ function formEnhance<T extends AnyZodObject>(
             updateFlash(page);
           }
         }
+      } else {
+        cancelFlash();
       }
 
       form.completed(cancelled);

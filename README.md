@@ -891,9 +891,9 @@ const schema = z.object({
 
 Let me know if you find something that could or should be supported regarding this.
 
-# Default values
+# Default options
 
-When you start to configure the library to suit your stack, it's recommended to create an object with default values that you will refer to instead:
+When you start to configure the library to suit your stack, it's recommended to create an object with default options that you will refer to instead:
 
 ```ts
 import { superForm } from 'sveltekit-superforms/client';
@@ -907,6 +907,26 @@ export function yourSuperForm(
     ...params[1]
   });
 }
+```
+
+# File handling
+
+Currently, file uploads are not handled with `sveltekit-superforms`. The recommended way to do it is to grab the `FormData` and extract the files from there, after validation:
+
+```ts
+export const actions = {
+  default: async ({ request }) => {
+    const formData = await request.formData();
+    const form = await superValidate(formData, schema);
+
+    if (!form.valid) return fail(400, { form });
+
+    const file = formData.get('file');
+    // Do something with the file.
+
+    return { form };
+  }
+} satisfies Actions;
 ```
 
 # Feedback wanted!

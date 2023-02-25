@@ -3,13 +3,14 @@ import { parse, stringify } from 'devalue';
 import type { Validation, ValidationErrors } from '..';
 
 import {
+  z,
+  type ZodTypeAny,
+  type AnyZodObject,
   ZodAny,
   ZodDefault,
   ZodNullable,
   ZodOptional,
   ZodString,
-  type AnyZodObject,
-  z,
   ZodNumber,
   ZodBoolean,
   ZodDate,
@@ -89,16 +90,17 @@ export function defaultEntity<T extends AnyZodObject>(
   // Need to set empty properties after defaults are set.
   output = Object.fromEntries(
     fields.map((f) => {
+      const typeInfo = zodTypeInfo(schema.shape[f]);
       const value =
         defaultKeys && defaultKeys.includes(f)
           ? output[f]
           : _valueOrDefault(
-              schema,
               f,
               undefined,
               true,
-              options.implicitDefaults ?? true
-            ).value;
+              options.implicitDefaults ?? true,
+              typeInfo
+            );
 
       return [f, value];
     })
@@ -140,37 +142,45 @@ export function noErrors<T extends AnyZodObject>(
 function formDataToValidation<T extends AnyZodObject>(
   schema: T,
   fields: string[],
-  data: FormData,
-  proxyFields: string[]
+  data: FormData
 ) {
   const output: Record<string, unknown> = {};
 
-  for (const key of fields) {
-    const entry = data.get(key);
+  function _parseSingleEntry(
+    key: string,
+    entry: FormDataEntryValue,
+    typeInfo: ReturnType<typeof zodTypeInfo>
+  ) {
     if (entry && typeof entry !== 'string') {
       // File object
-      output[key] = entry;
-    } else if (proxyFields.includes(key)) {
-      output[key] = entry === null ? undefined : parse(entry);
+      return entry;
     } else {
-      output[key] = parseEntry(key, entry);
+      return parseEntry(key, entry, typeInfo);
     }
   }
 
-  function parseEntry(field: string, value: string | null): unknown {
-    const newValue = _valueOrDefault(schema, field, value, false, true);
+  for (const key of fields) {
+    const typeInfo = zodTypeInfo(schema.shape[key]);
+    const entries = data.getAll(key);
 
-    /*
-      console.log(field, value, {
-      ...newValue,
-      type: newValue.type.constructor.name
-    });
-    */
+    if (!(typeInfo.zodType instanceof ZodArray)) {
+      output[key] = _parseSingleEntry(key, entries[0], typeInfo);
+    } else {
+      output[key] = entries.map((e) => _parseSingleEntry(key, e, typeInfo));
+    }
+  }
+
+  function parseEntry(
+    field: string,
+    value: string | null,
+    typeInfo: ReturnType<typeof zodTypeInfo>
+  ): unknown {
+    const newValue = _valueOrDefault(field, value, false, true, typeInfo);
 
     // If empty, it now has the default value, so it can be returned
-    if (newValue.wasEmpty) return newValue.value;
+    if (!value) return newValue;
 
-    const zodType = newValue.type;
+    const zodType = typeInfo.zodType;
 
     if (zodType instanceof ZodString) {
       return value;
@@ -181,22 +191,12 @@ function formDataToValidation<T extends AnyZodObject>(
     } else if (zodType instanceof ZodBoolean) {
       return Boolean(value).valueOf();
     } else if (zodType instanceof ZodArray) {
-      if (!value) return [];
-      const arrayType = zodType._def.type;
-      if (arrayType instanceof ZodNumber) {
-        return value.split(',').map((v) => parseFloat(v));
-      } else if (arrayType instanceof ZodString) {
-        return value.split(',').map((v) => decodeURIComponent(v));
-      } else if (arrayType instanceof ZodBoolean) {
-        return value.split(',').map((v) => Boolean(v).valueOf());
-      } else {
-        throw new Error(
-          'Unsupported ZodArray type: ' + typeof zodType.constructor.name
-        );
-      }
+      const arrayType = zodTypeInfo(zodType._def.type);
+      return parseEntry(field, value, arrayType);
     } else if (zodType instanceof ZodLiteral) {
-      if (typeof zodType.value === 'string') return value;
-      else if (typeof zodType.value === 'number')
+      if (typeof zodType.value === 'string') {
+        return value;
+      } else if (typeof zodType.value === 'number')
         return parseFloat(value ?? '');
       else if (typeof zodType.value === 'boolean')
         return Boolean(value).valueOf();
@@ -228,22 +228,15 @@ function formDataToValidation<T extends AnyZodObject>(
 }
 
 // Internal function, do not export.
-function _valueOrDefault<T extends AnyZodObject>(
-  schema: T,
-  field: keyof z.infer<T>,
-  value: unknown,
-  strict: boolean,
-  implicitDefaults: boolean
-) {
-  let zodType = schema.shape[field];
-  let wrapped = true;
+function zodTypeInfo<T extends ZodTypeAny>(zodType: T) {
+  let _wrapped = true;
   let isNullable = false;
   let isOptional = false;
   let defaultValue: unknown = undefined;
 
   //let i = 0;
   //console.log(field);
-  while (wrapped) {
+  while (_wrapped) {
     //console.log(' '.repeat(++i * 2) + zodType.constructor.name);
     if (zodType instanceof ZodNullable) {
       isNullable = true;
@@ -257,18 +250,29 @@ function _valueOrDefault<T extends AnyZodObject>(
     } else if (zodType instanceof ZodEffects) {
       zodType = zodType._def.schema;
     } else {
-      wrapped = false;
+      _wrapped = false;
     }
   }
 
-  /*
-  console.log(field, {
-    zodType: zodType.constructor.name,
+  return {
+    zodType,
     isNullable,
     isOptional,
     defaultValue
-  });
-  */
+  };
+}
+
+// Internal function, do not export.
+function _valueOrDefault<T extends AnyZodObject>(
+  field: keyof z.infer<T>,
+  value: unknown,
+  strict: boolean,
+  implicitDefaults: boolean,
+  typeInfo: ReturnType<typeof zodTypeInfo>
+) {
+  if (value) return value;
+
+  const { zodType, isNullable, isOptional, defaultValue } = typeInfo;
 
   // Based on schema type, check what the empty value should be parsed to
   function emptyValue() {
@@ -301,17 +305,8 @@ function _valueOrDefault<T extends AnyZodObject>(
     );
   }
 
-  if (value)
-    return { value: value as unknown, wasEmpty: false, type: zodType };
-  else
-    return {
-      value: emptyValue() as unknown,
-      wasEmpty: true,
-      type: zodType
-    };
+  return emptyValue();
 }
-
-//type NoFieldNamed<T, Field> = Extract<Field, keyof T> extends never ? T : never;
 
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
@@ -333,7 +328,6 @@ export async function superValidate<T extends AnyZodObject>(
     defaults?: DefaultFields<T>;
     implicitDefaults?: boolean;
     noErrors?: boolean;
-    proxyFields?: (keyof z.infer<T>)[];
   } = {}
 ): Promise<Validation<T>> {
   options = { ...options };
@@ -350,13 +344,7 @@ export async function superValidate<T extends AnyZodObject>(
       } catch (_) {
         return {};
       }
-    } else
-      return formDataToValidation(
-        schema,
-        schemaKeys,
-        data,
-        (options.proxyFields ?? []) as string[]
-      );
+    } else return formDataToValidation(schema, schemaKeys, data);
   }
 
   async function tryParseFormData(request: Request) {

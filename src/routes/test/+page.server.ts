@@ -20,9 +20,7 @@ export const _dataTypeForm = z.object({
 });
 
 export const load = (async (event) => {
-  const form = await superValidate(event, _dataTypeForm, {
-    proxyFields: ['proxyString']
-  });
+  const form = await superValidate(event, _dataTypeForm);
   console.log('🚀 ~ LOAD', form);
 
   return { form };
@@ -30,7 +28,8 @@ export const load = (async (event) => {
 
 export const actions = {
   form: async (event) => {
-    const form = await superValidate(event, _dataTypeForm);
+    const formData = await event.request.formData();
+    const form = await superValidate(formData, _dataTypeForm);
     console.log('🚀 ~ POST', form);
 
     await new Promise((resolve) => setTimeout(resolve, form.data.number));

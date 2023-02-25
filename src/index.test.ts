@@ -146,6 +146,20 @@ test('FormData with nullable', async () => {
   expect(validation.data.name).toBeNull();
 });
 
+test('FormData array data', async () => {
+  const formData = new FormData();
+
+  formData.append('name', 'Nr1');
+  formData.append('name', 'Nr2');
+
+  const form = await superValidate(
+    formData,
+    z.object({ name: z.string().array() })
+  );
+
+  expect(form.data.name).toEqual(['Nr1', 'Nr2']);
+});
+
 test('Nullable values', async () => {
   const schema = z.object({
     scopeId: z.number().int().min(1),

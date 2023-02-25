@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stringProxy, superForm, arrayProxy } from '$lib/client';
+  import { stringProxy, superForm, fieldProxy } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
 
@@ -30,7 +30,7 @@
     invalidateAll: false
   });
 
-  const arrProxy = arrayProxy(form, 'proxyString');
+  const arrProxy = fieldProxy(form, 'proxyString');
   const bool = stringProxy(form, 'bool', 'boolean');
   const proxyNumber = stringProxy(form, 'proxyNumber', 'int');
 
@@ -50,7 +50,9 @@
   </div>
   <div>Email</div>
   <input
-    on:input={() => arrProxy.add(Math.floor(Math.random() * 1000))}
+    on:input={() => {
+      arrProxy.set([1, 2, 3]);
+    }}
     bind:value={$modalForm.name}
   />
   <div>Password</div>

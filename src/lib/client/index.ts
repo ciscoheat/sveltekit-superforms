@@ -30,7 +30,7 @@ enum FetchStatus {
   Timeout = 3
 }
 
-export { fieldProxy, stringProxy, arrayProxy } from './proxies';
+export { fieldProxy, stringProxy } from './proxies';
 
 export type FormUpdate = (
   result: Extract<ActionResult, { type: 'success' } | { type: 'failure' }>,

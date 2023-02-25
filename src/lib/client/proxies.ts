@@ -2,17 +2,18 @@ import { derived, get, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
 
 /**
- * Creates a string store that will pass its value to a primitive value in the form.
+ * Creates a string store that will pass its value to a field in the form.
  * @param form The form
  * @param field Form field
- * @param type 'int' | 'boolean'
+ * @param type 'number' | 'int' | 'boolean'
  */
 export function stringProxy<
   T extends Record<string, unknown>,
-  Type extends 'int' | 'boolean'
+  Type extends 'number' | 'int' | 'boolean'
 >(form: Writable<T>, field: keyof T, type: Type): Writable<string> {
   function toValue(val: unknown) {
     if (typeof val === 'string') {
+      if (type == 'number') return parseFloat(val);
       if (type == 'int') return parseInt(val, 10);
       if (type == 'boolean') return !!val;
     }
@@ -20,7 +21,7 @@ export function stringProxy<
   }
 
   const proxy = derived(form, ($form) => {
-    if (type == 'int') {
+    if (type == 'int' || type == 'number') {
       const num = $form[field] as number;
       return isNaN(num) ? '' : String(num);
     } else {
@@ -80,41 +81,6 @@ export function fieldProxy<
     update,
     set(val: S) {
       form.update((f) => ({ ...f, [field]: stringify(val) }));
-    }
-  };
-}
-
-/*
-export interface ArrayProxy<S> extends Writable<S[]> {
-  toggle(id: S): void;
-  add(id: S): void;
-  remove(id: S): void;
-  length: number;
-}
-*/
-
-export function arrayProxy<
-  T extends Record<string, unknown>,
-  K extends keyof T,
-  S = T[K] extends (infer A)[] ? A : never
->(form: Writable<T>, field: K) {
-  const proxy = fieldProxy<T, K, S[]>(form, field as K);
-
-  return {
-    ...proxy,
-    toggle(id: S) {
-      proxy.update((r) => {
-        return r.includes(id) ? r.filter((i) => i !== id) : [...r, id];
-      });
-    },
-    add(id: S) {
-      proxy.update((r) => [...r, id]);
-    },
-    remove(id: S) {
-      proxy.update((r) => r.filter((i) => i !== id));
-    },
-    get length() {
-      return get(proxy).length;
     }
   };
 }

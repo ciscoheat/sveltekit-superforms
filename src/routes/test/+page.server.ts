@@ -1,6 +1,6 @@
 import { superValidate } from '$lib/server';
 import { z } from 'zod';
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from '../$types';
 
 export const _dataTypeForm = z.object({
@@ -21,7 +21,7 @@ export const _dataTypeForm = z.object({
 
 export const load = (async (event) => {
   const form = await superValidate(event, _dataTypeForm, {
-    jsonFields: ['proxyString']
+    proxyFields: ['proxyString']
   });
   console.log('🚀 ~ LOAD', form);
 

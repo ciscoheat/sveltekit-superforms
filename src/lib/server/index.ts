@@ -141,7 +141,7 @@ function formDataToValidation<T extends AnyZodObject>(
   schema: T,
   fields: string[],
   data: FormData,
-  jsonFields: string[]
+  proxyFields: string[]
 ) {
   const output: Record<string, unknown> = {};
 
@@ -150,7 +150,7 @@ function formDataToValidation<T extends AnyZodObject>(
     if (entry && typeof entry !== 'string') {
       // File object
       output[key] = entry;
-    } else if (jsonFields.includes(key)) {
+    } else if (proxyFields.includes(key)) {
       output[key] = entry === null ? undefined : parse(entry);
     } else {
       output[key] = parseEntry(key, entry);
@@ -333,7 +333,7 @@ export async function superValidate<T extends AnyZodObject>(
     defaults?: DefaultFields<T>;
     implicitDefaults?: boolean;
     noErrors?: boolean;
-    jsonFields?: (keyof z.infer<T>)[];
+    proxyFields?: (keyof z.infer<T>)[];
   } = {}
 ): Promise<Validation<T>> {
   options = { ...options };
@@ -355,7 +355,7 @@ export async function superValidate<T extends AnyZodObject>(
         schema,
         schemaKeys,
         data,
-        (options.jsonFields ?? []) as string[]
+        (options.proxyFields ?? []) as string[]
       );
   }
 

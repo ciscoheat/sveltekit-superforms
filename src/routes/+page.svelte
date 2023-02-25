@@ -4,6 +4,7 @@
   import { superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
+  import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: PageData;
 
@@ -16,10 +17,13 @@
           await goto('?id=' + form.data.id);
         }
       },
-      flashMessage: (errorResult) => ({
-        type: 'error',
-        message: errorResult.error.message
-      })
+      flashMessage: {
+        module: flashModule,
+        onError: (errorResult) => ({
+          type: 'error',
+          message: errorResult.error.message
+        })
+      }
     }
   );
 </script>

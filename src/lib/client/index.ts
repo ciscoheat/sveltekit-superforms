@@ -7,6 +7,7 @@ import {
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
+import type { Page } from '@sveltejs/kit';
 import { isElementInViewport, scrollToAndCenter } from './elements';
 import {
   derived,
@@ -22,7 +23,6 @@ import type { Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify, parse } from 'devalue';
 import { deepEqual } from '..';
-//import { getFlash, updateFlash } from './sveltekit-flash-message/client';
 
 enum FetchStatus {
   Idle = 0,
@@ -42,11 +42,6 @@ export type Validators<T extends AnyZodObject> = Partial<{
   ) => MaybePromise<string | null | undefined>;
 }>;
 
-/**
- * @param {string} taintedMessage If set, a confirm dialog will be shown when navigating away from the page if the form has been modified.
- * @param onUpdate Callback when the form is updated, by either a POST or a load function.
- * @param {boolean} applyAction If false, will not automatically update the form when $page updates. Useful for modal forms.
- */
 export type FormOptions<T extends AnyZodObject> = {
   applyAction?: boolean;
   invalidateAll?: boolean;
@@ -85,11 +80,20 @@ export type FormOptions<T extends AnyZodObject> = {
   delayMs?: number;
   timeoutMs?: number;
   multipleSubmits?: 'prevent' | 'allow' | 'abort';
-  flashMessage?: (errorResult: {
-    type: 'error';
-    status: number;
-    error: App.Error;
-  }) => any;
+  flashMessage?: {
+    module: {
+      getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
+      updateFlash(
+        page: Readable<Page>,
+        update?: () => Promise<void>
+      ): Promise<void>;
+    };
+    onError?: (errorResult: {
+      type: 'error';
+      status: number;
+      error: App.Error;
+    }) => App.PageData['flash'];
+  };
 };
 
 const defaultFormOptions: FormOptions<AnyZodObject> = {
@@ -289,7 +293,7 @@ export function superForm<T extends AnyZodObject>(
       typeof actionForm.form.valid !== 'boolean'
     ) {
       throw new Error(
-        "ActionData didn't return a Validation object. Make sure you return { form } from form actions."
+        "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
       );
     }
     form = actionForm.form as Validation<T>;
@@ -376,12 +380,6 @@ export function superForm<T extends AnyZodObject>(
     rebind(initialForm, true);
   }
 
-  /*
-  function _wipeForm() {
-    rebind(emptyForm(), true);
-  }
-  */
-
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
     if (['error', 'redirect'].includes(result.type)) {
       throw new Error(
@@ -452,13 +450,13 @@ export function superForm<T extends AnyZodObject>(
         if (p.form && p.form != initialForm) {
           if (!p.form.form)
             throw new Error(
-              "No form data found in $page.form (ActionData). Make sure you return { form } in this page's form actions."
+              'No form data found in $page.form (ActionData). Make sure you return { form } in the form actions.'
             );
           await _update(p.form.form, p.status >= 200 && p.status < 400);
         } else if (p.data.form && p.data.form != initialForm) {
           if (!p.data.form) {
             throw new Error(
-              "No form data found in $page.data (PageData). Make sure you return { form } in this page's load function."
+              'No form data found in $page.data (PageData). Make sure you return { form } in the load function.'
             );
           }
           // It's a page reload, so don't trigger any update events.
@@ -690,7 +688,7 @@ function formEnhance<T extends AnyZodObject>(
         (options.clearOnSubmit == 'errors-and-message' ||
           options.clearOnSubmit == 'message')
       ) {
-        //getFlash(page).set(undefined);
+        options.flashMessage.module.getFlash(page).set(undefined);
       }
 
       //d('Submitting');
@@ -770,25 +768,25 @@ function formEnhance<T extends AnyZodObject>(
         }
 
         if (options.flashMessage) {
-          if (result.type == 'error') {
+          if (result.type == 'error' && options.flashMessage.onError) {
             if (
               errorMessage &&
               result.error &&
               typeof result.error === 'object' &&
               'message' in result.error
             ) {
+              // Grab the modified error message from onError option
               result.error.message = errorMessage;
             }
-            /*
-            getFlash(page).set(
-              options.flashMessage({
+
+            options.flashMessage.module.getFlash(page).set(
+              options.flashMessage.onError({
                 ...result,
                 status: result.status ?? status
               })
             );
-            */
-          } else {
-            //updateFlash(page);
+          } else if (result.type != 'error') {
+            options.flashMessage.module.updateFlash(page);
           }
         }
       } else {

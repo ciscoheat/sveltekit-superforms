@@ -78,7 +78,7 @@ export const load = (async (event) => {
 </form>
 ```
 
-Optional: Add this to `<head>` for a much nicer visual experience:
+Optional: If you're starting from scratch, add this to `<head>` for a much nicer visual experience:
 
 **src/app.html**
 
@@ -86,7 +86,7 @@ Optional: Add this to `<head>` for a much nicer visual experience:
 <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" />
 ```
 
-What we see now is rather basic, and there is no form action to submit to, but we can at least see that the form is populated. To get deeper insight, let's add the Super Form Debugging Svelte Component:
+Currently there is no form action to submit to, but we can at least see that the form is populated. To get deeper insight, let's add the Super Form Debugging Svelte Component:
 
 **src/routes/+page.svelte**
 
@@ -98,7 +98,7 @@ What we see now is rather basic, and there is no form action to submit to, but w
 <SuperDebug data={$form} />
 ```
 
-Edit the fields and see how the `$form` store is automatically updated. It even displays the current page status in the right corner.
+Edit the fields and see how the `$form` store is automatically updated. The component also displays the current page status in the right corner.
 
 ## Posting - Without any bells and whistles
 
@@ -445,6 +445,10 @@ If this bliss is too much to handle, setting `dataType` to `formdata`, posts the
 </style>
 ```
 
+# Multiple and global forms
+
+There is only one `Page` and `ActionData` on a page, so multiple forms on the same page can cause trouble since it's hard to know which form updated `page`. An example is if you have a login form in the navigation that will be present on every page. Fortunately `sveltekit-superforms` has a simple solution for this, by setting `options.applyAction` to `false`, which will prevent it from updating `Page` and `ActionData`. If you want to make it completely self-contained, set `options.invalidateAll` to `false` as well.
+
 # Designing a CRUD interface
 
 That was the client configuration, now how about the server? Fortunately it's much less work, the `superValidate` function handles most things you can throw at it, and of course [Zod](https://zod.dev/) is an immense help with the actual validation, so you can focus on business logic.
@@ -508,7 +512,7 @@ const crudSchema = userSchema.extend({
 });
 ```
 
-Except for the `id`, it's worth noting that **Create** and **Update** can use the same schema, so they should naturally share the user interface. This is a fundamental idea in this library, so you can pass either `null/undefined` or an entity to `superValidate`, and it will generate default values in the first case:
+Note that **Create** and **Update** can now use the same schema, so they should naturally share the same user interface. This is a fundamental idea in this library, so you can pass either `null/undefined` or an entity to `superValidate`, and it will generate default values if the value passed to it is empty:
 
 **src/routes/+page.server.ts**
 
@@ -584,7 +588,7 @@ The page component is quite similar to the previous example.
 </style>
 ```
 
-We have prepared to display a status message, utilising `$page.status` to test for success or failure. And we're using the `empty` property of the form to display a "Create" or "Update" title. We shouldn't use the `empty` store returned from `superForm` here, since it will update even when validation fails, so we're using the initial data from the page load.
+We have prepared to display a status message, utilising `$page.status` to test for success or failure. And we're using the `empty` property of the form to display a "Create" or "Update" title. We shouldn't use the `$empty` store returned from `superForm` here, since it will update even when validation fails, changing the text, so we're using the initial data from the page load.
 
 The form action looks similar to before, but will branch after validation is successful:
 
@@ -605,7 +609,7 @@ export const actions = {
 } satisfies Actions;
 ```
 
-Here is where you should access your database API. Since we're using an array, the create and update logic is simple:
+This is where you should access your database API. Since we're using an array, the create and update logic is simple:
 
 ```ts
 if (!form.data.id) {
@@ -632,7 +636,15 @@ With this, we have 3 out of 4 letters of CRUD in about 100 lines of code! The re
 
 ## Types
 
-In all examples, `T` represents the validation schema, a type that extends `AnyZodObject`. `z.infer<T>` refers to the underlying type of the schema (the actual data structure).
+Throughout the referenc, the following types are represented:
+
+```ts
+// T represents the validation schema
+T extends AnyZodObject
+
+// S refers to the underlying type of the schema, the actual data structure.
+S = z.infer<T>
+```
 
 ```ts
 export type ValidationErrors<T extends AnyZodObject> = Partial<
@@ -661,7 +673,7 @@ import {
 } from 'sveltekit-superforms/server';
 ```
 
-**superValidate(data, schema, options?)**
+### **superValidate(data, schema, options?)**
 
 ```ts
 superValidate(
@@ -669,7 +681,7 @@ superValidate(
     | RequestEvent
     | Request
     | FormData
-    | Partial<Record<keyof z.infer<T>, unknown>>
+    | Partial<Record<keyof S, unknown>>
     | null
     | undefined,
   schema: T,
@@ -685,34 +697,35 @@ If `data` is determined to be empty (`null`, `undefined` or no `FormData`), a va
 ```js
 {
   valid: false;
-  errors: {};
-  data: z.infer<T>; // See further down for default entity values.
+  errors: {
+  }
+  data: S; // See further down for default entity values.
   empty: true;
   message: null;
 }
 ```
 
-**setError(form, field, error)**
+### **setError(form, field, error)**
 
 ```ts
 setError(
   form: Validation<T>,
-  field: keyof z.infer<T>,
+  field: keyof S,
   error: string | string[] | null
 ) : ActionFailure<{form: Validation<T>}>
 ```
 
 If you want to set an error on the form outside validation, use `setError`. It returns a `fail(400, { form })` so it can be returned immediately, or more errors can be added by calling it multiple times before returning.
 
-**noErrors(form)**
+### **noErrors(form)**
 
-If you want to return a form with no validation errors. Only the `errors` property will be modified, so `valid` still indicates the validation status. Useful for load functions where the entity is invalid, but as a initial state no errors should be displayed on the form.
+If you want to return a form with no validation errors. Only the `errors` property will be modified, so `valid` still indicates the validation status. Useful for load functions where the entity is invalid, but as an initial state no errors should be displayed on the form.
 
 ```ts
 noErrors(form: Validation<T>) : Validation<T>
 ```
 
-**actionResult(type, data?, status?)**
+### **actionResult(type, data?, status?)**
 
 When not using form actions, this constructs an action result in a `Response` object, so you can return `Validation<T>` from your API/endpoints, for example in a login request:
 
@@ -744,7 +757,7 @@ export const POST = (async (event) => {
 import { superForm } from 'sveltekit-superforms/client';
 ```
 
-**superForm(form?, options?)**
+### **superForm(form?, options?)**
 
 ```ts
 superForm(
@@ -800,6 +813,11 @@ type FormOptions<T extends AnyZodObject> = {
     | 'set-message'
     | 'apply'
     | string;
+
+  flashMessage?: {
+    module: (import * as module from 'sveltekit-flash-message/client'),
+    onError?: (errorResult: ActionResult<'error'>) => App.PageData['flash']
+  };
 };
 ```
 
@@ -867,7 +885,7 @@ Some Zod types like `ZodEnum` and `ZodUnion` can't use the above default values,
 
 ```ts
 const schema = z.object({
-  fish: z.enum(['Salmon', 'Tuna', 'Trout']).default('Salmon')
+  fish: z.enum(['Salmon', 'Tuna', 'Trout']).default('Salmon') // or nullable/optional/nullish
 });
 ```
 

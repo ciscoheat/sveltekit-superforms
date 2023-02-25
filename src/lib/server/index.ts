@@ -19,7 +19,8 @@ import {
   ZodEffects,
   ZodBigInt,
   ZodObject,
-  ZodSymbol
+  ZodSymbol,
+  ZodEnum
 } from 'zod';
 
 type DefaultFields<T extends AnyZodObject> = Partial<{
@@ -204,7 +205,11 @@ function formDataToValidation<T extends AnyZodObject>(
           'Unsupported ZodLiteral type: ' + typeof zodType.value
         );
       }
-    } else if (zodType instanceof ZodUnion || zodType instanceof ZodAny) {
+    } else if (
+      zodType instanceof ZodUnion ||
+      zodType instanceof ZodEnum ||
+      zodType instanceof ZodAny
+    ) {
       return value;
     } else if (zodType instanceof ZodBigInt) {
       try {
@@ -292,7 +297,7 @@ function _valueOrDefault<T extends AnyZodObject>(
         strict ? 'strict' : 'falsy'
       } values on field "${String(field)}": ${
         zodType.constructor.name
-      }. Add default, optional or nullable to the schema, or use the "defaults" option.`
+      }. Add default, optional or nullable to the schema.`
     );
   }
 

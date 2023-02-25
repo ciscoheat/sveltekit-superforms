@@ -69,6 +69,15 @@
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
 
+  <label>
+    Gender<br /><input
+      name="gender"
+      data-invalid={$errors.gender}
+      bind:value={$form.gender}
+    />
+    {#if $errors.gender}<span class="invalid">{$errors.gender}</span>{/if}
+  </label>
+
   <div>
     <button>Submit</button>
     {#if $delayed}Working...{/if}

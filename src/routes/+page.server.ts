@@ -13,7 +13,8 @@ const userSchema = z.object({
     .email()
     .refine((email) => !email.includes('spam'), {
       message: 'Email cannot contain spam.'
-    })
+    }),
+  gender: z.enum(['male', 'female', 'other']).nullish()
 });
 
 // Let's worry about id collisions later
@@ -57,8 +58,10 @@ export const load = (async ({ url }) => {
 
 export const actions = {
   edit: async (event) => {
-    const form = await superValidate(event, crudSchema);
-    console.log('POST', form);
+    const data = await event.request.formData();
+    console.log('POST', data);
+    const form = await superValidate(data, crudSchema);
+    console.log('FORM', form);
     if (!form.valid) return fail(400, { form });
 
     //throw error(500);

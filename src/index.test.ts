@@ -327,3 +327,18 @@ test('More default values', async () => {
   expect(form.message).toEqual(null);
   expect(form.valid).toEqual(false);
 });
+
+test('Zod enums', async () => {
+  const schema = z.object({
+    gender: z.enum(['male', 'female', 'other']).nullish()
+  });
+
+  const form = await superValidate(null, schema);
+  expect(form).toStrictEqual({
+    valid: false,
+    errors: {},
+    data: { gender: null },
+    empty: true,
+    message: null
+  });
+});

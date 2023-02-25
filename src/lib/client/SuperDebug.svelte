@@ -50,7 +50,7 @@
                 : match;
 
             if (match == '"#}#NaN"') {
-              cls = 'num';
+              cls = 'nan';
               match = 'NaN';
             } else if (match == '"#}#undefined"') {
               cls = 'undefined';
@@ -59,7 +59,7 @@
               cls = 'date';
               match = match.slice(5, -1);
             } else if (match.startsWith('"#}BI#')) {
-              cls = 'num';
+              cls = 'bigint';
               match = match.slice(6, -1) + 'n';
             }
           }
@@ -75,18 +75,18 @@
 </script>
 
 {#if display}
-  <div class="wrapper">
+  <div class="super-debug">
     {#if status}
       <div
         class:green={$page.status < 300}
         class:yellow={$page.status >= 300}
         class:red={$page.status >= 400}
-        class="page-status"
+        class="super-debug--status"
       >
         <div>{$page.status}</div>
       </div>
     {/if}
-    <pre bind:this={ref}><code
+    <pre bind:this={ref}><code class="super-debug--code"
         ><slot
           >{#if data}{@html syntaxHighlight(data)}{/if}</slot
         ></code
@@ -95,11 +95,11 @@
 {/if}
 
 <style>
-  .wrapper {
+  .super-debug {
     margin: 0.5rem 0;
   }
 
-  .wrapper .page-status {
+  .super-debug .super-debug--status {
     display: flex;
     padding-right: 16px;
     justify-content: right;
@@ -109,11 +109,11 @@
     text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.25);
   }
 
-  .wrapper .page-status > div {
+  .super-debug .super-debug--status > div {
     padding-top: 10px;
   }
 
-  .wrapper pre {
+  .super-debug pre {
     color: #999;
     background-color: #222;
   }
@@ -130,31 +130,39 @@
     color: #d20000;
   }
 
-  :global(.key) {
+  :global(.super-debug--code .key) {
     color: #ffc800;
   }
 
-  :global(.string) {
+  :global(.super-debug--code .string) {
     color: #73c8a9;
   }
 
-  :global(.date) {
+  :global(.super-debug--code .date) {
     color: #d44478;
   }
 
-  :global(.boolean) {
+  :global(.super-debug--code .boolean) {
     color: #bd5532;
   }
 
-  :global(.num) {
+  :global(.super-debug--code .num) {
     color: darkorange;
   }
 
-  :global(.null) {
+  :global(.super-debug--code .bigint) {
+    color: darkorange;
+  }
+
+  :global(.super-debug--code .null) {
     color: blueviolet;
   }
 
-  :global(.undefined) {
+  :global(.super-debug--code .nan) {
+    color: #704a9f;
+  }
+
+  :global(.super-debug--code .undefined) {
     color: #704a9f;
   }
 </style>

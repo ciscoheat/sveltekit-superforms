@@ -5,6 +5,14 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.9] - 2023-02-25
+
+### Fixed
+
+- `ZodEnum` is now handled properly.
+- Support for [sveltekit-flash-message](https://www.npmjs.com/package/sveltekit-flash-message) is back.
+- Improved styles for `SuperDebug`.
+
 ## [0.5.8] - 2023-02-23
 
 ### Deprecated

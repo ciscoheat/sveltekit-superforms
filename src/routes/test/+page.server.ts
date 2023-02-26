@@ -36,17 +36,8 @@ export const actions = {
       formData
     );
     const form = await superValidate(formData, _dataTypeForm);
-    console.log('🚀 ~ POST', form);
 
     if (!form.valid) return fail(400, { form });
-
-    try {
-      const dataSchema = z.number().array();
-      const data = dataSchema.parse(parse(form.data.proxyString));
-      // Data is ok, do something with it
-    } catch {
-      return setError(form, 'proxyString', 'Invalid data.');
-    }
 
     await new Promise((resolve) => setTimeout(resolve, form.data.number));
 

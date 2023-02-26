@@ -5,16 +5,14 @@
 
   export let data: PageData;
 
-  const { form, errors, message, delayed, timeout, enhance } = superForm(
-    data.form,
-    {
+  const { form, errors, message, delayed, timeout, enhance, tainted } =
+    superForm(data.form, {
       onError: 'Något gick fel.',
       validators: {
         email: (n) =>
           /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
       }
-    }
-  );
+    });
 
   const {
     form: modalForm,
@@ -43,7 +41,7 @@
   ] as const;
 </script>
 
-<SuperDebug data={$form} />
+<SuperDebug data={{ ...$form, $tainted }} />
 
 <form method="POST" action="/test/login" use:modalEnhance>
   <div data-message>
@@ -71,6 +69,7 @@
   <input type="hidden" name="proxyString" bind:value={$form.proxyString} />
 
   <input type="hidden" name="numberArray" value="123" />
+  <input type="hidden" name="numberArray" value="456" />
   <input type="hidden" name="numberArray" value="789" />
 
   <div>

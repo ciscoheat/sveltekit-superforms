@@ -142,10 +142,11 @@ export type EnhancedForm<T extends AnyZodObject> = {
   firstError: Readable<{ key: string; value: string } | null>;
   allErrors: Readable<{ key: string; value: string }[]>;
 
+  tainted: Readable<boolean>;
+
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: () => void;
-  isTainted: () => boolean;
 };
 
 /**
@@ -214,6 +215,7 @@ export function superForm<T extends AnyZodObject>(
   });
 
   const FirstError = derived(AllErrors, (allErrors) => allErrors[0] ?? null);
+  const Tainted = derived(Data, ($d) => (savedForm ? isTainted($d) : false));
 
   //////////////////////////////////////////////////////////////////////
 
@@ -231,20 +233,20 @@ export function superForm<T extends AnyZodObject>(
     savedForm = { ...get(Data) };
   }
 
-  function isTainted() {
-    return !deepEqual(get(Data), savedForm);
+  function isTainted(data: z.infer<T>) {
+    return !deepEqual(data, savedForm);
   }
 
   function rebind(form: Validation<T>, untaint: boolean) {
+    if (untaint) {
+      savedForm = { ...form.data };
+    }
+
     Validated.set(form.valid);
     Errors.set(form.errors);
     Data.set(form.data);
     Empty.set(form.empty);
     Message.set(form.message);
-
-    if (untaint && options.taintedMessage) {
-      savedForm = { ...form.data };
-    }
   }
 
   async function _update(form: Validation<T>, untaint: boolean) {
@@ -306,7 +308,7 @@ export function superForm<T extends AnyZodObject>(
   if (browser) {
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
-        if (isTainted() && !window.confirm(options.taintedMessage)) {
+        if (get(Tainted) && !window.confirm(options.taintedMessage)) {
           nav.cancel();
         }
       }
@@ -376,6 +378,8 @@ export function superForm<T extends AnyZodObject>(
     delayed: derived(Delayed, ($d) => $d),
     timeout: derived(Timeout, ($t) => $t),
 
+    tainted: Tainted,
+
     enhance: (el: HTMLFormElement) =>
       formEnhance(
         el,
@@ -394,8 +398,7 @@ export function superForm<T extends AnyZodObject>(
     firstError: FirstError,
     allErrors: AllErrors,
     update: Data_update,
-    reset: _resetForm,
-    isTainted
+    reset: _resetForm
   };
 }
 

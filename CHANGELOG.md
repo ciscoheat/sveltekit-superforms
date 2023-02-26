@@ -5,6 +5,18 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.10] - 2023-02-26
+
+### Added
+
+- [Proxy objects](https://github.com/ciscoheat/sveltekit-superforms#proxy-objects), for converting string data to other types.
+- `superForm.tainted` - A readable store for checking if form is modified.
+- If the schema type is `array`, multiple form values with the same name are now added to it.
+
+### Fixed
+
+- Data returned from `superValidate` is now guaranteed to have all fields populated.
+
 ## [0.5.9] - 2023-02-25
 
 ### Fixed

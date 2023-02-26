@@ -7,7 +7,7 @@ import { redirect } from 'sveltekit-flash-message/server';
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
   id: z.string().regex(/^\d+$/),
-  name: z.string().min(1),
+  name: z.string().min(2).regex(/^A.*$/),
   email: z
     .string()
     .email()

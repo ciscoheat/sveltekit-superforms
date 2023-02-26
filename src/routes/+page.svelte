@@ -8,9 +8,8 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, message, delayed, reset } = superForm(
-    data.form,
-    {
+  const { form, errors, enhance, message, delayed, reset, constraints } =
+    superForm(data.form, {
       dataType: 'formdata',
       async onUpdate({ form }) {
         if (form.valid) {
@@ -24,8 +23,7 @@
           message: errorResult.error.message
         })
       }
-    }
-  );
+    });
 </script>
 
 <SuperDebug data={$form} />
@@ -56,15 +54,18 @@
       name="name"
       data-invalid={$errors.name}
       bind:value={$form.name}
+      {...$constraints.name}
     />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
   </label>
 
   <label>
     E-mail<br /><input
+      type="email"
       name="email"
       data-invalid={$errors.email}
       bind:value={$form.email}
+      {...$constraints.email}
     />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
@@ -74,6 +75,7 @@
       name="gender"
       data-invalid={$errors.gender}
       bind:value={$form.gender}
+      {...$constraints.gender}
     />
     {#if $errors.gender}<span class="invalid">{$errors.gender}</span>{/if}
   </label>

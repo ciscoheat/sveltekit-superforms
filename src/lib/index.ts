@@ -13,6 +13,21 @@ export type Validation<T extends AnyZodObject> = {
   data: z.infer<T>;
   empty: boolean;
   message: string | null;
+  constraints: Record<
+    keyof z.infer<T>,
+    Partial<{
+      pattern: string; // RegExp
+      min: number; // | Date
+      max: number; // | Date
+      required: boolean;
+      step: number;
+      minlength: number;
+      maxlength: number;
+    }>
+  >;
+  meta?: {
+    types: Record<keyof z.infer<T>, string>;
+  };
 };
 
 export function deepEqual(obj1: unknown, obj2: unknown): boolean {

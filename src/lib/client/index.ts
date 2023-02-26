@@ -131,6 +131,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
   form: Writable<Validation<T>['data']>;
   errors: Writable<Validation<T>['errors']>;
   message: Writable<Validation<T>['message']>;
+  constraints: Writable<Validation<T>['constraints']>;
 
   validated: Readable<boolean>;
   empty: Readable<boolean>;
@@ -172,7 +173,8 @@ export function superForm<T extends AnyZodObject>(
       errors: {},
       data: {},
       empty: true,
-      message: null
+      message: null,
+      constraints: {} as Validation<T>['constraints']
     };
   }
 
@@ -200,6 +202,7 @@ export function superForm<T extends AnyZodObject>(
   const Data = writable(form.data);
   const Empty = writable(form.empty);
   const Message = writable(form.message);
+  const Constraints = writable(form.constraints);
 
   // Timers
   const Submitting = writable(false);
@@ -371,6 +374,7 @@ export function superForm<T extends AnyZodObject>(
     errors: Errors,
     form: Data,
     message: Message,
+    constraints: Constraints,
     validated: derived(Validated, ($s) => $s),
     empty: derived(Empty, ($e) => $e),
 

@@ -51,6 +51,29 @@ function setValidationDefaults<T extends AnyZodObject>(
   }
 }
 
+type EntityInfo<T extends AnyZodObject> = Record<
+  keyof z.infer<T>,
+  ReturnType<typeof zodTypeInfo>
+>;
+
+const entityInfoCache: WeakMap<
+  AnyZodObject,
+  EntityInfo<AnyZodObject>
+> = new WeakMap<AnyZodObject, EntityInfo<AnyZodObject>>();
+
+function entityTypeInfo<T extends AnyZodObject>(schema: T) {
+  if (entityInfoCache.has(schema))
+    return entityInfoCache.get(schema) as EntityInfo<T>;
+
+  const keys = schema.keyof().Values;
+  const info = Object.fromEntries(
+    Object.keys(keys).map((key) => [key, zodTypeInfo(schema.shape[key])])
+  );
+
+  entityInfoCache.set(schema, info);
+  return info as EntityInfo<T>;
+}
+
 const defaultEntityCache: WeakMap<
   AnyZodObject,
   z.infer<AnyZodObject>
@@ -87,22 +110,24 @@ export function defaultEntity<T extends AnyZodObject>(
     defaultKeys = Object.keys(options.defaults);
   }
 
+  const schemaTypeInfo = entityTypeInfo(schema);
+
   // Need to set empty properties after defaults are set.
   output = Object.fromEntries(
-    fields.map((f) => {
-      const typeInfo = zodTypeInfo(schema.shape[f]);
+    fields.map((field) => {
+      const typeInfo = schemaTypeInfo[field];
       const value =
-        defaultKeys && defaultKeys.includes(f)
-          ? output[f]
+        defaultKeys && defaultKeys.includes(field)
+          ? output[field]
           : valueOrDefault(
-              f,
+              field,
               undefined,
               true,
               options.implicitDefaults ?? true,
               typeInfo
             );
 
-      return [f, value];
+      return [field, value];
     })
   );
 
@@ -145,28 +170,25 @@ function formDataToValidation<T extends AnyZodObject>(
   data: FormData
 ) {
   const output: Record<string, unknown> = {};
+  const entityInfo = entityTypeInfo(schema);
 
-  function parseSingleEntry(
-    key: string,
-    entry: FormDataEntryValue,
-    typeInfo: ReturnType<typeof zodTypeInfo>
-  ) {
+  function parseSingleEntry(key: string, entry: FormDataEntryValue) {
     if (entry && typeof entry !== 'string') {
       // File object, not supported
       return undefined;
     } else {
-      return parseEntry(key, entry, typeInfo);
+      return parseEntry(key, entry, entityInfo[key]);
     }
   }
 
   for (const key of fields) {
-    const typeInfo = zodTypeInfo(schema.shape[key]);
+    const typeInfo = entityInfo[schema.shape[key]];
     const entries = data.getAll(key);
 
     if (!(typeInfo.zodType instanceof ZodArray)) {
-      output[key] = parseSingleEntry(key, entries[0], typeInfo);
+      output[key] = parseSingleEntry(key, entries[0]);
     } else {
-      output[key] = entries.map((e) => parseSingleEntry(key, e, typeInfo));
+      output[key] = entries.map((e) => parseSingleEntry(key, e));
     }
   }
 
@@ -227,7 +249,14 @@ function formDataToValidation<T extends AnyZodObject>(
   return output as z.infer<T>;
 }
 
-function zodTypeInfo<T extends ZodTypeAny>(zodType: T) {
+type ZodTypeInfo = {
+  zodType: ZodTypeAny;
+  isNullable: boolean;
+  isOptional: boolean;
+  defaultValue: unknown;
+};
+
+function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
   let _wrapped = true;
   let isNullable = false;
   let isOptional = false;
@@ -265,7 +294,7 @@ function valueOrDefault<T extends AnyZodObject>(
   value: unknown,
   strict: boolean,
   implicitDefaults: boolean,
-  typeInfo: ReturnType<typeof zodTypeInfo>
+  typeInfo: ZodTypeInfo
 ) {
   if (value) return value;
 
@@ -305,6 +334,76 @@ function valueOrDefault<T extends AnyZodObject>(
   return emptyValue();
 }
 
+function _constraint(key: string, info: ZodTypeInfo) {
+  const zodType = info.zodType;
+  const required = !info.isNullable && !info.isOptional;
+  if (zodType instanceof ZodString) {
+    const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
+
+    if (patterns.length > 1) {
+      throw new Error(
+        `Error on field "${key}": Only one regex is allowed per field.`
+      );
+    }
+
+    const pattern =
+      patterns.length == 1 && patterns[0].kind == 'regex'
+        ? patterns[0]
+        : undefined;
+
+    return {
+      pattern: pattern?.regex.source,
+      minlength: zodType.minLength ?? undefined,
+      maxlength: zodType.maxLength ?? undefined,
+      required
+    };
+  }
+
+  if (zodType instanceof ZodNumber) {
+    const steps = zodType._def.checks.filter((f) => f.kind == 'multipleOf');
+
+    if (steps.length > 1) {
+      throw new Error(
+        `Error on field "${key}": Only one multipleOf is allowed per field.`
+      );
+    }
+
+    const step =
+      steps.length == 1 && steps[0].kind == 'multipleOf'
+        ? steps[0]
+        : undefined;
+
+    return {
+      min: zodType.minValue ?? undefined,
+      max: zodType.maxValue ?? undefined,
+      step: step?.value,
+      required
+    };
+  }
+
+  if (zodType instanceof ZodDate) {
+    return {
+      min: zodType.minDate ?? undefined,
+      max: zodType.maxDate ?? undefined,
+      required
+    };
+  }
+
+  return {
+    required
+  };
+}
+
+function inputConstraints<T extends AnyZodObject>(schema: T) {
+  const entityInfo = entityTypeInfo(schema);
+  return Object.fromEntries(
+    Object.entries(entityInfo).map(([key, info]) => [
+      key,
+      _constraint(key, info)
+    ])
+  ) as NonNullable<Validation<T>['constraints']>;
+}
+
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
  * @param data Data structure for a Zod schema, or RequestEvent/FormData. If falsy, defaultEntity will be used.
@@ -331,13 +430,16 @@ export async function superValidate<T extends AnyZodObject>(
 
   const schemaKeys = Object.keys(schema.keyof().Values);
 
+  const constraints = inputConstraints(schema);
+
   function emptyEntity() {
     return {
       valid: false,
       errors: {},
       data: defaultEntity(schema, options),
       empty: true,
-      message: null
+      message: null,
+      constraints
     };
   }
 
@@ -397,7 +499,8 @@ export async function superValidate<T extends AnyZodObject>(
         ])
       ),
       empty: false,
-      message: null
+      message: null,
+      constraints
     };
   } else {
     return {
@@ -405,7 +508,8 @@ export async function superValidate<T extends AnyZodObject>(
       errors: {},
       data: status.data,
       empty: false,
-      message: null
+      message: null,
+      constraints
     };
   }
 }

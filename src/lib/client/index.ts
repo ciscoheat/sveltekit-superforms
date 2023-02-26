@@ -30,7 +30,13 @@ enum FetchStatus {
   Timeout = 3
 }
 
-export { fieldProxy, stringProxy } from './proxies';
+export {
+  jsonProxy,
+  intProxy,
+  numberProxy,
+  booleanProxy,
+  dateProxy
+} from './proxies';
 
 export type FormUpdate = (
   result: Extract<ActionResult, { type: 'success' } | { type: 'failure' }>,
@@ -139,6 +145,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: () => void;
+  isTainted: () => boolean;
 };
 
 /**
@@ -221,7 +228,11 @@ export function superForm<T extends AnyZodObject>(
 
   function enableTaintedMessage() {
     options.taintedMessage = _taintedMessage;
-    savedForm = options.taintedMessage ? { ...get(Data) } : undefined;
+    savedForm = { ...get(Data) };
+  }
+
+  function isTainted() {
+    return !deepEqual(get(Data), savedForm);
   }
 
   function rebind(form: Validation<T>, untaint: boolean) {
@@ -295,9 +306,7 @@ export function superForm<T extends AnyZodObject>(
   if (browser) {
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
-        const tainted = !deepEqual(get(Data), savedForm);
-
-        if (tainted && !window.confirm(options.taintedMessage)) {
+        if (isTainted() && !window.confirm(options.taintedMessage)) {
           nav.cancel();
         }
       }
@@ -385,7 +394,8 @@ export function superForm<T extends AnyZodObject>(
     firstError: FirstError,
     allErrors: AllErrors,
     update: Data_update,
-    reset: _resetForm
+    reset: _resetForm,
+    isTainted
   };
 }
 

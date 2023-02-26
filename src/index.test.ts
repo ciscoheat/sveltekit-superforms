@@ -271,7 +271,7 @@ test('Clearing errors with noErrors', async () => {
 
 test('Default values', () => {
   expect(() => defaultEntity(z.object({ id: z.literal(123) }))).toThrowError(
-    'Unsupported type for strict values on field "id": ZodLiteral.'
+    'Unsupported type for strict implicit values on field "id": ZodLiteral.'
   );
 
   const d = new Date();
@@ -313,7 +313,8 @@ test('More default values', async () => {
     nullableString: null,
     nullishString: null,
     optionalString: undefined,
-    proxyString: [1, 9, 8],
+    numberArray: [],
+    proxyString: '',
     trimmedString: '',
     date: d,
     coercedNumber: 0,

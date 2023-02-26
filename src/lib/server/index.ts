@@ -94,7 +94,7 @@ export function defaultEntity<T extends AnyZodObject>(
       const value =
         defaultKeys && defaultKeys.includes(f)
           ? output[f]
-          : _valueOrDefault(
+          : valueOrDefault(
               f,
               undefined,
               true,
@@ -146,13 +146,13 @@ function formDataToValidation<T extends AnyZodObject>(
 ) {
   const output: Record<string, unknown> = {};
 
-  function _parseSingleEntry(
+  function parseSingleEntry(
     key: string,
     entry: FormDataEntryValue,
     typeInfo: ReturnType<typeof zodTypeInfo>
   ) {
     if (entry && typeof entry !== 'string') {
-      // File object
+      // File object, not supported
       return undefined;
     } else {
       return parseEntry(key, entry, typeInfo);
@@ -164,9 +164,9 @@ function formDataToValidation<T extends AnyZodObject>(
     const entries = data.getAll(key);
 
     if (!(typeInfo.zodType instanceof ZodArray)) {
-      output[key] = _parseSingleEntry(key, entries[0], typeInfo);
+      output[key] = parseSingleEntry(key, entries[0], typeInfo);
     } else {
-      output[key] = entries.map((e) => _parseSingleEntry(key, e, typeInfo));
+      output[key] = entries.map((e) => parseSingleEntry(key, e, typeInfo));
     }
   }
 
@@ -175,9 +175,10 @@ function formDataToValidation<T extends AnyZodObject>(
     value: string | null,
     typeInfo: ReturnType<typeof zodTypeInfo>
   ): unknown {
-    const newValue = _valueOrDefault(field, value, false, true, typeInfo);
+    const newValue = valueOrDefault(field, value, false, true, typeInfo);
 
-    // If empty, it now has the default value, so it can be returned
+    // If the value was empty, it now contains the default value,
+    // so it can be returned immediately
     if (!value) return newValue;
 
     const zodType = typeInfo.zodType;
@@ -185,7 +186,9 @@ function formDataToValidation<T extends AnyZodObject>(
     if (zodType instanceof ZodString) {
       return value;
     } else if (zodType instanceof ZodNumber) {
-      return parseFloat(value ?? '');
+      return zodType.isInt
+        ? parseInt(value ?? '', 10)
+        : parseFloat(value ?? '');
     } else if (zodType instanceof ZodDate) {
       return new Date(value ?? '');
     } else if (zodType instanceof ZodBoolean) {
@@ -194,16 +197,13 @@ function formDataToValidation<T extends AnyZodObject>(
       const arrayType = zodTypeInfo(zodType._def.type);
       return parseEntry(field, value, arrayType);
     } else if (zodType instanceof ZodLiteral) {
-      if (typeof zodType.value === 'string') {
-        return value;
-      } else if (typeof zodType.value === 'number')
-        return parseFloat(value ?? '');
-      else if (typeof zodType.value === 'boolean')
-        return Boolean(value).valueOf();
+      const literalType = typeof zodType.value;
+
+      if (literalType === 'string') return value;
+      else if (literalType === 'number') return parseFloat(value ?? '');
+      else if (literalType === 'boolean') return Boolean(value).valueOf();
       else {
-        throw new Error(
-          'Unsupported ZodLiteral type: ' + typeof zodType.value
-        );
+        throw new Error('Unsupported ZodLiteral type: ' + literalType);
       }
     } else if (
       zodType instanceof ZodUnion ||
@@ -227,7 +227,6 @@ function formDataToValidation<T extends AnyZodObject>(
   return output as z.infer<T>;
 }
 
-// Internal function, do not export.
 function zodTypeInfo<T extends ZodTypeAny>(zodType: T) {
   let _wrapped = true;
   let isNullable = false;
@@ -261,8 +260,7 @@ function zodTypeInfo<T extends ZodTypeAny>(zodType: T) {
   };
 }
 
-// Internal function, do not export.
-function _valueOrDefault<T extends AnyZodObject>(
+function valueOrDefault<T extends AnyZodObject>(
   field: keyof z.infer<T>,
   value: unknown,
   strict: boolean,
@@ -296,8 +294,8 @@ function _valueOrDefault<T extends AnyZodObject>(
     }
 
     throw new Error(
-      `Unsupported type for ${
-        strict ? 'strict' : 'falsy'
+      `Unsupported type for ${strict ? 'strict' : 'falsy'} ${
+        implicitDefaults ? 'implicit' : 'explicit'
       } values on field "${String(field)}": ${
         zodType.constructor.name
       }. Add default, optional or nullable to the schema.`

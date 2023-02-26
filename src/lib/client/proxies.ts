@@ -1,5 +1,35 @@
-import { derived, get, type Updater, type Writable } from 'svelte/store';
+import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
+
+export function intProxy<
+  T extends Record<string, unknown>,
+  K extends keyof T
+>(form: Writable<T>, field: K) {
+  return stringProxy(form, field, 'int') as T[K] extends number
+    ? Writable<string>
+    : never;
+}
+
+export function booleanProxy<T extends Record<string, unknown>>(
+  form: Writable<T>,
+  field: keyof T
+): Writable<string> {
+  return stringProxy(form, field, 'boolean');
+}
+
+export function numberProxy<T extends Record<string, unknown>>(
+  form: Writable<T>,
+  field: keyof T
+): Writable<string> {
+  return stringProxy(form, field, 'number');
+}
+
+export function dateProxy<T extends Record<string, unknown>>(
+  form: Writable<T>,
+  field: keyof T
+): Writable<string> {
+  return stringProxy(form, field, 'date');
+}
 
 /**
  * Creates a string store that will pass its value to a field in the form.
@@ -7,15 +37,16 @@ import { stringify, parse } from 'devalue';
  * @param field Form field
  * @param type 'number' | 'int' | 'boolean'
  */
-export function stringProxy<
+function stringProxy<
   T extends Record<string, unknown>,
-  Type extends 'number' | 'int' | 'boolean'
+  Type extends 'number' | 'int' | 'boolean' | 'date'
 >(form: Writable<T>, field: keyof T, type: Type): Writable<string> {
   function toValue(val: unknown) {
     if (typeof val === 'string') {
       if (type == 'number') return parseFloat(val);
       if (type == 'int') return parseInt(val, 10);
       if (type == 'boolean') return !!val;
+      if (type == 'date') return new Date(val);
     }
     throw new Error('stringProxy received a non-string value.');
   }
@@ -43,11 +74,16 @@ export function stringProxy<
   };
 }
 
-export function fieldProxy<
+export function jsonProxy<
+  K,
   T extends Record<string, unknown>,
-  K extends keyof T,
-  S = T[K]
->(form: Writable<T>, field: K): Writable<S> {
+  Field extends keyof T,
+  S = T[Field] extends string ? T[Field] : never
+>(
+  form: Writable<T>,
+  field: Field,
+  initialValue?: K
+): Writable<S extends never ? never : K> {
   function unserialize(val: string) {
     try {
       return parse(val);
@@ -56,18 +92,14 @@ export function fieldProxy<
     }
   }
 
-  const initialValue = stringify(get(form)[field]);
-  form.update((f) => ({ ...f, [field]: initialValue }));
+  if (initialValue !== undefined)
+    form.update((f) => ({ ...f, [field]: initialValue }));
 
-  const proxy = derived(
-    form,
-    ($form) => {
-      return unserialize($form[field] as string);
-    },
-    initialValue
+  const proxy = derived(form, ($form) =>
+    unserialize($form[field] as string)
   );
 
-  function update(updater: Updater<S>) {
+  function update(updater: Updater<S extends never ? never : K>) {
     form.update((f) => {
       return {
         ...f,
@@ -79,7 +111,7 @@ export function fieldProxy<
   return {
     subscribe: proxy.subscribe,
     update,
-    set(val: S) {
+    set(val: S extends never ? never : K) {
       form.update((f) => ({ ...f, [field]: stringify(val) }));
     }
   };

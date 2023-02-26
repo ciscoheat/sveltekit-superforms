@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { stringProxy, superForm, fieldProxy } from '$lib/client';
+  import { intProxy, booleanProxy, superForm, jsonProxy } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
 
@@ -8,7 +8,6 @@
   const { form, errors, message, delayed, timeout, enhance } = superForm(
     data.form,
     {
-      taintedMessage: null,
       onError: 'Något gick fel.',
       validators: {
         email: (n) =>
@@ -30,9 +29,11 @@
     invalidateAll: false
   });
 
-  const arrProxy = fieldProxy(form, 'proxyString');
-  const bool = stringProxy(form, 'bool', 'boolean');
-  const proxyNumber = stringProxy(form, 'proxyNumber', 'int');
+  const proxyString = jsonProxy(form, 'proxyString', $form.coercedNumber);
+  proxyString.set(123);
+
+  const bool = booleanProxy(form, 'bool');
+  const proxyNumber = intProxy(form, 'proxyNumber');
 
   const fields = [
     'nullableString',
@@ -51,7 +52,7 @@
   <div>Email</div>
   <input
     on:input={() => {
-      arrProxy.set([1, 2, 3]);
+      proxyString.set(456);
     }}
     bind:value={$modalForm.name}
   />
@@ -67,7 +68,11 @@
 {/if}
 
 <form method="POST" action="?/form" use:enhance>
-  <input type="hidden" name="proxyString" bind:value={$arrProxy} />
+  <input type="hidden" name="proxyString" bind:value={$form.proxyString} />
+
+  <input type="hidden" name="numberArray" value="123" />
+  <input type="hidden" name="numberArray" value="789" />
+
   <div>
     <button>Submit</button>
     {#if $timeout}

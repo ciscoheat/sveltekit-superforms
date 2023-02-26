@@ -16,6 +16,8 @@ const slugify = (
   return _slugify(str, { ...options, lower: true, strict: true });
 };
 
+const testDate = new Date();
+
 const slug = z
   .string()
   .trim()
@@ -23,7 +25,7 @@ const slug = z
 
 const AccountSchema = z.object({
   id: z.number().int().positive(),
-  createdAt: z.coerce.date(),
+  createdAt: z.coerce.date().default(testDate),
   name: z.string().min(2).nullable(),
   phone: z
     .string()
@@ -188,7 +190,7 @@ test('Nullable values', async () => {
   const output3 = await superValidate({ scopeId: 3 }, schema);
   assert(!output3.valid);
   expect(output3.data.scopeId).toEqual(3);
-  expect(output3.data.name).toBeUndefined();
+  expect(output3.data.name).toBeNull();
   expect(output3.errors.name?.length).toEqual(1);
   expect(Object.keys(output3.errors).length).toEqual(1);
 });
@@ -241,7 +243,7 @@ test('Adding errors with setError', async () => {
   assert(!output2.valid);
   expect(output2.errors.name?.length).toEqual(1);
   expect(output2.data.scopeId).toEqual(3);
-  expect(output2.data.name).toBeUndefined();
+  expect(output2.data.name).toBeNull();
 });
 
 test('Clearing errors with noErrors', async () => {
@@ -265,23 +267,6 @@ test('Clearing errors with noErrors', async () => {
   expect(cleared.errors).toStrictEqual({});
   expect(cleared.data.scopeId).toEqual(output.data.scopeId);
   expect(cleared.data.name).toEqual(output.data.name);
-});
-
-test('File validation', async () => {
-  const schema = z.object({
-    upload: z.custom<Date>()
-  });
-
-  const output = await superValidate({ upload: new Date() }, schema);
-  expect(output.valid).equals(true);
-  expect(output.empty).toEqual(false);
-  expect(output.data.upload).instanceOf(Date);
-  expect(output.errors).toStrictEqual({});
-
-  const output2 = await superValidate({ upload: null }, schema);
-  expect(!output2.valid);
-  expect(output2.data.upload).toBeNull();
-  expect(output2.errors).toStrictEqual({});
 });
 
 test('Default values', () => {

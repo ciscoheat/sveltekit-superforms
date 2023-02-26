@@ -681,7 +681,7 @@ superValidate(
     | RequestEvent
     | Request
     | FormData
-    | Partial<Record<keyof S, unknown>>
+    | Partial<S>
     | null
     | undefined,
   schema: T,
@@ -692,13 +692,12 @@ superValidate(
 ): Promise<Validation<T>>
 ```
 
-If `data` is determined to be empty (`null`, `undefined` or no `FormData`), a validation result with a default entity for the schema is returned, in this form:
+If `data` is determined to be empty (`null`, `undefined` or no `FormData`), a validation result with a default entity for the schema is returned, in this shape:
 
 ```js
 {
   valid: false;
-  errors: {
-  }
+  errors: {};
   data: S; // See further down for default entity values.
   empty: true;
   message: null;
@@ -922,7 +921,9 @@ export const actions = {
     if (!form.valid) return fail(400, { form });
 
     const file = formData.get('file');
-    // Do something with the file.
+    if (file instanceof File) {
+      // Do something with the file.
+    }
 
     return { form };
   }

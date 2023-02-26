@@ -153,7 +153,7 @@ function formDataToValidation<T extends AnyZodObject>(
   ) {
     if (entry && typeof entry !== 'string') {
       // File object
-      return entry;
+      return undefined;
     } else {
       return parseEntry(key, entry, typeInfo);
     }
@@ -224,7 +224,7 @@ function formDataToValidation<T extends AnyZodObject>(
     );
   }
 
-  return output;
+  return output as z.infer<T>;
 }
 
 // Internal function, do not export.
@@ -235,7 +235,6 @@ function zodTypeInfo<T extends ZodTypeAny>(zodType: T) {
   let defaultValue: unknown = undefined;
 
   //let i = 0;
-  //console.log(field);
   while (_wrapped) {
     //console.log(' '.repeat(++i * 2) + zodType.constructor.name);
     if (zodType instanceof ZodNullable) {
@@ -320,7 +319,7 @@ export async function superValidate<T extends AnyZodObject>(
     | RequestEvent
     | Request
     | FormData
-    | Partial<Record<keyof z.infer<T>, unknown>>
+    | Partial<z.infer<T>>
     | null
     | undefined,
   schema: T,
@@ -333,49 +332,51 @@ export async function superValidate<T extends AnyZodObject>(
   options = { ...options };
 
   const schemaKeys = Object.keys(schema.keyof().Values);
-  let empty = false;
 
-  function parseFormData(data: FormData) {
-    if (data.has('__superform_json')) {
-      const value = data.get('__superform_json')?.toString();
-      if (!value) return {};
-      try {
-        return parse(value);
-      } catch (_) {
-        return {};
-      }
-    } else return formDataToValidation(schema, schemaKeys, data);
-  }
-
-  async function tryParseFormData(request: Request) {
-    try {
-      const formData = await request.formData();
-      return parseFormData(formData);
-    } catch {
-      empty = true;
-      return defaultEntity(schema, options);
-    }
-  }
-
-  if (!data) {
-    data = defaultEntity(schema, options);
-    empty = true;
-  } else if (data instanceof FormData) {
-    data = parseFormData(data);
-  } else if (data instanceof Request) {
-    data = await tryParseFormData(data);
-  } else if ('request' in data && data.request instanceof Request) {
-    data = await tryParseFormData(data.request);
-  }
-
-  if (empty) {
+  function emptyEntity() {
     return {
       valid: false,
       errors: {},
-      data: data as z.infer<T>,
-      empty,
+      data: defaultEntity(schema, options),
+      empty: true,
       message: null
     };
+  }
+
+  function parseSuperJson(data: FormData) {
+    if (data.has('__superform_json')) {
+      const output = parse(data.get('__superform_json')?.toString() ?? '');
+      if (typeof output === 'object')
+        return output as Record<string, unknown>;
+      else throw 'Invalid superform JSON type';
+    }
+    return null;
+  }
+
+  function parseFormData(data: FormData) {
+    const superJson = parseSuperJson(data);
+    return superJson
+      ? superJson
+      : formDataToValidation(schema, schemaKeys, data);
+  }
+
+  async function tryParseFormData(request: Request) {
+    const formData = await request.formData();
+    return parseFormData(formData);
+  }
+
+  try {
+    if (!data) {
+      return emptyEntity();
+    } else if (data instanceof FormData) {
+      data = parseFormData(data);
+    } else if (data instanceof Request) {
+      data = await tryParseFormData(data);
+    } else if ('request' in data && data.request instanceof Request) {
+      data = await tryParseFormData(data.request);
+    }
+  } catch (e) {
+    return emptyEntity();
   }
 
   const status = schema.safeParse(data);
@@ -384,11 +385,20 @@ export async function superValidate<T extends AnyZodObject>(
     const errors = options.noErrors
       ? {}
       : (status.error.flatten().fieldErrors as ValidationErrors<T>);
+
+    const parsedData = data as Partial<z.infer<T>>;
+    const defEntity = defaultEntity(schema, options);
+
     return {
       valid: false,
       errors,
-      data: data as z.infer<T>,
-      empty,
+      data: Object.fromEntries(
+        schemaKeys.map((key) => [
+          key,
+          parsedData[key] === undefined ? defEntity[key] : parsedData[key]
+        ])
+      ),
+      empty: false,
       message: null
     };
   } else {
@@ -396,7 +406,7 @@ export async function superValidate<T extends AnyZodObject>(
       valid: true,
       errors: {},
       data: status.data,
-      empty,
+      empty: false,
       message: null
     };
   }

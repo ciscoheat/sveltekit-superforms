@@ -7,24 +7,23 @@ export type ValidationErrors<T extends AnyZodObject> = Partial<
   Record<keyof z.infer<T>, string[] | undefined>
 >;
 
+export type InputConstraints = Partial<{
+  pattern: string; // RegExp
+  min: number | string; // | Date
+  max: number | string; // | Date
+  required: boolean;
+  step: number;
+  minlength: number;
+  maxlength: number;
+}>;
+
 export type Validation<T extends AnyZodObject> = {
   valid: boolean;
   errors: ValidationErrors<T>;
   data: z.infer<T>;
   empty: boolean;
   message: string | null;
-  constraints: Record<
-    keyof z.infer<T>,
-    Partial<{
-      pattern: string; // RegExp
-      min: number; // | Date
-      max: number; // | Date
-      required: boolean;
-      step: number;
-      minlength: number;
-      maxlength: number;
-    }>
-  >;
+  constraints: Record<keyof z.infer<T>, InputConstraints>;
   meta?: {
     types: Record<keyof z.infer<T>, string>;
   };

@@ -137,7 +137,11 @@ POST {
   errors: { email: [ 'Invalid email' ] },
   data: { name: 'Hello world!', email: '' },
   empty: false,
-  message: null
+  message: null,
+  constraints: {
+    name: { required: true },
+    email: { required: true }
+  }
 }
 ```
 
@@ -148,6 +152,7 @@ This is the validation object returned from `superValidate`, containing all you 
 - `data` - The coerced posted data, in this case not valid, so it should be promptly returned to the client.
 - `empty` - A `boolean` which tells you if the data passed to `superValidate` was empty, as in the load function.
 - `message` - A `string` property that can be set as a general information message.
+- `constraints` - An object with [html validation constraints](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#using_built-in_form_validation) than can be spread on input fields.
 
 And as you see in the example above, the logic for checking validation status is as simple as it gets:
 
@@ -165,8 +170,8 @@ We do that by adding variables to the destructuring assignment of `superForm`:
 
 ```svelte
 <script lang="ts">
-  const { form, errors } = superForm(data.form);
-  //            ^^^^^^
+  const { form, errors, constraints } = superForm(data.form);
+  //            ^^^^^^  ^^^^^^^^^^^
 </script>
 
 <form method="POST">
@@ -176,6 +181,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
     name="name"
     data-invalid={$errors.name}
     bind:value={$form.name}
+    {...$constraints.name}
   />
   {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
 
@@ -185,6 +191,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
     name="email"
     data-invalid={$errors.email}
     bind:value={$form.email}
+    {...$constraints.name}
   />
   {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
 
@@ -312,9 +319,35 @@ As you see, another difference is that the form isn't resetted by default. This 
 
 In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms` resetting means _going back to the initial state of the form data_, usually the contents of `form` in `PageData`. This may not be exactly what you needed, in which case you can use an event to clear the form instead.
 
-## More options: Client-side validators
+## Client-side validation
 
-Since there is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the client-side validation of `sveltekit-superforms` is just doing the basics:
+Since there is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the `constraints` store returned from `superForm` can be used to follow this with virtually no effort:
+
+```svelte
+<script lang="ts">
+  const { form, constraints } = superForm(data.form);
+</script>
+
+<input name="email" bind:value={$form.email} {...$constraints.email} />
+```
+
+The constraints field is an object, with validation properties mapped from the validation schema:
+
+```ts
+{
+  pattern?: string;      // z.string().regex(r)
+  step?: number;         // z.number().step(n)
+  minlength?: number;    // z.string().min(n)
+  maxlength?: number;    // z.string().max(n)
+  min?: number | string; // number if z.number.min(n), ISO date string if z.date().min(d)
+  max?: number | string; // number if z.number.max(n), ISO date string if z.date().max(d)
+  required?: true;       // Not nullable, nullish or optional
+}
+```
+
+### Custom validation
+
+If you want more control (or think the built-in browser validation is too constraining, pun intented), you can set the `validators` option:
 
 ```ts
 validators: {
@@ -322,7 +355,7 @@ validators: {
 }
 ```
 
-An object with the same keys as the form, with a function that receives the field value and should return either a string as a "validation failed" message, or `null` or `undefined` if the field is valid.
+It takes an object with the same keys as the form, with a function that receives the field value and should return either a string as a "validation failed" message, or `null` or `undefined` if the field is valid.
 
 Here's an example of how to validate a string length:
 
@@ -337,7 +370,7 @@ const { form, errors, enhance } = superForm(data.form, {
 });
 ```
 
-There is one other options for specifying the default client validation behavior, when no custom validator exists for a field:
+There is one additional option for specifying the default client validation behavior, when no custom validator exists for a field:
 
 ```ts
 defaultValidator: 'keep' | 'clear' = 'clear'

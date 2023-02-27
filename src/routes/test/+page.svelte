@@ -7,6 +7,7 @@
 
   const { form, errors, message, delayed, timeout, enhance, tainted } =
     superForm(data.form, {
+      taintedMessage: null,
       onError: 'Något gick fel.',
       validators: {
         email: (n) =>

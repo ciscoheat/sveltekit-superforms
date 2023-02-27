@@ -339,6 +339,16 @@ test('Zod enums', async () => {
     errors: {},
     data: { gender: null },
     empty: true,
-    message: null
+    message: null,
+    constraints: {
+      gender: {}
+    }
+    /*
+    meta: {
+      types: {
+        gender: 'ZodEnum'
+      }
+    }
+    */
   });
 });

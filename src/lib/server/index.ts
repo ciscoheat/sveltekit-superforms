@@ -1,15 +1,17 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import type { Validation, ValidationErrors } from '..';
+import {
+  entityData,
+  zodTypeInfo,
+  type DefaultEntityOptions,
+  type ZodTypeInfo
+} from './entity';
 
 import {
   z,
-  type ZodTypeAny,
   type AnyZodObject,
   ZodAny,
-  ZodDefault,
-  ZodNullable,
-  ZodOptional,
   ZodString,
   ZodNumber,
   ZodBoolean,
@@ -17,130 +19,13 @@ import {
   ZodLiteral,
   ZodUnion,
   ZodArray,
-  ZodEffects,
   ZodBigInt,
   ZodObject,
   ZodSymbol,
   ZodEnum
 } from 'zod';
 
-type DefaultFields<T extends AnyZodObject> = Partial<{
-  [Property in keyof z.infer<T>]:
-    | z.infer<T>[Property]
-    | ((
-        value: z.infer<T>[Property] | null | undefined,
-        data: z.infer<T>
-      ) => z.infer<T>[Property] | null | undefined);
-}>;
-
-function setValidationDefaults<T extends AnyZodObject>(
-  data: z.infer<T>,
-  fields: DefaultFields<T>
-) {
-  for (const stringField of Object.keys(fields)) {
-    const field = stringField as keyof typeof data;
-    const currentData = data[field];
-
-    if (typeof fields[field] === 'function') {
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      const func = fields[field] as Function;
-      data[field] = func(currentData, data);
-    } else if (!currentData) {
-      data[field] = fields[field] as never;
-    }
-  }
-}
-
-type EntityInfo<T extends AnyZodObject> = Record<
-  keyof z.infer<T>,
-  ReturnType<typeof zodTypeInfo>
->;
-
-const entityInfoCache: WeakMap<
-  AnyZodObject,
-  EntityInfo<AnyZodObject>
-> = new WeakMap<AnyZodObject, EntityInfo<AnyZodObject>>();
-
-function entityTypeInfo<T extends AnyZodObject>(schema: T) {
-  if (entityInfoCache.has(schema))
-    return entityInfoCache.get(schema) as EntityInfo<T>;
-
-  const keys = schema.keyof().Values;
-  const info = Object.fromEntries(
-    Object.keys(keys).map((key) => [key, zodTypeInfo(schema.shape[key])])
-  );
-
-  entityInfoCache.set(schema, info);
-  return info as EntityInfo<T>;
-}
-
-const defaultEntityCache: WeakMap<
-  AnyZodObject,
-  z.infer<AnyZodObject>
-> = new WeakMap<AnyZodObject, z.infer<AnyZodObject>>();
-
-/**
- * Returns the default values for a zod validation schema.
- * The main gotcha is that undefined values are changed to null if the field is nullable.
- */
-export function defaultEntity<T extends AnyZodObject>(
-  schema: T,
-  options: {
-    defaults?: DefaultFields<T>;
-    implicitDefaults?: boolean;
-  } = {}
-): z.infer<T> {
-  options = { ...options };
-
-  if (
-    defaultEntityCache &&
-    !options.defaults &&
-    defaultEntityCache.has(schema)
-  ) {
-    return defaultEntityCache.get(schema) as z.infer<T>;
-  }
-
-  const fields = Object.keys(schema.keyof().Values);
-
-  let output: Record<string, unknown> = {};
-  let defaultKeys: string[] | undefined;
-
-  if (options.defaults) {
-    setValidationDefaults(output, options.defaults);
-    defaultKeys = Object.keys(options.defaults);
-  }
-
-  const schemaTypeInfo = entityTypeInfo(schema);
-
-  // Need to set empty properties after defaults are set.
-  output = Object.fromEntries(
-    fields.map((field) => {
-      const typeInfo = schemaTypeInfo[field];
-      const value =
-        defaultKeys && defaultKeys.includes(field)
-          ? output[field]
-          : valueOrDefault(
-              field,
-              undefined,
-              true,
-              options.implicitDefaults ?? true,
-              typeInfo
-            );
-
-      return [field, value];
-    })
-  );
-
-  if (
-    defaultEntityCache &&
-    !options.defaults &&
-    !defaultEntityCache.has(schema)
-  ) {
-    defaultEntityCache.set(schema, output);
-  }
-
-  return output;
-}
+export { defaultEntity } from './entity';
 
 export function setError<T extends AnyZodObject>(
   form: Validation<T>,
@@ -170,19 +55,19 @@ function formDataToValidation<T extends AnyZodObject>(
   data: FormData
 ) {
   const output: Record<string, unknown> = {};
-  const entityInfo = entityTypeInfo(schema);
+  const entityInfo = entityData(schema);
 
   function parseSingleEntry(key: string, entry: FormDataEntryValue) {
     if (entry && typeof entry !== 'string') {
       // File object, not supported
       return undefined;
     } else {
-      return parseEntry(key, entry, entityInfo[key]);
+      return parseEntry(key, entry, entityInfo.typeInfo[key]);
     }
   }
 
   for (const key of fields) {
-    const typeInfo = entityInfo[schema.shape[key]];
+    const typeInfo = entityInfo.typeInfo[key];
     const entries = data.getAll(key);
 
     if (!(typeInfo.zodType instanceof ZodArray)) {
@@ -195,7 +80,7 @@ function formDataToValidation<T extends AnyZodObject>(
   function parseEntry(
     field: string,
     value: string | null,
-    typeInfo: ReturnType<typeof zodTypeInfo>
+    typeInfo: ZodTypeInfo
   ): unknown {
     const newValue = valueOrDefault(field, value, false, true, typeInfo);
 
@@ -249,46 +134,6 @@ function formDataToValidation<T extends AnyZodObject>(
   return output as z.infer<T>;
 }
 
-type ZodTypeInfo = {
-  zodType: ZodTypeAny;
-  isNullable: boolean;
-  isOptional: boolean;
-  defaultValue: unknown;
-};
-
-function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
-  let _wrapped = true;
-  let isNullable = false;
-  let isOptional = false;
-  let defaultValue: unknown = undefined;
-
-  //let i = 0;
-  while (_wrapped) {
-    //console.log(' '.repeat(++i * 2) + zodType.constructor.name);
-    if (zodType instanceof ZodNullable) {
-      isNullable = true;
-      zodType = zodType.unwrap();
-    } else if (zodType instanceof ZodDefault) {
-      defaultValue = zodType._def.defaultValue();
-      zodType = zodType._def.innerType;
-    } else if (zodType instanceof ZodOptional) {
-      isOptional = true;
-      zodType = zodType.unwrap();
-    } else if (zodType instanceof ZodEffects) {
-      zodType = zodType._def.schema;
-    } else {
-      _wrapped = false;
-    }
-  }
-
-  return {
-    zodType,
-    isNullable,
-    isOptional,
-    defaultValue
-  };
-}
-
 function valueOrDefault<T extends AnyZodObject>(
   field: keyof z.infer<T>,
   value: unknown,
@@ -334,76 +179,6 @@ function valueOrDefault<T extends AnyZodObject>(
   return emptyValue();
 }
 
-function _constraint(key: string, info: ZodTypeInfo) {
-  const zodType = info.zodType;
-  const required = !info.isNullable && !info.isOptional;
-  if (zodType instanceof ZodString) {
-    const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
-
-    if (patterns.length > 1) {
-      throw new Error(
-        `Error on field "${key}": Only one regex is allowed per field.`
-      );
-    }
-
-    const pattern =
-      patterns.length == 1 && patterns[0].kind == 'regex'
-        ? patterns[0]
-        : undefined;
-
-    return {
-      pattern: pattern?.regex.source,
-      minlength: zodType.minLength ?? undefined,
-      maxlength: zodType.maxLength ?? undefined,
-      required
-    };
-  }
-
-  if (zodType instanceof ZodNumber) {
-    const steps = zodType._def.checks.filter((f) => f.kind == 'multipleOf');
-
-    if (steps.length > 1) {
-      throw new Error(
-        `Error on field "${key}": Only one multipleOf is allowed per field.`
-      );
-    }
-
-    const step =
-      steps.length == 1 && steps[0].kind == 'multipleOf'
-        ? steps[0]
-        : undefined;
-
-    return {
-      min: zodType.minValue ?? undefined,
-      max: zodType.maxValue ?? undefined,
-      step: step?.value,
-      required
-    };
-  }
-
-  if (zodType instanceof ZodDate) {
-    return {
-      min: zodType.minDate ?? undefined,
-      max: zodType.maxDate ?? undefined,
-      required
-    };
-  }
-
-  return {
-    required
-  };
-}
-
-function inputConstraints<T extends AnyZodObject>(schema: T) {
-  const entityInfo = entityTypeInfo(schema);
-  return Object.fromEntries(
-    Object.entries(entityInfo).map(([key, info]) => [
-      key,
-      _constraint(key, info)
-    ])
-  ) as NonNullable<Validation<T>['constraints']>;
-}
-
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
  * @param data Data structure for a Zod schema, or RequestEvent/FormData. If falsy, defaultEntity will be used.
@@ -420,26 +195,23 @@ export async function superValidate<T extends AnyZodObject>(
     | null
     | undefined,
   schema: T,
-  options: {
-    defaults?: DefaultFields<T>;
-    implicitDefaults?: boolean;
+  options: DefaultEntityOptions<T> & {
     noErrors?: boolean;
   } = {}
 ): Promise<Validation<T>> {
   options = { ...options };
 
   const schemaKeys = Object.keys(schema.keyof().Values);
-
-  const constraints = inputConstraints(schema);
+  const entityInfo = entityData(schema);
 
   function emptyEntity() {
     return {
       valid: false,
       errors: {},
-      data: defaultEntity(schema, options),
+      data: entityInfo.defaultEntity,
       empty: true,
       message: null,
-      constraints
+      constraints: entityInfo.constraints
     };
   }
 
@@ -461,23 +233,26 @@ export async function superValidate<T extends AnyZodObject>(
   }
 
   async function tryParseFormData(request: Request) {
-    const formData = await request.formData();
+    let formData: FormData | undefined = undefined;
+    try {
+      formData = await request.formData();
+    } catch {
+      return null;
+    }
     return parseFormData(formData);
   }
 
-  try {
-    if (!data) {
-      return emptyEntity();
-    } else if (data instanceof FormData) {
-      data = parseFormData(data);
-    } else if (data instanceof Request) {
-      data = await tryParseFormData(data);
-    } else if ('request' in data && data.request instanceof Request) {
-      data = await tryParseFormData(data.request);
-    }
-  } catch (e) {
+  if (!data) {
     return emptyEntity();
+  } else if (data instanceof FormData) {
+    data = parseFormData(data);
+  } else if (data instanceof Request) {
+    data = await tryParseFormData(data);
+  } else if ('request' in data && data.request instanceof Request) {
+    data = await tryParseFormData(data.request);
   }
+
+  if (!data) return emptyEntity();
 
   const status = schema.safeParse(data);
 
@@ -487,7 +262,6 @@ export async function superValidate<T extends AnyZodObject>(
       : (status.error.flatten().fieldErrors as ValidationErrors<T>);
 
     const parsedData = data as Partial<z.infer<T>>;
-    const defEntity = defaultEntity(schema, options);
 
     return {
       valid: false,
@@ -495,12 +269,14 @@ export async function superValidate<T extends AnyZodObject>(
       data: Object.fromEntries(
         schemaKeys.map((key) => [
           key,
-          parsedData[key] === undefined ? defEntity[key] : parsedData[key]
+          parsedData[key] === undefined
+            ? entityInfo.defaultEntity[key]
+            : parsedData[key]
         ])
       ),
       empty: false,
       message: null,
-      constraints
+      constraints: entityInfo.constraints
     };
   } else {
     return {
@@ -509,7 +285,7 @@ export async function superValidate<T extends AnyZodObject>(
       data: status.data,
       empty: false,
       message: null,
-      constraints
+      constraints: entityInfo.constraints
     };
   }
 }

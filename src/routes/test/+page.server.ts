@@ -31,11 +31,8 @@ export const load = (async (event) => {
 export const actions = {
   form: async (event) => {
     const formData = await event.request.formData();
-    console.log(
-      '🚀 ~ file: +page.server.ts:32 ~ form: ~ formData:',
-      formData
-    );
     const form = await superValidate(formData, _dataTypeForm);
+    console.log('🚀 ~ POST', form);
 
     if (!form.valid) return fail(400, { form });
 

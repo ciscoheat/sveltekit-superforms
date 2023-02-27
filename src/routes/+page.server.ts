@@ -73,7 +73,7 @@ export const actions = {
       const user = { ...form.data, id: userId() };
       users.push(user);
       throw redirect(
-        '?id=' + user.id,
+        //'?id=' + user.id,
         {
           type: 'success',
           message: 'User created!'

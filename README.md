@@ -317,11 +317,11 @@ resetForm: boolean = false;
 
 As you see, another difference is that the form isn't resetted by default. This should also be opt-in to avoid data loss, and this isn't always wanted, especially in backend interfaces, where the form data should be persisted.
 
-In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms` resetting means _going back to the initial state of the form data_, usually the contents of `form` in `PageData`. This may not be exactly what you needed, in which case you can use an event to clear the form instead.
+In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms`, resetting means _going back to the initial state of the form data_, usually the contents of `form` in `PageData`. This may not be exactly what you needed, in which case you can use an event to clear the form instead.
 
 ## Client-side validation
 
-Since there is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the `constraints` store returned from `superForm` can be used to follow this with virtually no effort:
+Since there is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the `constraints` store returned from `superForm` can be used to follow it with virtually no effort:
 
 ```svelte
 <script lang="ts">
@@ -347,7 +347,7 @@ The constraints field is an object, with validation properties mapped from the v
 
 ### Custom validation
 
-If you want more control (or think the built-in browser validation is too constraining, pun intented), you can set the `validators` option:
+If think the built-in browser validation is too constraining (pun intented), you can set the `validators` option:
 
 ```ts
 validators: {

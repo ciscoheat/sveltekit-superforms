@@ -39,7 +39,7 @@ export {
 } from './proxies';
 
 export type FormUpdate = (
-  result: Extract<ActionResult, { type: 'success' } | { type: 'failure' }>,
+  result: Exclude<ActionResult, { type: 'error' }>,
   untaint?: boolean
 ) => Promise<void>;
 
@@ -298,10 +298,17 @@ export function superForm<T extends AnyZodObject>(
   }
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
-    if (['error', 'redirect'].includes(result.type)) {
+    if (result.type == ('error' as string)) {
       throw new Error(
-        `ActionResult of type "${result.type}" was passed to update function. Only "success" and "failure" are allowed.`
+        `ActionResult of type "${result.type}" cannot be passed to update function.`
       );
+    }
+
+    // All we need to do if redirected is to reset the form.
+    // No events should be triggered because technically we're somewhere else.
+    if (result.type == 'redirect') {
+      if (options.resetForm) _resetForm();
+      return;
     }
 
     if (typeof result.data !== 'object') {
@@ -661,9 +668,11 @@ function formEnhance<T extends AnyZodObject>(
           }
 
           if (options.applyAction) {
-            // This will call the page subscription in superForm
+            // This will trigger the page subscription in superForm,
+            // which will in turn call Data_update.
             await applyAction(result);
-          } else if (result.type !== 'redirect') {
+          } else {
+            // Call Data_update directly to trigger events
             await Data_update(result);
           }
         } else {
@@ -695,6 +704,8 @@ function formEnhance<T extends AnyZodObject>(
           }
         }
 
+        // Set flash message, which should be set in all cases, even
+        // if we have redirected (which is the point with the flash message!)
         if (options.flashMessage) {
           if (result.type == 'error' && options.flashMessage.onError) {
             if (

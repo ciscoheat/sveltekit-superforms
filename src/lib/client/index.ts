@@ -173,14 +173,9 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @returns {EnhancedForm} An object with properties for the form.
  */
 export function superForm<T extends AnyZodObject>(
-  form?: FormOptions<T> | Validation<T> | null | undefined,
+  form: Validation<T> | null | undefined,
   options: FormOptions<T> = {}
 ): EnhancedForm<T> {
-  if (form && !('data' in form)) {
-    options = form;
-    form = null;
-  }
-
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
 
   function emptyForm() {
@@ -239,6 +234,9 @@ export function superForm<T extends AnyZodObject>(
   //////////////////////////////////////////////////////////////////////
 
   const initialForm = form;
+  if (!('valid' in initialForm)) {
+    throw new Error('A non-validation object was passed to superForm.');
+  }
 
   // Need to set this after use:enhance has run, to avoid showing the dialog
   // when a form doesn't use it.

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Reset form also on redirect, if `options.resetForm` is set.
+- Check if value passed to `superForm` is a validation object.
 
 ## [0.5.11] - 2023-02-27
 

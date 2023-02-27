@@ -333,7 +333,7 @@ test('Zod enums', async () => {
     gender: z.enum(['male', 'female', 'other']).nullish()
   });
 
-  const form = await superValidate(null, schema);
+  const form = await superValidate(null, schema, { includeMeta: true });
   expect(form).toStrictEqual({
     valid: false,
     errors: {},
@@ -341,14 +341,12 @@ test('Zod enums', async () => {
     empty: true,
     message: null,
     constraints: {
-      gender: {}
-    }
-    /*
+      gender: undefined
+    },
     meta: {
       types: {
         gender: 'ZodEnum'
       }
     }
-    */
   });
 });

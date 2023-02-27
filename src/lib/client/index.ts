@@ -21,7 +21,7 @@ import { browser } from '$app/environment';
 import type { Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import { deepEqual } from '..';
+import { deepEqual, type InputConstraints } from '..';
 
 enum FetchStatus {
   Idle = 0,
@@ -127,12 +127,28 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   multipleSubmits: 'prevent'
 };
 
+type FormField<T, N = string> = {
+  name: N;
+  value: T;
+  errors: string[] | undefined;
+  constraints: InputConstraints | undefined;
+  type: string | undefined;
+};
+
+/*
+type FormFields<T extends AnyZodObject> = {
+  [Property in keyof z.infer<T>]: FormField<z.infer<T>[Property], Property>;
+};
+*/
+
 export type EnhancedForm<T extends AnyZodObject> = {
   form: Writable<Validation<T>['data']>;
   errors: Writable<Validation<T>['errors']>;
-  message: Writable<Validation<T>['message']>;
   constraints: Writable<Validation<T>['constraints']>;
 
+  fields: Readable<FormField<T>[]>;
+
+  message: Writable<Validation<T>['message']>;
   validated: Readable<boolean>;
   empty: Readable<boolean>;
 
@@ -373,16 +389,26 @@ export function superForm<T extends AnyZodObject>(
   return {
     errors: Errors,
     form: Data,
-    message: Message,
     constraints: Constraints,
+
+    fields: derived([Data, Errors, Constraints], ([$D, $E, $C]) => {
+      return Object.keys($D).map((key) => ({
+        name: key,
+        value: $D[key],
+        errors: $E[key],
+        constraints: $C[key],
+        type: initialForm.meta ? initialForm.meta.types[key] : undefined
+      }));
+    }),
+
+    message: Message,
+    tainted: Tainted,
     validated: derived(Validated, ($s) => $s),
     empty: derived(Empty, ($e) => $e),
 
     submitting: derived(Submitting, ($s) => $s),
     delayed: derived(Delayed, ($d) => $d),
     timeout: derived(Timeout, ($t) => $t),
-
-    tainted: Tainted,
 
     enhance: (el: HTMLFormElement) =>
       formEnhance(

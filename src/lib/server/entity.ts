@@ -68,7 +68,7 @@ type EntityMetaData<T extends AnyZodObject> = {
 type Entity<T extends AnyZodObject> = {
   typeInfo: EntityRecord<T, ZodTypeInfo>;
   defaultEntity: z.infer<T>;
-  constraints: EntityRecord<T, InputConstraints>;
+  constraints: EntityRecord<T, InputConstraints | undefined>;
   meta: EntityMetaData<T>;
 };
 
@@ -229,11 +229,13 @@ function constraints<T extends AnyZodObject>(
   schema: T,
   typeInfo: EntityRecord<T, ZodTypeInfo>
 ) {
-  function constraint(key: string, info: ZodTypeInfo): InputConstraints {
+  function constraint(
+    key: string,
+    info: ZodTypeInfo
+  ): InputConstraints | undefined {
     const zodType = info.zodType;
 
     const output: InputConstraints = {};
-    if (!info.isNullable && !info.isOptional) output.required = true;
 
     if (zodType instanceof ZodString) {
       const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
@@ -276,7 +278,9 @@ function constraints<T extends AnyZodObject>(
       if (zodType.maxDate) output.max = zodType.maxDate.toISOString();
     }
 
-    return output;
+    if (!info.isNullable && !info.isOptional) output.required = true;
+
+    return Object.keys(output).length > 0 ? output : undefined;
   }
 
   return _mapSchema(schema, (_, key) => {

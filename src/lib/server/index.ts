@@ -197,9 +197,10 @@ export async function superValidate<T extends AnyZodObject>(
   schema: T,
   options: DefaultEntityOptions<T> & {
     noErrors?: boolean;
+    includeMeta?: boolean;
   } = {}
 ): Promise<Validation<T>> {
-  options = { ...options };
+  options = { noErrors: false, includeMeta: false, ...options };
 
   const schemaKeys = Object.keys(schema.keyof().Values);
   const entityInfo = entityData(schema);
@@ -211,7 +212,8 @@ export async function superValidate<T extends AnyZodObject>(
       data: entityInfo.defaultEntity,
       empty: true,
       message: null,
-      constraints: entityInfo.constraints
+      constraints: entityInfo.constraints,
+      meta: options.includeMeta ? entityInfo.meta : undefined
     };
   }
 
@@ -276,7 +278,8 @@ export async function superValidate<T extends AnyZodObject>(
       ),
       empty: false,
       message: null,
-      constraints: entityInfo.constraints
+      constraints: entityInfo.constraints,
+      meta: options.includeMeta ? entityInfo.meta : undefined
     };
   } else {
     return {
@@ -285,7 +288,8 @@ export async function superValidate<T extends AnyZodObject>(
       data: status.data,
       empty: false,
       message: null,
-      constraints: entityInfo.constraints
+      constraints: entityInfo.constraints,
+      meta: options.includeMeta ? entityInfo.meta : undefined
     };
   }
 }

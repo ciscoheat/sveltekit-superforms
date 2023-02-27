@@ -23,7 +23,7 @@ export type Validation<T extends AnyZodObject> = {
   data: z.infer<T>;
   empty: boolean;
   message: string | null;
-  constraints: Record<keyof z.infer<T>, InputConstraints>;
+  constraints: Record<keyof z.infer<T>, InputConstraints | undefined>;
   meta?: {
     types: Record<keyof z.infer<T>, string>;
   };

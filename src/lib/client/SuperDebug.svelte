@@ -17,7 +17,7 @@
           return '#}#undefined';
         }
         if (typeof this === 'object' && this[key] instanceof Date) {
-          return '#}D#' + value;
+          return '#}D#' + (isNaN(this[key]) ? 'Invalid Date' : value);
         }
         if (typeof value === 'number' && isNaN(value)) {
           return '#}#NaN';
@@ -139,11 +139,11 @@
   }
 
   :global(.super-debug--code .date) {
-    color: #d44478;
+    color: #c25bc5;
   }
 
   :global(.super-debug--code .boolean) {
-    color: #bd5532;
+    color: #c55833;
   }
 
   :global(.super-debug--code .num) {

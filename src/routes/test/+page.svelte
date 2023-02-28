@@ -21,7 +21,7 @@
     message: modalMessage,
     delayed: modalDelayed,
     enhance: modalEnhance
-  } = superForm({
+  } = superForm(null, {
     taintedMessage: null,
     dataType: 'formdata',
     applyAction: false,

@@ -235,7 +235,9 @@ export function superForm<T extends AnyZodObject>(
 
   const initialForm = form;
   if (!('valid' in initialForm)) {
-    throw new Error('A non-validation object was passed to superForm.');
+    throw new Error(
+      "A non-validation object was passed to superForm. Check what's passed to its first parameter (null is allowed)."
+    );
   }
 
   // Need to set this after use:enhance has run, to avoid showing the dialog

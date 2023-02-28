@@ -40,7 +40,7 @@ import { superValidate } from 'sveltekit-superforms/server';
 
 // See https://zod.dev/?id=primitives for schema syntax
 const schema = z.object({
-  name: z.string().default('Hello world!'),
+  name: z.string().default('Hello world!'), // A default value just to show something
   email: z.string().email()
 });
 
@@ -51,6 +51,8 @@ export const load = (async (event) => {
   return { form };
 }) satisfies PageServerLoad;
 ```
+
+`superValidate` takes the data as the first parameter, which could be either the `RequestEvent` as in this case, a `Request`, `FormData`, or an entity partially matching the schema.
 
 **src/routes/+page.svelte**
 
@@ -78,15 +80,9 @@ export const load = (async (event) => {
 </form>
 ```
 
-Optional: If you're starting from scratch, add this to `<head>` for a much nicer visual experience:
+`superForm` is used on the client-side to display the data, which is conveniently supplied from `data.form`.
 
-**src/app.html**
-
-```html
-<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" />
-```
-
-Currently there is no form action to submit to, but we can at least see that the form is populated. To get deeper insight, let's add the Super Form Debugging Svelte Component:
+With this, we can at least see that the form is populated. But to get deeper insight, let's add the Super Form Debugging Svelte Component:
 
 **src/routes/+page.svelte**
 
@@ -100,9 +96,21 @@ Currently there is no form action to submit to, but we can at least see that the
 
 Edit the fields and see how the `$form` store is automatically updated. The component also displays the current page status in the right corner.
 
-## Posting - Without any bells and whistles
+**Optional:** If you're starting from scratch, add this to `<head>` for a much nicer visual experience:
 
-Let's add a minimal form action:
+**src/app.html**
+
+```html
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/normalize.css@8.0.1/normalize.css"
+/>
+<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" />
+```
+
+## Posting
+
+Let's add a minimal form action, to be able to post the data back to the server:
 
 **src/routes/+page.server.ts**
 
@@ -119,11 +127,13 @@ export const actions = {
 
     // Convenient validation check:
     if (!form.valid) {
-      // Again, always return { form } and you'll be fine.
+      // Again, always return { form } and things will just work.
       return fail(400, { form });
     }
 
-    // Yep, here too
+    // TODO: Do something with the validated data
+
+    // Yep, return { form } here too
     return { form };
   }
 } satisfies Actions;
@@ -205,13 +215,13 @@ We do that by adding variables to the destructuring assignment of `superForm`:
 </style>
 ```
 
-And with that, we have a fully working form, no JavaScript needed, with convenient handling of data and validation!
+And with that, we have a fully working form, no JavaScript needed, with convenient handling of data and validation on both client and server!
 
 # But wait, there's more
 
 Have we even started on the feature list? Well, let's move into the 2000's and activate JavaScript, and see what will happen.
 
-Let's start with retrieving a simple but most useful variable returned from `superForm`:
+Let's start with retrieving a simple but most useful variable returned from `superForm`, and use it on the `<form>`:
 
 ```svelte
 <script lang="ts">
@@ -267,19 +277,19 @@ In order of micro-managing the result, from least to most.
 onUpdated: ({ form }) => void
 ```
 
-If you just want to apply the default behaviour and do something afterwards depending on validation success, this is the simplest way.
+If you just want to apply the default behaviour and do something afterwards depending on validation success, `onUpdated` is the simplest way.
 
 ```ts
 onUpdate: ({ form, cancel }) => void
 ```
 
-A bit more control, lets you enter just before the form update is being applied and gives you the option to modify the `validation` object, or `cancel()` the update altogether.
+A bit more control, `onUpdate` lets you enter just before the form update is being applied and gives you the option to modify the `form` object (the validation result), or `cancel()` the update altogether.
 
 ```ts
 onError: (({ result, message }) => void) | 'set-message' | 'apply' | string = 'set-message'
 ```
 
-It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. This event gives you more control over the error than the default, which is to set the `message` store to the error value.
+It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. `onError` gives you more control over the error than the default, which is to set the `message` store to the error value.
 
 By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary. Or you can set it to a custom error message.
 
@@ -287,13 +297,13 @@ By setting onError to `apply`, the default `applyAction` behaviour will be used,
 onSubmit: SubmitFunction;
 ```
 
-See SvelteKit docs for the [SubmitFunction](https://kit.svelte.dev/docs/types#public-types-submitfunction) signature.
+`onSubmit` hooks you in to SvelteKit's `use:enhance` function. See SvelteKit docs for the [SubmitFunction](https://kit.svelte.dev/docs/types#public-types-submitfunction) signature.
 
 ```ts
 onResult: ({ result, update, formEl, cancel }) => void
 ```
 
-When you want detailed control, this event gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result` and an `update` function, so you can decide if you want to update the form at all.
+When you want detailed control, `onResult` gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result` and an `update` function, so you can decide if you want to update the form at all.
 
 The `update(result, untaint?)` function takes an `ActionResult` of type `success` or `failure`, and an optional `untaint` parameter which can be used to untaint the form, so the dialog won't appear when navigating away. If `untaint` isn't specified, a result status between 200-299 will untaint the form.
 
@@ -305,9 +315,9 @@ The `update(result, untaint?)` function takes an `ActionResult` of type `success
 
 (Knowing about [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) is useful before reading this section.)
 
-The biggest difference is that unless `onError` is set to `apply`, any `error` result is transformed into `failure`, to avoid disaster when the nearest `+error.svelte` page is rendered, wiping out all the form data that was just entered.
+The biggest difference is that unless `onError` is set to `apply`, any `error` result is transformed into `failure`, to avoid disaster when the nearest `+error.svelte` page is rendered, which will wipe out all the form data that was just entered.
 
-The rest of the behavior can be customized:
+If no error occured, you have some options to customize the rest of the behavior:
 
 ```ts
 applyAction: boolean = true;
@@ -319,9 +329,11 @@ As you see, another difference is that the form isn't resetted by default. This 
 
 In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms`, resetting means _going back to the initial state of the form data_, usually the contents of `form` in `PageData`. This may not be exactly what you needed, in which case you can use an event to clear the form instead.
 
+It's worth noting that by setting `applyAction` to `false`, multiple forms on the same page can be handle quite easily, since they won't tamper with `$page.form` and `$page.status`, in that case.
+
 ## Client-side validation
 
-Since there is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), the `constraints` store returned from `superForm` can be used to follow it with virtually no effort:
+There is already a browser standard for [client-side form validation](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation), and the `constraints` store returned from `superForm` can be used to follow it with virtually no effort:
 
 ```svelte
 <script lang="ts">
@@ -331,7 +343,7 @@ Since there is already a browser standard for [client-side form validation](http
 <input name="email" bind:value={$form.email} {...$constraints.email} />
 ```
 
-The constraints field is an object, with validation properties mapped from the validation schema:
+The constraints field is an object, with validation properties mapped from the schema:
 
 ```ts
 {
@@ -357,7 +369,7 @@ validators: {
 
 It takes an object with the same keys as the form, with a function that receives the field value and should return either a string as a "validation failed" message, or `null` or `undefined` if the field is valid.
 
-Here's an example of how to validate a string length:
+Here's how to validate a string length:
 
 **src/routes/+page.svelte**
 
@@ -380,7 +392,7 @@ The default value `clear`, will remove the error when that field value is modifi
 
 ## Submit behavior
 
-Making the user understand that things are happening when they submit the form is imperative for the best possible user experience. Fortunately, there are plenty of options that facitilates that, with sensible defaults.
+Making the user understand that things are happening when they submit the form is imperative for the best possible user experience. Fortunately, there are plenty of options for that, with sensible defaults.
 
 ```ts
 clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none' = 'errors-and-message'
@@ -423,7 +435,7 @@ Experimenting with these three timers and the delays between them, is certainly 
 multipleSubmits: 'prevent' | 'allow' | 'abort' = 'prevent'
 ```
 
-This one is more for the sake of the server than the user. When set to `prevent`, the form cannot be submitted again until a result is received, or the `timeout` state is reached. `abort` is the next sensible approach, which will cancel the previous request before submitting again. Finally, `allow` will allow any number of frenetic clicks on the submit button!
+This one is more for the sake of the server than the user. When set to `prevent`, the form cannot be submitted again until a result is received, or the `timeout` state is reached. `abort` is the next sensible approach, which will cancel the previous request before submitting again. Finally, `allow` will pass through any number of frenetic clicks on the submit button!
 
 ## sveltekit-flash-message support
 
@@ -461,6 +473,7 @@ If this bliss is too much to handle, setting `dataType` to `formdata`, posts the
 
   <label>
     E-mail<br /><input
+      type="email"
       data-invalid={$errors.email}
       bind:value={$form.email}
     />
@@ -480,9 +493,7 @@ If this bliss is too much to handle, setting `dataType` to `formdata`, posts the
 
 # Proxy objects
 
-Sometimes the form data must be proxied, for example if you use a third-party library that uses strings for a `<select>` element, but you want a number in the data structure. Or a date picker returns a string, but you want a `Date`.
-
-When you want a `string` value like this to be automatically converted and updating a value in your form data, there are a number of objects available:
+Sometimes the form data must be proxied, which could happen when you get a `string` value from an input field, third-party library, etc, and want it to be automatically converted and updating a non-string value in your form data structure. Fortunately, there are a number of objects available for that:
 
 ```ts
 import {
@@ -496,12 +507,14 @@ import {
 The usage for all of them is the same:
 
 ```ts
-// Assume that form contains a field 'id' of type number
+// Assume the following schema:
+// z.object({ id: z.number().int() })
+
 const { form } = superForm(data.form);
 const idProxy = intProxy(form, 'id'); // Writable<string>
 ```
 
-Now if you bind to this proxy object, `$form.id` will be updated automatically.
+Now if you bind to `$idProxy` instead of directly to `$form.id`, the value will be converted to an integer and `$form.id` will be updated automatically.
 
 # API reference
 

@@ -78,15 +78,17 @@
   <div class="super-debug">
     {#if status}
       <div
-        class:green={$page.status < 300}
-        class:yellow={$page.status >= 300}
-        class:red={$page.status >= 400}
+        class:info={$page.status < 200}
+        class:success={$page.status >= 200 && $page.status < 300}
+        class:redirect={$page.status >= 300 && $page.status < 400}
+        class:error={$page.status >= 400}
         class="super-debug--status"
       >
         <div>{$page.status}</div>
       </div>
     {/if}
-    <pre bind:this={ref}><code class="super-debug--code"
+    <pre class="super-debug--pre" bind:this={ref}><code
+        class="super-debug--code"
         ><slot
           >{#if data}{@html syntaxHighlight(data)}{/if}</slot
         ></code
@@ -95,10 +97,6 @@
 {/if}
 
 <style>
-  .super-debug {
-    margin: 0.5rem 0;
-  }
-
   .super-debug .super-debug--status {
     display: flex;
     padding-right: 16px;
@@ -118,16 +116,20 @@
     background-color: #222;
   }
 
-  .green {
-    color: green;
+  .info {
+    color: rgb(85, 85, 255);
   }
 
-  .yellow {
+  .success {
+    color: rgb(13, 160, 13);
+  }
+
+  .redirect {
     color: yellow;
   }
 
-  .red {
-    color: #d20000;
+  .error {
+    color: #f21c1c;
   }
 
   :global(.super-debug--code .key) {

@@ -201,7 +201,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
     name="email"
     data-invalid={$errors.email}
     bind:value={$form.email}
-    {...$constraints.name}
+    {...$constraints.email}
   />
   {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
 

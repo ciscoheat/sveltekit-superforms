@@ -11,15 +11,24 @@
 
   export let data: PageData;
 
-  const { form, errors, message, delayed, timeout, enhance, tainted } =
-    superForm(data.form, {
-      taintedMessage: null,
-      onError: 'Något gick fel.',
-      validators: {
-        email: (n) =>
-          /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
-      }
-    });
+  const {
+    form,
+    errors,
+    message,
+    delayed,
+    timeout,
+    enhance,
+    firstError,
+    allErrors,
+    tainted
+  } = superForm(data.form, {
+    taintedMessage: null,
+    onError: 'Något gick fel.',
+    validators: {
+      email: (n) =>
+        /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
+    }
+  });
 
   const {
     form: modalForm,
@@ -73,6 +82,18 @@
   <h3>{$message}</h3>
 {/if}
 
+{#if $firstError}
+  <p>First error: {$firstError.key} - {$firstError.value}</p>
+{/if}
+
+{#if $allErrors.length}
+  <ul>
+    {#each $allErrors as error}
+      <li>{error.key}: {error.value}</li>
+    {/each}
+  </ul>
+{/if}
+
 <form method="POST" action="?/form" use:enhance>
   <input type="hidden" name="proxyString" bind:value={$form.proxyString} />
 
@@ -94,7 +115,12 @@
   {#if $errors.string}<span data-invalid>{$errors.string}</span>{/if}
 
   <label for="email">email</label>
-  <input type="text" name="email" bind:value={$form.email} />
+  <input
+    type="text"
+    data-invalid={$errors.email}
+    name="email"
+    bind:value={$form.email}
+  />
   {#if $errors.email}<span data-invalid>{$errors.email}</span>{/if}
 
   <label for="bool">bool</label>
@@ -110,7 +136,12 @@
   {#if $errors.number}<span data-invalid>{$errors.number}</span>{/if}
 
   <label for="proxyNumber">proxyNumber</label>
-  <input type="text" name="proxyNumber" bind:value={$proxyNumber} />
+  <input
+    type="text"
+    name="proxyNumber"
+    data-invalid={$errors.proxyNumber}
+    bind:value={$proxyNumber}
+  />
   {#if $errors.proxyNumber}<span data-invalid>{$errors.proxyNumber}</span
     >{/if}
 

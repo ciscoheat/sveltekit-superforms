@@ -193,11 +193,7 @@ export function superForm<T extends AnyZodObject>(
   const actionForm = get(page).form;
 
   if (options.applyAction && actionForm) {
-    if (
-      !actionForm.form ||
-      !('valid' in actionForm.form) ||
-      typeof actionForm.form.valid !== 'boolean'
-    ) {
+    if (!actionForm.form || typeof actionForm.form.valid !== 'boolean') {
       throw new Error(
         "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
       );
@@ -207,13 +203,15 @@ export function superForm<T extends AnyZodObject>(
     form = emptyForm();
   }
 
+  const initialForm = form;
+
   // Stores for the properties of Validation<T>
-  const Validated = writable(form.valid);
-  const Errors = writable(form.errors);
-  const Data = writable(form.data);
-  const Empty = writable(form.empty);
-  const Message = writable(form.message);
-  const Constraints = writable(form.constraints);
+  const Validated = writable(initialForm.valid);
+  const Errors = writable(initialForm.errors);
+  const Data = writable(initialForm.data);
+  const Empty = writable(initialForm.empty);
+  const Message = writable(initialForm.message);
+  const Constraints = writable(initialForm.constraints);
 
   // Timers
   const Submitting = writable(false);
@@ -221,20 +219,22 @@ export function superForm<T extends AnyZodObject>(
   const Timeout = writable(false);
 
   // Utilities
-  const AllErrors = derived(Errors, (errors) => {
-    if (!errors) return [];
-    return Object.entries(errors).flatMap(
+  const AllErrors = derived(Errors, ($errors) => {
+    if (!$errors) return [];
+    return Object.entries($errors).flatMap(
       ([key, errors]) => errors?.map((value) => ({ key, value })) ?? []
     );
   });
 
-  const FirstError = derived(AllErrors, (allErrors) => allErrors[0] ?? null);
+  const FirstError = derived(
+    AllErrors,
+    ($allErrors) => $allErrors[0] ?? null
+  );
   const Tainted = derived(Data, ($d) => (savedForm ? isTainted($d) : false));
 
   //////////////////////////////////////////////////////////////////////
 
-  const initialForm = form;
-  if (!('valid' in initialForm)) {
+  if (typeof initialForm.valid !== 'boolean') {
     throw new Error(
       "A non-validation object was passed to superForm. Check what's passed to its first parameter (null is allowed)."
     );
@@ -261,11 +261,13 @@ export function superForm<T extends AnyZodObject>(
       savedForm = { ...form.data };
     }
 
-    Validated.set(form.valid);
-    Errors.set(form.errors);
     Data.set(form.data);
-    Empty.set(form.empty);
+    // Set Errors AFTER Data so client-side validation doesn't
+    // immediately overwrite the server errors!
+    Errors.set(form.errors);
     Message.set(form.message);
+    Empty.set(form.empty);
+    Validated.set(form.valid);
   }
 
   async function _update(form: Validation<T>, untaint: boolean) {
@@ -340,8 +342,10 @@ export function superForm<T extends AnyZodObject>(
       }
     });
 
-    let previousForm = { ...form.data };
+    let previousForm = { ...initialForm.data };
     Data.subscribe(async (f) => {
+      // Validation check, must be run before Errors are updated
+      // so they aren't immediately overwritten by this.
       for (const key of Object.keys(f)) {
         if (f[key] !== previousForm[key]) {
           const validator = options.validators && options.validators[key];
@@ -381,7 +385,7 @@ export function superForm<T extends AnyZodObject>(
               'No form data found in $page.data (PageData). Make sure you return { form } in the load function.'
             );
           }
-          // It's a page reload, so don't trigger any update events.
+          // It's a page reload, so don't trigger any events, just update the data.
           rebind(p.data.form, true);
         }
       });
@@ -562,6 +566,10 @@ function formEnhance<T extends AnyZodObject>(
         },
 
         completed: (cancelled: boolean) => {
+          if (delayedTimeout) clearTimeout(delayedTimeout);
+          if (timeoutTimeout) clearTimeout(timeoutTimeout);
+          delayedTimeout = timeoutTimeout = 0;
+
           setState(FetchStatus.Idle);
           if (!cancelled) Form_scrollToFirstError();
         },

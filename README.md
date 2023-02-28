@@ -52,7 +52,13 @@ export const load = (async (event) => {
 }) satisfies PageServerLoad;
 ```
 
-`superValidate` takes the data as the first parameter, which could be either the `RequestEvent` as in this case, a `Request`, `FormData`, or an entity partially matching the schema.
+`superValidate` takes the data as the first parameter, which could be either:
+
+- the `RequestEvent`, as in this case
+- a `Request`
+- `FormData` (usually from the request)
+- `null` or `undefined`
+- or an entity partially matching the schema.
 
 **src/routes/+page.svelte**
 
@@ -172,7 +178,7 @@ if (!form.valid) {
 }
 ```
 
-If you submit the form now, you'll see that the Super Form Debugging Svelte Component shows a `400` status, and we do have some errors being sent to the client, so how do we display them?
+If you submit the form now, you'll see that the Super Form Debugging Svelte Component shows a `400` status, and there are some errors being sent to the client, so how do we display them?
 
 We do that by adding variables to the destructuring assignment of `superForm`:
 

@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { intProxy, booleanProxy, superForm, jsonProxy } from '$lib/client';
+  import {
+    dateProxy,
+    intProxy,
+    booleanProxy,
+    superForm,
+    jsonProxy
+  } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
 
@@ -31,8 +37,9 @@
   const proxyString = jsonProxy(form, 'proxyString', $form.coercedNumber);
   proxyString.set(123);
 
-  const bool = booleanProxy(form, 'bool');
+  const bool = booleanProxy(form, 'bool', { trueStringValue: '1' });
   const proxyNumber = intProxy(form, 'proxyNumber');
+  const date = dateProxy(form, 'date', { format: 'datetime-local' });
 
   const fields = [
     'nullableString',
@@ -92,7 +99,7 @@
 
   <label for="bool">bool</label>
   <select name="bool" bind:value={$bool}>
-    <option value="true">true</option>
+    <option value="1">true</option>
     <option value="">false</option>
   </select>
   {#if $errors.bool}<span data-invalid>{$errors.bool}</span>{/if}
@@ -106,6 +113,10 @@
   <input type="text" name="proxyNumber" bind:value={$proxyNumber} />
   {#if $errors.proxyNumber}<span data-invalid>{$errors.proxyNumber}</span
     >{/if}
+
+  <label for="date">proxyDate</label>
+  <input type="datetime-local" name="date" bind:value={$date} />
+  {#if $errors.date}<span data-invalid>{$errors.date}</span>{/if}
 
   {#each fields as key}
     <label for={key}>{key}</label>

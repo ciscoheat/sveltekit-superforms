@@ -1,34 +1,61 @@
 import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
 
+type DefaultOptions = {
+  trueStringValue: string;
+  dateFormat: 'date-local' | 'datetime-local' | 'time-local' | 'iso';
+};
+
+const defaultOptions: DefaultOptions = {
+  trueStringValue: 'true',
+  dateFormat: 'iso'
+};
+
 export function intProxy<
   T extends Record<string, unknown>,
   K extends keyof T
 >(form: Writable<T>, field: K) {
-  return stringProxy(form, field, 'int') as T[K] extends number
-    ? Writable<string>
-    : never;
+  return stringProxy(
+    form,
+    field,
+    'int',
+    defaultOptions
+  ) as T[K] extends number ? Writable<string> : never;
 }
 
 export function booleanProxy<T extends Record<string, unknown>>(
   form: Writable<T>,
-  field: keyof T
+  field: keyof T,
+  options: Pick<DefaultOptions, 'trueStringValue'> = {
+    trueStringValue: 'true'
+  }
 ): Writable<string> {
-  return stringProxy(form, field, 'boolean');
+  return stringProxy(form, field, 'boolean', {
+    ...defaultOptions,
+    ...options
+  });
 }
 
 export function numberProxy<T extends Record<string, unknown>>(
   form: Writable<T>,
   field: keyof T
 ): Writable<string> {
-  return stringProxy(form, field, 'number');
+  return stringProxy(form, field, 'number', defaultOptions);
 }
 
 export function dateProxy<T extends Record<string, unknown>>(
   form: Writable<T>,
-  field: keyof T
+  field: keyof T,
+  options: {
+    format: 'date-local' | 'datetime-local' | 'time-local' | 'iso';
+  } = {
+    format: 'iso'
+  }
 ): Writable<string> {
-  return stringProxy(form, field, 'date');
+  return stringProxy(form, field, 'date', {
+    ...defaultOptions,
+    dateFormat: options.format
+  });
 }
 
 /**
@@ -40,23 +67,48 @@ export function dateProxy<T extends Record<string, unknown>>(
 function stringProxy<
   T extends Record<string, unknown>,
   Type extends 'number' | 'int' | 'boolean' | 'date'
->(form: Writable<T>, field: keyof T, type: Type): Writable<string> {
+>(
+  form: Writable<T>,
+  field: keyof T,
+  type: Type,
+  options: DefaultOptions
+): Writable<string> {
   function toValue(val: unknown) {
-    if (typeof val === 'string') {
-      if (type == 'number') return parseFloat(val);
-      if (type == 'int') return parseInt(val, 10);
-      if (type == 'boolean') return !!val;
-      if (type == 'date') return new Date(val);
+    if (typeof val !== 'string')
+      throw new Error('stringProxy received a non-string value.');
+
+    if (type == 'number') return parseFloat(val);
+    if (type == 'int') return parseInt(val, 10);
+    if (type == 'boolean') return !!val;
+    else {
+      // date
+      return new Date(val);
     }
-    throw new Error('stringProxy received a non-string value.');
   }
 
   const proxy = derived(form, ($form) => {
+    const value = $form[field];
+    if (value === undefined || value === null) return '';
+
     if (type == 'int' || type == 'number') {
-      const num = $form[field] as number;
+      const num = value as number;
       return isNaN(num) ? '' : String(num);
+    } else if (type == 'date') {
+      const date = value as unknown as Date;
+      if (isNaN(date as unknown as number)) return '';
+      if (options.dateFormat == 'date-local') {
+        return localDate(date);
+      } else if (options.dateFormat == 'datetime-local') {
+        return localDate(date) + 'T' + localTime(date);
+      } else if (options.dateFormat == 'time-local') {
+        return localTime(date);
+      } else {
+        // iso
+        return date.toISOString();
+      }
     } else {
-      return $form[field] ? 'true' : '';
+      // boolean
+      return value ? options.trueStringValue : '';
     }
   });
 
@@ -115,4 +167,22 @@ export function jsonProxy<
       form.update((f) => ({ ...f, [field]: stringify(val) }));
     }
   };
+}
+
+function localDate(date: Date) {
+  return (
+    date.getFullYear() +
+    '-' +
+    String(date.getMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(date.getDate()).padStart(2, '0')
+  );
+}
+
+function localTime(date: Date) {
+  return (
+    String(date.getHours()).padStart(2, '0') +
+    ':' +
+    String(date.getMinutes()).padStart(2, '0')
+  );
 }

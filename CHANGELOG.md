@@ -5,6 +5,18 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.15] - 2023-02-28
+
+### Added
+
+- A `fields` store, which can be used to loop through all fields in the form.
+- `options.validators` can now also return `string[]`.
+
+### Fixed
+
+- `valid` store return from `superForm` was incorrectly named `validated`.
+- Client-side validators were still overwriting errors passed from the server.
+
 ## [0.5.14] - 2023-02-28
 
 ### Fixed

@@ -46,7 +46,7 @@ export type FormUpdate = (
 export type Validators<T extends AnyZodObject> = Partial<{
   [Property in keyof z.infer<T>]: (
     value: z.infer<T>[Property]
-  ) => MaybePromise<string | null | undefined>;
+  ) => MaybePromise<string | string[] | null | undefined>;
 }>;
 
 export type FormOptions<T extends AnyZodObject> = {
@@ -145,17 +145,15 @@ export type EnhancedForm<T extends AnyZodObject> = {
   form: Writable<Validation<T>['data']>;
   errors: Writable<Validation<T>['errors']>;
   constraints: Writable<Validation<T>['constraints']>;
-
-  fields: Readable<FormField<T>[]>;
-
   message: Writable<Validation<T>['message']>;
-  validated: Readable<boolean>;
-  empty: Readable<boolean>;
 
+  valid: Readable<boolean>;
+  empty: Readable<boolean>;
   submitting: Readable<boolean>;
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
 
+  fields: Readable<FormField<T>[]>;
   firstError: Readable<{ key: string; value: string } | null>;
   allErrors: Readable<{ key: string; value: string }[]>;
 
@@ -206,7 +204,7 @@ export function superForm<T extends AnyZodObject>(
   const initialForm = form;
 
   // Stores for the properties of Validation<T>
-  const Validated = writable(initialForm.valid);
+  const Valid = writable(initialForm.valid);
   const Errors = writable(initialForm.errors);
   const Data = writable(initialForm.data);
   const Empty = writable(initialForm.empty);
@@ -240,8 +238,8 @@ export function superForm<T extends AnyZodObject>(
     );
   }
 
-  // Need to set this after use:enhance has run, to avoid showing the dialog
-  // when a form doesn't use it.
+  // Need to set this after use:enhance has run, to avoid showing the
+  // tainted dialog when a form doesn't use it or the browser doesn't use JS.
   let savedForm: Validation<T>['data'] | undefined;
 
   const _taintedMessage = options.taintedMessage;
@@ -262,12 +260,10 @@ export function superForm<T extends AnyZodObject>(
     }
 
     Data.set(form.data);
-    // Set Errors AFTER Data so client-side validation doesn't
-    // immediately overwrite the server errors!
-    Errors.set(form.errors);
     Message.set(form.message);
     Empty.set(form.empty);
-    Validated.set(form.valid);
+    Valid.set(form.valid);
+    Errors.set(form.errors);
   }
 
   async function _update(form: Validation<T>, untaint: boolean) {
@@ -342,26 +338,33 @@ export function superForm<T extends AnyZodObject>(
       }
     });
 
+    // Check client validation on data change
     let previousForm = { ...initialForm.data };
     Data.subscribe(async (f) => {
-      // Validation check, must be run before Errors are updated
-      // so they aren't immediately overwritten by this.
+      if (get(Submitting)) return;
       for (const key of Object.keys(f)) {
-        if (f[key] !== previousForm[key]) {
-          const validator = options.validators && options.validators[key];
-          if (validator) {
-            const newError = await validator(f[key]);
-            Errors.update((e) => {
-              if (!newError) delete e[key];
-              else e[key as keyof z.infer<T>] = [newError];
-              return e;
-            });
-          } else if (options.defaultValidator == 'clear') {
-            Errors.update((e) => {
-              delete e[key];
-              return e;
-            });
-          }
+        if (f[key] === previousForm[key]) continue;
+        console.log(
+          '🚀 ~ file: index.ts:349 ~ Data.subscribe ~ UPDATE key:',
+          key
+        );
+        const validator = options.validators && options.validators[key];
+        if (validator) {
+          const newError = await validator(f[key]);
+          Errors.update((e) => {
+            if (!newError) delete e[key];
+            else {
+              e[key as keyof z.infer<T>] = Array.isArray(newError)
+                ? newError
+                : [newError];
+            }
+            return e;
+          });
+        } else if (options.defaultValidator == 'clear') {
+          Errors.update((e) => {
+            delete e[key];
+            return e;
+          });
         }
       }
       previousForm = { ...f };
@@ -398,8 +401,9 @@ export function superForm<T extends AnyZodObject>(
   }
 
   return {
-    errors: Errors,
     form: Data,
+    errors: Errors,
+    message: Message,
     constraints: Constraints,
 
     fields: derived([Data, Errors, Constraints], ([$D, $E, $C]) => {
@@ -412,9 +416,8 @@ export function superForm<T extends AnyZodObject>(
       }));
     }),
 
-    message: Message,
-    tainted: Tainted,
-    validated: derived(Validated, ($s) => $s),
+    tainted: derived(Tainted, ($t) => $t),
+    valid: derived(Valid, ($s) => $s),
     empty: derived(Empty, ($e) => $e),
 
     submitting: derived(Submitting, ($s) => $s),

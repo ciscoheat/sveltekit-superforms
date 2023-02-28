@@ -30,11 +30,12 @@ export { defaultEntity } from './entity';
 export function setError<T extends AnyZodObject>(
   form: Validation<T>,
   field: keyof z.infer<T>,
-  error: string | string[] | null
+  error: string | string[] | null,
+  options: { overwrite: boolean } = { overwrite: false }
 ) {
   const errArr = Array.isArray(error) ? error : error ? [error] : [];
 
-  if (form.errors[field]) {
+  if (form.errors[field] && !options.overwrite) {
     form.errors[field] = form.errors[field]?.concat(errArr);
   } else {
     form.errors[field] = errArr;

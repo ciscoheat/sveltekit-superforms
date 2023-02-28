@@ -34,11 +34,19 @@ export const actions = {
     const form = await superValidate(formData, _dataTypeForm);
     console.log('🚀 ~ POST', form);
 
-    if (!form.valid) return fail(400, { form });
+    if (!form.valid) {
+      setError(
+        form,
+        'email',
+        'This is an email error that will overwrite and should not be overwritten.',
+        { overwrite: true }
+      );
+      return fail(400, { form });
+    }
 
     await new Promise((resolve) => setTimeout(resolve, form.data.number));
 
-    form.message = 'Form posted!';
+    form.message = 'Post successful!';
     return { form };
   }
 } satisfies Actions;

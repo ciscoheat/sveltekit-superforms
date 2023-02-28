@@ -20,7 +20,8 @@
     enhance,
     firstError,
     allErrors,
-    tainted
+    tainted,
+    constraints
   } = superForm(data.form, {
     taintedMessage: null,
     onError: 'Något gick fel.',
@@ -111,7 +112,12 @@
   </div>
 
   <label for="string">string</label>
-  <input type="text" name="string" bind:value={$form.string} />
+  <input
+    type="text"
+    name="string"
+    bind:value={$form.string}
+    {...$constraints.string}
+  />
   {#if $errors.string}<span data-invalid>{$errors.string}</span>{/if}
 
   <label for="email">email</label>
@@ -136,6 +142,7 @@
   {#if $errors.number}<span data-invalid>{$errors.number}</span>{/if}
 
   <label for="proxyNumber">proxyNumber</label>
+  <!-- Must be text -->
   <input
     type="text"
     name="proxyNumber"

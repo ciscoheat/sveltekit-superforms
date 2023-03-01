@@ -344,10 +344,17 @@ export function superForm<T extends AnyZodObject>(
       if (get(Submitting)) return;
       for (const key of Object.keys(f)) {
         if (f[key] === previousForm[key]) continue;
-        console.log(
-          '🚀 ~ file: index.ts:349 ~ Data.subscribe ~ UPDATE key:',
-          key
-        );
+
+        // Date comparison is a mess, since it can come from the server as undefined,
+        // or be Invalid Date from a proxy.
+        if (
+          (f[key] instanceof Date || previousForm[key] instanceof Date) &&
+          ((isNaN(f[key]) && isNaN(previousForm[key])) ||
+            f[key]?.getTime() == previousForm[key]?.getTime())
+        ) {
+          continue;
+        }
+
         const validator = options.validators && options.validators[key];
         if (validator) {
           const newError = await validator(f[key]);

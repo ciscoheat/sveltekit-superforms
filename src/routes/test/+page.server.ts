@@ -2,7 +2,6 @@ import { setError, superValidate } from '$lib/server';
 import { z } from 'zod';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from '../$types';
-import { parse } from 'devalue';
 
 export const _dataTypeForm = z.object({
   string: z.string().min(2).default('Shigeru'),
@@ -31,8 +30,13 @@ export const load = (async (event) => {
 export const actions = {
   form: async (event) => {
     const formData = await event.request.formData();
-    const form = await superValidate(formData, _dataTypeForm);
-    console.log('🚀 ~ POST', form);
+    console.log('🚀 ~ POST', formData);
+
+    const form = await superValidate(
+      formData,
+      _dataTypeForm.extend({ coercedDate: z.coerce.date() })
+    );
+    console.log('🚀 ~ FORM', form);
 
     if (!form.valid) {
       setError(

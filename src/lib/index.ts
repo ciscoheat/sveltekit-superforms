@@ -1,4 +1,5 @@
 import type { z, AnyZodObject } from 'zod';
+import type { Entity } from './server/entity';
 
 //export * as client from './client';
 //export * as server from './server';
@@ -23,10 +24,8 @@ export type Validation<T extends AnyZodObject> = {
   data: z.infer<T>;
   empty: boolean;
   message: string | null;
-  constraints: Record<keyof z.infer<T>, InputConstraints | undefined>;
-  meta?: {
-    types: Record<keyof z.infer<T>, string>;
-  };
+  constraints: Entity<T>['constraints'];
+  meta?: Entity<T>['meta'];
 };
 
 export function deepEqual(obj1: unknown, obj2: unknown): boolean {

@@ -2,9 +2,10 @@ import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import type { Validation, ValidationErrors } from '..';
 import {
+  checkMissingFields,
   entityData,
+  valueOrDefault,
   zodTypeInfo,
-  type DefaultEntityOptions,
   type ZodTypeInfo
 } from './entity';
 
@@ -20,8 +21,6 @@ import {
   ZodUnion,
   ZodArray,
   ZodBigInt,
-  ZodObject,
-  ZodSymbol,
   ZodEnum
 } from 'zod';
 
@@ -83,7 +82,7 @@ function formDataToValidation<T extends AnyZodObject>(
     value: string | null,
     typeInfo: ZodTypeInfo
   ): unknown {
-    const newValue = valueOrDefault(field, value, false, true, typeInfo);
+    const newValue = valueOrDefault(value, false, true, typeInfo);
 
     // If the value was empty, it now contains the default value,
     // so it can be returned immediately
@@ -135,49 +134,31 @@ function formDataToValidation<T extends AnyZodObject>(
   return output as z.infer<T>;
 }
 
-function valueOrDefault<T extends AnyZodObject>(
-  field: keyof z.infer<T>,
-  value: unknown,
-  strict: boolean,
-  implicitDefaults: boolean,
-  typeInfo: ZodTypeInfo
+type DefaultFields<T extends AnyZodObject> = Partial<{
+  [Property in keyof z.infer<T>]:
+    | z.infer<T>[Property]
+    | ((
+        value: z.infer<T>[Property] | null | undefined,
+        data: z.infer<T>
+      ) => z.infer<T>[Property] | null | undefined);
+}>;
+
+function setValidationDefaults<T extends AnyZodObject>(
+  data: z.infer<T>,
+  fields: DefaultFields<T>
 ) {
-  if (value) return value;
+  for (const stringField of Object.keys(fields)) {
+    const field = stringField as keyof typeof data;
+    const currentData = data[field];
 
-  const { zodType, isNullable, isOptional, defaultValue } = typeInfo;
-
-  // Based on schema type, check what the empty value should be parsed to
-  function emptyValue() {
-    // For convenience, make undefined into nullable if possible.
-    // otherwise all nullable fields requires a default value or optional.
-    // In the database, null is assumed if no other value (undefined doesn't exist there),
-    // so this should be ok.
-    // Also make a check for strict, so empty strings from FormData can also be set here.
-    if (strict && value !== undefined) return value;
-    if (defaultValue !== undefined) return defaultValue;
-    if (isNullable) return null;
-    if (isOptional) return undefined;
-
-    if (implicitDefaults) {
-      if (zodType instanceof ZodString) return '';
-      if (zodType instanceof ZodNumber) return 0;
-      if (zodType instanceof ZodBoolean) return false;
-      if (zodType instanceof ZodArray) return [];
-      if (zodType instanceof ZodObject) return {};
-      if (zodType instanceof ZodBigInt) return BigInt(0);
-      if (zodType instanceof ZodSymbol) return Symbol();
+    if (typeof fields[field] === 'function') {
+      // eslint-disable-next-line @typescript-eslint/ban-types
+      const func = fields[field] as Function;
+      data[field] = func(currentData, data);
+    } else if (!currentData) {
+      data[field] = fields[field] as never;
     }
-
-    throw new Error(
-      `Unsupported type for ${strict ? 'strict' : 'falsy'} ${
-        implicitDefaults ? 'implicit' : 'explicit'
-      } values on field "${String(field)}": ${
-        zodType.constructor.name
-      }. Add default, optional or nullable to the schema.`
-    );
   }
-
-  return emptyValue();
 }
 
 /**
@@ -196,40 +177,41 @@ export async function superValidate<T extends AnyZodObject>(
     | null
     | undefined,
   schema: T,
-  options: DefaultEntityOptions<T> & {
+  options: {
     noErrors?: boolean;
     includeMeta?: boolean;
+    checkMissingEntityFields?: boolean;
+    defaults?: DefaultFields<T>;
   } = {}
 ): Promise<Validation<T>> {
-  options = { noErrors: false, includeMeta: false, ...options };
+  options = {
+    checkMissingEntityFields: true,
+    noErrors: false,
+    includeMeta: false,
+    ...options
+  };
 
   const schemaKeys = Object.keys(schema.keyof().Values);
   const entityInfo = entityData(schema);
 
-  function emptyEntity() {
-    return {
-      valid: false,
-      errors: {},
-      data: entityInfo.defaultEntity,
-      empty: true,
-      message: null,
-      constraints: entityInfo.constraints,
-      meta: options.includeMeta ? entityInfo.meta : undefined
-    };
-  }
-
-  function parseSuperJson(data: FormData) {
-    if (data.has('__superform_json')) {
-      const output = parse(data.get('__superform_json')?.toString() ?? '');
-      if (typeof output === 'object')
-        return output as Record<string, unknown>;
-      else throw 'Invalid superform JSON type';
-    }
-    return null;
-  }
-
   function parseFormData(data: FormData) {
-    const superJson = parseSuperJson(data);
+    function tryParseSuperJson(data: FormData) {
+      if (data.has('__superform_json')) {
+        try {
+          const output = parse(
+            data.get('__superform_json')?.toString() ?? ''
+          );
+          if (typeof output === 'object') {
+            return output as Record<string, unknown>;
+          }
+        } catch {
+          //
+        }
+      }
+      return null;
+    }
+
+    const superJson = tryParseSuperJson(data);
     return superJson
       ? superJson
       : formDataToValidation(schema, schemaKeys, data);
@@ -245,26 +227,58 @@ export async function superValidate<T extends AnyZodObject>(
     return parseFormData(formData);
   }
 
-  if (!data) {
-    return emptyEntity();
-  } else if (data instanceof FormData) {
+  let checkMissing = true;
+
+  // If FormData exists, don't check for missing fields.
+  // Checking only at GET requests, basically, where
+  // the data is coming from the DB.
+  if (data instanceof FormData) {
     data = parseFormData(data);
+    checkMissing = false;
   } else if (data instanceof Request) {
     data = await tryParseFormData(data);
-  } else if ('request' in data && data.request instanceof Request) {
+    checkMissing = !data;
+  } else if (data && data.request instanceof Request) {
     data = await tryParseFormData(data.request);
+    checkMissing = !data;
+  } else if (data) {
+    // Make a copy of the data, so defaults can be applied to it.
+    data = { ...data };
   }
 
-  if (!data) return emptyEntity();
+  if (checkMissing && options.checkMissingEntityFields) {
+    // Empty or Partial entity
+    checkMissingFields(schema, data);
+  }
 
-  const status = schema.safeParse(data);
+  if (!data) {
+    const emptyEntity = {
+      valid: false,
+      errors: {},
+      // Copy the default entity so it's not modified
+      data: { ...entityInfo.defaultEntity },
+      empty: true,
+      message: null,
+      constraints: entityInfo.constraints,
+      meta: options.includeMeta ? entityInfo.meta : undefined
+    };
+    if (options.defaults) {
+      setValidationDefaults(emptyEntity.data, options.defaults);
+    }
+    return emptyEntity;
+  }
+
+  const partialData = data as Partial<z.infer<T>>;
+  if (options.defaults) {
+    setValidationDefaults(partialData, options.defaults);
+  }
+
+  const status = schema.safeParse(partialData);
 
   if (!status.success) {
     const errors = options.noErrors
       ? {}
       : (status.error.flatten().fieldErrors as ValidationErrors<T>);
-
-    const parsedData = data as Partial<z.infer<T>>;
 
     return {
       valid: false,
@@ -272,9 +286,9 @@ export async function superValidate<T extends AnyZodObject>(
       data: Object.fromEntries(
         schemaKeys.map((key) => [
           key,
-          parsedData[key] === undefined
+          partialData[key] === undefined
             ? entityInfo.defaultEntity[key]
-            : parsedData[key]
+            : partialData[key]
         ])
       ),
       empty: false,

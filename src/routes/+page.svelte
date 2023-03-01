@@ -28,6 +28,8 @@
 
 <SuperDebug data={$form} />
 
+<a href="/test">Test page</a>
+
 {#if $message}
   <h4 class:error={$page.status >= 400} class="message">{$message}</h4>
 {/if}

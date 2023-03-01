@@ -50,6 +50,9 @@
   const bool = booleanProxy(form, 'bool', { trueStringValue: '1' });
   const proxyNumber = intProxy(form, 'proxyNumber');
   const date = dateProxy(form, 'date', { format: 'datetime-local' });
+  const coercedDate = dateProxy(form, 'coercedDate', {
+    format: 'date-local'
+  });
 
   const fields = [
     'nullableString',
@@ -155,6 +158,11 @@
   <label for="date">proxyDate</label>
   <input type="datetime-local" name="date" bind:value={$date} />
   {#if $errors.date}<span data-invalid>{$errors.date}</span>{/if}
+
+  <label for="date">coercedDate</label>
+  <input type="date" name="coercedDate" bind:value={$coercedDate} />
+  {#if $errors.coercedDate}<span data-invalid>{$errors.coercedDate}</span
+    >{/if}
 
   {#each fields as key}
     <label for={key}>{key}</label>

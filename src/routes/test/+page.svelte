@@ -11,6 +11,8 @@
 
   export let data: PageData;
 
+  function runTests() {}
+
   const {
     form,
     errors,
@@ -28,6 +30,9 @@
     validators: {
       email: (n) =>
         /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
+    },
+    onUpdated(event) {
+      runTests();
     }
   });
 

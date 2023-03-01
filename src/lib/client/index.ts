@@ -286,8 +286,9 @@ export function superForm<T extends AnyZodObject>(
       rebind(form, untaint);
     }
 
+    // Do not await on onUpdated, since we're already finished with the request
     if (options.onUpdated) {
-      await options.onUpdated({ form });
+      options.onUpdated({ form });
     }
   }
 
@@ -590,17 +591,17 @@ function formEnhance<T extends AnyZodObject>(
     }
   }
 
-  const form = Form(formEl);
+  const htmlForm = Form(formEl);
   let currentRequest: AbortController | null;
 
   return enhance(formEl, async (submit) => {
     let cancelled = false;
-    if (form.isSubmitting() && options.multipleSubmits == 'prevent') {
+    if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
       //d('Prevented form submission');
       cancelled = true;
       submit.cancel();
     } else {
-      if (form.isSubmitting() && options.multipleSubmits == 'abort') {
+      if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
         if (currentRequest) currentRequest.abort();
       }
       currentRequest = submit.controller;
@@ -645,7 +646,7 @@ function formEnhance<T extends AnyZodObject>(
       }
 
       //d('Submitting');
-      form.submitting();
+      htmlForm.submitting();
 
       switch (options.dataType) {
         case 'json':
@@ -750,7 +751,7 @@ function formEnhance<T extends AnyZodObject>(
         cancelFlash();
       }
 
-      form.completed(cancelled);
+      htmlForm.completed(cancelled);
     };
   });
 }

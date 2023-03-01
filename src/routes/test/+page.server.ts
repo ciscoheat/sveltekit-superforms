@@ -17,7 +17,7 @@ export const _dataTypeForm = z.object({
   numberArray: z.number().int().array().min(3),
   date: z.date().default(new Date()),
   coercedNumber: z.coerce.number().default(0),
-  coercedDate: z.coerce.date().default(new Date())
+  coercedDate: z.coerce.date().optional()
 });
 
 export const load = (async (event) => {
@@ -39,12 +39,7 @@ export const actions = {
     console.log('🚀 ~ FORM', form);
 
     if (!form.valid) {
-      setError(
-        form,
-        'email',
-        'This is an email error that will overwrite and should not be overwritten.',
-        { overwrite: true }
-      );
+      setError(form, 'email', '[Email error]', { overwrite: true });
       return fail(400, { form });
     }
 

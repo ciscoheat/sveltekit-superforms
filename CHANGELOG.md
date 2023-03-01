@@ -11,13 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Checking for missing fields only if no `FormData` exists.
 - Correct comparison for client-side `Date` validation.
-- Improved cacheability for validation data
+- Timers were waiting for `onUpdated`.
+- Improved cacheability for validation data.
 
 ## [0.5.15] - 2023-02-28
 
 ### Added
 
-- A `fields` store, which can be used to loop through all fields in the form.
+- Added a `fields` store, which can be used to loop through all fields in the form.
 - `options.validators` can now also return `string[]`.
 
 ### Fixed

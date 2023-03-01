@@ -7,11 +7,73 @@
     jsonProxy
   } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
+  import { tick } from 'svelte';
   import type { PageData } from './$types';
 
   export let data: PageData;
 
-  function runTests() {}
+  let runTests = true;
+  let testErrors: string[] | undefined = undefined;
+
+  async function runFormTests() {
+    if (!runTests) {
+      testErrors = undefined;
+      return;
+    }
+    await tick();
+
+    const tests: string[] = [];
+    function assert(expr: boolean, failMsg: string) {
+      if (!expr) tests.push(failMsg);
+    }
+    function assertInnerText(
+      selector: string,
+      text: string,
+      failMsg?: string
+    ) {
+      if (!failMsg) failMsg = `Text not found in ${selector}: ${text}`;
+      assert(q(selector)?.innerText == text, failMsg);
+    }
+    function q(selector: string) {
+      return document.querySelector<HTMLElement>(selector);
+    }
+
+    if (q('[data-message]')?.innerText == 'Post successful!') {
+      testErrors = [];
+      return;
+    }
+
+    assertInnerText(
+      '[data-first-error]',
+      'First error: email - [Email error]'
+    );
+
+    assertInnerText(
+      '[data-all-errors]',
+      'email: [Email error]\nproxyNumber: Number must be greater than or equal to 10\ncoercedDate: Invalid date'
+    );
+
+    const fieldErrors = Array.from(
+      document.querySelectorAll<HTMLElement>('span[data-invalid]')
+    ).map((el) => el.innerText);
+
+    assert(
+      fieldErrors.join(', ') ==
+        '[Email error], Number must be greater than or equal to 10, Invalid date',
+      'Incorrect validation errors.'
+    );
+
+    const inputErrors = Array.from(
+      document.querySelectorAll<HTMLInputElement>('input[data-invalid]')
+    ).map((el) => el.name);
+
+    assert(
+      inputErrors.join(', ') == 'email, proxyNumber, coercedDate',
+      'Incorrect field errors.'
+    );
+
+    testErrors = tests;
+  }
 
   const {
     form,
@@ -31,9 +93,7 @@
       email: (n) =>
         /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
     },
-    onUpdated(event) {
-      runTests();
-    }
+    onUpdated: runFormTests
   });
 
   const {
@@ -70,7 +130,7 @@
 <SuperDebug data={{ ...$form, $tainted }} />
 
 <form method="POST" action="/test/login" use:modalEnhance>
-  <div data-message>
+  <div data-errors>
     {#each $modalErrors as error}• {error.value}<br />{/each}
   </div>
   <div>Email</div>
@@ -85,18 +145,42 @@
   <button data-submit>Login</button>
 </form>
 
+{#if runTests}
+  {#if testErrors === undefined}
+    <div style="color:gray">
+      <h2>Tests not run yet</h2>
+    </div>
+  {:else if testErrors.length}
+    <div style="color: red">
+      <h2>Tests failed</h2>
+      <ul>
+        {#each testErrors as error}
+          <li>{error}</li>
+        {/each}
+      </ul>
+    </div>
+  {:else}
+    <div style="color: green">
+      <h2>Tests OK</h2>
+    </div>
+  {/if}
+{/if}
+
 <h1>sveltekit-superforms</h1>
+<input type="checkbox" bind:checked={runTests} /> Run tests
 
 {#if $message}
-  <h3>{$message}</h3>
+  <h3 data-message>{$message}</h3>
 {/if}
 
 {#if $firstError}
-  <p>First error: {$firstError.key} - {$firstError.value}</p>
+  <p data-first-error>
+    First error: {$firstError.key} - {$firstError.value}
+  </p>
 {/if}
 
 {#if $allErrors.length}
-  <ul>
+  <ul data-all-errors>
     {#each $allErrors as error}
       <li>{error.key}: {error.value}</li>
     {/each}
@@ -161,11 +245,21 @@
     >{/if}
 
   <label for="date">proxyDate</label>
-  <input type="datetime-local" name="date" bind:value={$date} />
+  <input
+    type="datetime-local"
+    data-invalid={$errors.date}
+    name="date"
+    bind:value={$date}
+  />
   {#if $errors.date}<span data-invalid>{$errors.date}</span>{/if}
 
   <label for="date">coercedDate</label>
-  <input type="date" name="coercedDate" bind:value={$coercedDate} />
+  <input
+    type="date"
+    name="coercedDate"
+    data-invalid={$errors.coercedDate}
+    bind:value={$coercedDate}
+  />
   {#if $errors.coercedDate}<span data-invalid>{$errors.coercedDate}</span
     >{/if}
 
@@ -200,7 +294,7 @@
     background-color: gainsboro;
     border-radius: 4px;
 
-    [data-message] {
+    [data-errors] {
       font-weight: bold;
       color: red;
       grid-column: 1 / -1;

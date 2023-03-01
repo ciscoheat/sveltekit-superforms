@@ -115,8 +115,6 @@ export function checkMissingFields<T extends AnyZodObject>(
 ) {
   const entity = entityData(schema);
 
-  console.log(data, entity.constraints);
-
   const missingFields = Object.keys(entity.constraints).filter(
     (field) =>
       entity.constraints[field]?.required &&

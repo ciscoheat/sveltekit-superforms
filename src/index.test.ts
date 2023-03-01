@@ -168,18 +168,22 @@ test('Nullable values', async () => {
     name: z.string().nullable()
   });
 
-  const output = defaultEntity(schema, {
+  const output = defaultEntity(schema);
+  expect(output.scopeId).equals(0);
+  expect(output.name).equals(null);
+
+  const output4 = await superValidate(null, schema, {
     defaults: {
-      scopeId: 2,
+      scopeId: 7,
       name: (n, data) => `Test${data.scopeId}${n}`
     }
   });
-
-  expect(output.scopeId).equals(2);
-  expect(output.name).equals('Test2undefined');
+  assert(!output4.valid);
+  expect(output4.data.scopeId).toEqual(7);
+  expect(output4.data.name).toEqual('Test7null');
 
   // If null is passed in and all fields have defaults, return them
-  const output2 = await defaultEntity(
+  const output2 = defaultEntity(
     schema.extend({ scopeId: schema.shape.scopeId.default(10) })
   );
   expect(output2.scopeId).toEqual(10);
@@ -187,12 +191,16 @@ test('Nullable values', async () => {
 
   // If not null and a key is missing, it should fail since
   // name is nullable but not optional.
-  const output3 = await superValidate({ scopeId: 3 }, schema);
-  assert(!output3.valid);
+  const output3 = await superValidate({ scopeId: 3 }, schema, {
+    defaults: {
+      scopeId: 2,
+      name: (n, data) => `Test${data.scopeId}${n}`
+    }
+  });
+  assert(output3.valid);
   expect(output3.data.scopeId).toEqual(3);
-  expect(output3.data.name).toBeNull();
-  expect(output3.errors.name?.length).toEqual(1);
-  expect(Object.keys(output3.errors).length).toEqual(1);
+  expect(output3.data.name).toEqual('Test3undefined');
+  expect(output3.errors).toStrictEqual({});
 });
 
 test('Optional values', async () => {
@@ -269,24 +277,26 @@ test('Clearing errors with noErrors', async () => {
   expect(cleared.data.name).toEqual(output.data.name);
 });
 
-test('Default values', () => {
-  expect(() => defaultEntity(z.object({ id: z.literal(123) }))).toThrowError(
-    'Unsupported type for strict implicit values on field "id": ZodLiteral.'
+test('Default values', async () => {
+  await expect(
+    superValidate(null, z.object({ id: z.literal(123) }))
+  ).rejects.toThrowError(
+    'Unsupported default value for schema field(s): "id" (ZodLiteral). Add default, optional or nullable to those fields in the schema.'
   );
 
   const d = new Date();
 
   // Note that no default values for strings are needed,
   // they will be set to '' automatically.
-  const e1 = defaultEntity(userForm, {
+  const e1 = await superValidate(null, userForm, {
     defaults: {
       id: undefined,
-      createdAt: d,
+      createdAt: () => d, // Must use a callback, since field has a default in the schema
       isBool: true
     }
   });
 
-  expect(e1).toStrictEqual({
+  expect(e1.data).toStrictEqual({
     id: undefined,
     name: null,
     email: '',
@@ -300,11 +310,12 @@ test('Default values', () => {
 
 test('More default values', async () => {
   const d = new Date();
-  const e = defaultEntity(_dataTypeForm, {
-    defaults: { date: d, coercedDate: d }
+  const e = await superValidate(null, _dataTypeForm, {
+    // Must use a callback, since field has a default in the schema
+    defaults: { date: () => d, coercedDate: d }
   });
 
-  expect(e).toStrictEqual({
+  expect(e.data).toStrictEqual({
     string: 'Shigeru',
     email: '',
     bool: false,

@@ -9,7 +9,10 @@ const loginSchema = z.object({
 
 export const POST = (async (event) => {
   const form = await superValidate(event, loginSchema);
+  console.log('POST /test/login', form);
 
   if (!form.valid) return actionResult('failure', { form });
-  else return actionResult('success', { form });
+
+  form.message = 'Login successful!';
+  return actionResult('success', { form });
 }) satisfies RequestHandler;

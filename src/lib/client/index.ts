@@ -201,15 +201,23 @@ export function superForm<T extends AnyZodObject>(
     form = emptyForm();
   }
 
-  const initialForm = form;
+  // Make a deep copy of the original, in case of reset
+  const initialForm: Validation<T> = {
+    ...form,
+    data: { ...form.data },
+    errors: { ...form.errors },
+    constraints: { ...form.constraints }
+  };
 
   // Stores for the properties of Validation<T>
-  const Valid = writable(initialForm.valid);
-  const Errors = writable(initialForm.errors);
-  const Data = writable(initialForm.data);
-  const Empty = writable(initialForm.empty);
-  const Message = writable(initialForm.message);
-  const Constraints = writable(initialForm.constraints);
+  // Cannot be initialForm here, otherwise the initial
+  // values will be overwritten.
+  const Valid = writable(form.valid);
+  const Errors = writable(form.errors);
+  const Data = writable(form.data);
+  const Empty = writable(form.empty);
+  const Message = writable(form.message);
+  const Constraints = writable(form.constraints);
 
   // Timers
   const Submitting = writable(false);
@@ -254,13 +262,17 @@ export function superForm<T extends AnyZodObject>(
     return !deepEqual(data, savedForm);
   }
 
-  function rebind(form: Validation<T>, untaint: boolean) {
+  function rebind(
+    form: Validation<T>,
+    untaint: boolean,
+    message: string | null
+  ) {
     if (untaint) {
       savedForm = { ...form.data };
     }
 
     Data.set(form.data);
-    Message.set(form.message);
+    Message.set(message ?? form.message);
     Empty.set(form.empty);
     Valid.set(form.valid);
     Errors.set(form.errors);
@@ -281,9 +293,9 @@ export function superForm<T extends AnyZodObject>(
     }
 
     if (form.valid && options.resetForm) {
-      _resetForm();
+      _resetForm(form.message);
     } else {
-      rebind(form, untaint);
+      rebind(form, untaint, null);
     }
 
     // Do not await on onUpdated, since we're already finished with the request
@@ -292,8 +304,8 @@ export function superForm<T extends AnyZodObject>(
     }
   }
 
-  function _resetForm() {
-    rebind(initialForm, true);
+  function _resetForm(message: string | null) {
+    rebind(initialForm, true, message);
   }
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
@@ -306,7 +318,7 @@ export function superForm<T extends AnyZodObject>(
     // All we need to do if redirected is to reset the form.
     // No events should be triggered because technically we're somewhere else.
     if (result.type == 'redirect') {
-      if (options.resetForm) _resetForm();
+      if (options.resetForm) _resetForm(null);
       return;
     }
 
@@ -397,7 +409,7 @@ export function superForm<T extends AnyZodObject>(
             );
           }
           // It's a page reload, so don't trigger any events, just update the data.
-          rebind(p.data.form, true);
+          rebind(p.data.form, true, null);
         }
       });
     }
@@ -450,7 +462,7 @@ export function superForm<T extends AnyZodObject>(
     firstError: FirstError,
     allErrors: AllErrors,
     update: Data_update,
-    reset: _resetForm
+    reset: () => _resetForm(null)
   };
 }
 

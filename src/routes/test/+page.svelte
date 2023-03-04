@@ -103,6 +103,7 @@
     delayed: modalDelayed,
     enhance: modalEnhance
   } = superForm(null, {
+    resetForm: true,
     taintedMessage: null,
     dataType: 'formdata',
     applyAction: false,
@@ -127,10 +128,11 @@
   ] as const;
 </script>
 
-<SuperDebug data={{ ...$form, $tainted }} />
+<SuperDebug data={{ ...$form, $tainted, $modalForm }} />
 
 <form method="POST" action="/test/login" use:modalEnhance>
   <div data-errors>
+    {#if $modalMessage}{$modalMessage}{/if}
     {#each $modalErrors as error}• {error.value}<br />{/each}
   </div>
   <div>Email</div>
@@ -138,7 +140,7 @@
     on:input={() => {
       proxyString.set(456);
     }}
-    bind:value={$modalForm.name}
+    bind:value={$modalForm.email}
   />
   <div>Password</div>
   <input bind:value={$modalForm.password} />

@@ -1,8 +1,15 @@
-import { superValidate } from '$lib/server';
+import { setError, superValidate } from '$lib/server';
 import { z } from 'zod';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { redirect } from 'sveltekit-flash-message/server';
+import { RateLimiter } from 'sveltekit-rate-limiter';
+
+const limiter = new RateLimiter({
+  rates: {
+    IPUA: [1, 'm']
+  }
+});
 
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
@@ -65,6 +72,12 @@ export const actions = {
     const form = await superValidate(data, crudSchema);
     console.log('FORM', form);
     if (!form.valid) return fail(400, { form });
+
+    if (!(await limiter.check(event))) {
+      form.valid = false;
+      form.message = 'You are rate limited';
+      return fail(429, { form });
+    }
 
     //throw error(500);
 

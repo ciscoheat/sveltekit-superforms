@@ -357,6 +357,7 @@ export function superForm<T extends AnyZodObject>(
       if (get(Submitting)) return;
       for (const key of Object.keys(f)) {
         if (f[key] === previousForm[key]) continue;
+        if (!f[key] && !previousForm[key]) continue;
 
         // Date comparison is a mess, since it can come from the server as undefined,
         // or be Invalid Date from a proxy.
@@ -367,6 +368,8 @@ export function superForm<T extends AnyZodObject>(
         ) {
           continue;
         }
+
+        //console.log('Field changed:', f, f[key], previousForm[key]);
 
         const validator = options.validators && options.validators[key];
         if (validator) {

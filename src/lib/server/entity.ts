@@ -256,20 +256,20 @@ function constraints<T extends AnyZodObject>(
       if (zodType.maxDate) output.max = zodType.maxDate.toISOString();
     }
 
-    if (
-      !info.isNullable &&
-      !info.isOptional &&
-      (info.defaultValue === undefined || info.defaultValue === null)
-    ) {
+    if (!info.isNullable && !info.isOptional) {
       output.required = true;
     }
 
     return Object.keys(output).length > 0 ? output : undefined;
   }
 
-  return _mapSchema(schema, (_, key) => {
-    return constraint(key, typeInfo[key]);
-  });
+  return _mapSchema(
+    schema,
+    (_, key) => {
+      return constraint(key, typeInfo[key]);
+    },
+    (constraint) => !!constraint
+  );
 }
 
 function meta<T extends AnyZodObject>(schema: T) {
@@ -285,11 +285,14 @@ function meta<T extends AnyZodObject>(schema: T) {
 
 function _mapSchema<T extends AnyZodObject, S>(
   schema: T,
-  factory: (obj: AnyZodObject, key: string) => S
+  factory: (obj: AnyZodObject, key: string) => S,
+  filter?: (data: S) => boolean
 ) {
   const keys = schema.keyof().Values;
   return Object.fromEntries(
-    Object.keys(keys).map((key) => [key, factory(schema.shape[key], key)])
+    Object.keys(keys)
+      .map((key) => [key, factory(schema.shape[key], key)] as const)
+      .filter((entry) => (filter ? filter(entry[1]) : true))
   ) as EntityRecord<T, S>;
 }
 

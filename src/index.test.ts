@@ -333,10 +333,22 @@ test('More default values', async () => {
   });
 
   const form = await superValidate(null, _dataTypeForm);
-  expect(form.empty).toEqual(true);
-  expect(form.errors).toEqual({});
-  expect(form.message).toEqual(null);
+
   expect(form.valid).toEqual(false);
+  expect(form.errors).toEqual({});
+  expect(form.empty).toEqual(true);
+  expect(form.message).toEqual(null);
+
+  expect(form.constraints).toStrictEqual({
+    string: { required: true, minlength: 2 },
+    email: { required: true },
+    bool: { required: true },
+    number: { required: true },
+    proxyNumber: { required: true, min: 10 },
+    proxyString: { required: true },
+    trimmedString: { required: true },
+    numberArray: { required: true }
+  });
 });
 
 test('Zod enums', async () => {
@@ -351,9 +363,7 @@ test('Zod enums', async () => {
     data: { gender: null },
     empty: true,
     message: null,
-    constraints: {
-      gender: undefined
-    },
+    constraints: {},
     meta: {
       types: {
         gender: 'ZodEnum'

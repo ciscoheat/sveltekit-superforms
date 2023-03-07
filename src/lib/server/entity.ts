@@ -22,6 +22,7 @@ export type ZodTypeInfo = {
   zodType: ZodTypeAny;
   isNullable: boolean;
   isOptional: boolean;
+  hasDefault: boolean;
   defaultValue: unknown;
 };
 
@@ -76,6 +77,7 @@ export function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
   let _wrapped = true;
   let isNullable = false;
   let isOptional = false;
+  let hasDefault = false;
   let defaultValue: unknown = undefined;
 
   //let i = 0;
@@ -85,6 +87,7 @@ export function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
       isNullable = true;
       zodType = zodType.unwrap();
     } else if (zodType instanceof ZodDefault) {
+      hasDefault = true;
       defaultValue = zodType._def.defaultValue();
       zodType = zodType._def.innerType;
     } else if (zodType instanceof ZodOptional) {
@@ -101,6 +104,7 @@ export function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
     zodType,
     isNullable,
     isOptional,
+    hasDefault,
     defaultValue
   };
 }
@@ -115,12 +119,17 @@ export function checkMissingFields<T extends AnyZodObject>(
 ) {
   const entity = entityData(schema);
 
-  const missingFields = Object.keys(entity.constraints).filter(
-    (field) =>
-      entity.constraints[field]?.required &&
-      entity.defaultEntity[field] === undefined &&
-      (!data || data[field] === undefined || data[field] === null)
-  );
+  const missingFields = Object.keys(entity.constraints).filter((field) => {
+    if (!entity.constraints[field]?.required) return false;
+    if (
+      entity.typeInfo[field].hasDefault ||
+      entity.defaultEntity[field] !== undefined
+    ) {
+      return false;
+    }
+
+    return !data || data[field] === undefined || data[field] === null;
+  });
 
   if (missingFields.length) {
     const errors = missingFields.map(
@@ -145,7 +154,8 @@ export function valueOrDefault(
 ) {
   if (value) return value;
 
-  const { zodType, isNullable, isOptional, defaultValue } = typeInfo;
+  const { zodType, isNullable, isOptional, hasDefault, defaultValue } =
+    typeInfo;
 
   // Based on schema type, check what the empty value should be parsed to
 
@@ -156,7 +166,7 @@ export function valueOrDefault(
   // Also make a check for strict, so empty strings from FormData can also be set here.
 
   if (strict && value !== undefined) return value;
-  if (defaultValue !== undefined) return defaultValue;
+  if (hasDefault) return defaultValue;
   if (isNullable) return null;
   if (isOptional) return undefined;
 

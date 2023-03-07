@@ -437,3 +437,28 @@ test('Posting Zod enums and native enums', async () => {
     meta: undefined
   });
 });
+
+test('Agressive type coercion to avoid schema duplication', async () => {
+  const form = await superValidate(
+    null,
+    z.object({
+      agree: z.literal(true).default(false as true),
+      fruit: z.nativeEnum(Fruits).default(undefined as unknown as Fruits),
+      number: z.number().positive().default(NaN)
+    })
+  );
+
+  expect(form).toStrictEqual({
+    valid: false,
+    errors: {},
+    data: { agree: false, fruit: undefined, number: NaN },
+    empty: true,
+    message: null,
+    constraints: {
+      agree: { required: true },
+      fruit: { required: true },
+      number: { min: 0, required: true }
+    },
+    meta: undefined
+  });
+});

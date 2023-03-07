@@ -5,6 +5,17 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.18] - 2023-03-07
+
+### Added
+
+- Support for [native enums](https://zod.dev/?id=native-enums) in validation schemas.
+
+### Fixed
+
+- A default value accidentally removed the `required` constraint.
+- Client-side validation now handles falsy values, not removing the error message when it's not supposed to.
+
 ## [0.5.17] - 2023-03-04
 
 ### Fixed

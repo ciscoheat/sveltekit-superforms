@@ -318,6 +318,9 @@ test('More default values', async () => {
   expect(e.data).toStrictEqual({
     string: 'Shigeru',
     email: '',
+    nativeEnumInt: undefined,
+    nativeEnumString: undefined,
+    nativeEnumString2: undefined,
     bool: false,
     number: 0,
     proxyNumber: 0,
@@ -342,6 +345,9 @@ test('More default values', async () => {
   expect(form.constraints).toStrictEqual({
     string: { required: true, minlength: 2 },
     email: { required: true },
+    nativeEnumInt: { required: true },
+    nativeEnumString: { required: true },
+    nativeEnumString2: { required: true },
     bool: { required: true },
     number: { required: true },
     proxyNumber: { required: true, min: 10 },
@@ -351,23 +357,83 @@ test('More default values', async () => {
   });
 });
 
-test('Zod enums', async () => {
-  const schema = z.object({
-    gender: z.enum(['male', 'female', 'other']).nullish()
-  });
+enum Fruits {
+  Apple,
+  Banana
+}
 
-  const form = await superValidate(null, schema, { includeMeta: true });
+enum FruitsString {
+  Apple = 'Apple',
+  Banana = 'Banana'
+}
+
+const enumschema = z.object({
+  gender: z.enum(['male', 'female', 'other']).nullish(),
+  fruit: z.nativeEnum(Fruits).array(),
+  fruitsstring: z.nativeEnum(FruitsString).array(),
+  color: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' })
+});
+
+test('Zod enums and native enums', async () => {
+  const form = await superValidate(null, enumschema, { includeMeta: true });
+  expect(form.valid).toEqual(false);
+  expect(form.empty).toEqual(true);
+
   expect(form).toStrictEqual({
     valid: false,
     errors: {},
-    data: { gender: null },
+    data: {
+      color: undefined,
+      fruit: [],
+      fruitsstring: [],
+      gender: null
+    },
     empty: true,
     message: null,
-    constraints: {},
+    constraints: {
+      color: { required: true },
+      fruit: { required: true },
+      fruitsstring: { required: true }
+    },
     meta: {
       types: {
+        color: 'ZodNativeEnum',
+        fruit: 'ZodArray<ZodNativeEnum>',
+        fruitsstring: 'ZodArray<ZodNativeEnum>',
         gender: 'ZodEnum'
       }
     }
+  });
+});
+
+test('Posting Zod enums and native enums', async () => {
+  const data = new FormData();
+  data.set('fruit', '1');
+  data.append('fruit', 'Banana');
+  data.append('fruit', 'Apple');
+  data.append('fruit', '0');
+  data.set('fruitsstring', 'Apple');
+  data.append('fruitsstring', 'Banana');
+  data.set('color', 'GRAY');
+
+  const form = await superValidate(data, enumschema);
+
+  expect(form).toStrictEqual({
+    empty: false,
+    valid: true,
+    errors: {},
+    data: {
+      color: 'GRAY',
+      fruit: [Fruits.Banana, Fruits.Banana, Fruits.Apple, Fruits.Apple],
+      fruitsstring: [FruitsString.Apple, FruitsString.Banana],
+      gender: null
+    },
+    message: null,
+    constraints: {
+      color: { required: true },
+      fruit: { required: true },
+      fruitsstring: { required: true }
+    },
+    meta: undefined
   });
 });

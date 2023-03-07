@@ -190,6 +190,9 @@
 {/if}
 
 <form method="POST" action="?/form" use:enhance>
+  <input type="hidden" name="nativeEnumInt" value="1" />
+  <input type="hidden" name="nativeEnumString2" value="Banana" />
+
   <input type="hidden" name="proxyString" bind:value={$form.proxyString} />
 
   <input type="hidden" name="numberArray" value="123" />
@@ -270,6 +273,9 @@
     <input type="text" name={key} bind:value={$form[key]} />
     {#if $errors[key]}<span data-invalid>{$errors[key]}</span>{/if}
   {/each}
+
+  <label for="nativeEnumString">enum color</label>
+  <input name="nativeEnumString" value="GREEN" />
 
   <div>
     <button>Submit</button>

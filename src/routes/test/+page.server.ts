@@ -3,6 +3,16 @@ import { z } from 'zod';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from '../$types';
 
+enum Fruits {
+  Apple,
+  Banana
+}
+
+enum FruitsStr {
+  Apple = 'Apple',
+  Banana = 'Banana'
+}
+
 export const _dataTypeForm = z.object({
   string: z.string().min(2).default('Shigeru'),
   email: z.string().email(),
@@ -17,7 +27,10 @@ export const _dataTypeForm = z.object({
   numberArray: z.number().int().array().min(3),
   date: z.date().optional().default(new Date()),
   coercedNumber: z.coerce.number().default(0).optional(),
-  coercedDate: z.coerce.date().optional()
+  coercedDate: z.coerce.date().optional(),
+  nativeEnumInt: z.nativeEnum(Fruits),
+  nativeEnumString: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' }),
+  nativeEnumString2: z.nativeEnum(FruitsStr)
 });
 
 export const load = (async (event) => {

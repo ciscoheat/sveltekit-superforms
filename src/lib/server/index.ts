@@ -21,7 +21,9 @@ import {
   ZodUnion,
   ZodArray,
   ZodBigInt,
-  ZodEnum
+  ZodEnum,
+  ZodNativeEnum,
+  ZodSymbol
 } from 'zod';
 
 export { defaultEntity } from './entity';
@@ -96,13 +98,19 @@ function formDataToValidation<T extends AnyZodObject>(
       return zodType.isInt
         ? parseInt(value ?? '', 10)
         : parseFloat(value ?? '');
-    } else if (zodType instanceof ZodDate) {
-      return new Date(value ?? '');
     } else if (zodType instanceof ZodBoolean) {
       return Boolean(value).valueOf();
+    } else if (zodType instanceof ZodDate) {
+      return new Date(value ?? '');
     } else if (zodType instanceof ZodArray) {
       const arrayType = zodTypeInfo(zodType._def.type);
       return parseEntry(field, value, arrayType);
+    } else if (zodType instanceof ZodBigInt) {
+      try {
+        return BigInt(value ?? '.');
+      } catch {
+        return NaN;
+      }
     } else if (zodType instanceof ZodLiteral) {
       const literalType = typeof zodType.value;
 
@@ -118,12 +126,16 @@ function formDataToValidation<T extends AnyZodObject>(
       zodType instanceof ZodAny
     ) {
       return value;
-    } else if (zodType instanceof ZodBigInt) {
-      try {
-        return BigInt(value ?? '.');
-      } catch {
-        return NaN;
+    } else if (zodType instanceof ZodNativeEnum) {
+      //console.log(field, typeof value, value, zodType.enum);
+      if (value in zodType.enum) {
+        const enumValue = zodType.enum[value];
+        if (typeof enumValue === 'number') return enumValue;
+        else if (enumValue in zodType.enum) return zodType.enum[enumValue];
       }
+      return undefined;
+    } else if (zodType instanceof ZodSymbol) {
+      return Symbol(value);
     }
 
     throw new Error(

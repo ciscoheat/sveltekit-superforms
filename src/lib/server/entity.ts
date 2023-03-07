@@ -274,10 +274,17 @@ function constraints<T extends AnyZodObject>(
 
 function meta<T extends AnyZodObject>(schema: T) {
   return {
-    types: _mapSchema(
-      schema,
-      (obj) => zodTypeInfo(obj).zodType.constructor.name
-    )
+    types: _mapSchema(schema, (obj) => {
+      let type = zodTypeInfo(obj).zodType;
+      let name = '';
+      let depth = 0;
+      while (type instanceof ZodArray) {
+        name += 'ZodArray<';
+        depth++;
+        type = type._def.type;
+      }
+      return name + type.constructor.name + '>'.repeat(depth);
+    })
   };
 }
 

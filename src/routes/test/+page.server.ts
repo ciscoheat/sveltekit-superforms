@@ -28,9 +28,11 @@ export const _dataTypeForm = z.object({
   date: z.date().optional().default(new Date()),
   coercedNumber: z.coerce.number().default(0).optional(),
   coercedDate: z.coerce.date().optional(),
-  nativeEnumInt: z.nativeEnum(Fruits),
-  nativeEnumString: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' }),
-  nativeEnumString2: z.nativeEnum(FruitsStr)
+  nativeEnumInt: z.nativeEnum(Fruits).default(Fruits.Apple),
+  nativeEnumString: z
+    .nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' })
+    .default('GREEN'),
+  nativeEnumString2: z.nativeEnum(FruitsStr).default(FruitsStr.Banana)
 });
 
 export const load = (async (event) => {

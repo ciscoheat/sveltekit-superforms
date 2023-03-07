@@ -318,9 +318,9 @@ test('More default values', async () => {
   expect(e.data).toStrictEqual({
     string: 'Shigeru',
     email: '',
-    nativeEnumInt: undefined,
-    nativeEnumString: undefined,
-    nativeEnumString2: undefined,
+    nativeEnumInt: 0,
+    nativeEnumString: 'GREEN',
+    nativeEnumString2: 'Banana',
     bool: false,
     number: 0,
     proxyNumber: 0,
@@ -371,7 +371,7 @@ const enumschema = z.object({
   gender: z.enum(['male', 'female', 'other']).nullish(),
   fruit: z.nativeEnum(Fruits).array(),
   fruitsstring: z.nativeEnum(FruitsString).array(),
-  color: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' })
+  color: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' }).default('GREEN')
 });
 
 test('Zod enums and native enums', async () => {
@@ -383,7 +383,7 @@ test('Zod enums and native enums', async () => {
     valid: false,
     errors: {},
     data: {
-      color: undefined,
+      color: 'GREEN',
       fruit: [],
       fruitsstring: [],
       gender: null

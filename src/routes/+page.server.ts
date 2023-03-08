@@ -68,8 +68,12 @@ export const load = (async ({ url }) => {
 export const actions = {
   edit: async (event) => {
     const data = await event.request.formData();
+    if (data.get('error')) throw error(501);
+
     console.log('POST', data);
+
     const form = await superValidate(data, crudSchema);
+
     console.log('FORM', form);
     if (!form.valid) return fail(400, { form });
 

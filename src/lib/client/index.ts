@@ -79,6 +79,7 @@ export type FormOptions<T extends AnyZodObject> = {
       ) => MaybePromise<unknown | void>)
     | 'set-message'
     | 'apply'
+    | 'ignore'
     | string;
   dataType?: 'form' | 'formdata' | 'json';
   validators?: Validators<T>;
@@ -399,20 +400,19 @@ export function superForm<T extends AnyZodObject>(
         // Skip the update if no new data is retrieved.
         if (!p.form && !p.data.form) return;
 
+        function error(type: string) {
+          throw new Error(
+            `No form data found in ${type}. Make sure you return { form } in the form actions.`
+          );
+        }
+
         if (p.form && p.form != initialForm) {
-          if (!p.form.form)
-            throw new Error(
-              'No form data found in $page.form (ActionData). Make sure you return { form } in the form actions.'
-            );
+          if (!p.form.form) error('$page.form (ActionData)');
           await _update(p.form.form, p.status >= 200 && p.status < 400);
         } else if (p.data.form && p.data.form != initialForm) {
-          if (!p.data.form) {
-            throw new Error(
-              'No form data found in $page.data (PageData). Make sure you return { form } in the load function.'
-            );
-          }
-          // It's a page reload, so don't trigger any events, just update the data.
-          rebind(p.data.form, true, null);
+          if (!p.data.form) error('$page.data (PageData)');
+          // It's a page reload or error/failure, so don't trigger any events, just update the data.
+          rebind(p.data.form, p.status >= 200 && p.status < 400, null);
         }
       });
     }
@@ -724,7 +724,9 @@ function formEnhance<T extends AnyZodObject>(
           }
 
           // Check if the error message should be replaced
-          if (options.onError == 'set-message') {
+          if (options.onError == 'ignore') {
+            // Ignore error
+          } else if (options.onError == 'set-message') {
             message.set(
               (errorMessage =
                 result.error.message !== undefined

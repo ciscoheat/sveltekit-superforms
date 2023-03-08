@@ -12,6 +12,7 @@
     superForm(data.form, {
       dataType: 'formdata',
       async onUpdate({ form }) {
+        console.log('onUpdate', form);
         if (form.valid) {
           await goto('?id=' + form.data.id);
         }
@@ -84,6 +85,8 @@
 
   <div>
     <button>Submit</button>
+    <input type="checkbox" name="error" style="margin-left:1rem;" /> Trigger
+    error
     {#if $delayed}Working...{/if}
   </div>
 
@@ -100,6 +103,8 @@
     <button on:click|preventDefault={reset}>Reset</button>
   </div>
 </form>
+
+<button on:click={() => ($form.id = 'Test')}>Set form id</button>
 
 <style lang="scss">
   .invalid {

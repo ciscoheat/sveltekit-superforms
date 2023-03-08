@@ -130,6 +130,8 @@
 
 <SuperDebug data={{ ...$form, $tainted, $modalForm }} />
 
+<a href="/">&lt; Back to start</a>
+
 <form method="POST" action="/test/login" use:modalEnhance>
   <div data-errors>
     {#if $modalMessage}{$modalMessage}{/if}

@@ -45,9 +45,10 @@ const schema = z.object({
 });
 
 export const load = (async (event) => {
+  // Server API:
   const form = await superValidate(event, schema);
 
-  // Always return { form } and you'll be fine.
+  // Always return { form } in load and form actions.
   return { form };
 }) satisfies PageServerLoad;
 ```
@@ -69,7 +70,7 @@ export const load = (async (event) => {
 
   export let data: PageData;
 
-  // This is where the magic happens.
+  // Client API:
   const { form } = superForm(data.form);
 </script>
 
@@ -292,12 +293,12 @@ onUpdate: ({ form, cancel }) => void
 A bit more control, `onUpdate` lets you enter just before the form update is being applied and gives you the option to modify the `form` object (the validation result), or `cancel()` the update altogether.
 
 ```ts
-onError: (({ result, message }) => void) | 'set-message' | 'apply' | string = 'set-message'
+onError: (({ result, message }) => void) | 'set-message' | 'apply' | 'ignore' | string = 'set-message'
 ```
 
 It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. `onError` gives you more control over the error than the default, which is to set the `message` store to the error value.
 
-By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary. Or you can set it to a custom error message.
+By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary. You can instead set it to a custom error message, or ignore errors altogether with `ignore`.
 
 ```ts
 onSubmit: SubmitFunction;

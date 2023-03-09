@@ -50,6 +50,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
 }>;
 
 export type FormOptions<T extends AnyZodObject> = {
+  id?: string;
   applyAction?: boolean;
   invalidateAll?: boolean;
   resetForm?: boolean;
@@ -172,7 +173,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @returns {EnhancedForm} An object with properties for the form.
  */
 export function superForm<T extends AnyZodObject>(
-  form: Validation<T> | null | undefined,
+  form: Validation<T> | null | undefined | string,
   options: FormOptions<T> = {}
 ): EnhancedForm<T> {
   options = { ...(defaultFormOptions as FormOptions<T>), ...options };
@@ -188,22 +189,37 @@ export function superForm<T extends AnyZodObject>(
     };
   }
 
-  function isValidationObject(
-    object: Record<string, unknown> | null | undefined
-  ): string | undefined | boolean {
-    const isForm = !!(
-      object &&
-      'valid' in object &&
-      'empty' in object &&
-      typeof object.valid === 'boolean'
-    );
-    if (!isForm) return false;
+  function findForms(data: Record<string, unknown>) {
+    return Object.values(data).filter(
+      (v) => isValidationObject(v) !== false
+    ) as Validation<AnyZodObject>[];
+  }
+
+  function isValidationObject(object: unknown): string | undefined | false {
+    if (!object || typeof object !== 'object') return false;
+
+    if (
+      !(
+        'valid' in object &&
+        'empty' in object &&
+        typeof object.valid === 'boolean'
+      )
+    ) {
+      return false;
+    }
+
     return 'id' in object && typeof object.id === 'string'
       ? object.id
       : undefined;
   }
 
-  const formId = form?.id;
+  if (typeof form === 'string' && typeof options.id === 'string') {
+    throw new Error(
+      'You cannot specify an id in the first superForm argument and in the options.'
+    );
+  }
+
+  const formId = typeof form === 'string' ? form : options.id ?? form?.id;
 
   // Detect if a form is posted (without JavaScript).
   const actionForm = get(page).form;
@@ -218,7 +234,7 @@ export function superForm<T extends AnyZodObject>(
     if (postedFormId === formId) form = actionForm.form as Validation<T>;
   }
 
-  if (!form) {
+  if (!form || typeof form === 'string') {
     form = emptyForm();
   }
 
@@ -231,14 +247,14 @@ export function superForm<T extends AnyZodObject>(
   };
 
   // Stores for the properties of Validation<T>
-  // Cannot be initialForm here, otherwise the initial
-  // values will be overwritten.
+  // Need to make a copy here too, in case the form variable
+  // is used to populate multiple forms.
   const Valid = writable(form.valid);
-  const Errors = writable(form.errors);
-  const Data = writable(form.data);
   const Empty = writable(form.empty);
   const Message = writable(form.message);
-  const Constraints = writable(form.constraints);
+  const Errors = writable({ ...form.errors });
+  const Data = writable({ ...form.data });
+  const Constraints = writable({ ...form.constraints });
 
   // Timers
   const Submitting = writable(false);
@@ -349,12 +365,22 @@ export function superForm<T extends AnyZodObject>(
       );
     }
 
-    if (!('form' in result.data)) {
+    const forms = findForms(result.data);
+    if (!forms.length) {
       throw new Error(
         'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
       );
     }
 
+    for (const newForm of forms) {
+      if (newForm.id !== formId) continue;
+      await _update(
+        newForm as Validation<T>,
+        untaint ?? (result.status >= 200 && result.status < 300)
+      );
+    }
+
+    /*
     const form = result.data.form as Validation<T>;
     if (form.id !== formId) return;
 
@@ -362,6 +388,7 @@ export function superForm<T extends AnyZodObject>(
       form,
       untaint ?? (result.status >= 200 && result.status < 300)
     );
+    */
   };
 
   if (browser) {
@@ -391,7 +418,7 @@ export function superForm<T extends AnyZodObject>(
           continue;
         }
 
-        //console.log('Field changed:', f, f[key], previousForm[key]);
+        //console.log('Field changed:', formId, f, f[key], previousForm[key]);
 
         const validator = options.validators && options.validators[key];
         if (validator) {
@@ -418,30 +445,37 @@ export function superForm<T extends AnyZodObject>(
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
       page.subscribe(async (p) => {
-        // Skip the update if no new data is retrieved.
-        if (!p.form && !p.data.form) return;
-
         function error(type: string) {
           throw new Error(
-            `No form data found in ${type}. Make sure you return { form } in the form actions.`
+            `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
           );
         }
 
-        if (p.form && p.form != initialForm) {
-          if (!p.form.form) error('$page.form (ActionData)');
+        if (p.form && typeof p.form === 'object') {
+          const forms = findForms(p.form);
+          if (!forms.length) error('$page.form (ActionData)');
 
-          const form: Validation<T> = p.form.form;
-          if (form.id !== formId) return;
+          for (const newForm of forms) {
+            if (newForm === form || newForm.id !== formId) continue;
+            await _update(
+              newForm as Validation<T>,
+              p.status >= 200 && p.status < 300
+            );
+          }
+        } else if (p.data && typeof p.data === 'object') {
+          const forms = findForms(p.data);
+          if (!forms.length) error('$page.data (PageData)');
 
-          await _update(form, p.status >= 200 && p.status < 400);
-        } else if (p.data.form && p.data.form != initialForm) {
-          if (!p.data.form) error('$page.data (PageData)');
-
-          // It's a page reload or error/failure, so don't trigger any events, just update the data.
-          const form: Validation<T> = p.data.form;
-          if (form.id !== formId) return;
-
-          rebind(form, p.status >= 200 && p.status < 400, null);
+          // It's a page reload or error/failure, so don't trigger any events,
+          // just update the data.
+          for (const newForm of forms) {
+            if (newForm === form || newForm.id !== formId) continue;
+            rebind(
+              newForm as Validation<T>,
+              p.status >= 200 && p.status < 300,
+              null
+            );
+          }
         }
       });
     }

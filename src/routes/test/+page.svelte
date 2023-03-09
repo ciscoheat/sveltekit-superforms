@@ -96,17 +96,18 @@
     onUpdated: runFormTests
   });
 
+  // Testing null
   const {
     form: modalForm,
     allErrors: modalErrors,
     message: modalMessage,
     delayed: modalDelayed,
     enhance: modalEnhance
-  } = superForm(null, {
+  } = superForm('login-form', {
+    applyAction: false,
     resetForm: true,
     taintedMessage: null,
     dataType: 'formdata',
-    applyAction: false,
     invalidateAll: false
   });
 

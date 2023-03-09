@@ -7,13 +7,14 @@ import { RateLimiter } from 'sveltekit-rate-limiter';
 
 const limiter = new RateLimiter({
   rates: {
-    IPUA: [1, 'm']
+    IPUA: [3, 'm']
   }
 });
 
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
   id: z.string().regex(/^\d+$/),
+  formid: z.string().regex(/^\w+$/).optional(),
   name: z.string().min(2).regex(/^A.*$/),
   email: z
     .string()
@@ -73,6 +74,7 @@ export const actions = {
     console.log('POST', data);
 
     const form = await superValidate(data, crudSchema);
+    form.id = data.get('formid')?.toString();
 
     console.log('FORM', form);
     if (!form.valid) return fail(400, { form });

@@ -1,10 +1,32 @@
-# sveltekit-superforms 💥
+<p align="center">
+  <img src="logo.svg" width="200px" align="center" alt="Superforms logo" />
+  <h1 align="center">sveltekit-superforms 💥</h1>
+  <p align="center">
+    Supercharge your SvelteKit forms with this powerhouse of a library!
+  </p>
+</p>
+<br/>
 
-Supercharge your SvelteKit forms with this powerhouse of a library!
+<div align="center">
+  <a href="https://github.com/ciscoheat/sveltekit-superforms/wiki/API-reference">API</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://github.com/ciscoheat/sveltekit-superforms/discussions">Discussions</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ">FAQ</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://www.npmjs.com/package/sveltekit-superforms">npm</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://github.com/ciscoheat/sveltekit-superforms/issues">Issues</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <br />
+</div>
+
+<br/>
+<br/>
 
 ## Feature list
 
-- Merging `PageData` and `ActionData` - Stop worrying about which one to use and how, just focus on your data.
+- Merging `PageData` and `ActionData` consistently - Forget about which one to use and how, just focus on your data.
 - Server-side data validation using [Zod](https://zod.dev), with output that can be used directly on the client.
 - Auto-centering and auto-focusing on invalid form fields.
 - Tainted form detection, prevents the user from losing data if navigating away from an unsaved form.
@@ -12,9 +34,10 @@ Supercharge your SvelteKit forms with this powerhouse of a library!
 - Automatically coerces the string data from `FormData` into correct types.
 - For advanced data structures, forget about the limitations of `FormData` - Send your forms as devalued JSON, transparently.
 - Generates default form values from validation schemas.
-- Client-side validators for direct feedback.
+- Support for multiple forms on the same page.
 - Proxy objects for handling data conversions to string and back again.
-- Provide unparallelled feedback with auto-updating timers for long response times, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
+- Client-side validators for immediate user feedback.
+- Provide long response time feedback with auto-updating timers, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
 - Even more care for the user: No form data loss, by preventing error page rendering as default.
 - Hook into a number of events for full control over submitting, `ActionResult` and validation updates.
 - Complete customization with options like `applyAction`, `invalidateAll`, `autoFocus`, `resetForm`, etc...
@@ -87,7 +110,7 @@ export const load = (async (event) => {
 </form>
 ```
 
-`superForm` is used on the client-side to display the data, which is conveniently supplied from `data.form`.
+`superForm` is used on the client to display the data, conveniently supplied from `data.form`.
 
 With this, we can at least see that the form is populated. But to get deeper insight, let's add the Super Form Debugging Svelte Component:
 

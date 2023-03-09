@@ -31,7 +31,7 @@
 - Automatically coerces the string data from `FormData` into correct types.
 - For advanced data structures, forget about the limitations of `FormData` - Send your forms as devalued JSON, transparently.
 - Generates default form values from validation schemas.
-- Support for multiple forms on the same page.
+- Support for [multiple forms on the same page](https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ#are-multiple-forms-on-the-same-page-supported).
 - Proxy objects for handling data conversions to string and back again.
 - Client-side validators for immediate user feedback.
 - Provide long response time feedback with auto-updating timers, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
@@ -49,7 +49,7 @@
 
 ## Get started
 
-Let's gradually build up a super form, starting with just displaying the data for a name and an email address.
+Let's gradually build up a super form, with the data for a name and an email address.
 
 **src/routes/+page.server.ts**
 
@@ -75,7 +75,7 @@ export const load = (async (event) => {
 
 `superValidate` takes the data as the first parameter, which could be either:
 
-- the `RequestEvent`, as in this case
+- the `RequestEvent` in this case
 - a `Request`
 - `FormData` (usually from the request)
 - `null` or `undefined`

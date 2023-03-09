@@ -107,7 +107,7 @@
     applyAction: false,
     resetForm: true,
     taintedMessage: null,
-    dataType: 'formdata',
+    dataType: 'json',
     invalidateAll: false
   });
 

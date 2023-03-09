@@ -1,4 +1,4 @@
-import { setError, superValidate } from '$lib/server';
+import { superValidate } from '$lib/server';
 import { z } from 'zod';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';

@@ -25,6 +25,7 @@ export type Validation<T extends AnyZodObject> = {
   empty: boolean;
   message: string | null;
   constraints: Entity<T>['constraints'];
+  id?: string;
   meta?: Entity<T>['meta'];
 };
 

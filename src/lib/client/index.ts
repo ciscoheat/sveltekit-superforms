@@ -188,17 +188,37 @@ export function superForm<T extends AnyZodObject>(
     };
   }
 
+  function isValidationObject(
+    object: Record<string, unknown> | null | undefined
+  ): string | undefined | boolean {
+    const isForm = !!(
+      object &&
+      'valid' in object &&
+      'empty' in object &&
+      typeof object.valid === 'boolean'
+    );
+    if (!isForm) return false;
+    return 'id' in object && typeof object.id === 'string'
+      ? object.id
+      : undefined;
+  }
+
+  const formId = form?.id;
+
   // Detect if a form is posted (without JavaScript).
   const actionForm = get(page).form;
 
   if (options.applyAction && actionForm) {
-    if (!actionForm.form || typeof actionForm.form.valid !== 'boolean') {
+    const postedFormId = isValidationObject(actionForm.form);
+    if (postedFormId === false) {
       throw new Error(
         "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
       );
     }
-    form = actionForm.form as Validation<T>;
-  } else if (!form) {
+    if (postedFormId === formId) form = actionForm.form as Validation<T>;
+  }
+
+  if (!form) {
     form = emptyForm();
   }
 
@@ -335,7 +355,8 @@ export function superForm<T extends AnyZodObject>(
       );
     }
 
-    const form = (result.data.form as Validation<T>) ?? emptyForm();
+    const form = result.data.form as Validation<T>;
+    if (form.id !== formId) return;
 
     await _update(
       form,
@@ -408,11 +429,19 @@ export function superForm<T extends AnyZodObject>(
 
         if (p.form && p.form != initialForm) {
           if (!p.form.form) error('$page.form (ActionData)');
-          await _update(p.form.form, p.status >= 200 && p.status < 400);
+
+          const form: Validation<T> = p.form.form;
+          if (form.id !== formId) return;
+
+          await _update(form, p.status >= 200 && p.status < 400);
         } else if (p.data.form && p.data.form != initialForm) {
           if (!p.data.form) error('$page.data (PageData)');
+
           // It's a page reload or error/failure, so don't trigger any events, just update the data.
-          rebind(p.data.form, p.status >= 200 && p.status < 400, null);
+          const form: Validation<T> = p.data.form;
+          if (form.id !== formId) return;
+
+          rebind(form, p.status >= 200 && p.status < 400, null);
         }
       });
     }
@@ -459,7 +488,8 @@ export function superForm<T extends AnyZodObject>(
         Data,
         Message,
         enableTaintedMessage,
-        cancelFlash
+        cancelFlash,
+        formId
       ),
 
     firstError: FirstError,
@@ -484,7 +514,8 @@ function formEnhance<T extends AnyZodObject>(
   data: Writable<Validation<T>['data']>,
   message: Writable<Validation<T>['message']>,
   enableTaintedForm: () => void,
-  cancelFlash: () => void
+  cancelFlash: () => void,
+  formId: string | undefined
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();

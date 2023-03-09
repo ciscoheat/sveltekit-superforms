@@ -197,6 +197,7 @@ test('Nullable values', async () => {
       name: (n, data) => `Test${data.scopeId}${n}`
     }
   });
+  console.log(output3);
   assert(output3.valid);
   expect(output3.data.scopeId).toEqual(3);
   expect(output3.data.name).toEqual('Test3undefined');
@@ -316,6 +317,7 @@ test('More default values', async () => {
   });
 
   expect(e.data).toStrictEqual({
+    agree: true,
     string: 'Shigeru',
     email: '',
     nativeEnumInt: 0,
@@ -343,6 +345,7 @@ test('More default values', async () => {
   expect(form.message).toEqual(null);
 
   expect(form.constraints).toStrictEqual({
+    agree: { required: true },
     string: { required: true, minlength: 2 },
     email: { required: true },
     nativeEnumInt: { required: true },
@@ -433,8 +436,7 @@ test('Posting Zod enums and native enums', async () => {
       color: { required: true },
       fruit: { required: true },
       fruitsstring: { required: true }
-    },
-    meta: undefined
+    }
   });
 });
 
@@ -458,7 +460,6 @@ test('Agressive type coercion to avoid schema duplication', async () => {
       agree: { required: true },
       fruit: { required: true },
       number: { min: 0, required: true }
-    },
-    meta: undefined
+    }
   });
 });

@@ -176,9 +176,17 @@ function setValidationDefaults<T extends AnyZodObject>(
   }
 }
 
+export type SuperValidateOptions<T extends AnyZodObject> = {
+  noErrors?: boolean;
+  includeMeta?: boolean;
+  checkMissingEntityFields?: boolean;
+  defaults?: DefaultFields<T>;
+  id?: true | string;
+};
+
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
- * @param data Data structure for a Zod schema, or RequestEvent/FormData. If falsy, defaultEntity will be used.
+ * @param data Data structure for a Zod schema, or RequestEvent/FormData. If falsy, the schema's defaultEntity will be used.
  * @param schema The Zod schema to validate against.
  * @param options.defaults An object with keys that can be a default value, or a function that will be called to get the default value.
  * @param options.noErrors For load requests, this is usually set to prevent validation errors from showing directly on a GET request.
@@ -192,12 +200,7 @@ export async function superValidate<T extends AnyZodObject>(
     | null
     | undefined,
   schema: T,
-  options: {
-    noErrors?: boolean;
-    includeMeta?: boolean;
-    checkMissingEntityFields?: boolean;
-    defaults?: DefaultFields<T>;
-  } = {}
+  options: SuperValidateOptions<T> = {}
 ): Promise<Validation<T>> {
   options = {
     checkMissingEntityFields: true,
@@ -206,8 +209,8 @@ export async function superValidate<T extends AnyZodObject>(
     ...options
   };
 
-  const schemaKeys = Object.keys(schema.keyof().Values);
   const entityInfo = entityData(schema);
+  const schemaKeys = entityInfo.keys;
 
   function parseFormData(data: FormData) {
     function tryParseSuperJson(data: FormData) {
@@ -266,62 +269,72 @@ export async function superValidate<T extends AnyZodObject>(
     checkMissingFields(schema, data);
   }
 
+  let output: Validation<T>;
+
   if (!data) {
-    const emptyEntity = {
+    output = {
       valid: false,
       errors: {},
       // Copy the default entity so it's not modified
       data: { ...entityInfo.defaultEntity },
       empty: true,
       message: null,
-      constraints: entityInfo.constraints,
-      meta: options.includeMeta ? entityInfo.meta : undefined
+      constraints: entityInfo.constraints
     };
+
     if (options.defaults) {
-      setValidationDefaults(emptyEntity.data, options.defaults);
+      setValidationDefaults(output.data, options.defaults);
     }
-    return emptyEntity;
-  }
-
-  const partialData = data as Partial<z.infer<T>>;
-  if (options.defaults) {
-    setValidationDefaults(partialData, options.defaults);
-  }
-
-  const status = schema.safeParse(partialData);
-
-  if (!status.success) {
-    const errors = options.noErrors
-      ? {}
-      : (status.error.flatten().fieldErrors as ValidationErrors<T>);
-
-    return {
-      valid: false,
-      errors,
-      data: Object.fromEntries(
-        schemaKeys.map((key) => [
-          key,
-          partialData[key] === undefined
-            ? entityInfo.defaultEntity[key]
-            : partialData[key]
-        ])
-      ),
-      empty: false,
-      message: null,
-      constraints: entityInfo.constraints,
-      meta: options.includeMeta ? entityInfo.meta : undefined
-    };
   } else {
-    return {
-      valid: true,
-      errors: {},
-      data: status.data,
-      empty: false,
-      message: null,
-      constraints: entityInfo.constraints,
-      meta: options.includeMeta ? entityInfo.meta : undefined
-    };
+    const partialData = data as Partial<z.infer<T>>;
+
+    if (options.defaults) {
+      setValidationDefaults(partialData, options.defaults);
+    }
+
+    const status = schema.safeParse(partialData);
+
+    if (!status.success) {
+      const errors = options.noErrors
+        ? {}
+        : (status.error.flatten().fieldErrors as ValidationErrors<T>);
+
+      output = {
+        valid: false,
+        errors,
+        data: Object.fromEntries(
+          schemaKeys.map((key) => [
+            key,
+            partialData[key] === undefined
+              ? entityInfo.defaultEntity[key]
+              : partialData[key]
+          ])
+        ),
+        empty: false,
+        message: null,
+        constraints: entityInfo.constraints
+      };
+    } else {
+      output = {
+        valid: true,
+        errors: {},
+        data: status.data,
+        empty: false,
+        message: null,
+        constraints: entityInfo.constraints
+      };
+    }
   }
+
+  if (options.includeMeta) {
+    output.meta = entityInfo.meta;
+  }
+
+  if (options.id !== undefined) {
+    output.id = options.id === true ? entityInfo.hash : options.id;
+  }
+
+  return output;
 }
 
 export function actionResult<T extends Record<string, unknown> | string>(

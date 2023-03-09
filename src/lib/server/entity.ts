@@ -1,4 +1,5 @@
 import type { InputConstraints } from '..';
+import crypto from 'crypto';
 
 import {
   z,
@@ -39,7 +40,17 @@ export type Entity<T extends AnyZodObject> = {
   defaultEntity: z.infer<T>;
   constraints: EntityRecord<T, InputConstraints | undefined>;
   meta: EntityMetaData<T>;
+  hash: string;
+  keys: string[];
 };
+
+export function entityHash<T extends AnyZodObject>(meta: EntityMetaData<T>) {
+  return crypto
+    .createHash('shake256', { outputLength: 8 })
+    .update(JSON.stringify(meta.types))
+    .digest('base64')
+    .replace('=', '');
+}
 
 export function entityData<T extends AnyZodObject>(schema: T) {
   const cached = getCached(schema);
@@ -47,11 +58,14 @@ export function entityData<T extends AnyZodObject>(schema: T) {
 
   const typeInfos = typeInfo(schema);
   const defaultEnt = defaultEntity(schema);
+  const metaData = meta(schema);
   const entity: Entity<T> = {
     typeInfo: typeInfos,
     defaultEntity: defaultEnt,
     constraints: constraints(schema, typeInfos),
-    meta: meta(schema)
+    meta: metaData,
+    hash: entityHash(metaData),
+    keys: Object.keys(schema.keyof().Values)
   };
 
   setCached(schema, entity);

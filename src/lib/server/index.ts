@@ -337,8 +337,12 @@ export async function superValidate<T extends AnyZodObject>(
   return output;
 }
 
-export function actionResult<T extends Record<string, unknown> | string>(
-  type: T extends string ? 'redirect' : 'success' | 'failure' | 'error',
+export function actionResult<
+  T extends Record<string, unknown> | App.Error | string
+>(
+  type: T extends string
+    ? 'redirect' | 'error'
+    : 'success' | 'failure' | 'error',
   data?: T,
   status?: number
 ) {
@@ -349,7 +353,7 @@ export function actionResult<T extends Record<string, unknown> | string>(
   if (type == 'error') {
     return result({
       status: status || 500,
-      error: data
+      error: typeof data === 'string' ? { message: data } : data
     });
   } else if (type == 'redirect') {
     return result({

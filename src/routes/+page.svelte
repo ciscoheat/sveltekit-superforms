@@ -31,8 +31,6 @@
     errors: staticerrors,
     constraints: staticconstraints
   } = superForm(data.form, { id: 'static' });
-
-  console.log($staticerrors);
 </script>
 
 <SuperDebug data={{ $form, $staticform }} />

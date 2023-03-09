@@ -17,6 +17,8 @@ export const POST = (async (event) => {
   });
   console.log('FORM', form);
 
+  //if (!form.valid) return actionResult('redirect', '/');
+  //if (!form.valid) return actionResult('error', 'I AM ERROR');
   if (!form.valid) return actionResult('failure', { form });
 
   form.message = 'Login successful!';

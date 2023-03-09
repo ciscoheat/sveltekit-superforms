@@ -5,6 +5,17 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.21] - 2023-03-09
+
+### Added
+
+- Support for multiple forms, using the `id` option. [FAQ entry](https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ#are-multiple-forms-on-the-same-page-supported).
+- `setError` now takes a `status` option, default is `400`.
+
+### Fixed
+
+- `actionResult` now returns a proper error if a `string` is used when creating an `error` result.
+
 ## [0.5.20] - 2023-03-08
 
 ### Fixed

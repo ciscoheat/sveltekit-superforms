@@ -202,12 +202,17 @@
   <input type="hidden" name="numberArray" value="789" />
 
   <div>
-    <button>Submit</button>
+    <button style="margin-bottom: 1rem;">Submit</button>
     {#if $timeout}
       <span class="timeout">Timeout!</span>
     {:else if $delayed}
       <span class="delayed">Delayed...</span>
     {/if}
+  </div>
+
+  <div>
+    <input type="checkbox" name="agree" bind:checked={$form.agree} />
+    Agree to terms
   </div>
 
   <label for="string">string</label>

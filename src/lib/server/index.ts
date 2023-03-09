@@ -32,7 +32,10 @@ export function setError<T extends AnyZodObject>(
   form: Validation<T>,
   field: keyof z.infer<T>,
   error: string | string[] | null,
-  options: { overwrite: boolean } = { overwrite: false }
+  options: { overwrite?: boolean; status?: number } = {
+    overwrite: false,
+    status: 400
+  }
 ) {
   const errArr = Array.isArray(error) ? error : error ? [error] : [];
 
@@ -42,7 +45,7 @@ export function setError<T extends AnyZodObject>(
     form.errors[field] = errArr;
   }
   form.valid = false;
-  return fail(400, { form });
+  return fail(options.status ?? 400, { form });
 }
 
 export function noErrors<T extends AnyZodObject>(

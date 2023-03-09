@@ -17,6 +17,7 @@ export const _dataTypeForm = z.object({
   string: z.string().min(2).default('Shigeru'),
   email: z.string().email(),
   bool: z.boolean(),
+  agree: z.boolean({ required_error: 'You must accept the terms.' }),
   number: z.number(),
   proxyNumber: z.number().min(10).default(0),
   nullableString: z.string().nullable(),

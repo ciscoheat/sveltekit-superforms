@@ -1,12 +1,13 @@
 <p align="center">
-  <img src="logo.svg" width="150px" align="center" alt="Superforms logo" />
+  <img src="https://github.com/ciscoheat/sveltekit-superforms/raw/main/logo.svg" width="150px" align="center" alt="Superforms logo" />
   <h1 align="center">sveltekit-superforms 💥</h1>
 </p>
 
 <div align="center">
-  <p align="center">
+  <span>
     Supercharge your SvelteKit forms with this powerhouse of a library!
-  </p>
+  </span>
+  <br />
   <a href="https://github.com/ciscoheat/sveltekit-superforms/wiki/API-reference">API</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/ciscoheat/sveltekit-superforms/discussions">Discussions</a>

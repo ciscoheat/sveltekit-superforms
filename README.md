@@ -1,11 +1,10 @@
 <p align="center">
-  <img src="logo.svg" width="200px" align="center" alt="Superforms logo" />
+  <img src="logo.svg" width="150px" align="center" alt="Superforms logo" />
   <h1 align="center">sveltekit-superforms 💥</h1>
   <p align="center">
     Supercharge your SvelteKit forms with this powerhouse of a library!
   </p>
 </p>
-<br/>
 
 <div align="center">
   <a href="https://github.com/ciscoheat/sveltekit-superforms/wiki/API-reference">API</a>
@@ -17,11 +16,8 @@
   <a href="https://www.npmjs.com/package/sveltekit-superforms">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/ciscoheat/sveltekit-superforms/issues">Issues</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <br />
 </div>
 
-<br/>
 <br/>
 
 ## Feature list

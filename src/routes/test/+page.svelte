@@ -210,11 +210,6 @@
     {/if}
   </div>
 
-  <div>
-    <input type="checkbox" name="agree" bind:checked={$form.agree} />
-    Agree to terms
-  </div>
-
   <label for="string">string</label>
   <input
     type="text"
@@ -232,6 +227,11 @@
     bind:value={$form.email}
   />
   {#if $errors.email}<span data-invalid>{$errors.email}</span>{/if}
+
+  <div>
+    <input type="checkbox" name="agree" bind:checked={$form.agree} />
+    Agree to terms
+  </div>
 
   <label for="bool">bool</label>
   <select name="bool" bind:value={$bool}>

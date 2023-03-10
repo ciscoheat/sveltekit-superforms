@@ -38,7 +38,7 @@ export {
   dateProxy
 } from './proxies';
 
-export type FormUpdate = (
+type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,
   untaint?: boolean
 ) => Promise<void>;
@@ -62,7 +62,6 @@ export type FormOptions<M, T extends AnyZodObject> = {
   onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
   onResult?: (event: {
     result: ActionResult;
-    update: FormUpdate;
     formEl: HTMLFormElement;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
@@ -729,10 +728,10 @@ function formEnhance<M, T extends AnyZodObject>(
       //d('Completed: ', result, options);
       currentRequest = null;
       let cancelled = false;
+
       if (options.onResult) {
         await options.onResult({
           result,
-          update: Data_update,
           formEl,
           cancel: () => (cancelled = true)
         });

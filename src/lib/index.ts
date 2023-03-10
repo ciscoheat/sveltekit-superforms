@@ -23,8 +23,8 @@ export type Validation<M = string, T extends AnyZodObject = AnyZodObject> = {
   errors: ValidationErrors<T>;
   data: z.infer<T>;
   empty: boolean;
-  message: M | null;
   constraints: Entity<T>['constraints'];
+  message?: M;
   id?: string;
   meta?: Entity<T>['meta'];
 };

@@ -98,15 +98,19 @@ export type FormOptions<M, T extends AnyZodObject> = {
         update?: () => Promise<void>
       ): Promise<void>;
     };
-    onError?: (result: {
-      type: 'error';
-      status?: number;
-      error: App.Error;
-    }) => App.PageData['flash'];
+    onError?: (
+      result: {
+        type: 'error';
+        status?: number;
+        error: App.Error;
+      },
+      message: Writable<App.PageData['flash']>
+    ) => MaybePromise<unknown | void>;
+    cookiePath?: string;
   };
 };
 
-const defaultFormOptions: FormOptions<string, AnyZodObject> = {
+const defaultFormOptions = {
   applyAction: true,
   invalidateAll: true,
   resetForm: false,
@@ -185,7 +189,6 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
       errors: {},
       data: {},
       empty: true,
-      message: null,
       constraints: {} as Validation<M, T>['constraints']
     };
   }
@@ -252,7 +255,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
   // is used to populate multiple forms.
   const Valid = writable(form.valid);
   const Empty = writable(form.empty);
-  const Message = writable(form.message);
+  const Message = writable<M | undefined>(form.message);
   const Errors = writable({ ...form.errors });
   const Data = writable({ ...form.data });
   const Constraints = writable({ ...form.constraints });
@@ -300,11 +303,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
     return !deepEqual(data, savedForm);
   }
 
-  function rebind(
-    form: Validation<M, T>,
-    untaint: boolean,
-    message: M | null
-  ) {
+  function rebind(form: Validation<M, T>, untaint: boolean, message?: M) {
     if (untaint) {
       savedForm = { ...form.data };
     }
@@ -333,7 +332,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
     if (form.valid && options.resetForm) {
       _resetForm(form.message);
     } else {
-      rebind(form, untaint, null);
+      rebind(form, untaint);
     }
 
     // Do not await on onUpdated, since we're already finished with the request
@@ -342,7 +341,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
     }
   }
 
-  function _resetForm(message: M | null) {
+  function _resetForm(message?: M) {
     rebind(initialForm, true, message);
   }
 
@@ -356,7 +355,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
     // All we need to do if redirected is to reset the form.
     // No events should be triggered because technically we're somewhere else.
     if (result.type == 'redirect') {
-      if (options.resetForm) _resetForm(null);
+      if (options.resetForm) _resetForm();
       return;
     }
 
@@ -463,8 +462,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
 
             rebind(
               newForm as Validation<M, T>,
-              p.status >= 200 && p.status < 300,
-              null
+              p.status >= 200 && p.status < 300
             );
           }
         }
@@ -474,7 +472,9 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
 
   function cancelFlash() {
     if (options.flashMessage && browser)
-      document.cookie = `flash=; Max-Age=0; Path=/;`;
+      document.cookie = `flash=; Max-Age=0; Path=${
+        options.flashMessage.cookiePath ?? '/'
+      };`;
   }
 
   return {
@@ -520,7 +520,7 @@ export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
     allErrors: AllErrors,
     update: Data_update,
     reset: (options?) =>
-      _resetForm(options?.keepMessage ? get(Message) : null)
+      _resetForm(options?.keepMessage ? get(Message) : undefined)
   };
 }
 
@@ -695,7 +695,7 @@ function formEnhance<M, T extends AnyZodObject>(
       switch (options.clearOnSubmit) {
         case 'errors-and-message':
           errors.set({});
-          message.set(null);
+          message.set(undefined);
           break;
 
         case 'errors':
@@ -703,7 +703,7 @@ function formEnhance<M, T extends AnyZodObject>(
           break;
 
         case 'message':
-          message.set(null);
+          message.set(undefined);
           break;
       }
 
@@ -748,8 +748,6 @@ function formEnhance<M, T extends AnyZodObject>(
       }
 
       if (!cancelled) {
-        const status = Math.floor(result.status || 500);
-
         if (result.type !== 'error') {
           if (result.type === 'success' && options.invalidateAll) {
             await invalidateAll();
@@ -772,7 +770,7 @@ function formEnhance<M, T extends AnyZodObject>(
               // Transform to failure, to avoid data loss
               await applyAction({
                 type: 'failure',
-                status
+                status: Math.floor(result.status || 500)
               });
             }
           }
@@ -786,26 +784,14 @@ function formEnhance<M, T extends AnyZodObject>(
         // Set flash message, which should be set in all cases, even
         // if we have redirected (which is the point with the flash message!)
         if (options.flashMessage) {
-          const errorMessage: string | undefined = undefined;
-
           if (result.type == 'error' && options.flashMessage.onError) {
-            if (
-              result.error &&
-              typeof result.error === 'object' &&
-              'message' in result.error
-            ) {
-              // Grab the modified error message from onError option
-              result.error.message = errorMessage;
-            }
 
-            options.flashMessage.module.getFlash(page).set(
-              options.flashMessage.onError({
-                ...result,
-                status: result.status ?? status
-              })
+            await options.flashMessage.onError(
+              result,
+              options.flashMessage.module.getFlash(page)
             );
           } else if (result.type != 'error') {
-            options.flashMessage.module.updateFlash(page);
+            await options.flashMessage.module.updateFlash(page);
           }
         }
       } else {

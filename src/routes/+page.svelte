@@ -19,10 +19,12 @@
       },
       flashMessage: {
         module: flashModule,
-        onError: (errorResult) => ({
-          type: 'error',
-          message: errorResult.error.message
-        })
+        onError(result, message) {
+          message.set({
+            type: 'error',
+            message: result.error.message
+          });
+        }
       }
     });
 

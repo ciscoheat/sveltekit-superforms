@@ -281,7 +281,6 @@ export async function superValidate<
       // Copy the default entity so it's not modified
       data: { ...entityInfo.defaultEntity },
       empty: true,
-      message: null,
       constraints: entityInfo.constraints
     };
 
@@ -314,7 +313,6 @@ export async function superValidate<
           ])
         ),
         empty: false,
-        message: null,
         constraints: entityInfo.constraints
       };
     } else {
@@ -323,7 +321,6 @@ export async function superValidate<
         errors: {},
         data: status.data,
         empty: false,
-        message: null,
         constraints: entityInfo.constraints
       };
     }

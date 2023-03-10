@@ -7,7 +7,7 @@ import { RateLimiter } from 'sveltekit-rate-limiter';
 
 const limiter = new RateLimiter({
   rates: {
-    IPUA: [3, 'm']
+    IPUA: [5, 'm']
   }
 });
 

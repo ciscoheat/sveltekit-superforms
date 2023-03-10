@@ -60,6 +60,7 @@
 <div class="forms">
   <form method="POST" action="?/edit" use:enhance>
     <input type="hidden" name="id" bind:value={$form.id} />
+    <input type="hidden" name="notInSchema" value="123" />
 
     <label>
       Name<br /><input

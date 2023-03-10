@@ -57,7 +57,7 @@
 
 <div class="forms">
   <form method="POST" action="?/edit" use:enhance>
-    <input type="hidden" name="id" value={$form.id} />
+    <input type="hidden" name="id" bind:value={$form.id} />
 
     <label>
       Name<br /><input
@@ -113,7 +113,7 @@
 
   <!--------- Static form (no javascript/enhance) ----------------------->
   <form method="POST" action="?/edit">
-    <input type="hidden" name="id" value={$staticform.id} />
+    <input type="hidden" name="id" bind:value={$staticform.id} />
     <input type="hidden" name="formid" value="static" />
 
     <label>

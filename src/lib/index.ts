@@ -18,12 +18,12 @@ export type InputConstraints = Partial<{
   maxlength: number;
 }>;
 
-export type Validation<T extends AnyZodObject> = {
+export type Validation<M = string, T extends AnyZodObject = AnyZodObject> = {
   valid: boolean;
   errors: ValidationErrors<T>;
   data: z.infer<T>;
   empty: boolean;
-  message: string | null;
+  message: M | null;
   constraints: Entity<T>['constraints'];
   id?: string;
   meta?: Entity<T>['meta'];

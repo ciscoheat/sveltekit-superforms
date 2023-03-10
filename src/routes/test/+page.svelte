@@ -88,7 +88,9 @@
     constraints
   } = superForm(data.form, {
     taintedMessage: null,
-    onError: 'Något gick fel.',
+    onError(result, message) {
+      message.set(result.error.message);
+    },
     validators: {
       email: (n) =>
         /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'

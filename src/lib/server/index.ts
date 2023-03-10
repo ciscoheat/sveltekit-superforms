@@ -28,8 +28,8 @@ import {
 
 export { defaultEntity } from './entity';
 
-export function setError<T extends AnyZodObject>(
-  form: Validation<T>,
+export function setError<M = string, T extends AnyZodObject = AnyZodObject>(
+  form: Validation<M, T>,
   field: keyof z.infer<T>,
   error: string | string[] | null,
   options: { overwrite?: boolean; status?: number } = {
@@ -48,9 +48,9 @@ export function setError<T extends AnyZodObject>(
   return fail(options.status ?? 400, { form });
 }
 
-export function noErrors<T extends AnyZodObject>(
-  form: Validation<T>
-): Validation<T> {
+export function noErrors<M = string, T extends AnyZodObject = AnyZodObject>(
+  form: Validation<M, T>
+): Validation<M, T> {
   return { ...form, errors: {} };
 }
 
@@ -191,7 +191,10 @@ export type SuperValidateOptions<T extends AnyZodObject> = {
  * @param options.defaults An object with keys that can be a default value, or a function that will be called to get the default value.
  * @param options.noErrors For load requests, this is usually set to prevent validation errors from showing directly on a GET request.
  */
-export async function superValidate<T extends AnyZodObject>(
+export async function superValidate<
+  M = string,
+  T extends AnyZodObject = AnyZodObject
+>(
   data:
     | RequestEvent
     | Request
@@ -201,7 +204,7 @@ export async function superValidate<T extends AnyZodObject>(
     | undefined,
   schema: T,
   options: SuperValidateOptions<T> = {}
-): Promise<Validation<T>> {
+): Promise<Validation<M, T>> {
   options = {
     checkMissingEntityFields: true,
     noErrors: false,
@@ -269,7 +272,7 @@ export async function superValidate<T extends AnyZodObject>(
     checkMissingFields(schema, data);
   }
 
-  let output: Validation<T>;
+  let output: Validation<M, T>;
 
   if (!data) {
     output = {

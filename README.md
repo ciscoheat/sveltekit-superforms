@@ -466,14 +466,14 @@ This one is more for the sake of the server than the user. When set to `prevent`
 
 ## sveltekit-flash-message support
 
-The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property of `Validation<T>` doesn't persist when redirecting to a different page. If you have it installed and configured, you need to specify this option to make things work:
+The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property doesn't persist when redirecting to a different page. If you have it installed and configured, you need to specify this option to make things work:
 
 ```ts
 import * as flashModule from 'sveltekit-flash-message/client';
 
 flashMessage: {
   module: flashModule,
-  onError?: (errorResult: ActionResult<'error'>) => App.PageData['flash']
+  onError?: (error: ActionResult<'error'>) => App.PageData['flash']
 }
 ```
 

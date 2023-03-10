@@ -49,7 +49,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
   ) => MaybePromise<string | string[] | null | undefined>;
 }>;
 
-export type FormOptions<T extends AnyZodObject> = {
+export type FormOptions<M, T extends AnyZodObject> = {
   id?: string;
   applyAction?: boolean;
   invalidateAll?: boolean;
@@ -67,21 +67,22 @@ export type FormOptions<T extends AnyZodObject> = {
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdate?: (event: {
-    form: Validation<T>;
+    form: Validation<M, T>;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated?: (event: {
-    form: Validation<T>;
+    form: Validation<M, T>;
   }) => MaybePromise<unknown | void>;
   onError?:
-    | ((
-        result: Extract<ActionResult, { type: 'error' }>,
-        message: Writable<Validation<T>['message']>
-      ) => MaybePromise<unknown | void>)
-    | 'set-message'
     | 'apply'
-    | 'ignore'
-    | string;
+    | ((
+        result: {
+          type: 'error';
+          status?: number;
+          error: App.Error;
+        },
+        message: Writable<Validation<M, T>['message']>
+      ) => MaybePromise<unknown | void>);
   dataType?: 'form' | 'formdata' | 'json';
   validators?: Validators<T>;
   defaultValidator?: 'clear' | 'keep';
@@ -97,15 +98,15 @@ export type FormOptions<T extends AnyZodObject> = {
         update?: () => Promise<void>
       ): Promise<void>;
     };
-    onError?: (errorResult: {
+    onError?: (result: {
       type: 'error';
-      status: number;
+      status?: number;
       error: App.Error;
     }) => App.PageData['flash'];
   };
 };
 
-const defaultFormOptions: FormOptions<AnyZodObject> = {
+const defaultFormOptions: FormOptions<string, AnyZodObject> = {
   applyAction: true,
   invalidateAll: true,
   resetForm: false,
@@ -119,7 +120,7 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   onResult: undefined,
   onUpdate: undefined,
   onUpdated: undefined,
-  onError: 'set-message',
+  onError: undefined,
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'clear',
@@ -143,11 +144,11 @@ type FormFields<T extends AnyZodObject> = {
 };
 */
 
-export type EnhancedForm<T extends AnyZodObject> = {
-  form: Writable<Validation<T>['data']>;
-  errors: Writable<Validation<T>['errors']>;
-  constraints: Writable<Validation<T>['constraints']>;
-  message: Writable<Validation<T>['message']>;
+export type EnhancedForm<M, T extends AnyZodObject> = {
+  form: Writable<Validation<M, T>['data']>;
+  errors: Writable<Validation<M, T>['errors']>;
+  constraints: Writable<Validation<M, T>['constraints']>;
+  message: Writable<Validation<M, T>['message']>;
 
   valid: Readable<boolean>;
   empty: Readable<boolean>;
@@ -172,20 +173,20 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @param {FormOptions} options Configuration for the form.
  * @returns {EnhancedForm} An object with properties for the form.
  */
-export function superForm<T extends AnyZodObject>(
-  form: Validation<T> | null | undefined | string,
-  options: FormOptions<T> = {}
-): EnhancedForm<T> {
-  options = { ...(defaultFormOptions as FormOptions<T>), ...options };
+export function superForm<M = string, T extends AnyZodObject = AnyZodObject>(
+  form: Validation<M, T> | null | undefined | string,
+  options: FormOptions<M, T> = {}
+): EnhancedForm<M, T> {
+  options = { ...(defaultFormOptions as FormOptions<M, T>), ...options };
 
-  function emptyForm() {
+  function emptyForm(): Validation<M, T> {
     return {
       valid: false,
       errors: {},
       data: {},
       empty: true,
       message: null,
-      constraints: {} as Validation<T>['constraints']
+      constraints: {} as Validation<M, T>['constraints']
     };
   }
 
@@ -231,7 +232,7 @@ export function superForm<T extends AnyZodObject>(
         "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
       );
     }
-    if (postedFormId === formId) form = actionForm.form as Validation<T>;
+    if (postedFormId === formId) form = actionForm.form as Validation<M, T>;
   }
 
   if (!form || typeof form === 'string') {
@@ -239,14 +240,14 @@ export function superForm<T extends AnyZodObject>(
   }
 
   // Make a deep copy of the original, in case of reset
-  const initialForm: Validation<T> = {
+  const initialForm: Validation<M, T> = {
     ...form,
     data: { ...form.data },
     errors: { ...form.errors },
     constraints: { ...form.constraints }
   };
 
-  // Stores for the properties of Validation<T>
+  // Stores for the properties of Validation<M, T>
   // Need to make a copy here too, in case the form variable
   // is used to populate multiple forms.
   const Valid = writable(form.valid);
@@ -285,7 +286,7 @@ export function superForm<T extends AnyZodObject>(
 
   // Need to set this after use:enhance has run, to avoid showing the
   // tainted dialog when a form doesn't use it or the browser doesn't use JS.
-  let savedForm: Validation<T>['data'] | undefined;
+  let savedForm: Validation<M, T>['data'] | undefined;
 
   const _taintedMessage = options.taintedMessage;
   options.taintedMessage = undefined;
@@ -300,9 +301,9 @@ export function superForm<T extends AnyZodObject>(
   }
 
   function rebind(
-    form: Validation<T>,
+    form: Validation<M, T>,
     untaint: boolean,
-    message: string | null
+    message: M | null
   ) {
     if (untaint) {
       savedForm = { ...form.data };
@@ -315,7 +316,7 @@ export function superForm<T extends AnyZodObject>(
     Errors.set(form.errors);
   }
 
-  async function _update(form: Validation<T>, untaint: boolean) {
+  async function _update(form: Validation<M, T>, untaint: boolean) {
     if (options.onUpdate) {
       let cancelled = false;
       await options.onUpdate({
@@ -341,7 +342,7 @@ export function superForm<T extends AnyZodObject>(
     }
   }
 
-  function _resetForm(message: string | null) {
+  function _resetForm(message: M | null) {
     rebind(initialForm, true, message);
   }
 
@@ -375,20 +376,10 @@ export function superForm<T extends AnyZodObject>(
     for (const newForm of forms) {
       if (newForm.id !== formId) continue;
       await _update(
-        newForm as Validation<T>,
+        newForm as Validation<M, T>,
         untaint ?? (result.status >= 200 && result.status < 300)
       );
     }
-
-    /*
-    const form = result.data.form as Validation<T>;
-    if (form.id !== formId) return;
-
-    await _update(
-      form,
-      untaint ?? (result.status >= 200 && result.status < 300)
-    );
-    */
   };
 
   if (browser) {
@@ -458,7 +449,7 @@ export function superForm<T extends AnyZodObject>(
           for (const newForm of forms) {
             if (newForm === form || newForm.id !== formId) continue;
             await _update(
-              newForm as Validation<T>,
+              newForm as Validation<M, T>,
               p.status >= 200 && p.status < 300
             );
           }
@@ -471,7 +462,7 @@ export function superForm<T extends AnyZodObject>(
             if (newForm === form || newForm.id !== formId) continue;
 
             rebind(
-              newForm as Validation<T>,
+              newForm as Validation<M, T>,
               p.status >= 200 && p.status < 300,
               null
             );
@@ -537,16 +528,16 @@ export function superForm<T extends AnyZodObject>(
  * Custom use:enhance version. Flash message support, friendly error messages, for usage with initializeForm.
  * @param formEl Form element from the use:formEnhance default parameter.
  */
-function formEnhance<T extends AnyZodObject>(
+function formEnhance<M, T extends AnyZodObject>(
   formEl: HTMLFormElement,
   submitting: Writable<boolean>,
   delayed: Writable<boolean>,
   timeout: Writable<boolean>,
-  errors: Writable<Validation<T>['errors']>,
+  errors: Writable<Validation<M, T>['errors']>,
   Data_update: FormUpdate,
-  options: FormOptions<T>,
-  data: Writable<Validation<T>['data']>,
-  message: Writable<Validation<T>['message']>,
+  options: FormOptions<M, T>,
+  data: Writable<Validation<M, T>['data']>,
+  message: Writable<Validation<M, T>['message']>,
   enableTaintedForm: () => void,
   cancelFlash: () => void
 ) {
@@ -758,7 +749,6 @@ function formEnhance<T extends AnyZodObject>(
 
       if (!cancelled) {
         const status = Math.floor(result.status || 500);
-        let errorMessage: string | undefined = undefined;
 
         if (result.type !== 'error') {
           if (result.type === 'success' && options.invalidateAll) {
@@ -788,18 +778,7 @@ function formEnhance<T extends AnyZodObject>(
           }
 
           // Check if the error message should be replaced
-          if (options.onError == 'ignore') {
-            // Ignore error
-          } else if (options.onError == 'set-message') {
-            message.set(
-              (errorMessage =
-                result.error.message !== undefined
-                  ? result.error.message
-                  : `Error: ${status}`)
-            );
-          } else if (typeof options.onError === 'string') {
-            message.set((errorMessage = options.onError));
-          } else if (options.onError) {
+          if (options.onError && options.onError != 'apply') {
             await options.onError(result, message);
           }
         }
@@ -807,9 +786,10 @@ function formEnhance<T extends AnyZodObject>(
         // Set flash message, which should be set in all cases, even
         // if we have redirected (which is the point with the flash message!)
         if (options.flashMessage) {
+          const errorMessage: string | undefined = undefined;
+
           if (result.type == 'error' && options.flashMessage.onError) {
             if (
-              errorMessage &&
               result.error &&
               typeof result.error === 'object' &&
               'message' in result.error

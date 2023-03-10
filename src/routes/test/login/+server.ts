@@ -1,4 +1,5 @@
 import { actionResult, superValidate } from '$lib/server';
+import { redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
 
@@ -20,6 +21,11 @@ export const POST = (async (event) => {
   //if (!form.valid) return actionResult('redirect', '/');
   //if (!form.valid) return actionResult('error', 'I AM ERROR');
   if (!form.valid) return actionResult('failure', { form });
+
+  if (data.has('redirect')) {
+    return actionResult('redirect', '/redirected');
+    //throw redirect(303, '/redirected');
+  }
 
   form.message = 'Login successful!';
   return actionResult('success', { form });

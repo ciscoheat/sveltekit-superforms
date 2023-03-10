@@ -104,7 +104,6 @@
     delayed: modalDelayed,
     enhance: modalEnhance
   } = superForm('login-form', {
-    applyAction: false,
     resetForm: true,
     taintedMessage: null,
     dataType: 'json',
@@ -147,7 +146,11 @@
   />
   <div>Password</div>
   <input bind:value={$modalForm.password} />
-  <button data-submit>Login</button>
+  <div class="submit-button">
+    <button data-submit>Login</button>
+    <input type="checkbox" name="redirect" />
+    <span style="font-size:75%">Redirect on success</span>
+  </div>
 </form>
 
 {#if runTests}
@@ -172,7 +175,7 @@
 {/if}
 
 <h1>sveltekit-superforms</h1>
-<input type="checkbox" bind:checked={runTests} /> Run tests
+<input type="checkbox" bind:checked={runTests} /> Run tests<br />
 
 {#if $message}
   <h3 data-message>{$message}</h3>
@@ -204,6 +207,7 @@
 
   <div>
     <button style="margin-bottom: 1rem;">Submit</button>
+    <input type="checkbox" name="redirect" /> Redirect on post
     {#if $timeout}
       <span class="timeout">Timeout!</span>
     {:else if $delayed}
@@ -316,7 +320,7 @@
       grid-column: 1 / -1;
     }
 
-    button {
+    .submit-button {
       grid-column-start: 2;
       justify-self: left;
     }

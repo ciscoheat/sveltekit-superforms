@@ -1,6 +1,6 @@
 import { setError, superValidate } from '$lib/server';
 import { z } from 'zod';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from '../$types';
 
 enum Fruits {
@@ -53,6 +53,8 @@ export const actions = {
       _dataTypeForm.extend({ coercedDate: z.coerce.date() })
     );
     console.log('🚀 ~ FORM', form);
+
+    if (formData.has('redirect')) throw redirect(303, '/redirected');
 
     if (!form.valid) {
       setError(form, 'email', '[Email error]', { overwrite: true });

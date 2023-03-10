@@ -464,10 +464,9 @@ export function superForm<T extends AnyZodObject>(
           }
         } else if (p.data && typeof p.data === 'object') {
           const forms = findForms(p.data);
-          if (!forms.length) error('$page.data (PageData)');
 
-          // It's a page reload or error/failure, so don't trigger any events,
-          // just update the data.
+          // It's a page reload, redirect or error/failure,
+          // so don't trigger any events, just update the data.
           for (const newForm of forms) {
             if (newForm === form || newForm.id !== formId) continue;
             rebind(

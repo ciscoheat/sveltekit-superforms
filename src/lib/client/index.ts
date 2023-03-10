@@ -83,7 +83,7 @@ export type FormOptions<M, T extends AnyZodObject> = {
         },
         message: Writable<Validation<M, T>['message']>
       ) => MaybePromise<unknown | void>);
-  dataType?: 'form' | 'formdata' | 'json';
+  dataType?: 'form' | 'json';
   validators?: Validators<T>;
   defaultValidator?: 'clear' | 'keep';
   clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -718,19 +718,10 @@ function formEnhance<M, T extends AnyZodObject>(
       //d('Submitting');
       htmlForm.submitting();
 
-      switch (options.dataType) {
-        case 'json':
-          submit.data.set('__superform_json', stringify(get(data)));
-          break;
-
-        case 'formdata':
-          for (const [key, value] of Object.entries(get(data))) {
-            submit.data.set(
-              key,
-              value instanceof Blob ? value : `${value || ''}`
-            );
-          }
-          break;
+      if (options.dataType === 'json') {
+        const postData = get(data);
+        submit.data.set('__superform_json', stringify(postData));
+        Object.keys(postData).forEach((key) => submit.data.delete(key));
       }
     }
 

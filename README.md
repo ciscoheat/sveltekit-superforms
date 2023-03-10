@@ -484,12 +484,10 @@ The flash message is set automatically for every `ActionResult` except `error`, 
 I've been saving the best for last - If you're fine with JavaScript being a requirement for posting, you can bypass the annoyance that everything is a `string` when we are posting forms:
 
 ```ts
-dataType: 'form' | 'formdata' | 'json' = 'form'
+dataType: 'form' 'json' = 'form'
 ```
 
-By simply setting the `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc!
-
-If this bliss is too much to handle, setting `dataType` to `formdata`, posts the data as a `FormData` instance based on the data structure instead of the content of the `<form>` element, so you don't have to set names for the form fields anymore (this also applies when set to `json`). This can make the html for a form quite slim:
+By simply setting `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc! You don't even have to set names for the form fields anymore, making the html for a form quite slim:
 
 ```svelte
 <form method="POST" use:enhance>

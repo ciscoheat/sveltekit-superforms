@@ -1,5 +1,4 @@
 import type { InputConstraints } from '..';
-import crypto from 'crypto';
 
 import {
   z,
@@ -44,12 +43,21 @@ export type Entity<T extends AnyZodObject> = {
   keys: string[];
 };
 
+// https://stackoverflow.com/a/8831937/70894
+function hashCode(str: string) {
+  let hash = 0;
+  for (let i = 0, len = str.length; i < len; i++) {
+    const chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  // Make it unsigned, for the hash appearance
+  if (hash < 0) hash = hash >>> 0;
+  return hash.toString(36);
+}
+
 export function entityHash<T extends AnyZodObject>(meta: EntityMetaData<T>) {
-  return crypto
-    .createHash('shake256', { outputLength: 8 })
-    .update(JSON.stringify(meta.types))
-    .digest('base64')
-    .replace('=', '');
+  return hashCode(JSON.stringify(meta.types));
 }
 
 export function entityData<T extends AnyZodObject>(schema: T) {

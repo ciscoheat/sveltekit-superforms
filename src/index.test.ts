@@ -197,7 +197,6 @@ test('Nullable values', async () => {
       name: (n, data) => `Test${data.scopeId}${n}`
     }
   });
-  console.log(output3);
   assert(output3.valid);
   expect(output3.data.scopeId).toEqual(3);
   expect(output3.data.name).toEqual('Test3undefined');

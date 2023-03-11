@@ -49,14 +49,16 @@ export const load = (async ({ url }) => {
   if (id && !user) throw error(404, 'User not found.');
 
   const form = await superValidate(user, crudSchema);
-  return { form };
+  return { form, users };
 }) satisfies PageServerLoad;
 
 ///// Form actions //////////////////////////////////////////////////
 
 export const actions = {
   default: async (event) => {
-    const form = await superValidate(event, crudSchema);
+    const data = await event.request.formData();
+
+    const form = await superValidate(data, crudSchema);
     if (!form.valid) return fail(400, { form });
 
     if (!form.data.id) {
@@ -65,16 +67,22 @@ export const actions = {
       users.push(user);
 
       form.message = 'User created!';
-      return { form };
     } else {
-      // UPDATE user
       const user = users.find((u) => u.id == form.data.id);
       if (!user) throw error(404, 'User not found.');
 
-      users[users.indexOf(user)] = { ...form.data, id: user.id };
+      const index = users.indexOf(user);
 
-      form.message = 'User updated!';
-      return { form };
+      if (data.has('delete')) {
+        // DELETE user
+        users.splice(index, 1);
+        throw redirect(303, '?');
+      } else {
+        // UPDATE user
+        users[index] = { ...form.data, id: user.id };
+        form.message = 'User updated!';
+      }
     }
+    return { form };
   }
 } satisfies Actions;

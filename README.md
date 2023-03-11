@@ -543,6 +543,8 @@ const idProxy = intProxy(form, 'id'); // Writable<string>
 
 Now if you bind to `$idProxy` instead of directly to `$form.id`, the value will be converted to an integer and `$form.id` will be updated automatically.
 
+Note that this will usually happen automatically with `bind:value`, so check out all the possible [Svelte bindings](https://svelte.dev/tutorial/text-inputs) first, to avoid complicating the code!
+
 # API reference
 
 [Available here](https://github.com/ciscoheat/sveltekit-superforms/wiki/API-reference) at the repository wiki.

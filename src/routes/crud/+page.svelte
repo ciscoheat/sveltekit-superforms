@@ -2,10 +2,22 @@
   import type { PageData } from './$types';
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
 
   export let data: PageData;
 
-  const { form, errors, enhance, delayed, message } = superForm(data.form);
+  const create = data.form.empty;
+
+  const { form, errors, enhance, delayed, message, reset } = superForm(
+    data.form,
+    {
+      onUpdated({ form }) {
+        if (form.valid && create) {
+          reset({ preserveMessage: true });
+        }
+      }
+    }
+  );
 </script>
 
 <h1>sveltekit-superforms</h1>
@@ -14,10 +26,10 @@
   <h3 class:invalid={$page.status >= 400}>{$message}</h3>
 {/if}
 
-<h2>{data.form.empty ? 'Create' : 'Update'} user</h2>
+<h2>{create ? 'Create' : 'Update'} user</h2>
 
 <form method="POST" use:enhance>
-  <input type="hidden" name="id" value={$form.id} />
+  <input type="hidden" name="id" bind:value={$form.id} />
 
   <label>
     Name<br />

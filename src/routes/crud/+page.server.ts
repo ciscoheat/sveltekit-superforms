@@ -8,15 +8,20 @@ import type { Actions, PageServerLoad } from './$types';
 // See https://zod.dev/?id=primitives for schema syntax
 const userSchema = z.object({
   id: z.string().regex(/^\d+$/),
-  name: z.string(),
+  name: z.string().min(2),
   email: z.string().email()
 });
 
 // Let's worry about id collisions later
 const userId = () => String(Math.random()).slice(2);
 
+type UserDB = z.infer<typeof userSchema>[];
+
+// Set a global variable to preserve DB when Vite reloads.
+const g = globalThis as unknown as { users: UserDB };
+
 // A simple user "database"
-const users: z.infer<typeof userSchema>[] = [
+const users: UserDB = (g.users = g.users || [
   {
     id: userId(),
     name: 'Important Customer',
@@ -27,7 +32,7 @@ const users: z.infer<typeof userSchema>[] = [
     name: 'Super Customer',
     email: 'super@example.com'
   }
-];
+]);
 
 const crudSchema = userSchema.extend({
   id: userSchema.shape.id.optional()
@@ -59,7 +64,8 @@ export const actions = {
       const user = { ...form.data, id: userId() };
       users.push(user);
 
-      throw redirect(303, '?id=' + user.id);
+      form.message = 'User created!';
+      return { form };
     } else {
       // UPDATE user
       const user = users.find((u) => u.id == form.data.id);
@@ -70,7 +76,5 @@ export const actions = {
       form.message = 'User updated!';
       return { form };
     }
-
-    return { form };
   }
 } satisfies Actions;

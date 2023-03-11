@@ -163,7 +163,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
-  reset: () => void;
+  reset: (options?: { preserveMessage: boolean }) => void;
 };
 
 /**
@@ -469,6 +469,7 @@ export function superForm<T extends AnyZodObject>(
           // so don't trigger any events, just update the data.
           for (const newForm of forms) {
             if (newForm === form || newForm.id !== formId) continue;
+
             rebind(
               newForm as Validation<T>,
               p.status >= 200 && p.status < 300,
@@ -521,14 +522,14 @@ export function superForm<T extends AnyZodObject>(
         Data,
         Message,
         enableTaintedMessage,
-        cancelFlash,
-        formId
+        cancelFlash
       ),
 
     firstError: FirstError,
     allErrors: AllErrors,
     update: Data_update,
-    reset: () => _resetForm(null)
+    reset: (options) =>
+      _resetForm(options?.preserveMessage ? get(Message) : null)
   };
 }
 
@@ -547,8 +548,7 @@ function formEnhance<T extends AnyZodObject>(
   data: Writable<Validation<T>['data']>,
   message: Writable<Validation<T>['message']>,
   enableTaintedForm: () => void,
-  cancelFlash: () => void,
-  formId: string | undefined
+  cancelFlash: () => void
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();

@@ -73,7 +73,10 @@ export const actions = {
 
     console.log('POST', data);
 
-    const form = await superValidate(data, crudSchema);
+    const form = await superValidate<typeof crudSchema, string>(
+      data,
+      crudSchema
+    );
     form.id = data.get('formid')?.toString();
 
     console.log('FORM', form);

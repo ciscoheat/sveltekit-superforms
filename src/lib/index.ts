@@ -18,7 +18,11 @@ export type InputConstraints = Partial<{
   maxlength: number;
 }>;
 
-export type Validation<M = string, T extends AnyZodObject = AnyZodObject> = {
+export type Validation<
+  T extends AnyZodObject,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+> = {
   valid: boolean;
   errors: ValidationErrors<T>;
   data: z.infer<T>;

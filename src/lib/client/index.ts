@@ -528,7 +528,7 @@ export function superForm<T extends AnyZodObject>(
     firstError: FirstError,
     allErrors: AllErrors,
     update: Data_update,
-    reset: (options) =>
+    reset: (options?) =>
       _resetForm(options?.keepMessage ? get(Message) : null)
   };
 }

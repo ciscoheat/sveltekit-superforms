@@ -1,5 +1,6 @@
 import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
+import { SuperFormError } from '$lib';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -75,7 +76,7 @@ function stringProxy<
 ): Writable<string> {
   function toValue(val: unknown) {
     if (typeof val !== 'string')
-      throw new Error('stringProxy received a non-string value.');
+      throw new SuperFormError('stringProxy received a non-string value.');
 
     if (type == 'number') return parseFloat(val);
     if (type == 'int') return parseInt(val, 10);

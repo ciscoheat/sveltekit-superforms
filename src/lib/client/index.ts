@@ -18,7 +18,7 @@ import {
 } from 'svelte/store';
 import { tick } from 'svelte';
 import { browser } from '$app/environment';
-import type { Validation } from '..';
+import { SuperFormError, type Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type InputConstraints } from '..';
@@ -221,7 +221,7 @@ export function superForm<
   }
 
   if (typeof form === 'string' && typeof options.id === 'string') {
-    throw new Error(
+    throw new SuperFormError(
       'You cannot specify an id in the first superForm argument and in the options.'
     );
   }
@@ -234,7 +234,7 @@ export function superForm<
   if (options.applyAction && actionForm) {
     const postedFormId = isValidationObject(actionForm.form);
     if (postedFormId === false) {
-      throw new Error(
+      throw new SuperFormError(
         "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
       );
     }
@@ -285,7 +285,7 @@ export function superForm<
   //////////////////////////////////////////////////////////////////////
 
   if (typeof initialForm.valid !== 'boolean') {
-    throw new Error(
+    throw new SuperFormError(
       "A non-validation object was passed to superForm. Check what's passed to its first parameter (null is allowed)."
     );
   }
@@ -350,7 +350,7 @@ export function superForm<
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
     if (result.type == ('error' as string)) {
-      throw new Error(
+      throw new SuperFormError(
         `ActionResult of type "${result.type}" cannot be passed to update function.`
       );
     }
@@ -363,14 +363,14 @@ export function superForm<
     }
 
     if (typeof result.data !== 'object') {
-      throw new Error(
+      throw new SuperFormError(
         'Non-object validation data returned from ActionResult.'
       );
     }
 
     const forms = findForms(result.data);
     if (!forms.length) {
-      throw new Error(
+      throw new SuperFormError(
         'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
       );
     }
@@ -439,7 +439,7 @@ export function superForm<
     if (options.applyAction) {
       page.subscribe(async (p) => {
         function error(type: string) {
-          throw new Error(
+          throw new SuperFormError(
             `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
           );
         }

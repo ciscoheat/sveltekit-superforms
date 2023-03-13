@@ -4,6 +4,13 @@ import type { Entity } from './server/entity';
 //export * as client from './client';
 //export * as server from './server';
 
+export class SuperFormError extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, SuperFormError.prototype);
+  }
+}
+
 export type ValidationErrors<T extends AnyZodObject> = Partial<
   Record<keyof z.infer<T>, string[] | undefined>
 >;

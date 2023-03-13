@@ -1,6 +1,6 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import type { Validation, ValidationErrors } from '..';
+import { SuperFormError, type Validation, type ValidationErrors } from '..';
 import {
   checkMissingFields,
   entityData,
@@ -121,7 +121,9 @@ function formDataToValidation<T extends AnyZodObject>(
       else if (literalType === 'number') return parseFloat(value ?? '');
       else if (literalType === 'boolean') return Boolean(value).valueOf();
       else {
-        throw new Error('Unsupported ZodLiteral type: ' + literalType);
+        throw new SuperFormError(
+          'Unsupported ZodLiteral type: ' + literalType
+        );
       }
     } else if (
       zodType instanceof ZodUnion ||
@@ -141,7 +143,7 @@ function formDataToValidation<T extends AnyZodObject>(
       return Symbol(value);
     }
 
-    throw new Error(
+    throw new SuperFormError(
       'Unsupported Zod default type: ' + zodType.constructor.name
     );
   }

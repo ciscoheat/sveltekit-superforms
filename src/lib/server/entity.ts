@@ -1,4 +1,4 @@
-import type { InputConstraints } from '..';
+import { SuperFormError, type InputConstraints } from '..';
 
 import {
   z,
@@ -160,7 +160,7 @@ export function checkMissingFields<T extends AnyZodObject>(
           entity.typeInfo[field].zodType.constructor.name
         })`
     );
-    throw new Error(
+    throw new SuperFormError(
       `Unsupported default value for schema field(s): ${errors.join(
         ', '
       )}. Add default, optional or nullable to those fields in the schema.`
@@ -251,8 +251,8 @@ function constraints<T extends AnyZodObject>(
       const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
 
       if (patterns.length > 1) {
-        throw new Error(
-          `Error on field "${key}": Only one regex is allowed per field.`
+        throw new SuperFormError(
+          `Invalid field "${key}": Only one regex is allowed per field.`
         );
       }
 
@@ -270,8 +270,8 @@ function constraints<T extends AnyZodObject>(
       );
 
       if (steps.length > 1) {
-        throw new Error(
-          `Error on field "${key}": Only one multipleOf is allowed per field.`
+        throw new SuperFormError(
+          `Invalid field "${key}": Only one multipleOf is allowed per field.`
         );
       }
 

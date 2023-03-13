@@ -2,18 +2,25 @@
   import type { PageData } from './$types';
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
 
   export let data: PageData;
 
-  const { form, errors, enhance, delayed, message, reset, empty } =
-    superForm(data.form, {
-      onUpdated({ form }) {
-        if (form.valid && !data.form.id) {
-          reset({ preserveMessage: true });
-        }
+  const {
+    form,
+    errors,
+    enhance,
+    delayed,
+    message,
+    reset,
+    empty,
+    constraints
+  } = superForm(data.form, {
+    onUpdated({ form }) {
+      if (form.valid && !data.form.id) {
+        reset({ preserveMessage: true });
       }
-    });
+    }
+  });
 </script>
 
 <h1>sveltekit-superforms</h1>
@@ -35,7 +42,12 @@
 
   <label>
     Name<br />
-    <input name="name" data-invalid={$errors.name} bind:value={$form.name} />
+    <input
+      name="name"
+      data-invalid={!!$errors.name}
+      bind:value={$form.name}
+      {...$constraints.name}
+    />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
   </label>
 
@@ -43,8 +55,9 @@
     E-mail<br />
     <input
       name="email"
-      data-invalid={$errors.email}
+      data-invalid={!!$errors.email}
       bind:value={$form.email}
+      {...$constraints.email}
     />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
@@ -63,12 +76,12 @@
 </form>
 
 <style>
-  .danger {
-    background-color: brown;
-  }
-
   .invalid {
     color: red;
+  }
+
+  .danger {
+    background-color: brown;
   }
 
   .users {

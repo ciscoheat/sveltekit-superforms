@@ -35,7 +35,7 @@
 
 <SuperDebug data={{ $form, $staticform }} />
 
-<a href="/test">Test page</a>
+<a href="/test">Test page</a> | <a href="/crud">CRUD</a>
 
 {#if $message}
   <h4 class:error={$page.status >= 400} class="message">{$message}</h4>
@@ -107,7 +107,7 @@
     <div>&nbsp;</div>
 
     <div>
-      <button on:click|preventDefault={reset}>Reset</button>
+      <button on:click|preventDefault={() => reset()}>Reset</button>
     </div>
   </form>
 
@@ -170,7 +170,7 @@
     <div>&nbsp;</div>
 
     <div>
-      <button on:click|preventDefault={reset}>Reset</button>
+      <button on:click|preventDefault={() => reset()}>Reset</button>
     </div>
   </form>
 </div>

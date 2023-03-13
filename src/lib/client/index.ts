@@ -157,7 +157,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
 
   fields: Readable<FormField<T>[]>;
   firstError: Readable<{ key: string; value: string } | null>;
-  allErrors: Readable<{ key: string; value: string }[]>;
+  topErrors: Readable<{ key: string; value: string }[]>;
 
   tainted: Readable<boolean>;
 
@@ -282,7 +282,7 @@ export function superForm<
   const Timeout = writable(false);
 
   // Utilities
-  const AllErrors = derived(Errors, ($errors) => {
+  const TopErrors = derived(Errors, ($errors) => {
     if (!$errors) return [];
     return Object.entries($errors)
       .filter(
@@ -295,8 +295,8 @@ export function superForm<
   });
 
   const FirstError = derived(
-    AllErrors,
-    ($allErrors) => $allErrors[0] ?? null
+    TopErrors,
+    ($topErrors) => $topErrors[0] ?? null
   );
   const Tainted = derived(Data, ($d) => (savedForm ? isTainted($d) : false));
 
@@ -538,7 +538,7 @@ export function superForm<
       ),
 
     firstError: FirstError,
-    allErrors: AllErrors,
+    topErrors: TopErrors,
     update: Data_update,
     reset: (options?) =>
       _resetForm(options?.keepMessage ? get(Message) : undefined)

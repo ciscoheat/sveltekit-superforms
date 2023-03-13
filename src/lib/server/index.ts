@@ -1,6 +1,11 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import { SuperFormError, type Validation, type ValidationErrors } from '..';
+import {
+  SuperFormError,
+  type Validation,
+  type ValidationError,
+  type ValidationErrors
+} from '..';
 import {
   checkMissingFields,
   entityData,
@@ -12,6 +17,7 @@ import {
 import {
   z,
   type AnyZodObject,
+  ZodObject,
   ZodAny,
   ZodString,
   ZodNumber,
@@ -23,11 +29,13 @@ import {
   ZodBigInt,
   ZodEnum,
   ZodNativeEnum,
-  ZodSymbol
+  ZodSymbol,
+  type ZodFormattedError
 } from 'zod';
 
 export { defaultEntity } from './entity';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject, M = any>(
   form: Validation<T, M>,
   field: keyof z.infer<T>,
@@ -39,8 +47,9 @@ export function setError<T extends AnyZodObject, M = any>(
 ) {
   const errArr = Array.isArray(error) ? error : error ? [error] : [];
 
-  if (form.errors[field] && !options.overwrite) {
-    form.errors[field] = form.errors[field]?.concat(errArr);
+  if (Array.isArray(form.errors[field]) && !options.overwrite) {
+    const errors = form.errors[field] as string[];
+    form.errors[field] = errors.concat(errArr);
   } else {
     form.errors[field] = errArr;
   }
@@ -48,6 +57,7 @@ export function setError<T extends AnyZodObject, M = any>(
   return fail(options.status ?? 400, { form });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function noErrors<T extends AnyZodObject, M = any>(
   form: Validation<T, M>
 ): Validation<T, M> {
@@ -215,6 +225,12 @@ export async function superValidate<
     ...options
   };
 
+  if (!(schema instanceof ZodObject)) {
+    throw new SuperFormError(
+      'Only schema objects can be used with superValidate. Define the schema with z.object({ ... }).'
+    );
+  }
+
   const entityInfo = entityData(schema);
   const schemaKeys = entityInfo.keys;
 
@@ -277,6 +293,30 @@ export async function superValidate<
 
   let output: Validation<T, M>;
 
+  function mapError(obj: ZodFormattedError<unknown>): ValidationError {
+    const output: Record<string, unknown> = {};
+    const entries = Object.entries(obj);
+
+    if (
+      entries.length === 1 &&
+      entries[0][0] === '_errors' &&
+      obj._errors.length
+    ) {
+      return obj._errors;
+    } else if (obj._errors.length) {
+      output._errors = obj._errors;
+    }
+
+    for (const [key, value] of entries.filter(
+      ([key]) => key !== '_errors'
+    )) {
+      // _errors are filtered out, so casting is fine
+      output[key] = mapError(value as unknown as ZodFormattedError<unknown>);
+    }
+
+    return output as ValidationError;
+  }
+
   if (!data) {
     output = {
       valid: false,
@@ -302,7 +342,7 @@ export async function superValidate<
     if (!status.success) {
       const errors = options.noErrors
         ? {}
-        : (status.error.flatten().fieldErrors as ValidationErrors<T>);
+        : (mapError(status.error.format()) as ValidationErrors<T>);
 
       output = {
         valid: false,

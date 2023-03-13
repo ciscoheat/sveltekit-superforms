@@ -18,7 +18,7 @@ import {
 } from 'svelte/store';
 import { tick } from 'svelte';
 import { browser } from '$app/environment';
-import { SuperFormError, type Validation } from '..';
+import { SuperFormError, type Validation, type ValidationError } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type InputConstraints } from '..';
@@ -134,12 +134,12 @@ const defaultFormOptions = {
   multipleSubmits: 'prevent'
 };
 
-type FormField<T, N = string> = {
-  name: N;
+type FormField<T> = {
+  name: string;
   value: T;
-  errors: string[] | undefined;
-  constraints: InputConstraints | undefined;
-  type: string | undefined;
+  errors?: ValidationError;
+  constraints?: InputConstraints;
+  type?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -284,9 +284,14 @@ export function superForm<
   // Utilities
   const AllErrors = derived(Errors, ($errors) => {
     if (!$errors) return [];
-    return Object.entries($errors).flatMap(
-      ([key, errors]) => errors?.map((value) => ({ key, value })) ?? []
-    );
+    return Object.entries($errors)
+      .filter(
+        ([, errors]) => errors && Array.isArray(errors) && errors.length > 0
+      )
+      .flatMap(
+        ([key, errors]) =>
+          (errors as string[]).map((value) => ({ key, value })) ?? []
+      );
   });
 
   const FirstError = derived(
@@ -792,7 +797,6 @@ function formEnhance<T extends AnyZodObject, M>(
         // if we have redirected (which is the point with the flash message!)
         if (options.flashMessage) {
           if (result.type == 'error' && options.flashMessage.onError) {
-
             await options.flashMessage.onError(
               result,
               options.flashMessage.module.getFlash(page)

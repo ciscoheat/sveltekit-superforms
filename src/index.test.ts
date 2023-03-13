@@ -5,9 +5,10 @@ import {
   defaultEntity
 } from '$lib/server';
 import { assert, expect, test } from 'vitest';
-import { z } from 'zod';
+import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
+import { SuperFormError } from '$lib';
 
 const slugify = (
   str: string,
@@ -456,6 +457,56 @@ test('Agressive type coercion to avoid schema duplication', async () => {
       agree: { required: true },
       fruit: { required: true },
       number: { min: 0, required: true }
+    }
+  });
+});
+
+test('Passing an array schema instead of an object', async () => {
+  const schema = z
+    .object({
+      name: z.string()
+    })
+    .array();
+
+  await expect(
+    superValidate(null, z.string() as unknown as AnyZodObject)
+  ).rejects.toThrowError(SuperFormError);
+
+  await expect(
+    superValidate(null, schema as unknown as AnyZodObject)
+  ).rejects.toThrowError(SuperFormError);
+});
+
+test.only('Deeply nested errors', async () => {
+  const schema = z.object({
+    id: z.number().positive(),
+    users: z
+      .object({
+        name: z.string().min(2).regex(/X/),
+        posts: z
+          .object({ subject: z.string().min(1) })
+          .array()
+          .min(2)
+          .optional()
+      })
+      .array()
+  });
+
+  const form = await superValidate(
+    { users: [{ name: 'A', posts: [{ subject: '' }] }] },
+    schema
+  );
+
+  expect(form.errors).toStrictEqual({
+    id: ['Required'],
+    users: {
+      '0': {
+        name: ['String must contain at least 2 character(s)', 'Invalid'],
+        posts: {
+          '0': { subject: ['String must contain at least 1 character(s)'] },
+          _errors: ['Array must contain at least 2 element(s)']
+        }
+      }
     }
   });
 });

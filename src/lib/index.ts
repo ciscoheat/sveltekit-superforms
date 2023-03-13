@@ -11,8 +11,10 @@ export class SuperFormError extends Error {
   }
 }
 
+export type ValidationError = string[] | Record<string, ValidationError[]>;
+
 export type ValidationErrors<T extends AnyZodObject> = Partial<
-  Record<keyof z.infer<T>, string[] | undefined>
+  Record<keyof z.infer<T>, ValidationError | undefined>
 >;
 
 export type InputConstraints = Partial<{

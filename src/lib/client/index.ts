@@ -49,6 +49,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
   ) => MaybePromise<string | string[] | null | undefined>;
 }>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormOptions<T extends AnyZodObject, M = any> = {
   id?: string;
   applyAction?: boolean;
@@ -141,12 +142,7 @@ type FormField<T, N = string> = {
   type: string | undefined;
 };
 
-/*
-type FormFields<T extends AnyZodObject> = {
-  [Property in keyof z.infer<T>]: FormField<z.infer<T>[Property], Property>;
-};
-*/
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = {
   form: Writable<Validation<T, M>['data']>;
   errors: Writable<Validation<T, M>['errors']>;
@@ -241,8 +237,25 @@ export function superForm<
     if (postedFormId === formId) form = actionForm.form as Validation<T, M>;
   }
 
+  function checkJson(key: string, value: unknown) {
+    if (!value || typeof value !== 'object') return;
+
+    if (Array.isArray(value)) {
+      if (value.length > 0) checkJson(key, value[0]);
+    } else if (!(value instanceof Date)) {
+      throw new SuperFormError(
+        `Object found in form field "${key}". Set options.dataType = 'json' to use nested structures.`
+      );
+    }
+  }
+
   if (!form || typeof form === 'string') {
     form = emptyForm();
+  } else if (options.dataType !== 'json') {
+    // Check for deeply nested objects, throw if datatype isn't json
+    for (const [key, value] of Object.entries(form.data)) {
+      checkJson(key, value);
+    }
   }
 
   // Make a deep copy of the original, in case of reset
@@ -286,7 +299,7 @@ export function superForm<
 
   if (typeof initialForm.valid !== 'boolean') {
     throw new SuperFormError(
-      "A non-validation object was passed to superForm. Check what's passed to its first parameter (null is allowed)."
+      "A non-validation object was passed to superForm. Check what's passed to its first parameter (null/undefined is allowed)."
     );
   }
 

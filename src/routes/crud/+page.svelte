@@ -17,7 +17,7 @@
   } = superForm(data.form, {
     onUpdated({ form }) {
       if (form.valid && !data.form.id) {
-        reset({ preserveMessage: true });
+        reset({ keepMessage: true });
       }
     }
   });

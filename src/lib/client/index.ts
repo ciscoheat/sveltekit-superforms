@@ -163,7 +163,7 @@ export type EnhancedForm<T extends AnyZodObject> = {
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
-  reset: (options?: { preserveMessage: boolean }) => void;
+  reset: (options?: { keepMessage: boolean }) => void;
 };
 
 /**
@@ -529,7 +529,7 @@ export function superForm<T extends AnyZodObject>(
     allErrors: AllErrors,
     update: Data_update,
     reset: (options) =>
-      _resetForm(options?.preserveMessage ? get(Message) : null)
+      _resetForm(options?.keepMessage ? get(Message) : null)
   };
 }
 

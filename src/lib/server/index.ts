@@ -2,14 +2,15 @@ import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import {
   SuperFormError,
+  type RawShape,
   type Validation,
-  type ValidationError,
   type ValidationErrors
 } from '..';
 import {
   entityData,
   valueOrDefault,
   zodTypeInfo,
+  type UnwrappedEntity,
   type ZodTypeInfo
 } from './entity';
 
@@ -29,15 +30,24 @@ import {
   ZodEnum,
   ZodNativeEnum,
   ZodSymbol,
-  type ZodFormattedError
+  type ZodFormattedError,
+  type ZodTypeAny
 } from 'zod';
 
 export { defaultEntity } from './entity';
 
+type NonObjectArrayFields<T extends AnyZodObject> = keyof {
+  [Property in keyof z.infer<T> as UnwrappedEntity<
+    RawShape<T>[Property]
+  > extends AnyZodObject | ZodArray<ZodTypeAny>
+    ? never
+    : Property]: true;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function setError<T extends AnyZodObject, M = any>(
-  form: Validation<T, M>,
-  field: keyof z.infer<T>,
+export function setError<T extends AnyZodObject>(
+  form: Validation<T, unknown>,
+  field: NonObjectArrayFields<T>,
   error: string | string[] | null,
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
@@ -46,11 +56,14 @@ export function setError<T extends AnyZodObject, M = any>(
 ) {
   const errArr = Array.isArray(error) ? error : error ? [error] : [];
 
+  // The 'any' casts here are ok since NonObjectArrayFields is used.
   if (Array.isArray(form.errors[field]) && !options.overwrite) {
     const errors = form.errors[field] as string[];
-    form.errors[field] = errors.concat(errArr);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form.errors[field] = errors.concat(errArr) as any;
   } else {
-    form.errors[field] = errArr;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form.errors[field] = errArr as any;
   }
   form.valid = false;
   return fail(options.status ?? 400, { form });
@@ -282,7 +295,7 @@ export async function superValidate<
 
   let output: Validation<T, M>;
 
-  function mapError(obj: ZodFormattedError<unknown>): ValidationError {
+  function mapError(obj: ZodFormattedError<unknown>) {
     const output: Record<string, unknown> = {};
     const entries = Object.entries(obj);
 
@@ -303,7 +316,7 @@ export async function superValidate<
       output[key] = mapError(value as unknown as ZodFormattedError<unknown>);
     }
 
-    return output as ValidationError;
+    return output as ValidationErrors<RawShape<T>>;
   }
 
   if (!data) {
@@ -329,9 +342,7 @@ export async function superValidate<
     const status = schema.safeParse(partialData);
 
     if (!status.success) {
-      const errors = options.noErrors
-        ? {}
-        : (mapError(status.error.format()) as ValidationErrors<T>);
+      const errors = options.noErrors ? {} : mapError(status.error.format());
 
       output = {
         valid: false,

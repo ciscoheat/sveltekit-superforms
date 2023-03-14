@@ -1,5 +1,5 @@
 import type { z, AnyZodObject, ZodArray, ZodObject, ZodRawShape } from 'zod';
-import type { Entity, RawShape, UnwrappedEntity } from './server/entity';
+import type { Entity, UnwrappedEntity } from './server/entity';
 
 export class SuperFormError extends Error {
   constructor(message?: string) {
@@ -8,11 +8,22 @@ export class SuperFormError extends Error {
   }
 }
 
-export type ValidationError = string[] | Record<string, ValidationError[]>;
+export type RawShape<T> = T extends ZodObject<infer U> ? U : T;
 
-export type ValidationErrors<T extends AnyZodObject> = Partial<
-  Record<keyof z.infer<T>, ValidationError | undefined>
->;
+export type ValidationErrors<S extends ZodRawShape> = Partial<{
+  [Property in keyof S]: UnwrappedEntity<S[Property]> extends ZodObject<
+    infer P extends ZodRawShape
+  >
+    ? ValidationErrors<RawShape<UnwrappedEntity<P>>>
+    : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
+    ? { _errors?: string[] } & Record<
+        string,
+        UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
+          ? ValidationErrors<V>
+          : string[]
+      >
+    : string[];
+}>;
 
 export type InputConstraint = Partial<{
   pattern: string; // RegExp
@@ -24,14 +35,14 @@ export type InputConstraint = Partial<{
   maxlength: number;
 }>;
 
-export type InputConstraints<U extends ZodRawShape> = Partial<{
-  [Property in keyof U]: UnwrappedEntity<U[Property]> extends ZodObject<
+export type InputConstraints<S extends ZodRawShape> = Partial<{
+  [Property in keyof S]: UnwrappedEntity<S[Property]> extends ZodObject<
     infer P extends ZodRawShape
   >
     ? InputConstraints<RawShape<UnwrappedEntity<P>>>
-    : UnwrappedEntity<U[Property]> extends ZodArray<infer A>
+    : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
     ? {
-        _constraints: InputConstraint;
+        _constraints?: InputConstraint;
       } & (UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
         ? InputConstraints<RawShape<UnwrappedEntity<V>>>
         : unknown)
@@ -44,7 +55,7 @@ export type Validation<
   M = any
 > = {
   valid: boolean;
-  errors: ValidationErrors<T>;
+  errors: ValidationErrors<RawShape<T>>;
   data: z.infer<T>;
   empty: boolean;
   constraints: Entity<T>['constraints'];

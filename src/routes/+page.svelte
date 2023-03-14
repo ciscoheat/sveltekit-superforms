@@ -8,25 +8,33 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, message, delayed, reset, constraints } =
-    superForm(data.form, {
-      dataType: 'json',
-      async onUpdate({ form }) {
-        console.log('onUpdate', form);
-        if (form.valid) {
-          await goto('?id=' + form.data.id);
-        }
-      },
-      flashMessage: {
-        module: flashModule,
-        onError(result, message) {
-          message.set({
-            type: 'error',
-            message: result.error.message
-          });
-        }
+  const {
+    form,
+    errors,
+    enhance,
+    message,
+    delayed,
+    reset,
+    constraints,
+    fields
+  } = superForm(data.form, {
+    dataType: 'json',
+    async onUpdate({ form }) {
+      console.log('onUpdate', form);
+      if (form.valid) {
+        await goto('?id=' + form.data.id);
       }
-    });
+    },
+    flashMessage: {
+      module: flashModule,
+      onError(result, message) {
+        message.set({
+          type: 'error',
+          message: result.error.message
+        });
+      }
+    }
+  });
 
   const {
     form: staticform,

@@ -1,7 +1,8 @@
 import {
   SuperFormError,
   type InputConstraints,
-  type InputConstraint
+  type InputConstraint,
+  type RawShape
 } from '..';
 
 import {
@@ -21,8 +22,6 @@ import {
   ZodObject,
   ZodSymbol
 } from 'zod';
-
-export type RawShape<T> = T extends ZodObject<infer U> ? U : T;
 
 export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
   ? UnwrappedEntity<U>

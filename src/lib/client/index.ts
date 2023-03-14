@@ -18,10 +18,10 @@ import {
 } from 'svelte/store';
 import { tick } from 'svelte';
 import { browser } from '$app/environment';
-import { SuperFormError, type Validation, type ValidationError } from '..';
+import { SuperFormError, type Validation, type ValidationErrors } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import { deepEqual, type InputConstraint } from '..';
+import { deepEqual, type InputConstraints, type RawShape } from '..';
 
 enum FetchStatus {
   Idle = 0,
@@ -50,7 +50,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
 }>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FormOptions<T extends AnyZodObject, M = any> = {
+export type FormOptions<T extends AnyZodObject, M> = {
   id?: string;
   applyAction?: boolean;
   invalidateAll?: boolean;
@@ -134,12 +134,14 @@ const defaultFormOptions = {
   multipleSubmits: 'prevent'
 };
 
-type FormField<T> = {
-  name: string;
-  value: T;
-  errors?: ValidationError;
-  constraints?: InputConstraint;
-  type?: string;
+type FormField<T extends AnyZodObject> = {
+  [Property in keyof z.infer<T>]: {
+    name: string;
+    value: z.infer<T>[Property];
+    errors?: ValidationErrors<RawShape<T>>;
+    constraints?: InputConstraints<RawShape<T>>;
+    type?: string;
+  };
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

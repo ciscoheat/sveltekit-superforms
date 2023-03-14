@@ -227,10 +227,13 @@ test('Optional values', async () => {
   expect(output.errors).toStrictEqual({});
 });
 
-test('Adding errors with setError', async () => {
+test.only('Adding errors with setError', async () => {
   const schema = z.object({
     scopeId: z.number().int().min(1),
-    name: z.string().nullable()
+    name: z.string().nullable(),
+    object: z.object({ name: z.string() }).optional(),
+    arr: z.string().array().optional(),
+    enumber: z.enum(['test', 'testing']).optional()
   });
 
   const output = await superValidate({ scopeId: 3, name: null }, schema);
@@ -240,8 +243,19 @@ test('Adding errors with setError', async () => {
   expect(output.data.scopeId).toEqual(3);
   expect(output.data.name).toBeNull();
 
-  const err = { scopeId: ['This is an error'] };
-  setError(output, 'scopeId', 'This is an error');
+  const err = {
+    scopeId: ['This is an error'],
+    enumber: ['This should be ok', 'Still ok'],
+    arr: ['This should cause a type error'],
+    object: ['This should cause a type error']
+  };
+
+  setError(output, 'scopeId', 'This should not be displayed.');
+  setError(output, 'scopeId', 'This is an error', { overwrite: true });
+  setError(output, 'object', 'This should cause a type error');
+  setError(output, 'arr', 'This should cause a type error');
+  setError(output, 'enumber', 'This should be ok');
+  setError(output, 'enumber', 'Still ok');
 
   assert(!output.valid);
   expect(output.errors).toStrictEqual(err);

@@ -172,12 +172,12 @@ export function valueOrDefault(
   value: unknown,
   strict: boolean,
   implicitDefaults: true,
-  typeInfo: ZodTypeInfo
+  schemaInfo: ZodTypeInfo
 ) {
   if (value) return value;
 
   const { zodType, isNullable, isOptional, hasDefault, defaultValue } =
-    typeInfo;
+    schemaInfo;
 
   // Based on schema type, check what the empty value should be parsed to
 
@@ -197,7 +197,7 @@ export function valueOrDefault(
     if (zodType instanceof ZodNumber) return 0;
     if (zodType instanceof ZodBoolean) return false;
     if (zodType instanceof ZodArray) return [];
-    if (zodType instanceof ZodObject) return {};
+    if (zodType instanceof ZodObject) return defaultEntity(zodType);
     if (zodType instanceof ZodBigInt) return BigInt(0);
     if (zodType instanceof ZodSymbol) return Symbol();
   }
@@ -215,7 +215,6 @@ export function defaultEntity<T extends AnyZodObject>(
   const fields = Object.keys(schema.keyof().Values);
 
   let output: Record<string, unknown> = {};
-  let defaultKeys: string[] | undefined;
 
   const schemaTypeInfo = typeInfo(schema);
 
@@ -223,10 +222,7 @@ export function defaultEntity<T extends AnyZodObject>(
   output = Object.fromEntries(
     fields.map((field) => {
       const typeInfo = schemaTypeInfo[field];
-      const newValue =
-        defaultKeys && defaultKeys.includes(field)
-          ? output[field]
-          : valueOrDefault(undefined, true, true, typeInfo);
+      const newValue = valueOrDefault(undefined, true, true, typeInfo);
 
       return [field, newValue];
     })

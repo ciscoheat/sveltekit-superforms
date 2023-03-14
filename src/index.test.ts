@@ -477,7 +477,36 @@ test('Passing an array schema instead of an object', async () => {
   ).rejects.toThrowError(SuperFormError);
 });
 
-test.only('Deeply nested errors', async () => {
+test('Deeply nested objects', async () => {
+  const schema = z.object({
+    id: z.number().positive(),
+    user: z.object({
+      name: z.string().min(2),
+      posts: z.object({ subject: z.string().min(1) }).array()
+    })
+  });
+
+  const data = new FormData();
+  data.set('id', '123');
+
+  const form = await superValidate(data, schema);
+
+  expect(form.valid).toBeFalsy();
+  expect(form.empty).toBeFalsy();
+
+  expect(form.errors).toStrictEqual({
+    user: { name: ['String must contain at least 2 character(s)'] }
+  });
+  expect(form.data).toStrictEqual({
+    id: 123,
+    user: {
+      name: '',
+      posts: []
+    }
+  });
+});
+
+test('Deeply nested errors', async () => {
   const schema = z.object({
     id: z.number().positive(),
     users: z

@@ -1,4 +1,8 @@
-import { SuperFormError, type InputConstraints } from '..';
+import {
+  SuperFormError,
+  type InputConstraints,
+  type InputConstraint
+} from '..';
 
 import {
   z,
@@ -17,6 +21,18 @@ import {
   ZodObject,
   ZodSymbol
 } from 'zod';
+
+export type RawShape<T> = T extends ZodObject<infer U> ? U : T;
+
+export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
+  ? UnwrappedEntity<U>
+  : T extends ZodDefault<infer U>
+  ? UnwrappedEntity<U>
+  : T extends ZodNullable<infer U>
+  ? UnwrappedEntity<U>
+  : T extends ZodEffects<infer U>
+  ? UnwrappedEntity<U>
+  : T;
 
 export type ZodTypeInfo = {
   zodType: ZodTypeAny;
@@ -37,7 +53,7 @@ export type EntityMetaData<T extends AnyZodObject> = {
 export type Entity<T extends AnyZodObject> = {
   typeInfo: EntityRecord<T, ZodTypeInfo>;
   defaultEntity: z.infer<T>;
-  constraints: EntityRecord<T, InputConstraints | undefined>;
+  constraints: InputConstraints<RawShape<T>>;
   meta: EntityMetaData<T>;
   hash: string;
   keys: string[];
@@ -64,13 +80,13 @@ export function entityData<T extends AnyZodObject>(schema: T) {
   const cached = getCached(schema);
   if (cached) return cached;
 
-  const typeInfos = typeInfo(schema);
+  const typeInfos = schemaInfo(schema);
   const defaultEnt = defaultEntity(schema);
   const metaData = meta(schema);
   const entity: Entity<T> = {
     typeInfo: typeInfos,
     defaultEntity: defaultEnt,
-    constraints: constraints(schema, typeInfos),
+    constraints: constraints(schema),
     meta: metaData,
     hash: entityHash(metaData),
     keys: Object.keys(schema.keyof().Values)
@@ -131,41 +147,8 @@ export function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
   };
 }
 
-function typeInfo<T extends AnyZodObject>(schema: T) {
+function schemaInfo<T extends AnyZodObject>(schema: T) {
   return _mapSchema(schema, (obj) => zodTypeInfo(obj));
-}
-
-export function checkMissingFields<T extends AnyZodObject>(
-  schema: T,
-  data: Partial<z.infer<T>> | null | undefined
-) {
-  const entity = entityData(schema);
-
-  const missingFields = Object.keys(entity.constraints).filter((field) => {
-    if (!entity.constraints[field]?.required) return false;
-    if (
-      entity.typeInfo[field].hasDefault ||
-      entity.defaultEntity[field] !== undefined
-    ) {
-      return false;
-    }
-
-    return !data || data[field] === undefined || data[field] === null;
-  });
-
-  if (missingFields.length) {
-    const errors = missingFields.map(
-      (field) =>
-        `"${String(field)}" (${
-          entity.typeInfo[field].zodType.constructor.name
-        })`
-    );
-    throw new SuperFormError(
-      `Unsupported default value for schema field(s): ${errors.join(
-        ', '
-      )}. Add default, optional or nullable to those fields in the schema.`
-    );
-  }
 }
 
 export function valueOrDefault(
@@ -216,7 +199,7 @@ export function defaultEntity<T extends AnyZodObject>(
 
   let output: Record<string, unknown> = {};
 
-  const schemaTypeInfo = typeInfo(schema);
+  const schemaTypeInfo = schemaInfo(schema);
 
   // Need to set empty properties after defaults are set.
   output = Object.fromEntries(
@@ -232,16 +215,14 @@ export function defaultEntity<T extends AnyZodObject>(
 }
 
 function constraints<T extends AnyZodObject>(
-  schema: T,
-  typeInfo: EntityRecord<T, ZodTypeInfo>
-) {
+  schema: T
+): InputConstraints<RawShape<T>> {
   function constraint(
     key: string,
+    zodType: ZodTypeAny,
     info: ZodTypeInfo
-  ): InputConstraints | undefined {
-    const zodType = info.zodType;
-
-    const output: InputConstraints = {};
+  ): InputConstraint | undefined {
+    const output: InputConstraint = {};
 
     if (zodType instanceof ZodString) {
       const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
@@ -282,6 +263,11 @@ function constraints<T extends AnyZodObject>(
     } else if (zodType instanceof ZodDate) {
       if (zodType.minDate) output.min = zodType.minDate.toISOString();
       if (zodType.maxDate) output.max = zodType.maxDate.toISOString();
+    } else if (zodType instanceof ZodArray) {
+      if (zodType._def.minLength) output.min = zodType._def.minLength.value;
+      if (zodType._def.maxLength) output.max = zodType._def.maxLength.value;
+      if (zodType._def.exactLength)
+        output.min = output.max = zodType._def.exactLength.value;
     }
 
     if (!info.isNullable && !info.isOptional) {
@@ -291,13 +277,29 @@ function constraints<T extends AnyZodObject>(
     return Object.keys(output).length > 0 ? output : undefined;
   }
 
+  function mapField(key: string, value: ZodTypeAny): any {
+    const info = zodTypeInfo(value);
+    value = info.zodType;
+    //console.log('Constraints:', key, value.constructor.name);
+    if (value instanceof ZodArray) {
+      return {
+        ...mapField(key, value._def.type),
+        _constraints: constraint(key, value, info)
+      };
+    } else if (value instanceof ZodObject) {
+      return constraints(value);
+    } else {
+      return constraint(key, value, info);
+    }
+  }
+
   return _mapSchema(
     schema,
-    (_, key) => {
-      return constraint(key, typeInfo[key]);
+    (obj, key) => {
+      return mapField(key, obj);
     },
-    (constraint) => !!constraint
-  );
+    (data) => !!data
+  ) as InputConstraints<RawShape<T>>;
 }
 
 function meta<T extends AnyZodObject>(schema: T) {

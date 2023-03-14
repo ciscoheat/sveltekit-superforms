@@ -1,8 +1,5 @@
-import type { z, AnyZodObject } from 'zod';
-import type { Entity } from './server/entity';
-
-//export * as client from './client';
-//export * as server from './server';
+import type { z, AnyZodObject, ZodArray, ZodObject, ZodRawShape } from 'zod';
+import type { Entity, RawShape, UnwrappedEntity } from './server/entity';
 
 export class SuperFormError extends Error {
   constructor(message?: string) {
@@ -17,14 +14,28 @@ export type ValidationErrors<T extends AnyZodObject> = Partial<
   Record<keyof z.infer<T>, ValidationError | undefined>
 >;
 
-export type InputConstraints = Partial<{
+export type InputConstraint = Partial<{
   pattern: string; // RegExp
-  min: number | string; // | Date
-  max: number | string; // | Date
+  min: number | string; // Date
+  max: number | string; // Date
   required: boolean;
   step: number;
   minlength: number;
   maxlength: number;
+}>;
+
+export type InputConstraints<U extends ZodRawShape> = Partial<{
+  [Property in keyof U]: UnwrappedEntity<U[Property]> extends ZodObject<
+    infer P extends ZodRawShape
+  >
+    ? InputConstraints<RawShape<UnwrappedEntity<P>>>
+    : UnwrappedEntity<U[Property]> extends ZodArray<infer A>
+    ? {
+        _constraints: InputConstraint;
+      } & (UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
+        ? InputConstraints<RawShape<UnwrappedEntity<V>>>
+        : unknown)
+    : InputConstraint;
 }>;
 
 export type Validation<

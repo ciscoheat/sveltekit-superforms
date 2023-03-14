@@ -21,7 +21,7 @@ import { browser } from '$app/environment';
 import { SuperFormError, type Validation, type ValidationError } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import { deepEqual, type InputConstraints } from '..';
+import { deepEqual, type InputConstraint } from '..';
 
 enum FetchStatus {
   Idle = 0,
@@ -138,7 +138,7 @@ type FormField<T> = {
   name: string;
   value: T;
   errors?: ValidationError;
-  constraints?: InputConstraints;
+  constraints?: InputConstraint;
   type?: string;
 };
 

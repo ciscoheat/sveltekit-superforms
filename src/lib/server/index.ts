@@ -7,7 +7,6 @@ import {
   type ValidationErrors
 } from '..';
 import {
-  checkMissingFields,
   entityData,
   valueOrDefault,
   zodTypeInfo,
@@ -267,28 +266,18 @@ export async function superValidate<
     return parseFormData(formData);
   }
 
-  let checkMissing = true;
-
   // If FormData exists, don't check for missing fields.
   // Checking only at GET requests, basically, where
   // the data is coming from the DB.
   if (data instanceof FormData) {
     data = parseFormData(data);
-    checkMissing = false;
   } else if (data instanceof Request) {
     data = await tryParseFormData(data);
-    checkMissing = !data;
   } else if (data && data.request instanceof Request) {
     data = await tryParseFormData(data.request);
-    checkMissing = !data;
   } else if (data) {
     // Make a copy of the data, so defaults can be applied to it.
     data = { ...data };
-  }
-
-  if (checkMissing && options.checkMissingEntityFields) {
-    // Empty or Partial entity
-    checkMissingFields(schema, data);
   }
 
   let output: Validation<T, M>;

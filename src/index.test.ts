@@ -279,12 +279,6 @@ test('Clearing errors with noErrors', async () => {
 });
 
 test('Default values', async () => {
-  await expect(
-    superValidate(null, z.object({ id: z.literal(123) }))
-  ).rejects.toThrowError(
-    'Unsupported default value for schema field(s): "id" (ZodLiteral). Add default, optional or nullable to those fields in the schema.'
-  );
-
   const d = new Date();
 
   // Note that no default values for strings are needed,
@@ -356,7 +350,7 @@ test('More default values', async () => {
     proxyNumber: { required: true, min: 10 },
     proxyString: { required: true },
     trimmedString: { required: true },
-    numberArray: { required: true }
+    numberArray: { _constraints: { min: 3, required: true }, required: true }
   });
 });
 
@@ -394,8 +388,8 @@ test('Zod enums and native enums', async () => {
     empty: true,
     constraints: {
       color: { required: true },
-      fruit: { required: true },
-      fruitsstring: { required: true }
+      fruit: { _constraints: { required: true }, required: true },
+      fruitsstring: { _constraints: { required: true }, required: true }
     },
     meta: {
       types: {
@@ -432,8 +426,8 @@ test('Posting Zod enums and native enums', async () => {
     },
     constraints: {
       color: { required: true },
-      fruit: { required: true },
-      fruitsstring: { required: true }
+      fruit: { _constraints: { required: true }, required: true },
+      fruitsstring: { _constraints: { required: true }, required: true }
     }
   });
 });
@@ -506,24 +500,24 @@ test('Deeply nested objects', async () => {
   });
 });
 
-test('Deeply nested errors', async () => {
-  const schema = z.object({
-    id: z.number().positive(),
-    users: z
-      .object({
-        name: z.string().min(2).regex(/X/),
-        posts: z
-          .object({ subject: z.string().min(1) })
-          .array()
-          .min(2)
-          .optional()
-      })
-      .array()
-  });
+const nestedSchema = z.object({
+  id: z.number().positive(),
+  users: z
+    .object({
+      name: z.string().min(2).regex(/X/),
+      posts: z
+        .object({ subject: z.string().min(1) })
+        .array()
+        .min(2)
+        .optional()
+    })
+    .array()
+});
 
+test('Deeply nested errors', async () => {
   const form = await superValidate(
     { users: [{ name: 'A', posts: [{ subject: '' }] }] },
-    schema
+    nestedSchema
   );
 
   expect(form.errors).toStrictEqual({
@@ -535,6 +529,22 @@ test('Deeply nested errors', async () => {
           '0': { subject: ['String must contain at least 1 character(s)'] },
           _errors: ['Array must contain at least 2 element(s)']
         }
+      }
+    }
+  });
+});
+
+test('Deeply nested constraints', async () => {
+  const form = await superValidate(null, nestedSchema);
+
+  expect(form.constraints).toStrictEqual({
+    id: { min: 0, required: true },
+    users: {
+      _constraints: { required: true },
+      name: { required: true, minlength: 2, pattern: 'X' },
+      posts: {
+        _constraints: { min: 2 },
+        subject: { required: true, minlength: 1 }
       }
     }
   });

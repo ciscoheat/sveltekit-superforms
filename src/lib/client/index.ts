@@ -18,7 +18,7 @@ import {
 } from 'svelte/store';
 import { tick } from 'svelte';
 import { browser } from '$app/environment';
-import { type FormField, SuperFormError, type Validation } from '..';
+import { SuperFormError, type Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type FormFields } from '..';
@@ -735,7 +735,7 @@ function formEnhance<T extends AnyZodObject, M>(
           }
         };
 
-        options.onSubmit(submit2);
+        await options.onSubmit(submit2);
       }
     }
 

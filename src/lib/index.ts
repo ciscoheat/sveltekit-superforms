@@ -11,20 +11,20 @@ export class SuperFormError extends Error {
 
 export type RawShape<T> = T extends ZodObject<infer U> ? U : T;
 
-export type ValidationErrors<S extends ZodRawShape> = Partial<{
-  [Property in keyof S]: UnwrappedEntity<S[Property]> extends ZodObject<
+export type ValidationErrors<S extends ZodRawShape> = {
+  [Property in keyof S]?: UnwrappedEntity<S[Property]> extends ZodObject<
     infer P extends ZodRawShape
   >
     ? ValidationErrors<RawShape<UnwrappedEntity<P>>>
     : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
     ? { _errors?: string[] } & Record<
-        string,
+        number,
         UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
           ? ValidationErrors<V>
           : string[]
       >
     : string[];
-}>;
+};
 
 export type InputConstraint = Partial<{
   pattern: string; // RegExp

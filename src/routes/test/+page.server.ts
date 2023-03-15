@@ -41,7 +41,8 @@ export const _dataTypeForm = z.object({
 
 export const load = (async (event) => {
   const form = await superValidate(event, _dataTypeForm);
-  console.log('🚀 ~ LOAD', form);
+  console.log('===== load /test ======================================');
+  console.dir(form, { depth: 10 });
 
   return { form };
 }) satisfies PageServerLoad;

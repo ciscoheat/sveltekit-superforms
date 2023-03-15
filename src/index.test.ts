@@ -227,7 +227,7 @@ test('Optional values', async () => {
   expect(output.errors).toStrictEqual({});
 });
 
-test.only('Adding errors with setError', async () => {
+test('Adding errors with setError', async () => {
   const schema = z.object({
     scopeId: z.number().int().min(1),
     name: z.string().nullable(),

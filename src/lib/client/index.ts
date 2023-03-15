@@ -18,8 +18,19 @@ import {
 } from 'svelte/store';
 import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
-import { SuperFormError, type Validation } from '..';
-import type { z, AnyZodObject } from 'zod';
+import {
+  SuperFormError,
+  type RawShape,
+  type Validation,
+  type ValidationErrors
+} from '..';
+import type {
+  z,
+  AnyZodObject,
+  ZodArray,
+  ZodAny,
+  ZodFormattedError
+} from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type FormFields } from '..';
 
@@ -43,39 +54,45 @@ type FormUpdate = (
   untaint?: boolean
 ) => Promise<void>;
 
-export type Validators<T extends AnyZodObject> = Partial<{
-  [Property in keyof z.infer<T>]: (
-    value: z.infer<T>[Property]
-  ) => MaybePromise<string | string[] | null | undefined>;
-}>;
+type Validator<T extends AnyZodObject, P extends keyof z.infer<T>> = (
+  value: z.infer<T>[P]
+) => MaybePromise<string | string[] | null | undefined>;
+
+export type Validators<T extends AnyZodObject> = {
+  [Property in keyof RawShape<T>]?: RawShape<T>[Property] extends
+    | AnyZodObject
+    | ZodArray<ZodAny>
+    ? Validators<RawShape<T>[Property]>
+    : Validator<T, Property>;
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FormOptions<T extends AnyZodObject, M> = {
-  id?: string;
-  applyAction?: boolean;
-  invalidateAll?: boolean;
-  resetForm?: boolean;
-  scrollToError?: 'auto' | 'smooth' | 'off';
-  autoFocusOnError?: boolean | 'detect';
-  errorSelector?: string;
-  stickyNavbar?: string;
-  taintedMessage?: string | false | null;
-  onSubmit?: (
+export type FormOptions<T extends AnyZodObject, M> = Partial<{
+  id: string;
+  applyAction: boolean;
+  invalidateAll: boolean;
+  resetForm: boolean;
+  scrollToError: 'auto' | 'smooth' | 'off';
+  autoFocusOnError: boolean | 'detect';
+  errorSelector: string;
+  stickyNavbar: string;
+  taintedMessage: string | false | null;
+  onSubmit: (
     ...params: Parameters<SubmitFunction>
   ) => MaybePromise<unknown | void>;
-  onResult?: (event: {
+  onResult: (event: {
     result: ActionResult;
     formEl: HTMLFormElement;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
-  onUpdate?: (event: {
+  onUpdate: (event: {
     form: Validation<T, M>;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
-  onUpdated?: (event: {
+  onUpdated: (event: {
     form: Validation<T, M>;
   }) => MaybePromise<unknown | void>;
-  onError?:
+  onError:
     | 'apply'
     | ((
         result: {
@@ -85,14 +102,14 @@ export type FormOptions<T extends AnyZodObject, M> = {
         },
         message: Writable<Validation<T, M>['message']>
       ) => MaybePromise<unknown | void>);
-  dataType?: 'form' | 'json';
-  validators?: Validators<T>;
-  defaultValidator?: 'clear' | 'keep';
-  clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
-  delayMs?: number;
-  timeoutMs?: number;
-  multipleSubmits?: 'prevent' | 'allow' | 'abort';
-  flashMessage?: {
+  dataType: 'form' | 'json';
+  validators: Validators<T>;
+  defaultValidator: 'clear' | 'keep';
+  clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
+  delayMs: number;
+  timeoutMs: number;
+  multipleSubmits: 'prevent' | 'allow' | 'abort';
+  flashMessage: {
     module: {
       getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
       updateFlash(
@@ -110,7 +127,8 @@ export type FormOptions<T extends AnyZodObject, M> = {
     ) => MaybePromise<unknown | void>;
     cookiePath?: string;
   };
-};
+  validation: T;
+}>;
 
 const defaultFormOptions = {
   applyAction: true,
@@ -133,7 +151,8 @@ const defaultFormOptions = {
   clearOnSubmit: 'errors-and-message',
   delayMs: 500,
   timeoutMs: 8000,
-  multipleSubmits: 'prevent'
+  multipleSubmits: 'prevent',
+  validation: undefined
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,6 +179,29 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   update: FormUpdate;
   reset: (options?: { keepMessage: boolean }) => void;
 };
+
+// This function cannot be shared by client and server for some reason...
+function mapErrors<T extends AnyZodObject>(obj: ZodFormattedError<unknown>) {
+  const output: Record<string, unknown> = {};
+  const entries = Object.entries(obj);
+
+  if (
+    entries.length === 1 &&
+    entries[0][0] === '_errors' &&
+    obj._errors.length
+  ) {
+    return obj._errors;
+  } else if (obj._errors.length) {
+    output._errors = obj._errors;
+  }
+
+  for (const [key, value] of entries.filter(([key]) => key !== '_errors')) {
+    // _errors are filtered out, so casting is fine
+    output[key] = mapErrors(value as unknown as ZodFormattedError<unknown>);
+  }
+
+  return output as ValidationErrors<RawShape<T>>;
+}
 
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
@@ -213,7 +255,7 @@ export function superForm<
 
   if (typeof form === 'string' && typeof options.id === 'string') {
     throw new SuperFormError(
-      'You cannot specify an id in the first superForm argument and in the options.'
+      'You cannot specify an id both in the first superForm argument and in the options.'
     );
   }
 
@@ -232,6 +274,7 @@ export function superForm<
     if (postedFormId === formId) form = actionForm.form as Validation<T, M>;
   }
 
+  // Check for nested objects, throw if datatype isn't json
   function checkJson(key: string, value: unknown) {
     if (!value || typeof value !== 'object') return;
 
@@ -239,7 +282,7 @@ export function superForm<
       if (value.length > 0) checkJson(key, value[0]);
     } else if (!(value instanceof Date)) {
       throw new SuperFormError(
-        `Object found in form field "${key}". Set options.dataType = 'json' to use nested structures.`
+        `Object found in form field "${key}". Set options.dataType = 'json' and use:enhance to use nested structures.`
       );
     }
   }
@@ -247,7 +290,6 @@ export function superForm<
   if (!form || typeof form === 'string') {
     form = emptyForm();
   } else if (options.dataType !== 'json') {
-    // Check for deeply nested objects, throw if datatype isn't json
     for (const [key, value] of Object.entries(form.data)) {
       checkJson(key, value);
     }
@@ -403,8 +445,17 @@ export function superForm<
   };
 
   if (browser) {
+    let isSubmitting = false;
+    Submitting.subscribe((submitting) => {
+      console.log(
+        '🚀 ~ file: index.ts:429 ~ Submitting.subscribe ~ submitting:',
+        submitting
+      );
+      isSubmitting = submitting;
+    });
+
     beforeNavigate((nav) => {
-      if (options.taintedMessage && !get(Submitting)) {
+      if (options.taintedMessage && !isSubmitting) {
         if (get(Tainted) && !window.confirm(options.taintedMessage)) {
           nav.cancel();
         }
@@ -413,8 +464,22 @@ export function superForm<
 
     // Check client validation on data change
     let previousForm = { ...initialForm.data };
-    Data.subscribe(async (f) => {
-      if (get(Submitting)) return;
+    let loaded = false;
+
+    //function checkModified(obj: Record) {}
+
+    Data.subscribe(async (data) => {
+      if (!loaded) {
+        console.log('Start, no validation');
+        loaded = true;
+        return;
+      }
+      if (isSubmitting) {
+        console.log('Submitting, no validation', isSubmitting);
+        return;
+      }
+
+      /*
       for (const key of Object.keys(f)) {
         if (f[key] === previousForm[key]) continue;
         if (!f[key] && !previousForm[key]) continue;
@@ -429,7 +494,7 @@ export function superForm<
           continue;
         }
 
-        //console.log('Field changed:', formId, f, f[key], previousForm[key]);
+        console.log('Field changed:', formId, f, f[key], previousForm[key]);
 
         const validator = options.validators && options.validators[key];
         if (validator) {
@@ -453,7 +518,8 @@ export function superForm<
           });
         }
       }
-      previousForm = { ...f };
+      */
+      previousForm = { ...data };
     });
 
     // Need to subscribe to catch page invalidation.
@@ -665,6 +731,8 @@ function formEnhance<T extends AnyZodObject, M>(
       }
     };
 
+    rebind();
+
     {
       let state: FetchStatus = FetchStatus.Idle;
       let delayedTimeout: number, timeoutTimeout: number;
@@ -708,6 +776,8 @@ function formEnhance<T extends AnyZodObject, M>(
           if (!cancelled) Form_scrollToFirstError();
         },
 
+        scrollToFirstError: () => Form_scrollToFirstError(),
+
         isSubmitting: () =>
           state === FetchStatus.Submitting || state === FetchStatus.Delayed
       };
@@ -719,9 +789,13 @@ function formEnhance<T extends AnyZodObject, M>(
 
   return enhance(formEl, async (submit) => {
     let cancelled = false;
-    if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
+    function cancel() {
       cancelled = true;
-      submit.cancel();
+      return submit.cancel();
+    }
+
+    if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
+      cancel();
     } else {
       if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
         if (currentRequest) currentRequest.abort();
@@ -729,50 +803,55 @@ function formEnhance<T extends AnyZodObject, M>(
       currentRequest = submit.controller;
 
       if (options.onSubmit) {
-        const submit2 = {
-          ...submit,
-          cancel: () => {
-            cancelled = true;
-            return submit.cancel();
-          }
-        };
-
-        await options.onSubmit(submit2);
+        await options.onSubmit({ ...submit, cancel });
       }
     }
 
     if (cancelled) {
       cancelFlash();
     } else {
-      switch (options.clearOnSubmit) {
-        case 'errors-and-message':
-          errors.set({});
-          message.set(undefined);
-          break;
-
-        case 'errors':
-          errors.set({});
-          break;
-
-        case 'message':
-          message.set(undefined);
-          break;
+      // Client validation
+      if (options.validation) {
+        const val = options.validation;
+        const result = await val.safeParseAsync(get(data));
+        if (!result.success) {
+          errors.set(mapErrors<T>(result.error.format()) as any);
+          cancel();
+          htmlForm.scrollToFirstError();
+        }
       }
 
-      if (
-        options.flashMessage &&
-        (options.clearOnSubmit == 'errors-and-message' ||
-          options.clearOnSubmit == 'message')
-      ) {
-        options.flashMessage.module.getFlash(page).set(undefined);
-      }
+      if (!cancelled) {
+        switch (options.clearOnSubmit) {
+          case 'errors-and-message':
+            errors.set({});
+            message.set(undefined);
+            break;
 
-      htmlForm.submitting();
+          case 'errors':
+            errors.set({});
+            break;
 
-      if (options.dataType === 'json') {
-        const postData = get(data);
-        submit.data.set('__superform_json', stringify(postData));
-        Object.keys(postData).forEach((key) => submit.data.delete(key));
+          case 'message':
+            message.set(undefined);
+            break;
+        }
+
+        if (
+          options.flashMessage &&
+          (options.clearOnSubmit == 'errors-and-message' ||
+            options.clearOnSubmit == 'message')
+        ) {
+          options.flashMessage.module.getFlash(page).set(undefined);
+        }
+
+        htmlForm.submitting();
+
+        if (options.dataType === 'json') {
+          const postData = get(data);
+          submit.data.set('__superform_json', stringify(postData));
+          Object.keys(postData).forEach((key) => submit.data.delete(key));
+        }
       }
     }
 

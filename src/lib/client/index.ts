@@ -16,7 +16,7 @@ import {
   type Readable,
   type Writable
 } from 'svelte/store';
-import { tick } from 'svelte';
+import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
 import { SuperFormError, type Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
@@ -458,39 +458,41 @@ export function superForm<
 
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
-      page.subscribe(async (p) => {
-        function error(type: string) {
-          throw new SuperFormError(
-            `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
-          );
-        }
-
-        if (p.form && typeof p.form === 'object') {
-          const forms = findForms(p.form);
-          if (!forms.length) error('$page.form (ActionData)');
-
-          for (const newForm of forms) {
-            if (newForm === form || newForm.id !== formId) continue;
-            await _update(
-              newForm as Validation<T, M>,
-              p.status >= 200 && p.status < 300
+      onDestroy(
+        page.subscribe(async (p) => {
+          function error(type: string) {
+            throw new SuperFormError(
+              `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
             );
           }
-        } else if (p.data && typeof p.data === 'object') {
-          const forms = findForms(p.data);
 
-          // It's a page reload, redirect or error/failure,
-          // so don't trigger any events, just update the data.
-          for (const newForm of forms) {
-            if (newForm === form || newForm.id !== formId) continue;
+          if (p.form && typeof p.form === 'object') {
+            const forms = findForms(p.form);
+            if (!forms.length) error('$page.form (ActionData)');
 
-            rebind(
-              newForm as Validation<T, M>,
-              p.status >= 200 && p.status < 300
-            );
+            for (const newForm of forms) {
+              if (newForm === form || newForm.id !== formId) continue;
+              await _update(
+                newForm as Validation<T, M>,
+                p.status >= 200 && p.status < 300
+              );
+            }
+          } else if (p.data && typeof p.data === 'object') {
+            const forms = findForms(p.data);
+
+            // It's a page reload, redirect or error/failure,
+            // so don't trigger any events, just update the data.
+            for (const newForm of forms) {
+              if (newForm === form || newForm.id !== formId) continue;
+
+              rebind(
+                newForm as Validation<T, M>,
+                p.status >= 200 && p.status < 300
+              );
+            }
           }
-        }
-      });
+        })
+      );
     }
   }
 

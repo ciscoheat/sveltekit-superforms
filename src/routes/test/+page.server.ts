@@ -20,7 +20,10 @@ export const _dataTypeForm = z.object({
   agree: z.literal(true).default(true),
   number: z.number(),
   proxyNumber: z.number().min(10).default(0),
-  nullableString: z.string().nullable(),
+  nullableString: z
+    .string()
+    .refine(() => true)
+    .nullable(),
   nullishString: z.string().nullish(),
   optionalString: z.string().optional(),
   proxyString: z.string(),

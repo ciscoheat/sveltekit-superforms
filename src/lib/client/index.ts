@@ -134,12 +134,12 @@ const defaultFormOptions = {
   multipleSubmits: 'prevent'
 };
 
-type FormField<T extends AnyZodObject> = {
+type FormFields<T extends AnyZodObject> = {
   [Property in keyof z.infer<T>]: {
-    name: string;
+    name: Property;
     value: z.infer<T>[Property];
-    errors?: ValidationErrors<RawShape<T>>;
-    constraints?: InputConstraints<RawShape<T>>;
+    errors?: ValidationErrors<RawShape<T>>[Property];
+    constraints?: InputConstraints<RawShape<T>>[Property];
     type?: string;
   };
 };
@@ -157,7 +157,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
 
-  fields: Readable<FormField<T>[]>;
+  fields: Readable<FormFields<T>>;
   firstError: Readable<{ key: string; value: string } | null>;
   topErrors: Readable<{ key: string; value: string }[]>;
 
@@ -513,7 +513,7 @@ export function superForm<
         errors: $E[key],
         constraints: $C[key],
         type: initialForm.meta ? initialForm.meta.types[key] : undefined
-      }));
+      })) as FormFields<T>;
     }),
 
     tainted: derived(Tainted, ($t) => $t),

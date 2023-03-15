@@ -1,5 +1,6 @@
 import type { z, AnyZodObject, ZodArray, ZodObject, ZodRawShape } from 'zod';
 import type { Entity, UnwrappedEntity } from './server/entity';
+import type { Writable } from 'svelte/store';
 
 export class SuperFormError extends Error {
   constructor(message?: string) {
@@ -62,6 +63,21 @@ export type Validation<
   message?: M;
   id?: string;
   meta?: Entity<T>['meta'];
+};
+
+export type FormField<
+  T extends AnyZodObject,
+  Property extends keyof z.infer<T>
+> = {
+  name: string;
+  value: Writable<z.infer<T>[Property]>;
+  errors?: ValidationErrors<RawShape<T>>[Property];
+  constraints?: InputConstraints<RawShape<T>>[Property];
+  type?: string;
+};
+
+export type FormFields<T extends AnyZodObject> = {
+  [Property in keyof z.infer<T>]-?: FormField<T, Property>;
 };
 
 export function deepEqual(obj1: unknown, obj2: unknown): boolean {

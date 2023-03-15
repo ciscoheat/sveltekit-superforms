@@ -22,7 +22,7 @@ const userSchema = z.object({
     .refine((email) => !email.includes('spam'), {
       message: 'Email cannot contain spam.'
     }),
-  gender: z.enum(['male', 'female', 'other']).nullish()
+  gender: z.enum(['male', 'female', 'other']).default('male').nullish()
 });
 
 // Let's worry about id collisions later

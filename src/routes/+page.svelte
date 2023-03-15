@@ -5,6 +5,7 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
   import * as flashModule from 'sveltekit-flash-message/client';
+  import Input from './Input.svelte';
 
   export let data: PageData;
 
@@ -80,26 +81,8 @@
       {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
     </label>
 
-    <label>
-      E-mail<br /><input
-        type="email"
-        name="email"
-        data-invalid={$errors.email}
-        bind:value={$form.email}
-        {...$constraints.email}
-      />
-      {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
-    </label>
-
-    <label>
-      Gender<br /><input
-        name="gender"
-        data-invalid={$errors.gender}
-        bind:value={$form.gender}
-        {...$constraints.gender}
-      />
-      {#if $errors.gender}<span class="invalid">{$errors.gender}</span>{/if}
-    </label>
+    <Input label="E-mail" field={$fields.email} />
+    <Input label="Gender" field={$fields.gender} />
 
     <div>
       <button>Submit</button>

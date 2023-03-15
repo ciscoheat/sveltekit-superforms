@@ -18,10 +18,10 @@ import {
 } from 'svelte/store';
 import { tick } from 'svelte';
 import { browser } from '$app/environment';
-import { SuperFormError, type Validation, type ValidationErrors } from '..';
+import { type FormField, SuperFormError, type Validation } from '..';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import { deepEqual, type InputConstraints, type RawShape } from '..';
+import { deepEqual, type FormFields } from '..';
 
 enum FetchStatus {
   Idle = 0,
@@ -60,7 +60,9 @@ export type FormOptions<T extends AnyZodObject, M> = {
   errorSelector?: string;
   stickyNavbar?: string;
   taintedMessage?: string | false | null;
-  onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
+  onSubmit?: (
+    ...params: Parameters<SubmitFunction>
+  ) => MaybePromise<unknown | void>;
   onResult?: (event: {
     result: ActionResult;
     formEl: HTMLFormElement;
@@ -134,22 +136,13 @@ const defaultFormOptions = {
   multipleSubmits: 'prevent'
 };
 
-type FormFields<T extends AnyZodObject> = {
-  [Property in keyof z.infer<T>]: {
-    name: Property;
-    value: z.infer<T>[Property];
-    errors?: ValidationErrors<RawShape<T>>[Property];
-    constraints?: InputConstraints<RawShape<T>>[Property];
-    type?: string;
-  };
-};
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = {
   form: Writable<Validation<T, M>['data']>;
   errors: Writable<Validation<T, M>['errors']>;
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
+  meta: Readable<Validation<T, M>['meta']>;
 
   valid: Readable<boolean>;
   empty: Readable<boolean>;
@@ -265,7 +258,8 @@ export function superForm<
     ...form,
     data: { ...form.data },
     errors: { ...form.errors },
-    constraints: { ...form.constraints }
+    constraints: { ...form.constraints },
+    meta: form.meta ? { ...form.meta } : undefined
   };
 
   // Stores for the properties of Validation<T, M>
@@ -277,6 +271,9 @@ export function superForm<
   const Errors = writable({ ...form.errors });
   const Data = writable({ ...form.data });
   const Constraints = writable({ ...form.constraints });
+  const Meta = writable<Validation<T, M>['meta'] | undefined>(
+    form.meta ? { ...form.meta } : undefined
+  );
 
   // Timers
   const Submitting = writable(false);
@@ -336,6 +333,7 @@ export function superForm<
     Empty.set(form.empty);
     Valid.set(form.valid);
     Errors.set(form.errors);
+    Meta.set(form.meta);
   }
 
   async function _update(form: Validation<T, M>, untaint: boolean) {
@@ -445,7 +443,10 @@ export function superForm<
             }
             return e;
           });
-        } else if (options.defaultValidator == 'clear') {
+        } else if (
+          options.defaultValidator == 'clear' &&
+          key in get(Errors)
+        ) {
           Errors.update((e) => {
             delete e[key];
             return e;
@@ -500,20 +501,49 @@ export function superForm<
       };`;
   }
 
+  function fieldStore<V>(fieldName: string): Writable<V> {
+    const store = writable<V>();
+
+    Data.subscribe((data) => {
+      store.set(data[fieldName]);
+    });
+
+    return {
+      subscribe: store.subscribe,
+      set: (value: V) => {
+        Data.set({ ...get(Data), [fieldName]: value });
+      },
+      update: (cb: (value: V) => V) => {
+        Data.set((form: z.infer<T>) => ({
+          ...form,
+          [fieldName]: cb(form[fieldName])
+        }));
+      }
+    };
+  }
+
   return {
     form: Data,
     errors: Errors,
     message: Message,
     constraints: Constraints,
+    meta: derived(Meta, ($m) => $m),
 
-    fields: derived([Data, Errors, Constraints], ([$D, $E, $C]) => {
-      return Object.keys($D).map((key) => ({
-        name: key,
-        value: $D[key],
-        errors: $E[key],
-        constraints: $C[key],
-        type: initialForm.meta ? initialForm.meta.types[key] : undefined
-      })) as FormFields<T>;
+    fields: derived([Errors, Constraints, Meta], ([$E, $C, $M], set) => {
+      set(
+        Object.fromEntries(
+          Object.keys(get(Data)).map((key) => [
+            key,
+            {
+              name: key,
+              value: fieldStore(key),
+              errors: $E[key],
+              constraints: $C[key],
+              type: $M?.types[key]
+            }
+          ])
+        ) as FormFields<T>
+      );
     }),
 
     tainted: derived(Tainted, ($t) => $t),
@@ -603,8 +633,6 @@ function formEnhance<T extends AnyZodObject, M>(
       // Find underlying element if it is a FormGroup element
       el = el.querySelector(selector) ?? el;
 
-      //d('Validation error:', el);
-
       const nav = options.stickyNavbar
         ? (document.querySelector(options.stickyNavbar) as HTMLElement)
         : null;
@@ -690,7 +718,6 @@ function formEnhance<T extends AnyZodObject, M>(
   return enhance(formEl, async (submit) => {
     let cancelled = false;
     if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
-      //d('Prevented form submission');
       cancelled = true;
       submit.cancel();
     } else {
@@ -738,7 +765,6 @@ function formEnhance<T extends AnyZodObject, M>(
         options.flashMessage.module.getFlash(page).set(undefined);
       }
 
-      //d('Submitting');
       htmlForm.submitting();
 
       if (options.dataType === 'json') {
@@ -749,7 +775,6 @@ function formEnhance<T extends AnyZodObject, M>(
     }
 
     return async ({ result }) => {
-      //d('Completed: ', result, options);
       currentRequest = null;
       let cancelled = false;
 

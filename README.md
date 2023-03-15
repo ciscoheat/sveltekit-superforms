@@ -44,7 +44,10 @@
 ## Installation
 
 ```
-(p)npm i -D sveltekit-superforms zod
+ npm i -D sveltekit-superforms zod
+```
+```
+ pnpm i -D sveltekit-superforms zod
 ```
 
 ## Get started

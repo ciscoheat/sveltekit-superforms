@@ -296,13 +296,7 @@ export function superForm<
   }
 
   // Make a deep copy of the original, in case of reset
-  const initialForm: Validation<T, M> = {
-    ...form,
-    data: { ...form.data },
-    errors: { ...form.errors },
-    constraints: { ...form.constraints },
-    meta: form.meta ? { ...form.meta } : undefined
-  };
+  const initialForm: Validation<T, M> = structuredClone(form);
 
   // Stores for the properties of Validation<T, M>
   // Need to make a copy here too, in case the form variable
@@ -444,15 +438,72 @@ export function superForm<
     }
   };
 
+  function clearError(path: string[]) {
+    if (!path.length) return;
+    path = [...path];
+
+    Errors.update((errors) => {
+      let current: Record<string | number | symbol, any> = errors;
+      while (path.length > 1) {
+        current = current[path.shift()!];
+        console.log('   ', path, current);
+      }
+
+      current[path.shift()!] = undefined;
+      return errors;
+    });
+  }
+
+  function checkEqual(
+    newObj: unknown,
+    compareAgainst: unknown,
+    path: string[] = []
+  ) {
+    console.log('Entering:', path);
+    if (!Array.isArray(newObj) && newObj === compareAgainst) {
+      return;
+    } else if (newObj === null || compareAgainst === null) {
+      return;
+    } else if (
+      typeof newObj === 'object' &&
+      typeof compareAgainst === 'object'
+    ) {
+      if (newObj instanceof Date) {
+        if (
+          compareAgainst instanceof Date &&
+          newObj.getTime() == compareAgainst.getTime()
+        ) {
+          return;
+        }
+      } else {
+        for (const prop in newObj) {
+          checkEqual(
+            newObj[prop as keyof object],
+            compareAgainst[prop as keyof object],
+            path.concat([prop])
+          );
+        }
+        return;
+      }
+    }
+
+    console.log(
+      '  Run validator:',
+      path,
+      newObj,
+      compareAgainst,
+      get(Errors)
+    );
+
+    if (options.defaultValidator == 'clear') {
+      clearError(path);
+      console.log('Cleared:', get(Errors));
+    }
+  }
+
   if (browser) {
     let isSubmitting = false;
-    Submitting.subscribe((submitting) => {
-      console.log(
-        '🚀 ~ file: index.ts:429 ~ Submitting.subscribe ~ submitting:',
-        submitting
-      );
-      isSubmitting = submitting;
-    });
+    Submitting.subscribe((submitting) => (isSubmitting = submitting));
 
     beforeNavigate((nav) => {
       if (options.taintedMessage && !isSubmitting) {
@@ -463,21 +514,22 @@ export function superForm<
     });
 
     // Check client validation on data change
-    let previousForm = { ...initialForm.data };
+    let previousForm = structuredClone(initialForm.data);
     let loaded = false;
 
     //function checkModified(obj: Record) {}
 
     Data.subscribe(async (data) => {
       if (!loaded) {
-        console.log('Start, no validation');
+        console.log('Loaded.');
         loaded = true;
         return;
       }
-      if (isSubmitting) {
-        console.log('Submitting, no validation', isSubmitting);
-        return;
-      }
+
+      if (isSubmitting) return;
+
+      console.log('checkEqual', data, previousForm);
+      checkEqual(data, previousForm);
 
       /*
       for (const key of Object.keys(f)) {
@@ -519,7 +571,7 @@ export function superForm<
         }
       }
       */
-      previousForm = { ...data };
+      previousForm = structuredClone(data); // { ...data };
     });
 
     // Need to subscribe to catch page invalidation.

@@ -6,20 +6,25 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, message } = superForm(data.form, {
-    dataType: 'json',
-    validation: schema
-  });
+  const { form, errors, enhance, message, constraints } = superForm(
+    data.form,
+    {
+      dataType: 'json',
+      validation: schema
+    }
+  );
 </script>
 
 <h2>Nested forms</h2>
 
 <SuperDebug data={{ $form, $errors }} />
 
+<a href="/">&lt; Back to start</a>
+
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
-  {#each $form.ids.id as id, i}
+  {#each $form.ids.id as _, i}
     <div>
       <input
         type="number"

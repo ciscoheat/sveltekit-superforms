@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert, beforeEach, expect, test } from 'vitest';
-import { z, ZodAny, ZodArray, ZodString, type AnyZodObject } from 'zod';
+import {
+  z,
+  ZodArray,
+  ZodString,
+  type AnyZodObject,
+  type ZodTypeAny
+} from 'zod';
 import { checkPath } from '$lib/entity';
 import { writable } from 'svelte/store';
 import { mapErrors, unwrapZodType } from '$lib/entity';
@@ -129,7 +135,7 @@ test('Traversing a Zod schema', () => {
       let type = unwrapZodType(value).zodType;
 
       while (type.constructor.name === 'ZodArray') {
-        type = (type as ZodArray<ZodAny>)._def.type;
+        type = (type as ZodArray<ZodTypeAny>)._def.type;
       }
 
       if (type.constructor.name == 'ZodObject') {

@@ -10,7 +10,7 @@
     data.form,
     {
       dataType: 'json',
-      validation: schema
+      validators: schema
     }
   );
 </script>

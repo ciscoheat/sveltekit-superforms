@@ -19,7 +19,7 @@ import {
 import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
 import { SuperFormError, type RawShape, type Validation } from '..';
-import type { z, AnyZodObject, ZodArray, ZodAny, ZodTypeAny } from 'zod';
+import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type FormFields } from '..';
 import { mapErrors, unwrapZodType, checkPath } from '$lib/entity';
@@ -51,7 +51,7 @@ type Validator<T extends AnyZodObject, P extends keyof z.infer<T>> = (
 export type Validators<T extends AnyZodObject> = {
   [Property in keyof RawShape<T>]?: RawShape<T>[Property] extends
     | AnyZodObject
-    | ZodArray<ZodAny>
+    | ZodArray<ZodTypeAny>
     ? Validators<RawShape<T>[Property]>
     : Validator<T, Property>;
 };
@@ -93,7 +93,7 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
         message: Writable<Validation<T, M>['message']>
       ) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
-  validators: Validators<T>;
+  validators: Validators<T> | T;
   defaultValidator: 'clear' | 'keep';
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs: number;
@@ -117,7 +117,6 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
     ) => MaybePromise<unknown | void>;
     cookiePath?: string;
   };
-  validation: T;
 }>;
 
 const defaultFormOptions = {
@@ -425,6 +424,18 @@ export function superForm<
       typeof newObj === 'object' &&
       typeof compareAgainst === 'object'
     ) {
+      /*
+        // Date comparison is a mess, since it can come from the server as undefined,
+        // or be Invalid Date from a proxy.
+        if (
+          (f[key] instanceof Date || previousForm[key] instanceof Date) &&
+          ((isNaN(f[key]) && isNaN(previousForm[key])) ||
+            f[key]?.getTime() == previousForm[key]?.getTime())
+        ) {
+          continue;
+        }
+      */
+
       if (newObj instanceof Date) {
         if (
           compareAgainst instanceof Date &&
@@ -454,8 +465,6 @@ export function superForm<
     );
     */
 
-    let found: ZodTypeAny | undefined;
-
     function setError(path: string[], newErrors: string[] | null) {
       Errors.update((errors) => {
         const errorPath = checkPath(
@@ -476,51 +485,74 @@ export function superForm<
       });
     }
 
-    if (options.validation) {
+    let validated = false;
+
+    if (options.validators) {
       // Filter out array indices, since the type for options.validation
       // doesn't have that in the structure.
       const validationPath = [...path].filter((p) => isNaN(parseInt(p)));
       if (validationPath.length > 0) {
-        found = checkPath(
-          options.validation.shape,
-          validationPath,
-          ({ value }) => {
-            let type = unwrapZodType(value).zodType;
+        if (options.validators.constructor.name === 'ZodObject') {
+          const validator = options.validators as T;
+          let found: ZodTypeAny | undefined = checkPath(
+            validator.shape,
+            validationPath,
+            ({ value }) => {
+              let type = unwrapZodType(value).zodType;
 
-            while (type.constructor.name === 'ZodArray') {
-              type = (type as ZodArray<ZodAny>)._def.type;
+              while (type.constructor.name === 'ZodArray') {
+                type = (type as ZodArray<ZodTypeAny>)._def.type;
+              }
+
+              if (type.constructor.name == 'ZodObject') {
+                return (type as AnyZodObject).shape;
+              } else {
+                return undefined;
+              }
+            }
+          )?.value;
+
+          if (found) {
+            // If we land on an array (can happen when an array index has errors)
+            // go into the array schema and extract the underlying type
+            while (found && found.constructor.name === 'ZodArray') {
+              found = unwrapZodType(
+                (found as unknown as ZodArray<ZodTypeAny>)._def.type
+              ).zodType;
             }
 
-            if (type.constructor.name == 'ZodObject') {
-              return (type as AnyZodObject).shape;
-            } else {
-              return undefined;
-            }
+            const result = await found.spa(newObj);
+
+            setError(
+              path,
+              result.success
+                ? null
+                : result.error.errors.map((err) => err.message)
+            );
+
+            validated = true;
           }
-        )?.value;
+        } else {
+          // SuperForms validator
+          const validator = options.validators as Validators<T>;
+          const found: Validator<T, keyof z.infer<T>> | undefined =
+            checkPath(validator, validationPath)?.value;
 
-        if (found) {
-          // If we land on an array (can happen when an array index has errors)
-          // go into the array schema and extract the underlying type
-          while (found && found.constructor.name === 'ZodArray') {
-            found = unwrapZodType(
-              (found as unknown as ZodArray<ZodTypeAny>)._def.type
-            ).zodType;
+          if (found) {
+            const result = await found(newObj as any);
+
+            setError(
+              path,
+              typeof result === 'string' ? [result] : result ?? null
+            );
+
+            validated = true;
           }
-
-          const result = await found.spa(newObj);
-
-          setError(
-            path,
-            result.success
-              ? null
-              : result.error.errors.map((err) => err.message)
-          );
         }
       }
     }
 
-    if (!found && options.defaultValidator == 'clear') {
+    if (!validated && options.defaultValidator == 'clear') {
       Errors.update((errors) => {
         const leaf = checkPath(errors, path);
         if (leaf) delete leaf.parent[leaf.key];
@@ -542,8 +574,6 @@ export function superForm<
     let previousForm = structuredClone(initialForm.data);
     let loaded = false;
 
-    //function checkModified(obj: Record) {}
-
     Data.subscribe(async (data) => {
       if (!loaded) {
         loaded = true;
@@ -551,50 +581,8 @@ export function superForm<
       }
 
       if (get(Submitting)) return;
-
-      console.log('checkEqual', data, previousForm);
       await checkEqual(data, previousForm);
 
-      /*
-      for (const key of Object.keys(f)) {
-        if (f[key] === previousForm[key]) continue;
-        if (!f[key] && !previousForm[key]) continue;
-
-        // Date comparison is a mess, since it can come from the server as undefined,
-        // or be Invalid Date from a proxy.
-        if (
-          (f[key] instanceof Date || previousForm[key] instanceof Date) &&
-          ((isNaN(f[key]) && isNaN(previousForm[key])) ||
-            f[key]?.getTime() == previousForm[key]?.getTime())
-        ) {
-          continue;
-        }
-
-        console.log('Field changed:', formId, f, f[key], previousForm[key]);
-
-        const validator = options.validators && options.validators[key];
-        if (validator) {
-          const newError = await validator(f[key]);
-          Errors.update((e) => {
-            if (!newError) delete e[key];
-            else {
-              e[key as keyof z.infer<T>] = Array.isArray(newError)
-                ? newError
-                : [newError];
-            }
-            return e;
-          });
-        } else if (
-          options.defaultValidator == 'clear' &&
-          key in get(Errors)
-        ) {
-          Errors.update((e) => {
-            delete e[key];
-            return e;
-          });
-        }
-      }
-      */
       previousForm = structuredClone(data);
     });
 
@@ -887,13 +875,16 @@ function formEnhance<T extends AnyZodObject, M>(
       cancelFlash();
     } else {
       // Client validation
-      if (options.validation) {
-        const val = options.validation;
-        const result = await val.safeParseAsync(get(data));
-        if (!result.success) {
-          errors.set(mapErrors<T>(result.error.format()) as any);
-          cancel();
-          htmlForm.scrollToFirstError();
+      if (options.validators) {
+        if (options.validators.constructor.name == 'ZodObject') {
+          const validator = options.validators as AnyZodObject;
+          const result = await validator.safeParseAsync(get(data));
+
+          if (!result.success) {
+            errors.set(mapErrors<T>(result.error.format()) as any);
+            cancel();
+            htmlForm.scrollToFirstError();
+          }
         }
       }
 

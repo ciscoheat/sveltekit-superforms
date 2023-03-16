@@ -18,21 +18,11 @@ import {
 } from 'svelte/store';
 import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
-import {
-  SuperFormError,
-  type RawShape,
-  type Validation,
-  type ValidationErrors
-} from '..';
-import type {
-  z,
-  AnyZodObject,
-  ZodArray,
-  ZodAny,
-  ZodFormattedError
-} from 'zod';
+import { SuperFormError, type RawShape, type Validation } from '..';
+import type { z, AnyZodObject, ZodArray, ZodAny, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type FormFields } from '..';
+import { mapErrors, unwrapZodType, checkPath } from '$lib/entity';
 
 enum FetchStatus {
   Idle = 0,
@@ -180,29 +170,6 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   reset: (options?: { keepMessage: boolean }) => void;
 };
 
-// This function cannot be shared by client and server for some reason...
-function mapErrors<T extends AnyZodObject>(obj: ZodFormattedError<unknown>) {
-  const output: Record<string, unknown> = {};
-  const entries = Object.entries(obj);
-
-  if (
-    entries.length === 1 &&
-    entries[0][0] === '_errors' &&
-    obj._errors.length
-  ) {
-    return obj._errors;
-  } else if (obj._errors.length) {
-    output._errors = obj._errors;
-  }
-
-  for (const [key, value] of entries.filter(([key]) => key !== '_errors')) {
-    // _errors are filtered out, so casting is fine
-    output[key] = mapErrors(value as unknown as ZodFormattedError<unknown>);
-  }
-
-  return output as ValidationErrors<RawShape<T>>;
-}
-
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {Validation} form Usually data.form from PageData.
@@ -295,8 +262,14 @@ export function superForm<
     }
   }
 
-  // Make a deep copy of the original, in case of reset
-  const initialForm: Validation<T, M> = structuredClone(form);
+  // Make an "as deep copy as needed" of the original, in case of reset
+  const initialForm: Validation<T, M> = {
+    ...form,
+    data: { ...form.data },
+    errors: { ...form.errors },
+    constraints: { ...form.constraints },
+    meta: form.meta ? { ...form.meta } : undefined
+  };
 
   // Stores for the properties of Validation<T, M>
   // Need to make a copy here too, in case the form variable
@@ -438,33 +411,17 @@ export function superForm<
     }
   };
 
-  function clearError(path: string[]) {
-    if (!path.length) return;
-    path = [...path];
-
-    Errors.update((errors) => {
-      let current: Record<string | number | symbol, any> = errors;
-      while (path.length > 1) {
-        current = current[path.shift()!];
-        console.log('   ', path, current);
-      }
-
-      current[path.shift()!] = undefined;
-      return errors;
-    });
-  }
-
-  function checkEqual(
+  async function checkEqual(
     newObj: unknown,
     compareAgainst: unknown,
     path: string[] = []
   ) {
-    console.log('Entering:', path);
-    if (!Array.isArray(newObj) && newObj === compareAgainst) {
-      return;
-    } else if (newObj === null || compareAgainst === null) {
-      return;
-    } else if (
+    //console.log('Entering:', path);
+    if (newObj === compareAgainst) return;
+
+    if (
+      newObj !== null &&
+      compareAgainst !== null &&
       typeof newObj === 'object' &&
       typeof compareAgainst === 'object'
     ) {
@@ -487,6 +444,7 @@ export function superForm<
       }
     }
 
+    /*
     console.log(
       '  Run validator:',
       path,
@@ -494,19 +452,86 @@ export function superForm<
       compareAgainst,
       get(Errors)
     );
+    */
 
-    if (options.defaultValidator == 'clear') {
-      clearError(path);
-      console.log('Cleared:', get(Errors));
+    let found: ZodTypeAny | undefined;
+
+    function setError(path: string[], newErrors: string[] | null) {
+      Errors.update((errors) => {
+        const errorPath = checkPath(
+          errors,
+          path,
+          ({ parent, key, value }) => {
+            if (value === undefined) parent[key] = {};
+            return parent[key];
+          }
+        );
+
+        if (errorPath) {
+          const { parent, key } = errorPath;
+          if (newErrors === null) delete parent[key];
+          else parent[key] = newErrors;
+        }
+        return errors;
+      });
+    }
+
+    if (options.validation) {
+      // Filter out array indices, since the type for options.validation
+      // doesn't have that in the structure.
+      const validationPath = [...path].filter((p) => isNaN(parseInt(p)));
+      if (validationPath.length > 0) {
+        found = checkPath(
+          options.validation.shape,
+          validationPath,
+          ({ value }) => {
+            let type = unwrapZodType(value).zodType;
+
+            while (type.constructor.name === 'ZodArray') {
+              type = (type as ZodArray<ZodAny>)._def.type;
+            }
+
+            if (type.constructor.name == 'ZodObject') {
+              return (type as AnyZodObject).shape;
+            } else {
+              return undefined;
+            }
+          }
+        )?.value;
+
+        if (found) {
+          // If we land on an array (can happen when an array index has errors)
+          // go into the array schema and extract the underlying type
+          while (found && found.constructor.name === 'ZodArray') {
+            found = unwrapZodType(
+              (found as unknown as ZodArray<ZodTypeAny>)._def.type
+            ).zodType;
+          }
+
+          const result = await found.spa(newObj);
+
+          setError(
+            path,
+            result.success
+              ? null
+              : result.error.errors.map((err) => err.message)
+          );
+        }
+      }
+    }
+
+    if (!found && options.defaultValidator == 'clear') {
+      Errors.update((errors) => {
+        const leaf = checkPath(errors, path);
+        if (leaf) delete leaf.parent[leaf.key];
+        return errors;
+      });
     }
   }
 
   if (browser) {
-    let isSubmitting = false;
-    Submitting.subscribe((submitting) => (isSubmitting = submitting));
-
     beforeNavigate((nav) => {
-      if (options.taintedMessage && !isSubmitting) {
+      if (options.taintedMessage && !get(Submitting)) {
         if (get(Tainted) && !window.confirm(options.taintedMessage)) {
           nav.cancel();
         }
@@ -521,15 +546,14 @@ export function superForm<
 
     Data.subscribe(async (data) => {
       if (!loaded) {
-        console.log('Loaded.');
         loaded = true;
         return;
       }
 
-      if (isSubmitting) return;
+      if (get(Submitting)) return;
 
       console.log('checkEqual', data, previousForm);
-      checkEqual(data, previousForm);
+      await checkEqual(data, previousForm);
 
       /*
       for (const key of Object.keys(f)) {
@@ -571,7 +595,7 @@ export function superForm<
         }
       }
       */
-      previousForm = structuredClone(data); // { ...data };
+      previousForm = structuredClone(data);
     });
 
     // Need to subscribe to catch page invalidation.

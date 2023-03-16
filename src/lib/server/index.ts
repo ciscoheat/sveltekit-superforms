@@ -1,11 +1,6 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import {
-  SuperFormError,
-  type RawShape,
-  type Validation,
-  type ValidationErrors
-} from '..';
+import { SuperFormError, type RawShape, type Validation } from '..';
 import {
   entityData,
   valueOrDefault,
@@ -30,9 +25,10 @@ import {
   ZodEnum,
   ZodNativeEnum,
   ZodSymbol,
-  type ZodFormattedError,
   type ZodTypeAny
 } from 'zod';
+
+import { mapErrors } from '$lib/entity';
 
 export { defaultEntity } from './entity';
 
@@ -43,28 +39,6 @@ type NonObjectArrayFields<T extends AnyZodObject> = keyof {
     ? never
     : Property]: true;
 };
-
-function mapErrors<T extends AnyZodObject>(obj: ZodFormattedError<unknown>) {
-  const output: Record<string, unknown> = {};
-  const entries = Object.entries(obj);
-
-  if (
-    entries.length === 1 &&
-    entries[0][0] === '_errors' &&
-    obj._errors.length
-  ) {
-    return obj._errors;
-  } else if (obj._errors.length) {
-    output._errors = obj._errors;
-  }
-
-  for (const [key, value] of entries.filter(([key]) => key !== '_errors')) {
-    // _errors are filtered out, so casting is fine
-    output[key] = mapErrors(value as unknown as ZodFormattedError<unknown>);
-  }
-
-  return output as ValidationErrors<RawShape<T>>;
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(

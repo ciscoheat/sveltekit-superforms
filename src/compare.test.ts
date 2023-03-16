@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert, beforeEach, expect, test } from 'vitest';
 import { z, ZodAny, ZodArray, ZodString, type AnyZodObject } from 'zod';
-import { checkPath } from '$lib/client/compare';
+import { checkPath } from '$lib/entity';
 import { writable } from 'svelte/store';
 import { mapErrors, unwrapZodType } from '$lib/entity';
 
@@ -121,7 +121,7 @@ test('Setting a path', () => {
   });
 });
 
-test.only('Traversing a Zod schema', () => {
+test('Traversing a Zod schema', () => {
   const { value } = checkPath(
     social.shape,
     ['friends', 'tags', 'name'],

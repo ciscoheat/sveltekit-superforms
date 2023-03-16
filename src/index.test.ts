@@ -364,7 +364,9 @@ test('More default values', async () => {
     proxyNumber: { required: true, min: 10 },
     proxyString: { required: true },
     trimmedString: { required: true },
-    numberArray: { _constraints: { min: 3, required: true }, required: true }
+    numberArray: {
+      /*_constraints: { min: 3, required: true },*/ required: true
+    }
   });
 });
 
@@ -402,8 +404,8 @@ test('Zod enums and native enums', async () => {
     empty: true,
     constraints: {
       color: { required: true },
-      fruit: { _constraints: { required: true }, required: true },
-      fruitsstring: { _constraints: { required: true }, required: true }
+      fruit: { /*_constraints: { required: true },*/ required: true },
+      fruitsstring: { /*_constraints: { required: true },*/ required: true }
     },
     meta: {
       types: {
@@ -440,8 +442,8 @@ test('Posting Zod enums and native enums', async () => {
     },
     constraints: {
       color: { required: true },
-      fruit: { _constraints: { required: true }, required: true },
-      fruitsstring: { _constraints: { required: true }, required: true }
+      fruit: { /*_constraints: { required: true },*/ required: true },
+      fruitsstring: { /*_constraints: { required: true },*/ required: true }
     }
   });
 });
@@ -554,10 +556,10 @@ test('Deeply nested constraints', async () => {
   expect(form.constraints).toStrictEqual({
     id: { min: 0, required: true },
     users: {
-      _constraints: { required: true },
+      /*_constraints: { required: true },*/
       name: { required: true, minlength: 2, pattern: 'X' },
       posts: {
-        _constraints: { min: 2 },
+        /*_constraints: { min: 2 },*/
         subject: { required: true, minlength: 1 }
       }
     }

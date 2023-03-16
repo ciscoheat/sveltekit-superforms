@@ -42,11 +42,11 @@ export type InputConstraints<S extends ZodRawShape> = Partial<{
   >
     ? InputConstraints<RawShape<UnwrappedEntity<P>>>
     : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
-    ? {
-        _constraints?: InputConstraint;
-      } & (UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
-        ? InputConstraints<RawShape<UnwrappedEntity<V>>>
-        : unknown)
+    ? /*{ _constraints?: InputConstraint; } &*/ UnwrappedEntity<A> extends ZodObject<
+        infer V extends ZodRawShape
+      >
+      ? InputConstraints<RawShape<UnwrappedEntity<V>>>
+      : InputConstraint
     : InputConstraint;
 }>;
 

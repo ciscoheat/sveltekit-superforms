@@ -279,12 +279,9 @@ function constraints<T extends AnyZodObject>(
   function mapField(key: string, value: ZodTypeAny): any {
     const info = zodTypeInfo(value);
     value = info.zodType;
-    //console.log('Constraints:', key, value.constructor.name);
     if (value instanceof ZodArray) {
-      return {
-        ...mapField(key, value._def.type),
-        _constraints: constraint(key, value, info)
-      };
+      return mapField(key, value._def.type);
+      /*_constraints: constraint(key, value, info)*/
     } else if (value instanceof ZodObject) {
       return constraints(value);
     } else {

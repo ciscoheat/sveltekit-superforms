@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert, beforeEach, expect, test } from 'vitest';
 import { z, ZodAny, ZodArray, ZodString, type AnyZodObject } from 'zod';
-import { checkPath, mapErrors } from '$lib/client/compare';
+import { checkPath } from '$lib/client/compare';
 import { writable } from 'svelte/store';
-import { unwrapZodType } from '$lib/entity';
+import { mapErrors, unwrapZodType } from '$lib/entity';
 
 const user = z.object({
   id: z.number().int().positive(),
@@ -122,10 +122,10 @@ test('Setting a path', () => {
 });
 
 test.only('Traversing a Zod schema', () => {
-  const { parent, key, value } = checkPath(
+  const { value } = checkPath(
     social.shape,
     ['friends', 'tags', 'name'],
-    ({ parent, key, value }) => {
+    ({ value }) => {
       let type = unwrapZodType(value).zodType;
 
       while (type.constructor.name === 'ZodArray') {

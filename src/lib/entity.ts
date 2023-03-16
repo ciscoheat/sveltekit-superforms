@@ -1,9 +1,12 @@
+import type { RawShape, ValidationErrors } from '.';
 import {
   type ZodTypeAny,
   ZodDefault,
   ZodNullable,
   ZodOptional,
-  ZodEffects
+  ZodEffects,
+  type AnyZodObject,
+  type ZodFormattedError
 } from 'zod';
 
 export type ZodTypeInfo = {
@@ -48,4 +51,28 @@ export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
     hasDefault,
     defaultValue
   };
+}
+
+export function mapErrors<T extends AnyZodObject>(
+  obj: ZodFormattedError<unknown>
+) {
+  const output: Record<string, unknown> = {};
+  const entries = Object.entries(obj);
+
+  if (
+    entries.length === 1 &&
+    entries[0][0] === '_errors' &&
+    obj._errors.length
+  ) {
+    return obj._errors as unknown as ValidationErrors<RawShape<T>>;
+  } else if (obj._errors.length) {
+    output._errors = obj._errors;
+  }
+
+  for (const [key, value] of entries.filter(([key]) => key !== '_errors')) {
+    // _errors are filtered out, so casting is fine
+    output[key] = mapErrors(value as unknown as ZodFormattedError<unknown>);
+  }
+
+  return output as ValidationErrors<RawShape<T>>;
 }

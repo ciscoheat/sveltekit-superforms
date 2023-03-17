@@ -35,7 +35,7 @@
 
 <SuperDebug data={{ $form, $staticform }} />
 
-<a href="/test">Test page</a> | <a href="/crud">CRUD</a>
+<a href="/test">Test page</a> | <a href="/crud">CRUD</a> | <a href="/super-debug">SuperDebug</a>
 
 {#if $message}
   <h4 class:error={$page.status >= 400} class="message">{$message}</h4>

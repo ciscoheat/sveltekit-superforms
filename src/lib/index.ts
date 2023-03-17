@@ -1,32 +1,83 @@
-import type { z, AnyZodObject } from 'zod';
-import type { Entity } from './server/entity';
+import type { z, AnyZodObject, ZodArray, ZodObject, ZodRawShape } from 'zod';
+import type { Entity, UnwrappedEntity } from './server/entity';
+import type { Writable } from 'svelte/store';
 
-//export * as client from './client';
-//export * as server from './server';
+export class SuperFormError extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, SuperFormError.prototype);
+  }
+}
 
-export type ValidationErrors<T extends AnyZodObject> = Partial<
-  Record<keyof z.infer<T>, string[] | undefined>
->;
+export type RawShape<T> = T extends ZodObject<infer U> ? U : never;
 
-export type InputConstraints = Partial<{
+export type ValidationErrors<S extends ZodRawShape> = {
+  [Property in keyof S]?: UnwrappedEntity<S[Property]> extends ZodObject<
+    infer P extends ZodRawShape
+  >
+    ? ValidationErrors<RawShape<UnwrappedEntity<P>>>
+    : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
+    ? { _errors?: string[] } & Record<
+        number,
+        UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
+          ? ValidationErrors<V>
+          : string[]
+      >
+    : string[];
+};
+
+export type InputConstraint = Partial<{
   pattern: string; // RegExp
-  min: number | string; // | Date
-  max: number | string; // | Date
+  min: number | string; // Date
+  max: number | string; // Date
   required: boolean;
   step: number;
   minlength: number;
   maxlength: number;
 }>;
 
-export type Validation<T extends AnyZodObject> = {
+export type InputConstraints<S extends ZodRawShape> = Partial<{
+  [Property in keyof S]: UnwrappedEntity<S[Property]> extends ZodObject<
+    infer P extends ZodRawShape
+  >
+    ? InputConstraints<RawShape<UnwrappedEntity<P>>>
+    : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
+    ? /*{ _constraints?: InputConstraint; } &*/ UnwrappedEntity<A> extends ZodObject<
+        infer V extends ZodRawShape
+      >
+      ? InputConstraints<RawShape<UnwrappedEntity<V>>>
+      : InputConstraint
+    : InputConstraint;
+}>;
+
+export type Validation<
+  T extends AnyZodObject,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+> = {
   valid: boolean;
-  errors: ValidationErrors<T>;
+  errors: ValidationErrors<RawShape<T>>;
   data: z.infer<T>;
   empty: boolean;
-  message: string | null;
   constraints: Entity<T>['constraints'];
+  message?: M;
   id?: string;
   meta?: Entity<T>['meta'];
+};
+
+export type FormField<
+  T extends AnyZodObject,
+  Property extends keyof z.infer<T>
+> = {
+  name: string;
+  value: Writable<z.infer<T>[Property]>;
+  errors?: ValidationErrors<RawShape<T>>[Property];
+  constraints?: InputConstraints<RawShape<T>>[Property];
+  type?: string;
+};
+
+export type FormFields<T extends AnyZodObject> = {
+  [Property in keyof z.infer<T>]-?: FormField<T, Property>;
 };
 
 export function deepEqual(obj1: unknown, obj2: unknown): boolean {

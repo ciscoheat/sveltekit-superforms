@@ -16,12 +16,13 @@ import {
   type Readable,
   type Writable
 } from 'svelte/store';
-import { tick } from 'svelte';
+import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
-import type { Validation } from '..';
-import type { z, AnyZodObject } from 'zod';
+import { SuperFormError, type RawShape, type Validation } from '..';
+import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
-import { deepEqual, type InputConstraints } from '..';
+import { deepEqual, type FormFields } from '..';
+import { mapErrors, unwrapZodType, checkPath } from '$lib/entity';
 
 enum FetchStatus {
   Idle = 0,
@@ -38,58 +39,67 @@ export {
   dateProxy
 } from './proxies';
 
-export type FormUpdate = (
+type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,
   untaint?: boolean
 ) => Promise<void>;
 
-export type Validators<T extends AnyZodObject> = Partial<{
-  [Property in keyof z.infer<T>]: (
-    value: z.infer<T>[Property]
-  ) => MaybePromise<string | string[] | null | undefined>;
-}>;
+type Validator<T extends AnyZodObject, P extends keyof z.infer<T>> = (
+  value: z.infer<T>[P]
+) => MaybePromise<string | string[] | null | undefined>;
 
-export type FormOptions<T extends AnyZodObject> = {
-  id?: string;
-  applyAction?: boolean;
-  invalidateAll?: boolean;
-  resetForm?: boolean;
-  scrollToError?: 'auto' | 'smooth' | 'off';
-  autoFocusOnError?: boolean | 'detect';
-  errorSelector?: string;
-  stickyNavbar?: string;
-  taintedMessage?: string | false | null;
-  onSubmit?: (...params: Parameters<SubmitFunction>) => unknown | void;
-  onResult?: (event: {
+export type Validators<T extends AnyZodObject> = {
+  [Property in keyof RawShape<T>]?: RawShape<T>[Property] extends
+    | AnyZodObject
+    | ZodArray<ZodTypeAny>
+    ? Validators<RawShape<T>[Property]>
+    : Validator<T, Property>;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FormOptions<T extends AnyZodObject, M> = Partial<{
+  id: string;
+  applyAction: boolean;
+  invalidateAll: boolean;
+  resetForm: boolean;
+  scrollToError: 'auto' | 'smooth' | 'off';
+  autoFocusOnError: boolean | 'detect';
+  errorSelector: string;
+  stickyNavbar: string;
+  taintedMessage: string | false | null;
+  onSubmit: (
+    ...params: Parameters<SubmitFunction>
+  ) => MaybePromise<unknown | void>;
+  onResult: (event: {
     result: ActionResult;
-    update: FormUpdate;
     formEl: HTMLFormElement;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
-  onUpdate?: (event: {
-    form: Validation<T>;
+  onUpdate: (event: {
+    form: Validation<T, M>;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
-  onUpdated?: (event: {
-    form: Validation<T>;
+  onUpdated: (event: {
+    form: Validation<T, M>;
   }) => MaybePromise<unknown | void>;
-  onError?:
-    | ((
-        result: Extract<ActionResult, { type: 'error' }>,
-        message: Writable<Validation<T>['message']>
-      ) => MaybePromise<unknown | void>)
-    | 'set-message'
+  onError:
     | 'apply'
-    | 'ignore'
-    | string;
-  dataType?: 'form' | 'formdata' | 'json';
-  validators?: Validators<T>;
-  defaultValidator?: 'clear' | 'keep';
-  clearOnSubmit?: 'errors' | 'message' | 'errors-and-message' | 'none';
-  delayMs?: number;
-  timeoutMs?: number;
-  multipleSubmits?: 'prevent' | 'allow' | 'abort';
-  flashMessage?: {
+    | ((
+        result: {
+          type: 'error';
+          status?: number;
+          error: App.Error;
+        },
+        message: Writable<Validation<T, M>['message']>
+      ) => MaybePromise<unknown | void>);
+  dataType: 'form' | 'json';
+  validators: Validators<T> | T;
+  defaultValidator: 'clear' | 'keep';
+  clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
+  delayMs: number;
+  timeoutMs: number;
+  multipleSubmits: 'prevent' | 'allow' | 'abort';
+  flashMessage: {
     module: {
       getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
       updateFlash(
@@ -97,15 +107,19 @@ export type FormOptions<T extends AnyZodObject> = {
         update?: () => Promise<void>
       ): Promise<void>;
     };
-    onError?: (errorResult: {
-      type: 'error';
-      status: number;
-      error: App.Error;
-    }) => App.PageData['flash'];
+    onError?: (
+      result: {
+        type: 'error';
+        status?: number;
+        error: App.Error;
+      },
+      message: Writable<App.PageData['flash']>
+    ) => MaybePromise<unknown | void>;
+    cookiePath?: string;
   };
-};
+}>;
 
-const defaultFormOptions: FormOptions<AnyZodObject> = {
+const defaultFormOptions = {
   applyAction: true,
   invalidateAll: true,
   resetForm: false,
@@ -119,35 +133,24 @@ const defaultFormOptions: FormOptions<AnyZodObject> = {
   onResult: undefined,
   onUpdate: undefined,
   onUpdated: undefined,
-  onError: 'set-message',
+  onError: undefined,
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'clear',
   clearOnSubmit: 'errors-and-message',
   delayMs: 500,
   timeoutMs: 8000,
-  multipleSubmits: 'prevent'
+  multipleSubmits: 'prevent',
+  validation: undefined
 };
 
-type FormField<T, N = string> = {
-  name: N;
-  value: T;
-  errors: string[] | undefined;
-  constraints: InputConstraints | undefined;
-  type: string | undefined;
-};
-
-/*
-type FormFields<T extends AnyZodObject> = {
-  [Property in keyof z.infer<T>]: FormField<z.infer<T>[Property], Property>;
-};
-*/
-
-export type EnhancedForm<T extends AnyZodObject> = {
-  form: Writable<Validation<T>['data']>;
-  errors: Writable<Validation<T>['errors']>;
-  constraints: Writable<Validation<T>['constraints']>;
-  message: Writable<Validation<T>['message']>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type EnhancedForm<T extends AnyZodObject, M = any> = {
+  form: Writable<Validation<T, M>['data']>;
+  errors: Writable<Validation<T, M>['errors']>;
+  constraints: Writable<Validation<T, M>['constraints']>;
+  message: Writable<Validation<T, M>['message']>;
+  meta: Readable<Validation<T, M>['meta']>;
 
   valid: Readable<boolean>;
   empty: Readable<boolean>;
@@ -155,9 +158,9 @@ export type EnhancedForm<T extends AnyZodObject> = {
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
 
-  fields: Readable<FormField<T>[]>;
+  fields: Readable<FormFields<T>>;
   firstError: Readable<{ key: string; value: string } | null>;
-  allErrors: Readable<{ key: string; value: string }[]>;
+  topErrors: Readable<{ key: string; value: string }[]>;
 
   tainted: Readable<boolean>;
 
@@ -172,20 +175,23 @@ export type EnhancedForm<T extends AnyZodObject> = {
  * @param {FormOptions} options Configuration for the form.
  * @returns {EnhancedForm} An object with properties for the form.
  */
-export function superForm<T extends AnyZodObject>(
-  form: Validation<T> | null | undefined | string,
-  options: FormOptions<T> = {}
-): EnhancedForm<T> {
-  options = { ...(defaultFormOptions as FormOptions<T>), ...options };
+export function superForm<
+  T extends AnyZodObject = AnyZodObject,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
+  form: Validation<T, M> | null | undefined | string,
+  options: FormOptions<T, M> = {}
+): EnhancedForm<T, M> {
+  options = { ...(defaultFormOptions as FormOptions<T, M>), ...options };
 
-  function emptyForm() {
+  function emptyForm(): Validation<T, M> {
     return {
       valid: false,
       errors: {},
       data: {},
       empty: true,
-      message: null,
-      constraints: {} as Validation<T>['constraints']
+      constraints: {} as Validation<T, M>['constraints']
     };
   }
 
@@ -214,8 +220,8 @@ export function superForm<T extends AnyZodObject>(
   }
 
   if (typeof form === 'string' && typeof options.id === 'string') {
-    throw new Error(
-      'You cannot specify an id in the first superForm argument and in the options.'
+    throw new SuperFormError(
+      'You cannot specify an id both in the first superForm argument and in the options.'
     );
   }
 
@@ -227,34 +233,55 @@ export function superForm<T extends AnyZodObject>(
   if (options.applyAction && actionForm) {
     const postedFormId = isValidationObject(actionForm.form);
     if (postedFormId === false) {
-      throw new Error(
+      throw new SuperFormError(
         "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
       );
     }
-    if (postedFormId === formId) form = actionForm.form as Validation<T>;
+    if (postedFormId === formId) form = actionForm.form as Validation<T, M>;
+  }
+
+  // Check for nested objects, throw if datatype isn't json
+  function checkJson(key: string, value: unknown) {
+    if (!value || typeof value !== 'object') return;
+
+    if (Array.isArray(value)) {
+      if (value.length > 0) checkJson(key, value[0]);
+    } else if (!(value instanceof Date)) {
+      throw new SuperFormError(
+        `Object found in form field "${key}". Set options.dataType = 'json' and use:enhance to use nested structures.`
+      );
+    }
   }
 
   if (!form || typeof form === 'string') {
     form = emptyForm();
+  } else if (options.dataType !== 'json') {
+    for (const [key, value] of Object.entries(form.data)) {
+      checkJson(key, value);
+    }
   }
 
-  // Make a deep copy of the original, in case of reset
-  const initialForm: Validation<T> = {
+  // Make an "as deep copy as needed" of the original, in case of reset
+  const initialForm: Validation<T, M> = {
     ...form,
     data: { ...form.data },
     errors: { ...form.errors },
-    constraints: { ...form.constraints }
+    constraints: { ...form.constraints },
+    meta: form.meta ? { ...form.meta } : undefined
   };
 
-  // Stores for the properties of Validation<T>
+  // Stores for the properties of Validation<T, M>
   // Need to make a copy here too, in case the form variable
   // is used to populate multiple forms.
   const Valid = writable(form.valid);
   const Empty = writable(form.empty);
-  const Message = writable(form.message);
+  const Message = writable<M | undefined>(form.message);
   const Errors = writable({ ...form.errors });
   const Data = writable({ ...form.data });
   const Constraints = writable({ ...form.constraints });
+  const Meta = writable<Validation<T, M>['meta'] | undefined>(
+    form.meta ? { ...form.meta } : undefined
+  );
 
   // Timers
   const Submitting = writable(false);
@@ -262,30 +289,35 @@ export function superForm<T extends AnyZodObject>(
   const Timeout = writable(false);
 
   // Utilities
-  const AllErrors = derived(Errors, ($errors) => {
+  const TopErrors = derived(Errors, ($errors) => {
     if (!$errors) return [];
-    return Object.entries($errors).flatMap(
-      ([key, errors]) => errors?.map((value) => ({ key, value })) ?? []
-    );
+    return Object.entries($errors)
+      .filter(
+        ([, errors]) => errors && Array.isArray(errors) && errors.length > 0
+      )
+      .flatMap(
+        ([key, errors]) =>
+          (errors as string[]).map((value) => ({ key, value })) ?? []
+      );
   });
 
   const FirstError = derived(
-    AllErrors,
-    ($allErrors) => $allErrors[0] ?? null
+    TopErrors,
+    ($topErrors) => $topErrors[0] ?? null
   );
   const Tainted = derived(Data, ($d) => (savedForm ? isTainted($d) : false));
 
   //////////////////////////////////////////////////////////////////////
 
   if (typeof initialForm.valid !== 'boolean') {
-    throw new Error(
-      "A non-validation object was passed to superForm. Check what's passed to its first parameter (null is allowed)."
+    throw new SuperFormError(
+      "A non-validation object was passed to superForm. Check what's passed to its first parameter (null/undefined is allowed)."
     );
   }
 
   // Need to set this after use:enhance has run, to avoid showing the
   // tainted dialog when a form doesn't use it or the browser doesn't use JS.
-  let savedForm: Validation<T>['data'] | undefined;
+  let savedForm: Validation<T, M>['data'] | undefined;
 
   const _taintedMessage = options.taintedMessage;
   options.taintedMessage = undefined;
@@ -299,11 +331,7 @@ export function superForm<T extends AnyZodObject>(
     return !deepEqual(data, savedForm);
   }
 
-  function rebind(
-    form: Validation<T>,
-    untaint: boolean,
-    message: string | null
-  ) {
+  function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
     if (untaint) {
       savedForm = { ...form.data };
     }
@@ -313,9 +341,10 @@ export function superForm<T extends AnyZodObject>(
     Empty.set(form.empty);
     Valid.set(form.valid);
     Errors.set(form.errors);
+    Meta.set(form.meta);
   }
 
-  async function _update(form: Validation<T>, untaint: boolean) {
+  async function _update(form: Validation<T, M>, untaint: boolean) {
     if (options.onUpdate) {
       let cancelled = false;
       await options.onUpdate({
@@ -332,7 +361,7 @@ export function superForm<T extends AnyZodObject>(
     if (form.valid && options.resetForm) {
       _resetForm(form.message);
     } else {
-      rebind(form, untaint, null);
+      rebind(form, untaint);
     }
 
     // Do not await on onUpdated, since we're already finished with the request
@@ -341,13 +370,13 @@ export function superForm<T extends AnyZodObject>(
     }
   }
 
-  function _resetForm(message: string | null) {
+  function _resetForm(message?: M) {
     rebind(initialForm, true, message);
   }
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
     if (result.type == ('error' as string)) {
-      throw new Error(
+      throw new SuperFormError(
         `ActionResult of type "${result.type}" cannot be passed to update function.`
       );
     }
@@ -355,19 +384,19 @@ export function superForm<T extends AnyZodObject>(
     // All we need to do if redirected is to reset the form.
     // No events should be triggered because technically we're somewhere else.
     if (result.type == 'redirect') {
-      if (options.resetForm) _resetForm(null);
+      if (options.resetForm) _resetForm();
       return;
     }
 
     if (typeof result.data !== 'object') {
-      throw new Error(
+      throw new SuperFormError(
         'Non-object validation data returned from ActionResult.'
       );
     }
 
     const forms = findForms(result.data);
     if (!forms.length) {
-      throw new Error(
+      throw new SuperFormError(
         'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
       );
     }
@@ -375,21 +404,162 @@ export function superForm<T extends AnyZodObject>(
     for (const newForm of forms) {
       if (newForm.id !== formId) continue;
       await _update(
-        newForm as Validation<T>,
+        newForm as Validation<T, M>,
         untaint ?? (result.status >= 200 && result.status < 300)
       );
     }
+  };
+
+  async function checkEqual(
+    newObj: unknown,
+    compareAgainst: unknown,
+    path: string[] = []
+  ) {
+    //console.log('Entering:', path);
+    if (newObj === compareAgainst) return;
+
+    if (
+      newObj !== null &&
+      compareAgainst !== null &&
+      typeof newObj === 'object' &&
+      typeof compareAgainst === 'object'
+    ) {
+      /*
+        // Date comparison is a mess, since it can come from the server as undefined,
+        // or be Invalid Date from a proxy.
+        if (
+          (f[key] instanceof Date || previousForm[key] instanceof Date) &&
+          ((isNaN(f[key]) && isNaN(previousForm[key])) ||
+            f[key]?.getTime() == previousForm[key]?.getTime())
+        ) {
+          continue;
+        }
+      */
+
+      if (newObj instanceof Date) {
+        if (
+          compareAgainst instanceof Date &&
+          newObj.getTime() == compareAgainst.getTime()
+        ) {
+          return;
+        }
+      } else {
+        for (const prop in newObj) {
+          checkEqual(
+            newObj[prop as keyof object],
+            compareAgainst[prop as keyof object],
+            path.concat([prop])
+          );
+        }
+        return;
+      }
+    }
 
     /*
-    const form = result.data.form as Validation<T>;
-    if (form.id !== formId) return;
-
-    await _update(
-      form,
-      untaint ?? (result.status >= 200 && result.status < 300)
+    console.log(
+      '  Run validator:',
+      path,
+      newObj,
+      compareAgainst,
+      get(Errors)
     );
     */
-  };
+
+    function setError(path: string[], newErrors: string[] | null) {
+      Errors.update((errors) => {
+        const errorPath = checkPath(
+          errors,
+          path,
+          ({ parent, key, value }) => {
+            if (value === undefined) parent[key] = {};
+            return parent[key];
+          }
+        );
+
+        if (errorPath) {
+          const { parent, key } = errorPath;
+          if (newErrors === null) delete parent[key];
+          else parent[key] = newErrors;
+        }
+        return errors;
+      });
+    }
+
+    let validated = false;
+
+    if (options.validators) {
+      // Filter out array indices, since the type for options.validation
+      // doesn't have that in the structure.
+      const validationPath = [...path].filter((p) => isNaN(parseInt(p)));
+      if (validationPath.length > 0) {
+        if (options.validators.constructor.name === 'ZodObject') {
+          const validator = options.validators as T;
+          let found: ZodTypeAny | undefined = checkPath(
+            validator.shape,
+            validationPath,
+            ({ value }) => {
+              let type = unwrapZodType(value).zodType;
+
+              while (type.constructor.name === 'ZodArray') {
+                type = (type as ZodArray<ZodTypeAny>)._def.type;
+              }
+
+              if (type.constructor.name == 'ZodObject') {
+                return (type as AnyZodObject).shape;
+              } else {
+                return undefined;
+              }
+            }
+          )?.value;
+
+          if (found) {
+            // If we land on an array (can happen when an array index has errors)
+            // go into the array schema and extract the underlying type
+            while (found && found.constructor.name === 'ZodArray') {
+              found = unwrapZodType(
+                (found as unknown as ZodArray<ZodTypeAny>)._def.type
+              ).zodType;
+            }
+
+            const result = await found.spa(newObj);
+
+            setError(
+              path,
+              result.success
+                ? null
+                : result.error.errors.map((err) => err.message)
+            );
+
+            validated = true;
+          }
+        } else {
+          // SuperForms validator
+          const validator = options.validators as Validators<T>;
+          const found: Validator<T, keyof z.infer<T>> | undefined =
+            checkPath(validator, validationPath)?.value;
+
+          if (found) {
+            const result = await found(newObj as any);
+
+            setError(
+              path,
+              typeof result === 'string' ? [result] : result ?? null
+            );
+
+            validated = true;
+          }
+        }
+      }
+    }
+
+    if (!validated && options.defaultValidator == 'clear') {
+      Errors.update((errors) => {
+        const leaf = checkPath(errors, path);
+        if (leaf) delete leaf.parent[leaf.key];
+        return errors;
+      });
+    }
+  }
 
   if (browser) {
     beforeNavigate((nav) => {
@@ -401,89 +571,87 @@ export function superForm<T extends AnyZodObject>(
     });
 
     // Check client validation on data change
-    let previousForm = { ...initialForm.data };
-    Data.subscribe(async (f) => {
-      if (get(Submitting)) return;
-      for (const key of Object.keys(f)) {
-        if (f[key] === previousForm[key]) continue;
-        if (!f[key] && !previousForm[key]) continue;
+    let previousForm = structuredClone(initialForm.data);
+    let loaded = false;
 
-        // Date comparison is a mess, since it can come from the server as undefined,
-        // or be Invalid Date from a proxy.
-        if (
-          (f[key] instanceof Date || previousForm[key] instanceof Date) &&
-          ((isNaN(f[key]) && isNaN(previousForm[key])) ||
-            f[key]?.getTime() == previousForm[key]?.getTime())
-        ) {
-          continue;
-        }
-
-        //console.log('Field changed:', formId, f, f[key], previousForm[key]);
-
-        const validator = options.validators && options.validators[key];
-        if (validator) {
-          const newError = await validator(f[key]);
-          Errors.update((e) => {
-            if (!newError) delete e[key];
-            else {
-              e[key as keyof z.infer<T>] = Array.isArray(newError)
-                ? newError
-                : [newError];
-            }
-            return e;
-          });
-        } else if (options.defaultValidator == 'clear') {
-          Errors.update((e) => {
-            delete e[key];
-            return e;
-          });
-        }
+    Data.subscribe(async (data) => {
+      if (!loaded) {
+        loaded = true;
+        return;
       }
-      previousForm = { ...f };
+
+      if (get(Submitting)) return;
+      await checkEqual(data, previousForm);
+
+      previousForm = structuredClone(data);
     });
 
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
-      page.subscribe(async (p) => {
-        function error(type: string) {
-          throw new Error(
-            `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
-          );
-        }
-
-        if (p.form && typeof p.form === 'object') {
-          const forms = findForms(p.form);
-          if (!forms.length) error('$page.form (ActionData)');
-
-          for (const newForm of forms) {
-            if (newForm === form || newForm.id !== formId) continue;
-            await _update(
-              newForm as Validation<T>,
-              p.status >= 200 && p.status < 300
+      onDestroy(
+        page.subscribe(async (p) => {
+          function error(type: string) {
+            throw new SuperFormError(
+              `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
             );
           }
-        } else if (p.data && typeof p.data === 'object') {
-          const forms = findForms(p.data);
 
-          // It's a page reload, redirect or error/failure,
-          // so don't trigger any events, just update the data.
-          for (const newForm of forms) {
-            if (newForm === form || newForm.id !== formId) continue;
+          if (p.form && typeof p.form === 'object') {
+            const forms = findForms(p.form);
+            if (!forms.length) error('$page.form (ActionData)');
 
-            rebind(
-              newForm as Validation<T>,
-              p.status >= 200 && p.status < 300,
-              null
-            );
+            for (const newForm of forms) {
+              if (newForm === form || newForm.id !== formId) continue;
+              await _update(
+                newForm as Validation<T, M>,
+                p.status >= 200 && p.status < 300
+              );
+            }
+          } else if (p.data && typeof p.data === 'object') {
+            const forms = findForms(p.data);
+
+            // It's a page reload, redirect or error/failure,
+            // so don't trigger any events, just update the data.
+            for (const newForm of forms) {
+              if (newForm === form || newForm.id !== formId) continue;
+
+              rebind(
+                newForm as Validation<T, M>,
+                p.status >= 200 && p.status < 300
+              );
+            }
           }
-        }
-      });
+        })
+      );
     }
   }
 
   function cancelFlash() {
     if (options.flashMessage && browser)
-      document.cookie = `flash=; Max-Age=0; Path=/;`;
+      document.cookie = `flash=; Max-Age=0; Path=${
+        options.flashMessage.cookiePath ?? '/'
+      };`;
+  }
+
+  function fieldStore<V>(fieldName: string): Writable<V> {
+    const store = writable<V>();
+
+    Data.subscribe((data) => {
+      store.set(data[fieldName]);
+    });
+
+    return {
+      subscribe: store.subscribe,
+      set: (value: V) => {
+        Data.set({ ...get(Data), [fieldName]: value });
+      },
+      update: (cb: (value: V) => V) => {
+        Data.set((form: z.infer<T>) => ({
+          ...form,
+          [fieldName]: cb(form[fieldName])
+        }));
+      }
+    };
   }
 
   return {
@@ -491,15 +659,23 @@ export function superForm<T extends AnyZodObject>(
     errors: Errors,
     message: Message,
     constraints: Constraints,
+    meta: derived(Meta, ($m) => $m),
 
-    fields: derived([Data, Errors, Constraints], ([$D, $E, $C]) => {
-      return Object.keys($D).map((key) => ({
-        name: key,
-        value: $D[key],
-        errors: $E[key],
-        constraints: $C[key],
-        type: initialForm.meta ? initialForm.meta.types[key] : undefined
-      }));
+    fields: derived([Errors, Constraints, Meta], ([$E, $C, $M], set) => {
+      set(
+        Object.fromEntries(
+          Object.keys(get(Data)).map((key) => [
+            key,
+            {
+              name: key,
+              value: fieldStore(key),
+              errors: $E[key],
+              constraints: $C[key],
+              type: $M?.types[key]
+            }
+          ])
+        ) as FormFields<T>
+      );
     }),
 
     tainted: derived(Tainted, ($t) => $t),
@@ -526,10 +702,10 @@ export function superForm<T extends AnyZodObject>(
       ),
 
     firstError: FirstError,
-    allErrors: AllErrors,
+    topErrors: TopErrors,
     update: Data_update,
     reset: (options?) =>
-      _resetForm(options?.keepMessage ? get(Message) : null)
+      _resetForm(options?.keepMessage ? get(Message) : undefined)
   };
 }
 
@@ -537,16 +713,16 @@ export function superForm<T extends AnyZodObject>(
  * Custom use:enhance version. Flash message support, friendly error messages, for usage with initializeForm.
  * @param formEl Form element from the use:formEnhance default parameter.
  */
-function formEnhance<T extends AnyZodObject>(
+function formEnhance<T extends AnyZodObject, M>(
   formEl: HTMLFormElement,
   submitting: Writable<boolean>,
   delayed: Writable<boolean>,
   timeout: Writable<boolean>,
-  errors: Writable<Validation<T>['errors']>,
+  errors: Writable<Validation<T, M>['errors']>,
   Data_update: FormUpdate,
-  options: FormOptions<T>,
-  data: Writable<Validation<T>['data']>,
-  message: Writable<Validation<T>['message']>,
+  options: FormOptions<T, M>,
+  data: Writable<Validation<T, M>['data']>,
+  message: Writable<Validation<T, M>['message']>,
   enableTaintedForm: () => void,
   cancelFlash: () => void
 ) {
@@ -589,8 +765,6 @@ function formEnhance<T extends AnyZodObject>(
       // Find underlying element if it is a FormGroup element
       el = el.querySelector(selector) ?? el;
 
-      //d('Validation error:', el);
-
       const nav = options.stickyNavbar
         ? (document.querySelector(options.stickyNavbar) as HTMLElement)
         : null;
@@ -620,6 +794,8 @@ function formEnhance<T extends AnyZodObject>(
         // Some hidden inputs like from flatpickr cannot be focused.
       }
     };
+
+    rebind();
 
     {
       let state: FetchStatus = FetchStatus.Idle;
@@ -664,6 +840,8 @@ function formEnhance<T extends AnyZodObject>(
           if (!cancelled) Form_scrollToFirstError();
         },
 
+        scrollToFirstError: () => Form_scrollToFirstError(),
+
         isSubmitting: () =>
           state === FetchStatus.Submitting || state === FetchStatus.Delayed
       };
@@ -675,10 +853,13 @@ function formEnhance<T extends AnyZodObject>(
 
   return enhance(formEl, async (submit) => {
     let cancelled = false;
-    if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
-      //d('Prevented form submission');
+    function cancel() {
       cancelled = true;
-      submit.cancel();
+      return submit.cancel();
+    }
+
+    if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
+      cancel();
     } else {
       if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
         if (currentRequest) currentRequest.abort();
@@ -686,80 +867,74 @@ function formEnhance<T extends AnyZodObject>(
       currentRequest = submit.controller;
 
       if (options.onSubmit) {
-        const submit2 = {
-          ...submit,
-          cancel: () => {
-            cancelled = true;
-            return submit.cancel();
-          }
-        };
-
-        options.onSubmit(submit2);
+        await options.onSubmit({ ...submit, cancel });
       }
     }
 
     if (cancelled) {
       cancelFlash();
     } else {
-      switch (options.clearOnSubmit) {
-        case 'errors-and-message':
-          errors.set({});
-          message.set(null);
-          break;
+      // Client validation
+      if (options.validators) {
+        if (options.validators.constructor.name == 'ZodObject') {
+          const validator = options.validators as AnyZodObject;
+          const result = await validator.safeParseAsync(get(data));
 
-        case 'errors':
-          errors.set({});
-          break;
-
-        case 'message':
-          message.set(null);
-          break;
-      }
-
-      if (
-        options.flashMessage &&
-        (options.clearOnSubmit == 'errors-and-message' ||
-          options.clearOnSubmit == 'message')
-      ) {
-        options.flashMessage.module.getFlash(page).set(undefined);
-      }
-
-      //d('Submitting');
-      htmlForm.submitting();
-
-      switch (options.dataType) {
-        case 'json':
-          submit.data.set('__superform_json', stringify(get(data)));
-          break;
-
-        case 'formdata':
-          for (const [key, value] of Object.entries(get(data))) {
-            submit.data.set(
-              key,
-              value instanceof Blob ? value : `${value || ''}`
-            );
+          if (!result.success) {
+            errors.set(mapErrors<T>(result.error.format()) as any);
+            cancel();
+            htmlForm.scrollToFirstError();
           }
-          break;
+        }
+      }
+
+      if (!cancelled) {
+        switch (options.clearOnSubmit) {
+          case 'errors-and-message':
+            errors.set({});
+            message.set(undefined);
+            break;
+
+          case 'errors':
+            errors.set({});
+            break;
+
+          case 'message':
+            message.set(undefined);
+            break;
+        }
+
+        if (
+          options.flashMessage &&
+          (options.clearOnSubmit == 'errors-and-message' ||
+            options.clearOnSubmit == 'message')
+        ) {
+          options.flashMessage.module.getFlash(page).set(undefined);
+        }
+
+        htmlForm.submitting();
+
+        if (options.dataType === 'json') {
+          const postData = get(data);
+          submit.data.set('__superform_json', stringify(postData));
+          Object.keys(postData).forEach((key) => submit.data.delete(key));
+        }
       }
     }
 
     return async ({ result }) => {
-      //d('Completed: ', result, options);
       currentRequest = null;
       let cancelled = false;
+
       if (options.onResult) {
         await options.onResult({
           result,
-          update: Data_update,
           formEl,
           cancel: () => (cancelled = true)
         });
       }
 
       if (!cancelled) {
-        const status = Math.floor(result.status || 500);
-        let errorMessage: string | undefined = undefined;
-
         if (result.type !== 'error') {
           if (result.type === 'success' && options.invalidateAll) {
             await invalidateAll();
@@ -782,24 +957,13 @@ function formEnhance<T extends AnyZodObject>(
               // Transform to failure, to avoid data loss
               await applyAction({
                 type: 'failure',
-                status
+                status: Math.floor(result.status || 500)
               });
             }
           }
 
           // Check if the error message should be replaced
-          if (options.onError == 'ignore') {
-            // Ignore error
-          } else if (options.onError == 'set-message') {
-            message.set(
-              (errorMessage =
-                result.error.message !== undefined
-                  ? result.error.message
-                  : `Error: ${status}`)
-            );
-          } else if (typeof options.onError === 'string') {
-            message.set((errorMessage = options.onError));
-          } else if (options.onError) {
+          if (options.onError && options.onError != 'apply') {
             await options.onError(result, message);
           }
         }
@@ -808,24 +972,12 @@ function formEnhance<T extends AnyZodObject>(
         // if we have redirected (which is the point with the flash message!)
         if (options.flashMessage) {
           if (result.type == 'error' && options.flashMessage.onError) {
-            if (
-              errorMessage &&
-              result.error &&
-              typeof result.error === 'object' &&
-              'message' in result.error
-            ) {
-              // Grab the modified error message from onError option
-              result.error.message = errorMessage;
-            }
-
-            options.flashMessage.module.getFlash(page).set(
-              options.flashMessage.onError({
-                ...result,
-                status: result.status ?? status
-              })
+            await options.flashMessage.onError(
+              result,
+              options.flashMessage.module.getFlash(page)
             );
           } else if (result.type != 'error') {
-            options.flashMessage.module.updateFlash(page);
+            await options.flashMessage.module.updateFlash(page);
           }
         }
       } else {

@@ -7,7 +7,7 @@ import { RateLimiter } from 'sveltekit-rate-limiter';
 
 const limiter = new RateLimiter({
   rates: {
-    IPUA: [3, 'm']
+    IPUA: [5, 'm']
   }
 });
 
@@ -22,7 +22,7 @@ const userSchema = z.object({
     .refine((email) => !email.includes('spam'), {
       message: 'Email cannot contain spam.'
     }),
-  gender: z.enum(['male', 'female', 'other']).nullish()
+  gender: z.enum(['male', 'female', 'other']).default('male').nullish()
 });
 
 // Let's worry about id collisions later
@@ -73,7 +73,10 @@ export const actions = {
 
     console.log('POST', data);
 
-    const form = await superValidate(data, crudSchema);
+    const form = await superValidate<typeof crudSchema, string>(
+      data,
+      crudSchema
+    );
     form.id = data.get('formid')?.toString();
 
     console.log('FORM', form);

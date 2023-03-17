@@ -1,17 +1,18 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import type { Validation, ValidationErrors } from '..';
+import { SuperFormError, type RawShape, type Validation } from '..';
 import {
-  checkMissingFields,
   entityData,
   valueOrDefault,
   zodTypeInfo,
+  type UnwrappedEntity,
   type ZodTypeInfo
 } from './entity';
 
 import {
   z,
   type AnyZodObject,
+  ZodObject,
   ZodAny,
   ZodString,
   ZodNumber,
@@ -23,14 +24,27 @@ import {
   ZodBigInt,
   ZodEnum,
   ZodNativeEnum,
-  ZodSymbol
+  ZodSymbol,
+  type ZodTypeAny,
+  ZodEffects
 } from 'zod';
+
+import { mapErrors } from '$lib/entity';
 
 export { defaultEntity } from './entity';
 
+type NonObjectArrayFields<T extends AnyZodObject> = keyof {
+  [Property in keyof z.infer<T> as UnwrappedEntity<
+    RawShape<T>[Property]
+  > extends AnyZodObject | ZodArray<ZodTypeAny>
+    ? never
+    : Property]: true;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(
-  form: Validation<T>,
-  field: keyof z.infer<T>,
+  form: Validation<T, unknown>,
+  field: NonObjectArrayFields<T>,
   error: string | string[] | null,
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
@@ -39,18 +53,23 @@ export function setError<T extends AnyZodObject>(
 ) {
   const errArr = Array.isArray(error) ? error : error ? [error] : [];
 
-  if (form.errors[field] && !options.overwrite) {
-    form.errors[field] = form.errors[field]?.concat(errArr);
+  // The 'any' casts here are ok since NonObjectArrayFields is used.
+  if (Array.isArray(form.errors[field]) && !options.overwrite) {
+    const errors = form.errors[field] as string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form.errors[field] = errors.concat(errArr) as any;
   } else {
-    form.errors[field] = errArr;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form.errors[field] = errArr as any;
   }
   form.valid = false;
   return fail(options.status ?? 400, { form });
 }
 
-export function noErrors<T extends AnyZodObject>(
-  form: Validation<T>
-): Validation<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function noErrors<T extends AnyZodObject, M = any>(
+  form: Validation<T, M>
+): Validation<T, M> {
   return { ...form, errors: {} };
 }
 
@@ -121,7 +140,9 @@ function formDataToValidation<T extends AnyZodObject>(
       else if (literalType === 'number') return parseFloat(value ?? '');
       else if (literalType === 'boolean') return Boolean(value).valueOf();
       else {
-        throw new Error('Unsupported ZodLiteral type: ' + literalType);
+        throw new SuperFormError(
+          'Unsupported ZodLiteral type: ' + literalType
+        );
       }
     } else if (
       zodType instanceof ZodUnion ||
@@ -141,7 +162,7 @@ function formDataToValidation<T extends AnyZodObject>(
       return Symbol(value);
     }
 
-    throw new Error(
+    throw new SuperFormError(
       'Unsupported Zod default type: ' + zodType.constructor.name
     );
   }
@@ -191,7 +212,11 @@ export type SuperValidateOptions<T extends AnyZodObject> = {
  * @param options.defaults An object with keys that can be a default value, or a function that will be called to get the default value.
  * @param options.noErrors For load requests, this is usually set to prevent validation errors from showing directly on a GET request.
  */
-export async function superValidate<T extends AnyZodObject>(
+export async function superValidate<
+  T extends AnyZodObject,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
   data:
     | RequestEvent
     | Request
@@ -199,9 +224,9 @@ export async function superValidate<T extends AnyZodObject>(
     | Partial<z.infer<T>>
     | null
     | undefined,
-  schema: T,
+  schema: T | ZodEffects<T>,
   options: SuperValidateOptions<T> = {}
-): Promise<Validation<T>> {
+): Promise<Validation<T, M>> {
   options = {
     checkMissingEntityFields: true,
     noErrors: false,
@@ -209,7 +234,22 @@ export async function superValidate<T extends AnyZodObject>(
     ...options
   };
 
-  const entityInfo = entityData(schema);
+  const originalSchema = schema;
+
+  let wrappedSchema = schema;
+  while (wrappedSchema instanceof ZodEffects) {
+    wrappedSchema = (wrappedSchema as ZodEffects<T>)._def.schema;
+  }
+
+  if (!(wrappedSchema instanceof ZodObject)) {
+    throw new SuperFormError(
+      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine at the end.'
+    );
+  }
+
+  const realSchema = wrappedSchema as T;
+
+  const entityInfo = entityData(realSchema);
   const schemaKeys = entityInfo.keys;
 
   function parseFormData(data: FormData) {
@@ -232,7 +272,7 @@ export async function superValidate<T extends AnyZodObject>(
     const superJson = tryParseSuperJson(data);
     return superJson
       ? superJson
-      : formDataToValidation(schema, schemaKeys, data);
+      : formDataToValidation(realSchema, schemaKeys, data);
   }
 
   async function tryParseFormData(request: Request) {
@@ -245,31 +285,21 @@ export async function superValidate<T extends AnyZodObject>(
     return parseFormData(formData);
   }
 
-  let checkMissing = true;
-
   // If FormData exists, don't check for missing fields.
   // Checking only at GET requests, basically, where
   // the data is coming from the DB.
   if (data instanceof FormData) {
     data = parseFormData(data);
-    checkMissing = false;
   } else if (data instanceof Request) {
     data = await tryParseFormData(data);
-    checkMissing = !data;
   } else if (data && data.request instanceof Request) {
     data = await tryParseFormData(data.request);
-    checkMissing = !data;
   } else if (data) {
     // Make a copy of the data, so defaults can be applied to it.
     data = { ...data };
   }
 
-  if (checkMissing && options.checkMissingEntityFields) {
-    // Empty or Partial entity
-    checkMissingFields(schema, data);
-  }
-
-  let output: Validation<T>;
+  let output: Validation<T, M>;
 
   if (!data) {
     output = {
@@ -278,7 +308,6 @@ export async function superValidate<T extends AnyZodObject>(
       // Copy the default entity so it's not modified
       data: { ...entityInfo.defaultEntity },
       empty: true,
-      message: null,
       constraints: entityInfo.constraints
     };
 
@@ -292,12 +321,12 @@ export async function superValidate<T extends AnyZodObject>(
       setValidationDefaults(partialData, options.defaults);
     }
 
-    const status = schema.safeParse(partialData);
+    const status = originalSchema.safeParse(partialData);
 
     if (!status.success) {
       const errors = options.noErrors
         ? {}
-        : (status.error.flatten().fieldErrors as ValidationErrors<T>);
+        : mapErrors<T>(status.error.format());
 
       output = {
         valid: false,
@@ -311,7 +340,6 @@ export async function superValidate<T extends AnyZodObject>(
           ])
         ),
         empty: false,
-        message: null,
         constraints: entityInfo.constraints
       };
     } else {
@@ -320,7 +348,6 @@ export async function superValidate<T extends AnyZodObject>(
         errors: {},
         data: status.data,
         empty: false,
-        message: null,
         constraints: entityInfo.constraints
       };
     }

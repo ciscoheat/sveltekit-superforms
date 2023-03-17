@@ -330,16 +330,16 @@ onSubmit: SubmitFunction;
 `onSubmit` hooks you in to SvelteKit's `use:enhance` function. See SvelteKit docs for the [SubmitFunction](https://kit.svelte.dev/docs/types#public-types-submitfunction) signature.
 
 ```ts
-onResult: ({ result, update, formEl, cancel }) => void
+onResult: ({ result, formEl, cancel }) => void
 ```
 
-When you want detailed control, `onResult` gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result` and an `update` function, so you can decide if you want to update the form at all.
-
-The `update(result, untaint?)` function takes an `ActionResult` of type `success` or `failure`, and an optional `untaint` parameter which can be used to untaint the form, so the dialog won't appear when navigating away. If `untaint` isn't specified, a result status between 200-299 will untaint the form.
+When you want detailed control, `onResult` gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result`, so you can decide if you want to update the form at all. You can modify it, which will be used further down the event chain.
 
 `formEl` is the `HTMLFormElement` of the form.
 
-`cancel()` is a function which will completely cancel the rest of the event chain and any form updates. It's not the same as not calling `update`, since without cancelling, the SvelteKit [use:enhance](https://kit.svelte.dev/docs/form-actions#progressive-enhancement-use-enhance) behaviour will kick in, with some notable changes:
+`cancel()` is a function which will completely cancel the rest of the event chain and any form updates.
+
+A result status between `200-299` will untaint the form.
 
 ## Differences from SvelteKit's use:enhance
 
@@ -469,14 +469,14 @@ This one is more for the sake of the server than the user. When set to `prevent`
 
 ## sveltekit-flash-message support
 
-The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property of `Validation<T>` doesn't persist when redirecting to a different page. If you have it installed and configured, you need to specify this option to make things work:
+The sister library to `sveltekit-superforms` is called [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message), a useful addon since the `message` property doesn't persist when redirecting to a different page. If you have it installed and configured, you need to specify this option to make things work:
 
 ```ts
 import * as flashModule from 'sveltekit-flash-message/client';
 
 flashMessage: {
   module: flashModule,
-  onError?: (errorResult: ActionResult<'error'>) => App.PageData['flash']
+  onError?: (error: ActionResult<'error'>) => App.PageData['flash']
 }
 ```
 
@@ -487,12 +487,10 @@ The flash message is set automatically for every `ActionResult` except `error`, 
 I've been saving the best for last - If you're fine with JavaScript being a requirement for posting, you can bypass the annoyance that everything is a `string` when we are posting forms:
 
 ```ts
-dataType: 'form' | 'formdata' | 'json' = 'form'
+dataType: 'form' 'json' = 'form'
 ```
 
-By simply setting the `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc!
-
-If this bliss is too much to handle, setting `dataType` to `formdata`, posts the data as a `FormData` instance based on the data structure instead of the content of the `<form>` element, so you don't have to set names for the form fields anymore (this also applies when set to `json`). This can make the html for a form quite slim:
+By simply setting `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc! You don't even have to set names for the form fields anymore, making the html for a form quite slim:
 
 ```svelte
 <form method="POST" use:enhance>

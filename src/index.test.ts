@@ -5,9 +5,10 @@ import {
   defaultEntity
 } from '$lib/server';
 import { assert, expect, test } from 'vitest';
-import { z } from 'zod';
+import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
+import { SuperFormError } from '$lib';
 
 const slugify = (
   str: string,
@@ -211,7 +212,7 @@ test('Optional values', async () => {
 
   const output = await superValidate({ other: 'Test' }, schema);
   expect(output.valid).equals(true);
-  expect(output.message).equals(null);
+  expect(output.message).toBeUndefined();
   expect(output.data.name).toBeUndefined();
   expect(output.data.other).equals('Test');
   expect(output.errors).toStrictEqual({});
@@ -229,7 +230,10 @@ test('Optional values', async () => {
 test('Adding errors with setError', async () => {
   const schema = z.object({
     scopeId: z.number().int().min(1),
-    name: z.string().nullable()
+    name: z.string().nullable(),
+    object: z.object({ name: z.string() }).optional(),
+    arr: z.string().array().optional(),
+    enumber: z.enum(['test', 'testing']).optional()
   });
 
   const output = await superValidate({ scopeId: 3, name: null }, schema);
@@ -239,8 +243,19 @@ test('Adding errors with setError', async () => {
   expect(output.data.scopeId).toEqual(3);
   expect(output.data.name).toBeNull();
 
-  const err = { scopeId: ['This is an error'] };
-  setError(output, 'scopeId', 'This is an error');
+  const err = {
+    scopeId: ['This is an error'],
+    enumber: ['This should be ok', 'Still ok'],
+    arr: ['This should cause a type error'],
+    object: ['This should cause a type error']
+  };
+
+  setError(output, 'scopeId', 'This should not be displayed.');
+  setError(output, 'scopeId', 'This is an error', { overwrite: true });
+  setError(output, 'object', 'This should cause a type error');
+  setError(output, 'arr', 'This should cause a type error');
+  setError(output, 'enumber', 'This should be ok');
+  setError(output, 'enumber', 'Still ok');
 
   assert(!output.valid);
   expect(output.errors).toStrictEqual(err);
@@ -278,12 +293,6 @@ test('Clearing errors with noErrors', async () => {
 });
 
 test('Default values', async () => {
-  await expect(
-    superValidate(null, z.object({ id: z.literal(123) }))
-  ).rejects.toThrowError(
-    'Unsupported default value for schema field(s): "id" (ZodLiteral). Add default, optional or nullable to those fields in the schema.'
-  );
-
   const d = new Date();
 
   // Note that no default values for strings are needed,
@@ -341,7 +350,7 @@ test('More default values', async () => {
   expect(form.valid).toEqual(false);
   expect(form.errors).toEqual({});
   expect(form.empty).toEqual(true);
-  expect(form.message).toEqual(null);
+  expect(form.message).toBeUndefined();
 
   expect(form.constraints).toStrictEqual({
     agree: { required: true },
@@ -355,7 +364,9 @@ test('More default values', async () => {
     proxyNumber: { required: true, min: 10 },
     proxyString: { required: true },
     trimmedString: { required: true },
-    numberArray: { required: true }
+    numberArray: {
+      /*_constraints: { min: 3, required: true },*/ required: true
+    }
   });
 });
 
@@ -391,11 +402,10 @@ test('Zod enums and native enums', async () => {
       gender: null
     },
     empty: true,
-    message: null,
     constraints: {
       color: { required: true },
-      fruit: { required: true },
-      fruitsstring: { required: true }
+      fruit: { /*_constraints: { required: true },*/ required: true },
+      fruitsstring: { /*_constraints: { required: true },*/ required: true }
     },
     meta: {
       types: {
@@ -430,11 +440,10 @@ test('Posting Zod enums and native enums', async () => {
       fruitsstring: [FruitsString.Apple, FruitsString.Banana],
       gender: null
     },
-    message: null,
     constraints: {
       color: { required: true },
-      fruit: { required: true },
-      fruitsstring: { required: true }
+      fruit: { /*_constraints: { required: true },*/ required: true },
+      fruitsstring: { /*_constraints: { required: true },*/ required: true }
     }
   });
 });
@@ -454,13 +463,125 @@ test('Agressive type coercion to avoid schema duplication', async () => {
     errors: {},
     data: { agree: false, fruit: undefined, number: NaN },
     empty: true,
-    message: null,
     constraints: {
       agree: { required: true },
       fruit: { required: true },
       number: { min: 0, required: true }
     }
   });
+});
+
+test('Passing an array schema instead of an object', async () => {
+  const schema = z
+    .object({
+      name: z.string()
+    })
+    .array();
+
+  await expect(
+    superValidate(null, z.string() as unknown as AnyZodObject)
+  ).rejects.toThrowError(SuperFormError);
+
+  await expect(
+    superValidate(null, schema as unknown as AnyZodObject)
+  ).rejects.toThrowError(SuperFormError);
+});
+
+test('Deeply nested objects', async () => {
+  const schema = z.object({
+    id: z.number().positive(),
+    user: z.object({
+      name: z.string().min(2),
+      posts: z.object({ subject: z.string().min(1) }).array()
+    })
+  });
+
+  const data = new FormData();
+  data.set('id', '123');
+
+  const form = await superValidate(data, schema);
+
+  expect(form.valid).toBeFalsy();
+  expect(form.empty).toBeFalsy();
+
+  expect(form.errors).toStrictEqual({
+    user: { name: ['String must contain at least 2 character(s)'] }
+  });
+  expect(form.data).toStrictEqual({
+    id: 123,
+    user: {
+      name: '',
+      posts: []
+    }
+  });
+});
+
+const nestedSchema = z.object({
+  id: z.number().positive(),
+  users: z
+    .object({
+      name: z.string().min(2).regex(/X/),
+      posts: z
+        .object({ subject: z.string().min(1) })
+        .array()
+        .min(2)
+        .optional()
+    })
+    .array()
+});
+
+test('Deeply nested errors', async () => {
+  const form = await superValidate(
+    { users: [{ name: 'A', posts: [{ subject: '' }] }] },
+    nestedSchema
+  );
+
+  expect(form.errors).toStrictEqual({
+    id: ['Required'],
+    users: {
+      '0': {
+        name: ['String must contain at least 2 character(s)', 'Invalid'],
+        posts: {
+          '0': { subject: ['String must contain at least 1 character(s)'] },
+          _errors: ['Array must contain at least 2 element(s)']
+        }
+      }
+    }
+  });
+});
+
+test('Deeply nested constraints', async () => {
+  const form = await superValidate(null, nestedSchema);
+
+  expect(form.constraints).toStrictEqual({
+    id: { min: 0, required: true },
+    users: {
+      /*_constraints: { required: true },*/
+      name: { required: true, minlength: 2, pattern: 'X' },
+      posts: {
+        /*_constraints: { min: 2 },*/
+        subject: { required: true, minlength: 1 }
+      }
+    }
+  });
+});
+
+test('Refined schemas', async () => {
+  const form = await superValidate(
+    { id: 123, users: [{ name: 'Xenon' }] },
+    nestedSchema.superRefine((check, ctx) => {
+      if (check.id > 100) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Too high ID',
+          path: ['id']
+        });
+      }
+    })
+  );
+
+  assert(!form.valid);
+  expect(form.errors).toStrictEqual({ id: ['Too high ID'] });
 });
 
 test('Deeply nested objects', async () => {

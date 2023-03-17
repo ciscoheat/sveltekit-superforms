@@ -174,15 +174,16 @@ test('Nullable values', async () => {
   expect(output.scopeId).equals(0);
   expect(output.name).equals(null);
 
-  const output4 = await superValidate(null, schema, {
-    defaults: {
-      scopeId: 7,
-      name: (n, data) => `Test${data.scopeId}${n}`
-    }
-  });
-  assert(!output4.valid);
+  const extended = schema
+    .extend({
+      scopeId: schema.shape.scopeId.default(7)
+    })
+    .transform((data) => ({ ...data, name: `Test${data.scopeId}` }));
+
+  const output4 = await superValidate(null, extended);
+  assert(output4.valid);
   expect(output4.data.scopeId).toEqual(7);
-  expect(output4.data.name).toEqual('Test7null');
+  expect(output4.data.name).toEqual('Test7');
 
   // If null is passed in and all fields have defaults, return them
   const output2 = defaultEntity(
@@ -190,19 +191,6 @@ test('Nullable values', async () => {
   );
   expect(output2.scopeId).toEqual(10);
   expect(output2.name).toBeNull();
-
-  // If not null and a key is missing, it should fail since
-  // name is nullable but not optional.
-  const output3 = await superValidate({ scopeId: 3 }, schema, {
-    defaults: {
-      scopeId: 2,
-      name: (n, data) => `Test${data.scopeId}${n}`
-    }
-  });
-  assert(output3.valid);
-  expect(output3.data.scopeId).toEqual(3);
-  expect(output3.data.name).toEqual('Test3undefined');
-  expect(output3.errors).toStrictEqual({});
 });
 
 test('Optional values', async () => {
@@ -298,13 +286,14 @@ test('Default values', async () => {
 
   // Note that no default values for strings are needed,
   // they will be set to '' automatically.
-  const e1 = await superValidate(null, userForm, {
-    defaults: {
-      id: undefined,
-      createdAt: () => d, // Must use a callback, since field has a default in the schema
-      isBool: true
-    }
-  });
+  const e1 = await superValidate(
+    null,
+    userForm.extend({
+      id: userForm.shape.id.default(undefined as unknown as number),
+      isBool: userForm.shape.isBool.default(true),
+      createdAt: userForm.shape.createdAt.removeDefault().default(d)
+    })
+  );
 
   expect(e1.data).toStrictEqual({
     id: undefined,
@@ -320,10 +309,13 @@ test('Default values', async () => {
 
 test('More default values', async () => {
   const d = new Date();
-  const e = await superValidate(null, _dataTypeForm, {
-    // Must use a callback, since field has a default in the schema
-    defaults: { date: () => d, coercedDate: d }
-  });
+  const e = await superValidate(
+    null,
+    _dataTypeForm.extend({
+      date: _dataTypeForm.shape.date.removeDefault().default(d),
+      coercedDate: _dataTypeForm.shape.coercedDate.default(d)
+    })
+  );
 
   expect(e.data).toStrictEqual({
     agree: true,
@@ -599,8 +591,8 @@ test('Deeply nested objects', async () => {
 
   const form = await superValidate(data, schema);
 
-  expect(form.valid).toBeFalsy();
-  expect(form.empty).toBeFalsy();
+  expect(form.valid).toStrictEqual(false);
+  expect(form.empty).toStrictEqual(false);
 
   expect(form.errors).toStrictEqual({
     user: { name: ['String must contain at least 2 character(s)'] }
@@ -615,7 +607,7 @@ test('Deeply nested objects', async () => {
   });
 });
 
-test.only('AllErrors', async () => {
+test('AllErrors', async () => {
   const form = await superValidate(
     { users: [{ name: 'A', posts: [{ subject: '' }] }] },
     nestedSchema

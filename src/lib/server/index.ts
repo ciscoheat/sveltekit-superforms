@@ -1,6 +1,11 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import { SuperFormError, type RawShape, type Validation } from '..';
+import {
+  SuperFormError,
+  type RawShape,
+  type Validation,
+  type ValidationErrors
+} from '..';
 import { entityData, valueOrDefault, type UnwrappedEntity } from './entity';
 
 import { unwrapZodType, type ZodTypeInfo } from '../entity';
@@ -8,6 +13,7 @@ import { unwrapZodType, type ZodTypeInfo } from '../entity';
 import {
   z,
   type AnyZodObject,
+  type ZodTypeAny,
   ZodObject,
   ZodAny,
   ZodString,
@@ -21,7 +27,6 @@ import {
   ZodEnum,
   ZodNativeEnum,
   ZodSymbol,
-  type ZodTypeAny,
   ZodEffects
 } from 'zod';
 
@@ -166,38 +171,9 @@ function formDataToValidation<T extends AnyZodObject>(
   return output as z.infer<T>;
 }
 
-type DefaultFields<T extends AnyZodObject> = Partial<{
-  [Property in keyof z.infer<T>]:
-    | z.infer<T>[Property]
-    | ((
-        value: z.infer<T>[Property] | null | undefined,
-        data: z.infer<T>
-      ) => z.infer<T>[Property] | null | undefined);
-}>;
-
-function setValidationDefaults<T extends AnyZodObject>(
-  data: z.infer<T>,
-  fields: DefaultFields<T>
-) {
-  for (const stringField of Object.keys(fields)) {
-    const field = stringField as keyof typeof data;
-    const currentData = data[field];
-
-    if (typeof fields[field] === 'function') {
-      // eslint-disable-next-line @typescript-eslint/ban-types
-      const func = fields[field] as Function;
-      data[field] = func(currentData, data);
-    } else if (!currentData) {
-      data[field] = fields[field] as never;
-    }
-  }
-}
-
-export type SuperValidateOptions<T extends AnyZodObject> = {
+export type SuperValidateOptions = {
   noErrors?: boolean;
   includeMeta?: boolean;
-  checkMissingEntityFields?: boolean;
-  defaults?: DefaultFields<T>;
   id?: true | string;
 };
 
@@ -220,11 +196,17 @@ export async function superValidate<
     | Partial<z.infer<T>>
     | null
     | undefined,
-  schema: T | ZodEffects<T>,
-  options: SuperValidateOptions<T> = {}
+  // This looks silly but recursively unwrapping the type with infer simply didn't work...
+  schema:
+    | T
+    | ZodEffects<T>
+    | ZodEffects<ZodEffects<T>>
+    | ZodEffects<ZodEffects<ZodEffects<T>>>
+    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>, // 5 should be enough
+  options: SuperValidateOptions = {}
 ): Promise<Validation<T, M>> {
   options = {
-    checkMissingEntityFields: true,
     noErrors: false,
     includeMeta: false,
     ...options
@@ -233,13 +215,16 @@ export async function superValidate<
   const originalSchema = schema;
 
   let wrappedSchema = schema;
+  let hasEffects = false;
+
   while (wrappedSchema instanceof ZodEffects) {
+    hasEffects = true;
     wrappedSchema = (wrappedSchema as ZodEffects<T>)._def.schema;
   }
 
   if (!(wrappedSchema instanceof ZodObject)) {
     throw new SuperFormError(
-      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine at the end.'
+      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
     );
   }
 
@@ -290,39 +275,49 @@ export async function superValidate<
     data = await tryParseFormData(data);
   } else if (data && data.request instanceof Request) {
     data = await tryParseFormData(data.request);
-  } else if (data) {
+  }
+  /*
+   else if (data) {
     // Make a copy of the data, so defaults can be applied to it.
     data = { ...data };
   }
+  */
 
   let output: Validation<T, M>;
 
   if (!data) {
-    output = {
-      valid: false,
-      errors: {},
+    let errors: ValidationErrors<RawShape<T>>;
+    let valid = false;
+
+    if (hasEffects) {
+      const result = originalSchema.safeParse(entityInfo.defaultEntity);
+
+      valid = result.success;
+      data = result.success ? result.data : data;
+      errors =
+        result.success || options.noErrors
+          ? {}
+          : mapErrors<T>(result.error.format());
+    } else {
       // Copy the default entity so it's not modified
-      data: { ...entityInfo.defaultEntity },
+      errors = {};
+    }
+
+    output = {
+      valid,
+      errors,
+      data: data ?? structuredClone(entityInfo.defaultEntity),
       empty: true,
       constraints: entityInfo.constraints
     };
-
-    if (options.defaults) {
-      setValidationDefaults(output.data, options.defaults);
-    }
   } else {
     const partialData = data as Partial<z.infer<T>>;
+    const result = originalSchema.safeParse(partialData);
 
-    if (options.defaults) {
-      setValidationDefaults(partialData, options.defaults);
-    }
-
-    const status = originalSchema.safeParse(partialData);
-
-    if (!status.success) {
+    if (!result.success) {
       const errors = options.noErrors
         ? {}
-        : mapErrors<T>(status.error.format());
+        : mapErrors<T>(result.error.format());
 
       output = {
         valid: false,
@@ -330,9 +325,9 @@ export async function superValidate<
         data: Object.fromEntries(
           schemaKeys.map((key) => [
             key,
-            partialData[key] === undefined
-              ? entityInfo.defaultEntity[key]
-              : partialData[key]
+            key in partialData
+              ? partialData[key]
+              : structuredClone(entityInfo.defaultEntity[key])
           ])
         ),
         empty: false,
@@ -342,7 +337,7 @@ export async function superValidate<
       output = {
         valid: true,
         errors: {},
-        data: status.data,
+        data: result.data,
         empty: false,
         constraints: entityInfo.constraints
       };

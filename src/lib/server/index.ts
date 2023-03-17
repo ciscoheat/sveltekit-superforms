@@ -1,13 +1,9 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import { SuperFormError, type RawShape, type Validation } from '..';
-import {
-  entityData,
-  valueOrDefault,
-  zodTypeInfo,
-  type UnwrappedEntity,
-  type ZodTypeInfo
-} from './entity';
+import { entityData, valueOrDefault, type UnwrappedEntity } from './entity';
+
+import { unwrapZodType, type ZodTypeInfo } from '../entity';
 
 import {
   z,
@@ -125,7 +121,7 @@ function formDataToValidation<T extends AnyZodObject>(
     } else if (zodType instanceof ZodDate) {
       return new Date(value ?? '');
     } else if (zodType instanceof ZodArray) {
-      const arrayType = zodTypeInfo(zodType._def.type);
+      const arrayType = unwrapZodType(zodType._def.type);
       return parseEntry(field, value, arrayType);
     } else if (zodType instanceof ZodBigInt) {
       try {

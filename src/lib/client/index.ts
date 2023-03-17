@@ -22,12 +22,7 @@ import { SuperFormError, type RawShape, type Validation } from '..';
 import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type FormFields } from '..';
-import {
-  mapErrors,
-  unwrapZodType,
-  checkPath,
-  findErrors
-} from '$lib/entity';
+import { mapErrors, unwrapZodType, checkPath, findErrors } from '../entity';
 
 enum FetchStatus {
   Idle = 0,

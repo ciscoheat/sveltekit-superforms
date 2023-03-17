@@ -5,6 +5,8 @@ import {
   type RawShape
 } from '..';
 
+import { unwrapZodType, type ZodTypeInfo } from '../entity';
+
 import {
   z,
   type ZodTypeAny,
@@ -32,14 +34,6 @@ export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
   : T extends ZodEffects<infer U>
   ? UnwrappedEntity<U>
   : T;
-
-export type ZodTypeInfo = {
-  zodType: ZodTypeAny;
-  isNullable: boolean;
-  isOptional: boolean;
-  hasDefault: boolean;
-  defaultValue: unknown;
-};
 
 type EntityRecord<T extends AnyZodObject, K> = Record<keyof z.infer<T>, K>;
 
@@ -110,44 +104,8 @@ const entityCache: WeakMap<AnyZodObject, Entity<AnyZodObject>> = new WeakMap<
 
 ///// Factory functions for Entity ///////////////////////////////////////////
 
-export function zodTypeInfo(zodType: ZodTypeAny): ZodTypeInfo {
-  let _wrapped = true;
-  let isNullable = false;
-  let isOptional = false;
-  let hasDefault = false;
-  let defaultValue: unknown = undefined;
-
-  //let i = 0;
-  while (_wrapped) {
-    //console.log(' '.repeat(++i * 2) + zodType.constructor.name);
-    if (zodType instanceof ZodNullable) {
-      isNullable = true;
-      zodType = zodType.unwrap();
-    } else if (zodType instanceof ZodDefault) {
-      hasDefault = true;
-      defaultValue = zodType._def.defaultValue();
-      zodType = zodType._def.innerType;
-    } else if (zodType instanceof ZodOptional) {
-      isOptional = true;
-      zodType = zodType.unwrap();
-    } else if (zodType instanceof ZodEffects) {
-      zodType = zodType._def.schema;
-    } else {
-      _wrapped = false;
-    }
-  }
-
-  return {
-    zodType,
-    isNullable,
-    isOptional,
-    hasDefault,
-    defaultValue
-  };
-}
-
 function schemaInfo<T extends AnyZodObject>(schema: T) {
-  return _mapSchema(schema, (obj) => zodTypeInfo(obj));
+  return _mapSchema(schema, (obj) => unwrapZodType(obj));
 }
 
 export function valueOrDefault(
@@ -277,7 +235,7 @@ function constraints<T extends AnyZodObject>(
   }
 
   function mapField(key: string, value: ZodTypeAny): any {
-    const info = zodTypeInfo(value);
+    const info = unwrapZodType(value);
     value = info.zodType;
     if (value instanceof ZodArray) {
       return mapField(key, value._def.type);
@@ -301,7 +259,7 @@ function constraints<T extends AnyZodObject>(
 function meta<T extends AnyZodObject>(schema: T) {
   return {
     types: _mapSchema(schema, (obj) => {
-      let type = zodTypeInfo(obj).zodType;
+      let type = unwrapZodType(obj).zodType;
       let name = '';
       let depth = 0;
       while (type instanceof ZodArray) {

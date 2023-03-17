@@ -81,9 +81,9 @@
 
 {#if display}
   <div class="super-debug">
-    {#if status}
       <div class="super-debug--status {label === "" ? 'absolute inset-x-0 top-0' : ''}">
         <div class="super-debug--label">{label}</div>
+        {#if status}
         <div
           class:info={$page.status < 200}
           class:success={$page.status >= 200 && $page.status < 300}
@@ -92,8 +92,8 @@
         >
           {$page.status}
         </div>
+        {/if}
       </div>
-    {/if}
     <pre class="super-debug--pre {label === "" ? 'pt-4' : 'pt-0'}" bind:this={ref}><code
         class="super-debug--code"
         ><slot

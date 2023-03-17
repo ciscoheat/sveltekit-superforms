@@ -5,6 +5,38 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2023-03-17
+
+### Changed
+
+- `form.message` is now of `any` type, and uses `undefined` instead of `null` to signify no value.
+- `options.onError` can now only be set to `apply`, or a callback `(result, message) => void` for handling the error result. It does not automatically set the error message anymore, since it can be of any type.
+- The signature for `allErrors` and `firstError` is now `{ path: string[], message: string }`.
+- `SuperFormError` is thrown instead of `Error`.
+- The callback for `options.flashMessage.onError` now follows the same signature as `options.onError`.
+- If `options.dataType` isn't set to `json` and a nested object is detected in the data sent to `superForm`, an error will be thrown.
+
+### Added
+
+- `options.validators` now accepts a Zod schema, for complete client-side validation!
+- `errors`, `constraints` and `options.validators` now handles nested data structures!
+- `superValidate` finally accepts schemas modified with `refine/superRefine/transform`.
+- Added `meta` store, which is populated when `options.includeMeta = true` in `superValidate`.
+
+### Removed
+
+- The undocumented `defaults` option of `superValidate` is removed, it can be replaced with `transform/refine` in the validation schema.
+- `formdata` is removed from `options.dataType`. Use `json` instead, it will cover all cases except some very narrow ones.
+- The `update` parameter in `onResult` is removed. It has the same effect as not cancelling the event, so it's redundant.
+
+### Fixed
+
+- Using `onDestroy` to unsubscribe from `page`.
+- The `fields` store properly lists all top-level fields as an object, so they can be passed to sub-components.
+- `onSubmit` wasn't called with `await`.
+- Default data is now copied properly, not just referenced.
+- Last but not least, a big thanks to [Dale Ryan](https://github.com/lnfel) for making the `SuperDebug` component even more super!
+
 ## [0.5.25] - 2023-03-14
 
 ### Fixed

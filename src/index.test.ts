@@ -565,3 +565,21 @@ test('Deeply nested constraints', async () => {
     }
   });
 });
+
+test('Refined schemas', async () => {
+  const form = await superValidate(
+    { id: 123, users: [{ name: 'Xenon' }] },
+    nestedSchema.superRefine((check, ctx) => {
+      if (check.id > 100) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Too high ID',
+          path: ['id']
+        });
+      }
+    })
+  );
+
+  assert(!form.valid);
+  expect(form.errors).toStrictEqual({ id: ['Too high ID'] });
+});

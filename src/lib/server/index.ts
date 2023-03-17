@@ -25,7 +25,8 @@ import {
   ZodEnum,
   ZodNativeEnum,
   ZodSymbol,
-  type ZodTypeAny
+  type ZodTypeAny,
+  ZodEffects
 } from 'zod';
 
 import { mapErrors } from '$lib/entity';
@@ -223,7 +224,7 @@ export async function superValidate<
     | Partial<z.infer<T>>
     | null
     | undefined,
-  schema: T,
+  schema: T | ZodEffects<T>,
   options: SuperValidateOptions<T> = {}
 ): Promise<Validation<T, M>> {
   options = {
@@ -233,13 +234,22 @@ export async function superValidate<
     ...options
   };
 
-  if (!(schema instanceof ZodObject)) {
+  const originalSchema = schema;
+
+  let wrappedSchema = schema;
+  while (wrappedSchema instanceof ZodEffects) {
+    wrappedSchema = (wrappedSchema as ZodEffects<T>)._def.schema;
+  }
+
+  if (!(wrappedSchema instanceof ZodObject)) {
     throw new SuperFormError(
-      'Only schema objects can be used with superValidate. Define the schema with z.object({ ... }).'
+      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine at the end.'
     );
   }
 
-  const entityInfo = entityData(schema);
+  const realSchema = wrappedSchema as T;
+
+  const entityInfo = entityData(realSchema);
   const schemaKeys = entityInfo.keys;
 
   function parseFormData(data: FormData) {
@@ -262,7 +272,7 @@ export async function superValidate<
     const superJson = tryParseSuperJson(data);
     return superJson
       ? superJson
-      : formDataToValidation(schema, schemaKeys, data);
+      : formDataToValidation(realSchema, schemaKeys, data);
   }
 
   async function tryParseFormData(request: Request) {
@@ -311,7 +321,7 @@ export async function superValidate<
       setValidationDefaults(partialData, options.defaults);
     }
 
-    const status = schema.safeParse(partialData);
+    const status = originalSchema.safeParse(partialData);
 
     if (!status.success) {
       const errors = options.noErrors

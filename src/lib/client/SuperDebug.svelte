@@ -6,8 +6,8 @@
   export let data: any;
   export let stringTruncate = 120;
   export let ref: HTMLPreElement | undefined = undefined;
-  //export let wrapText = true;
-  //export let expanded = false;
+  export let label = "";
+  export let promise = false;
 
   function syntaxHighlight(json: any) {
     json = JSON.stringify(
@@ -72,48 +72,82 @@
       }
     );
   }
+
+  async function promiseSyntaxHighlight(json: any) {
+    json = await json
+    return syntaxHighlight(json)
+  }
 </script>
 
 {#if display}
   <div class="super-debug">
     {#if status}
-      <div
-        class:info={$page.status < 200}
-        class:success={$page.status >= 200 && $page.status < 300}
-        class:redirect={$page.status >= 300 && $page.status < 400}
-        class:error={$page.status >= 400}
-        class="super-debug--status"
-      >
-        <div>{$page.status}</div>
+      <div class="super-debug--status {label === "" ? 'absolute inset-x-0 top-0' : ''}">
+        <div class="super-debug--label">{label}</div>
+        <div
+          class:info={$page.status < 200}
+          class:success={$page.status >= 200 && $page.status < 300}
+          class:redirect={$page.status >= 300 && $page.status < 400}
+          class:error={$page.status >= 400}
+        >
+          {$page.status}
+        </div>
       </div>
     {/if}
-    <pre class="super-debug--pre" bind:this={ref}><code
+    <pre class="super-debug--pre {label === "" ? 'pt-4' : 'pt-0'}" bind:this={ref}><code
         class="super-debug--code"
         ><slot
-          >{#if data}{@html syntaxHighlight(data)}{/if}</slot
+          >{#if promise}{#await promiseSyntaxHighlight(data) }<div>Loading data</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(data)}{/if}</slot
         ></code
       ></pre>
   </div>
 {/if}
 
 <style>
-  .super-debug .super-debug--status {
-    display: flex;
-    padding-right: 16px;
-    justify-content: right;
-    position: relative;
-    height: 0;
-    z-index: 1;
-    text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.25);
+  .absolute {
+    position: absolute;
   }
 
-  .super-debug .super-debug--status > div {
-    padding-top: 10px;
+  .top-0 {
+    top: 0;
+  }
+
+  .inset-x-0 {
+    left: 0px;
+    right: 0px;
+  }
+
+  .pt-0 {
+    padding-top: 0px;
+  }
+
+  .pt-4 {
+    padding-top: 1em;
+  }
+
+  .super-debug {
+    position: relative;
+    background-color: #222;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .super-debug .super-debug--status {
+    display: flex;
+    padding: 1em;
+    justify-content: space-between;
+  }
+
+  .super-debug--label {
+    color: white;
   }
 
   .super-debug pre {
     color: #999;
     background-color: #222;
+    margin-bottom: 0px;
+    /** Sakura is doing 0.9em, turn font-size back to 1em **/
+    font-size: 1em;
   }
 
   .info {

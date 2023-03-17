@@ -9,7 +9,7 @@ export class SuperFormError extends Error {
   }
 }
 
-export type RawShape<T> = T extends ZodObject<infer U> ? U : T;
+export type RawShape<T> = T extends ZodObject<infer U> ? U : never;
 
 export type ValidationErrors<S extends ZodRawShape> = {
   [Property in keyof S]?: UnwrappedEntity<S[Property]> extends ZodObject<

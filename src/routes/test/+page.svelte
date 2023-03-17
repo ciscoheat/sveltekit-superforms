@@ -83,7 +83,7 @@
     timeout,
     enhance,
     firstError,
-    topErrors,
+    allErrors,
     tainted,
     constraints
   } = superForm(data.form, {
@@ -101,7 +101,7 @@
   // Testing null
   const {
     form: modalForm,
-    topErrors: modalTopErrors,
+    allErrors: modalAllErrors,
     message: modalMessage,
     delayed: modalDelayed,
     enhance: modalEnhance
@@ -137,7 +137,7 @@
 <form method="POST" action="/test/login" use:modalEnhance>
   <div data-errors>
     {#if $modalMessage}{$modalMessage}{/if}
-    {#each $modalTopErrors as error}• {error.value}<br />{/each}
+    {#each $modalAllErrors as error}• {error.message}<br />{/each}
   </div>
   <div>Email</div>
   <input
@@ -185,14 +185,14 @@
 
 {#if $firstError}
   <p data-first-error>
-    First error: {$firstError.key} - {$firstError.value}
+    First error: {$firstError.path} - {$firstError.message}
   </p>
 {/if}
 
-{#if $topErrors.length}
+{#if $allErrors.length}
   <ul data-all-errors>
-    {#each $topErrors as error}
-      <li>{error.key}: {error.value}</li>
+    {#each $allErrors as error}
+      <li>{error.path}: {error.message}</li>
     {/each}
   </ul>
 {/if}

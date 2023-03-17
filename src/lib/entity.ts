@@ -77,6 +77,24 @@ export function mapErrors<T extends AnyZodObject>(
   return output as ValidationErrors<RawShape<T>>;
 }
 
+export function findErrors(
+  errors: ValidationErrors<RawShape<AnyZodObject>>,
+  path: string[] = []
+): { path: string[]; message: string }[] {
+  const entries = Object.entries(errors);
+  return entries.flatMap(([key, value]) => {
+    if (Array.isArray(value) && value.length > 0) {
+      const currPath = path.concat([key]);
+      return value.map((message) => ({ path: currPath, message }));
+    } else {
+      return findErrors(
+        errors[key] as ValidationErrors<RawShape<AnyZodObject>>,
+        path.concat([key])
+      );
+    }
+  });
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 type PathData = {

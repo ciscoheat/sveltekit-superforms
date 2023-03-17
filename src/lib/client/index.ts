@@ -22,7 +22,12 @@ import { SuperFormError, type RawShape, type Validation } from '..';
 import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import { deepEqual, type FormFields } from '..';
-import { mapErrors, unwrapZodType, checkPath } from '$lib/entity';
+import {
+  mapErrors,
+  unwrapZodType,
+  checkPath,
+  findErrors
+} from '$lib/entity';
 
 enum FetchStatus {
   Idle = 0,
@@ -159,8 +164,8 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   timeout: Readable<boolean>;
 
   fields: Readable<FormFields<T>>;
-  firstError: Readable<{ key: string; value: string } | null>;
-  topErrors: Readable<{ key: string; value: string }[]>;
+  firstError: Readable<{ path: string[]; message: string } | null>;
+  allErrors: Readable<{ path: string[]; message: string }[]>;
 
   tainted: Readable<boolean>;
 
@@ -289,22 +294,12 @@ export function superForm<
   const Timeout = writable(false);
 
   // Utilities
-  const TopErrors = derived(Errors, ($errors) => {
+  const AllErrors = derived(Errors, ($errors) => {
     if (!$errors) return [];
-    return Object.entries($errors)
-      .filter(
-        ([, errors]) => errors && Array.isArray(errors) && errors.length > 0
-      )
-      .flatMap(
-        ([key, errors]) =>
-          (errors as string[]).map((value) => ({ key, value })) ?? []
-      );
+    return findErrors($errors);
   });
 
-  const FirstError = derived(
-    TopErrors,
-    ($topErrors) => $topErrors[0] ?? null
-  );
+  const FirstError = derived(AllErrors, ($all) => $all[0] ?? null);
   const Tainted = derived(Data, ($d) => (savedForm ? isTainted($d) : false));
 
   //////////////////////////////////////////////////////////////////////
@@ -535,11 +530,12 @@ export function superForm<
         } else {
           // SuperForms validator
           const validator = options.validators as Validators<T>;
+
           const found: Validator<T, keyof z.infer<T>> | undefined =
             checkPath(validator, validationPath)?.value;
 
           if (found) {
-            const result = await found(newObj as any);
+            const result = await found(newObj as z.infer<T>);
 
             setError(
               path,
@@ -702,7 +698,7 @@ export function superForm<
       ),
 
     firstError: FirstError,
-    topErrors: TopErrors,
+    allErrors: AllErrors,
     update: Data_update,
     reset: (options?) =>
       _resetForm(options?.keepMessage ? get(Message) : undefined)

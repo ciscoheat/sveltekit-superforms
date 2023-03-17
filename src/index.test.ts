@@ -9,6 +9,7 @@ import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
 import { SuperFormError } from '$lib';
+import { findErrors } from '$lib/entity';
 
 const slugify = (
   str: string,
@@ -602,8 +603,9 @@ test('Deeply nested objects', async () => {
   expect(form.empty).toBeFalsy();
 
   expect(form.errors).toStrictEqual({
-    user: ['String must contain at least 2 character(s)']
+    user: { name: ['String must contain at least 2 character(s)'] }
   });
+
   expect(form.data).toStrictEqual({
     id: 123,
     user: {
@@ -611,4 +613,28 @@ test('Deeply nested objects', async () => {
       posts: []
     }
   });
+});
+
+test.only('AllErrors', async () => {
+  const form = await superValidate(
+    { users: [{ name: 'A', posts: [{ subject: '' }] }] },
+    nestedSchema
+  );
+
+  expect(findErrors(form.errors)).toStrictEqual([
+    { path: ['id'], message: 'Required' },
+    {
+      path: ['users', '0', 'name'],
+      message: 'String must contain at least 2 character(s)'
+    },
+    { path: ['users', '0', 'name'], message: 'Invalid' },
+    {
+      path: ['users', '0', 'posts', '0', 'subject'],
+      message: 'String must contain at least 1 character(s)'
+    },
+    {
+      path: ['users', '0', 'posts', '_errors'],
+      message: 'Array must contain at least 2 element(s)'
+    }
+  ]);
 });

@@ -42,9 +42,17 @@
         <SuperDebug label="Sample User" data={$form} />
     </section>
     <section>
+        <h4>Super Debug without status</h4>
+        <SuperDebug label="Sample User" status={false} data={$form} />
+    </section>
+    <section>
         <h4>Super Debug without label</h4>
         <p>This is SuperDebug's classic layout. Make sure we don't have weird spaces when there is no label.</p>
         <SuperDebug data={$form} />
+    </section>
+    <section>
+        <h4>Super Debug without label and status</h4>
+        <SuperDebug data={$form} status={false} />
     </section>
     <section>
         <h4>Super Debug with label and undefined data</h4>

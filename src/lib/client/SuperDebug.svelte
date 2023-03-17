@@ -6,7 +6,7 @@
   export let data: any;
   export let stringTruncate = 120;
   export let ref: HTMLPreElement | undefined = undefined;
-  export let label = "";
+  export let label = '';
   export let promise = false;
 
   function syntaxHighlight(json: any) {
@@ -74,16 +74,20 @@
   }
 
   async function promiseSyntaxHighlight(json: any) {
-    json = await json
-    return syntaxHighlight(json)
+    json = await json;
+    return syntaxHighlight(json);
   }
 </script>
 
 {#if display}
   <div class="super-debug">
-      <div class="super-debug--status {label === "" ? 'absolute inset-x-0 top-0' : ''}">
-        <div class="super-debug--label">{label}</div>
-        {#if status}
+    <div
+      class="super-debug--status {label === ''
+        ? 'absolute inset-x-0 top-0'
+        : ''}"
+    >
+      <div class="super-debug--label">{label}</div>
+      {#if status}
         <div
           class:info={$page.status < 200}
           class:success={$page.status >= 200 && $page.status < 300}
@@ -92,12 +96,15 @@
         >
           {$page.status}
         </div>
-        {/if}
-      </div>
-    <pre class="super-debug--pre {label === "" ? 'pt-4' : 'pt-0'}" bind:this={ref}><code
-        class="super-debug--code"
+      {/if}
+    </div>
+    <pre
+      class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
+      bind:this={ref}><code class="super-debug--code"
         ><slot
-          >{#if promise}{#await promiseSyntaxHighlight(data) }<div>Loading data</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(data)}{/if}</slot
+          >{#if promise}{#await promiseSyntaxHighlight(data)}<div>Loading data</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(
+              data
+            )}{/if}</slot
         ></code
       ></pre>
   </div>
@@ -179,7 +186,7 @@
   }
 
   :global(.super-debug--code .boolean) {
-    color: #c55833;
+    color: #3189d6;
   }
 
   :global(.super-debug--code .num) {

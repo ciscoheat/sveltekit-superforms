@@ -5,11 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2023-03-17
+## [0.6.0] - 2023-03-18
 
 ### Changed
 
-- `form.message` is now of `any` type, and uses `undefined` instead of `null` to signify no value.
+- `form.message` is now default `any` type, and uses `undefined` instead of `null` to signify no value. This means that `superValidate` and `superForm`, as well as some of the types, like `Validation` and `FormOptions`, can take a second generic parametr that can specify the `message` type.
 - `options.onError` can now only be set to `apply`, or a callback `({result, message}) => void` for handling the error result. It does not automatically set the error message anymore, since it can be of any type.
 - The signature for `allErrors` and `firstError` is now `{ path: string[], message: string }`.
 - If `options.dataType` isn't set to `json` and a nested object is detected in the data sent to `superForm`, an error will be thrown.
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Using `onDestroy` to unsubscribe from the `page` store.
-- The `fields` lists all top-level fields as an object, so they can be passed to sub-components.
+- The `fields` store lists all top-level fields as an object, so they can be passed to sub-components.
 - `onSubmit` wasn't called with `await`.
 - Default data is now cloned, not just referenced.
 - Last but not least, a big thanks to [Dale Ryan](https://github.com/lnfel) for making the `SuperDebug` component even more super!

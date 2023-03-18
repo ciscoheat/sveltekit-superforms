@@ -2,7 +2,7 @@ import { superValidate } from '$lib/server';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-import { users, userId, userSchema } from '$lib/users';
+import { users, userId, userSchema } from '../users';
 
 const schema = userSchema.extend({
   id: userSchema.shape.id.optional()

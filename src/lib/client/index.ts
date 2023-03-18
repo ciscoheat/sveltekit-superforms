@@ -449,6 +449,7 @@ export function superForm<
       return tainted;
     });
 
+    /*
     console.log(
       '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
       path,
@@ -456,6 +457,7 @@ export function superForm<
       compareAgainst,
       get(Tainted)
     );
+    */
 
     function setError(path: string[], newErrors: string[] | null) {
       Errors.update((errors) => {

@@ -16,6 +16,7 @@
     constraints
   } = superForm(data.form, {
     onUpdated({ form }) {
+      console.log(data.form.id);
       if (form.valid && !data.form.id) {
         reset({ keepMessage: true });
       }
@@ -29,6 +30,11 @@
   {#each data.users as user}
     <a href="?id={user.id}">{user.name}</a>
   {/each}
+  {#if !$empty}
+    <form action="/crud">
+      <button>Create new</button>
+    </form>
+  {/if}
 </div>
 
 {#if $message}
@@ -44,7 +50,7 @@
     Name<br />
     <input
       name="name"
-      data-invalid={!!$errors.name}
+      data-invalid={$errors.name}
       bind:value={$form.name}
       {...$constraints.name}
     />
@@ -55,7 +61,8 @@
     E-mail<br />
     <input
       name="email"
-      data-invalid={!!$errors.email}
+      type="email"
+      data-invalid={$errors.email}
       bind:value={$form.email}
       {...$constraints.email}
     />
@@ -92,5 +99,9 @@
     display: block;
     white-space: nowrap;
     overflow-x: hidden;
+  }
+
+  .users a:hover {
+    border-bottom: none;
   }
 </style>

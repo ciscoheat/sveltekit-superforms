@@ -1,6 +1,6 @@
 {
   "name": "sveltekit-superforms",
-  "version": "0.6.0-rc.1",
+  "version": "0.6.0-rc.2",
   "author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
   "description": "Supercharge your SvelteKit forms with this powerhouse of a library!",
   "keywords": [
@@ -20,7 +20,7 @@
     "build": "vite build && npm run test && npm run package",
     "preview": "vite preview",
     "package": "svelte-kit sync && svelte-package && publint",
-    "prepublishOnly": "npm run package && publint",
+    "prepublishOnly": "npm run package && npm run test && publint",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "vitest",

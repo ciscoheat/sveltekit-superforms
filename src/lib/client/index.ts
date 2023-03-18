@@ -83,14 +83,14 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
   }) => MaybePromise<unknown | void>;
   onError:
     | 'apply'
-    | ((
+    | ((event: {
         result: {
           type: 'error';
           status?: number;
           error: App.Error;
-        },
-        message: Writable<Validation<T, M>['message']>
-      ) => MaybePromise<unknown | void>);
+        };
+        message: Writable<Validation<T, M>['message']>;
+      }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   validators: Validators<T> | T;
   defaultValidator: 'clear' | 'keep';
@@ -106,14 +106,14 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
         update?: () => Promise<void>
       ): Promise<void>;
     };
-    onError?: (
+    onError?: (event: {
       result: {
         type: 'error';
         status?: number;
         error: App.Error;
-      },
-      message: Writable<App.PageData['flash']>
-    ) => MaybePromise<unknown | void>;
+      };
+      message: Writable<App.PageData['flash']>;
+    }) => MaybePromise<unknown | void>;
     cookiePath?: string;
   };
 }>;
@@ -967,7 +967,7 @@ function formEnhance<T extends AnyZodObject, M>(
 
           // Check if the error message should be replaced
           if (options.onError && options.onError != 'apply') {
-            await options.onError(result, message);
+            await options.onError({ result, message });
           }
         }
 
@@ -975,10 +975,10 @@ function formEnhance<T extends AnyZodObject, M>(
         // if we have redirected (which is the point with the flash message!)
         if (options.flashMessage) {
           if (result.type == 'error' && options.flashMessage.onError) {
-            await options.flashMessage.onError(
+            await options.flashMessage.onError({
               result,
-              options.flashMessage.module.getFlash(page)
-            );
+              message: options.flashMessage.module.getFlash(page)
+            });
           } else if (result.type != 'error') {
             await options.flashMessage.module.updateFlash(page);
           }

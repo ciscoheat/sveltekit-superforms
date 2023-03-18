@@ -28,7 +28,7 @@
     },
     flashMessage: {
       module: flashModule,
-      onError(result, message) {
+      onError({ result, message }) {
         message.set({
           type: 'error',
           message: result.error.message
@@ -46,7 +46,9 @@
 
 <SuperDebug data={{ $form, $staticform }} />
 
-<a href="/test">Test page</a> | <a href="/crud">CRUD</a> | <a href="/super-debug">SuperDebug</a> | <a href="/nested">Nested</a>
+<a href="/test">Test page</a> | <a href="/crud">CRUD</a> |
+<a href="/super-debug">SuperDebug</a>
+| <a href="/nested">Nested</a>
 
 {#if $message}
   <h4 class:error={$page.status >= 400} class="message">{$message}</h4>

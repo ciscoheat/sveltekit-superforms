@@ -88,7 +88,7 @@
     constraints
   } = superForm(data.form, {
     taintedMessage: null,
-    onError(result, message) {
+    onError({ result, message }) {
       message.set(result.error.message);
     },
     validators: {

@@ -105,7 +105,7 @@ type PathData = {
 
 export function checkPath(
   obj: any,
-  path: string[],
+  path: (string | number)[],
   modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
   if (!path.length) return undefined;
@@ -116,7 +116,7 @@ export function checkPath(
   while (path.length > 1) {
     const key = path.shift() || '';
     const value = modifier
-      ? modifier({ parent, key, value: parent[key] })
+      ? modifier({ parent, key: String(key), value: parent[key] })
       : parent[key];
 
     if (value === undefined) return undefined;
@@ -124,5 +124,5 @@ export function checkPath(
   }
 
   const key = path[0];
-  return { parent, key, value: parent[key] };
+  return { parent, key: String(key), value: parent[key] };
 }

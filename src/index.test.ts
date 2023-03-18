@@ -235,14 +235,14 @@ test('Adding errors with setError', async () => {
   const err = {
     scopeId: ['This is an error'],
     enumber: ['This should be ok', 'Still ok'],
-    arr: ['This should cause a type error'],
-    object: ['This should cause a type error']
+    arr: { 3: ['Array error'] },
+    object: { name: ['Object error'] }
   };
 
   setError(output, 'scopeId', 'This should not be displayed.');
   setError(output, 'scopeId', 'This is an error', { overwrite: true });
-  setError(output, 'object', 'This should cause a type error');
-  setError(output, 'arr', 'This should cause a type error');
+  setError(output, ['object', 'name'], 'Object error');
+  setError(output, ['arr', 3], 'Array error');
   setError(output, 'enumber', 'This should be ok');
   setError(output, 'enumber', 'Still ok');
 

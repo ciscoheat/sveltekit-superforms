@@ -8,7 +8,7 @@ import {
 } from '..';
 import { entityData, valueOrDefault, type UnwrappedEntity } from './entity';
 
-import { unwrapZodType, type ZodTypeInfo } from '../entity';
+import { checkPath, unwrapZodType, type ZodTypeInfo } from '../entity';
 
 import {
   z,
@@ -45,24 +45,34 @@ type NonObjectArrayFields<T extends AnyZodObject> = keyof {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(
   form: Validation<T, unknown>,
-  field: NonObjectArrayFields<T>,
-  error: string | string[] | null,
+  path: keyof z.infer<T> | [keyof z.infer<T>, ...(string | number)[]],
+  error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
     status: 400
   }
 ) {
-  const errArr = Array.isArray(error) ? error : error ? [error] : [];
+  const errArr = Array.isArray(error) ? error : [error];
 
-  // The 'any' casts here are ok since NonObjectArrayFields is used.
-  if (Array.isArray(form.errors[field]) && !options.overwrite) {
-    const errors = form.errors[field] as string[];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    form.errors[field] = errors.concat(errArr) as any;
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    form.errors[field] = errArr as any;
+  if (!form.errors) form.errors = {};
+  if (typeof path === 'string') path = [path];
+
+  const leaf = checkPath(
+    form.errors,
+    path as (string | number)[],
+    ({ parent, key, value }) => {
+      if (value === undefined) parent[key] = {};
+      return parent[key];
+    }
+  );
+
+  if (leaf) {
+    leaf.parent[leaf.key] =
+      Array.isArray(leaf.value) && !options.overwrite
+        ? leaf.value.concat(errArr)
+        : errArr;
   }
+
   form.valid = false;
   return fail(options.status ?? 400, { form });
 }

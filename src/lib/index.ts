@@ -1,4 +1,4 @@
-import type { z, AnyZodObject, ZodArray, ZodObject, ZodTypeAny } from 'zod';
+import type { z, AnyZodObject, ZodArray, ZodObject } from 'zod';
 import type { Entity, UnwrappedEntity } from './server/entity';
 import type { Writable } from 'svelte/store';
 import type { MaybePromise } from '$app/forms';
@@ -61,16 +61,6 @@ export type Validators<T extends AnyZodObject> = Partial<{
     : Validator<T, Property>;
 }>;
 
-/*
-export type Validators<T extends AnyZodObject> = {
-  [Property in keyof RawShape<T>]?: RawShape<T>[Property] extends
-    | AnyZodObject
-    | ZodArray<ZodTypeAny>
-    ? Validators<RawShape<T>[Property]>
-    : Validator<T, Property>;
-};
-*/
-
 export type TaintedFields<T extends AnyZodObject> = SuperStructArray<
   T,
   boolean
@@ -126,25 +116,3 @@ export type FormField<
 export type FormFields<T extends AnyZodObject> = {
   [Property in keyof z.infer<T>]-?: FormField<T, Property>;
 };
-
-export function deepEqual(obj1: unknown, obj2: unknown): boolean {
-  if (obj1 === obj2) {
-    return true;
-  } else if (obj1 === null || obj2 === null) {
-    return false;
-  } else if (typeof obj1 === 'object' && typeof obj2 === 'object') {
-    if (Object.keys(obj1).length !== Object.keys(obj2).length) {
-      return false;
-    }
-    for (const prop in obj1) {
-      if (
-        !deepEqual(obj1[prop as keyof object], obj2[prop as keyof object])
-      ) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}

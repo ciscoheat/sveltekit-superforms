@@ -31,7 +31,7 @@
 - Automatically coerces the string data from `FormData` into correct types.
 - For advanced data structures, forget about the limitations of `FormData` - Send your forms as devalued JSON, transparently.
 - Generates default form values from validation schemas.
-- Support for [multiple forms on the same page](https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ#are-multiple-forms-on-the-same-page-supported).
+- Supports for nested forms and [multiple forms](https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ#are-multiple-forms-on-the-same-page-supported) on the same page.
 - Proxy objects for handling data conversions to string and back again.
 - Client-side validators for immediate user feedback.
 - Provide long response time feedback with auto-updating timers, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
@@ -46,6 +46,7 @@
 ```
  npm i -D sveltekit-superforms zod
 ```
+
 ```
  pnpm i -D sveltekit-superforms zod
 ```
@@ -112,7 +113,7 @@ export const load = (async (event) => {
 
 `superForm` is used on the client to display the data, conveniently supplied from `data.form`.
 
-With this, we can at least see that the form is populated. But to get deeper insight, let's add the Super Form Debugging Svelte Component:
+With this, we can at least see that the form is populated. But to get deeper insight, let's add the Super Form Debugging Svelte Component called `SuperDebug`:
 
 **src/routes/+page.svelte**
 
@@ -202,7 +203,7 @@ if (!form.valid) {
 }
 ```
 
-If you submit the form now, you'll see that the Super Form Debugging Svelte Component shows a `400` status, and there are some errors being sent to the client, so how do we display them?
+If you submit the form now, you'll see that the Super Form Debugging Svelte Component shows a `400` status, and we know that there are some errors being sent to the client, so how do we display them?
 
 We do that by adding variables to the destructuring assignment of `superForm`:
 
@@ -245,7 +246,7 @@ We do that by adding variables to the destructuring assignment of `superForm`:
 </style>
 ```
 
-And with that, we have a fully working form, no JavaScript needed, with convenient handling of data and validation on both client and server!
+And with that, we have a fully working form, no JavaScript needed, with convenient handling of data and validation on both client and server! Check the [API reference](https://github.com/ciscoheat/sveltekit-superforms/wiki/API-reference#superform-return-type) for a full list of properties returned from `superForm`.
 
 # But wait, there's more
 
@@ -264,7 +265,7 @@ Let's start with retrieving a simple but most useful variable returned from `sup
 
 And with that, we're completely client-side. So what is included in this little upgrade?
 
-This is the beginning of a long list of options for `superForm`, which can be added as an option object:
+This is the beginning of a long list of options for `superForm`, all optional, which can be added as an object:
 
 ```ts
 const { form, errors, enhance } = superForm(data.form, { lotsOfOptions });
@@ -275,7 +276,7 @@ const { form, errors, enhance } = superForm(data.form, { lotsOfOptions });
 Try to modify the form fields, then close the tab or open another page in the same tab. A confirmation dialog should prevent you from losing the changes.
 
 ```ts
-taintedMessage: string | null | false = '<A default message in english>'
+taintedMessage: string | null | false = 'Do you want to leave this page? Changes you made may not be saved.'
 ```
 
 When the page status changes to something between 200-299, the form is automatically marked as untainted.
@@ -291,7 +292,7 @@ errorSelector: string | undefined = '[data-invalid]'
 stickyNavbar: string | undefined = undefined
 ```
 
-`scrollToError` is quite self-explanatory.
+`scrollToError` determines how to scroll to the first error message in the form. `smooth` and `auto` are values from [Window.scroll()](https://developer.mozilla.org/en-US/docs/Web/API/Window/scroll).
 
 `autoFocusOnError`: When set to `detect`, it checks if the user is on a mobile device, **if not** it will automatically focus on the first error input field. It's prevented on mobile since auto-focusing will open the on-screen keyboard, most likely hiding the validation error.
 
@@ -301,25 +302,27 @@ stickyNavbar: string | undefined = undefined
 
 ## Events
 
+See [the wiki entry](https://github.com/ciscoheat/sveltekit-superforms/wiki/Event-order) for a flowchart of the events.
+
 In order of micro-managing the result, from least to most.
 
 ```ts
 onUpdated: ({ form }) => void
 ```
 
-If you just want to apply the default behaviour and do something afterwards depending on validation success, `onUpdated` is the simplest way.
+If you just want the default behaviour and act on the validation success or its data, `onUpdated` is the simplest way. `form` is the validation result, and should be considered read-only here.
 
 ```ts
 onUpdate: ({ form, cancel }) => void
 ```
 
-A bit more control, `onUpdate` lets you enter just before the form update is being applied and gives you the option to modify the `form` object (the validation result), or `cancel()` the update altogether.
+You get a bit more control with `onUpdate`, which lets you enter just before the form update is being applied and gives you the option to modify the `form` the validation result, or `cancel()` the update altogether.
 
 ```ts
-onError: (({ result, message }) => void) | 'set-message' | 'apply' | 'ignore' | string = 'set-message'
+onError: (({ result, message }) => void) | 'apply'
 ```
 
-It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. `onError` gives you more control over the error than the default, which is to set the `message` store to the error value.
+It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. `onError` gives you more control over the error. You can use the `message` store parameter to set an error value.
 
 By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary. You can instead set it to a custom error message, or ignore errors altogether with `ignore`.
 
@@ -333,19 +336,19 @@ onSubmit: SubmitFunction;
 onResult: ({ result, formEl, cancel }) => void
 ```
 
-When you want detailed control, `onResult` gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result`, so you can decide if you want to update the form at all. You can modify it, which will be used further down the event chain.
+When you want detailed control, `onResult` gives you the [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) in `result`. You can modify it, which will be used further down the event chain.
 
 `formEl` is the `HTMLFormElement` of the form.
 
-`cancel()` is a function which will completely cancel the rest of the event chain and any form updates.
+`cancel()` is a function which will cancel the rest of the event chain and any form updates.
 
-A result status between `200-299` will untaint the form.
+As said before, but worth mentioning again: A result status between `200-299` will untaint the form.
 
 ## Differences from SvelteKit's use:enhance
 
 (Knowing about [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) is useful before reading this section.)
 
-The biggest difference is that unless `onError` is set to `apply`, any `error` result is transformed into `failure`, to avoid disaster when the nearest `+error.svelte` page is rendered, which will wipe out all the form data that was just entered.
+The biggest difference is that unless `onError` is set to `apply`, an `error` result is transformed into `failure`, to avoid form data loss, since when the nearest `+error.svelte` page is rendered, it will wipe out the form and all data that was just entered. Not very nice to the user!
 
 If no error occured, you have some options to customize the rest of the behavior:
 
@@ -359,7 +362,7 @@ As you see, another difference is that the form isn't resetted by default. This 
 
 In any case, since we're binding the fields to `$form`, the html form reset behavior doesn't make much sense, so in `sveltekit-superforms`, resetting means _going back to the initial state of the form data_, usually the contents of `form` in `PageData`. This may not be exactly what you needed, in which case you can use an event to clear the form instead.
 
-It's worth noting that by setting `applyAction` to `false`, multiple forms on the same page can be handle quite easily, since they won't tamper with `$page.form` and `$page.status`, in that case.
+By setting `applyAction` to `false`, the form won't tamper with `$page.form` and `$page.status`, and when `invalidateAll` is `false`, the page load function won't run after a `success` result.
 
 ## Client-side validation
 
@@ -389,17 +392,17 @@ The constraints field is an object, with validation properties mapped from the s
 
 ### Custom validation
 
-If think the built-in browser validation is too constraining (pun intented), you can set the `validators` option:
+If think the built-in browser validation is too constraining (pun intented), you can either use a Zod schema, or set the `validators` option:
 
 ```ts
-validators: {
-  field: (value) => string | null | undefined;
+validators: AnyZodObject | {
+  field: (value) => string | string[] | null | undefined;
 }
 ```
 
-It takes an object with the same keys as the form, with a function that receives the field value and should return either a string as a "validation failed" message, or `null` or `undefined` if the field is valid.
+It takes an object with the same keys as the form, with a function that receives the field value and should return either a `string` or `string[]` as a "validation failed" message, or `null` or `undefined` if the field is valid.
 
-Here's how to validate a string length:
+Here's how to validate a string length, for example:
 
 **src/routes/+page.svelte**
 
@@ -412,13 +415,13 @@ const { form, errors, enhance } = superForm(data.form, {
 });
 ```
 
-There is one additional option for specifying the default client validation behavior, when no custom validator exists for a field:
+There is one additional option for specifying the default client validation behavior, when no validator exists for a field:
 
 ```ts
 defaultValidator: 'keep' | 'clear' = 'clear'
 ```
 
-The default value `clear`, will remove the error when that field value is modified. If set to `keep`, validation errors will be kept displayed until the form submits (unless you change it, see next option).
+The default value `clear`, will remove the error when that field value is modified. If set to `keep`, validation errors will be kept displayed until the form submits.
 
 ## Submit behavior
 
@@ -430,7 +433,7 @@ delayMs: number = 500
 timeoutMs: number = 8000
 ```
 
-The `clearOnSubmit` option decides what should happen to the form when submitting. It can clear all the `errors`, the `message`, both or none. The default is to clear both. If you don't want any jumping content, which could occur when error messages are removed from the DOM, setting it to `none` can be useful.
+The `clearOnSubmit` option decides what should happen to the form when submitting. It can clear all the `errors`, the `message`, both or none. The default is to clear both. If you don't want any jumping content, which could occur when error messages are removed from the DOM, setting it to one of the other options can be useful.
 
 The `delayMs` and `timeoutMs` decides how long before the submission changes state. The states are:
 
@@ -457,9 +460,9 @@ A perfect use for these is to show a loading indicator while the form is submitt
 </div>
 ```
 
-The reason for not using `submitting` here is based on the article [Response Times: The 3 Important Limits](https://www.nngroup.com/articles/response-times-3-important-limits/), which states that for short waiting periods, no feedback is required except to display the result. Therefore, `delayed` is used to show a loading indicator.
+The reason for not using `submitting` is based on the article [Response Times: The 3 Important Limits](https://www.nngroup.com/articles/response-times-3-important-limits/), which states that for short waiting periods, no feedback is required except to display the result. Therefore, `delayed` is instead used to show a loading indicator after a little while.
 
-Experimenting with these three timers and the delays between them, is certainly possible to prevent the feeling of unresponsiveness in many cases. Please share your results, if you do!
+Experimenting with these three timers and the delays between them, is certainly possible to prevent the feeling of unresponsiveness in many cases. Please [share your results](https://github.com/ciscoheat/sveltekit-superforms/discussions), if you do!
 
 ```ts
 multipleSubmits: 'prevent' | 'allow' | 'abort' = 'prevent'
@@ -476,7 +479,7 @@ import * as flashModule from 'sveltekit-flash-message/client';
 
 flashMessage: {
   module: flashModule,
-  onError?: (error: ActionResult<'error'>) => App.PageData['flash']
+  onError?: ({error, message}) => void
 }
 ```
 
@@ -487,7 +490,7 @@ The flash message is set automatically for every `ActionResult` except `error`, 
 I've been saving the best for last - If you're fine with JavaScript being a requirement for posting, you can bypass the annoyance that everything is a `string` when we are posting forms:
 
 ```ts
-dataType: 'form' 'json' = 'form'
+dataType: 'form' | 'json' = 'form'
 ```
 
 By simply setting `dataType` to `json`, you can store any data structure allowed by [devalue](https://github.com/Rich-Harris/devalue) in the form, and you don't have to worry about failed coercion, converting arrays to strings, etc! You don't even have to set names for the form fields anymore, making the html for a form quite slim:
@@ -495,15 +498,22 @@ By simply setting `dataType` to `json`, you can store any data structure allowed
 ```svelte
 <form method="POST" use:enhance>
   <label>
-    Name<br /><input data-invalid={$errors.name} bind:value={$form.name} />
+    Name<br />
+    <input
+      data-invalid={$errors.name}
+      bind:value={$form.name}
+      {...$constraints.name}
+    />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
   </label>
 
   <label>
-    E-mail<br /><input
+    E-mail<br />
+    <input
       type="email"
       data-invalid={$errors.email}
       bind:value={$form.email}
+      {...$constraints.email}
     />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>

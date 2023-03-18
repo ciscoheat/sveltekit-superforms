@@ -18,10 +18,15 @@ import {
 } from 'svelte/store';
 import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
-import { SuperFormError, type RawShape, type Validation } from '..';
+import {
+  SuperFormError,
+  type RawShape,
+  type TaintedFields,
+  type Validation
+} from '..';
 import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
-import { deepEqual, type FormFields } from '..';
+import type { FormFields } from '..';
 import { mapErrors, unwrapZodType, checkPath, findErrors } from '../entity';
 
 enum FetchStatus {
@@ -48,6 +53,7 @@ type Validator<T extends AnyZodObject, P extends keyof z.infer<T>> = (
   value: z.infer<T>[P]
 ) => MaybePromise<string | string[] | null | undefined>;
 
+// TODO: Move to SuperStructure, cannot have a generic type due to Property
 export type Validators<T extends AnyZodObject> = {
   [Property in keyof RawShape<T>]?: RawShape<T>[Property] extends
     | AnyZodObject
@@ -162,7 +168,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   firstError: Readable<{ path: string[]; message: string } | null>;
   allErrors: Readable<{ path: string[]; message: string }[]>;
 
-  tainted: Readable<boolean>;
+  tainted: Readable<TaintedFields<T> | undefined>;
 
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
@@ -283,6 +289,8 @@ export function superForm<
     form.meta ? { ...form.meta } : undefined
   );
 
+  const Tainted = writable<TaintedFields<T> | undefined>();
+
   // Timers
   const Submitting = writable(false);
   const Delayed = writable(false);
@@ -295,7 +303,6 @@ export function superForm<
   });
 
   const FirstError = derived(AllErrors, ($all) => $all[0] ?? null);
-  const Tainted = derived(Data, ($d) => (savedForm ? isTainted($d) : false));
 
   //////////////////////////////////////////////////////////////////////
 
@@ -307,24 +314,15 @@ export function superForm<
 
   // Need to set this after use:enhance has run, to avoid showing the
   // tainted dialog when a form doesn't use it or the browser doesn't use JS.
-  let savedForm: Validation<T, M>['data'] | undefined;
-
   const _taintedMessage = options.taintedMessage;
   options.taintedMessage = undefined;
 
   function enableTaintedMessage() {
     options.taintedMessage = _taintedMessage;
-    savedForm = { ...get(Data) };
-  }
-
-  function isTainted(data: z.infer<T>) {
-    return !deepEqual(data, savedForm);
   }
 
   function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
-    if (untaint) {
-      savedForm = { ...form.data };
-    }
+    if (untaint) Tainted.set(undefined);
 
     Data.set(form.data);
     Message.set(message ?? form.message);
@@ -400,13 +398,12 @@ export function superForm<
     }
   };
 
-  async function checkEqual(
+  async function checkValidationAndTainted(
     newObj: unknown,
     compareAgainst: unknown,
     path: string[] = []
-  ) {
-    //console.log('Entering:', path);
-    if (newObj === compareAgainst) return;
+  ): Promise<Record<string, unknown> | undefined> {
+    //console.log('Entering', path, newObj, compareAgainst);
 
     if (
       newObj !== null &&
@@ -435,7 +432,7 @@ export function superForm<
         }
       } else {
         for (const prop in newObj) {
-          checkEqual(
+          checkValidationAndTainted(
             newObj[prop as keyof object],
             compareAgainst[prop as keyof object],
             path.concat([prop])
@@ -443,17 +440,29 @@ export function superForm<
         }
         return;
       }
+    } else if (newObj === compareAgainst) {
+      return;
     }
 
-    /*
+    // At this point, the field is modified.
+    // Update Tainted store.
+    Tainted.update((tainted) => {
+      if (!tainted) tainted = {};
+      const leaf = checkPath(tainted, path, ({ parent, key, value }) => {
+        if (value === undefined) parent[key] = {};
+        return parent[key];
+      });
+      if (leaf) leaf.parent[leaf.key] = true;
+      return tainted;
+    });
+
     console.log(
-      '  Run validator:',
+      '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
       path,
       newObj,
       compareAgainst,
-      get(Errors)
+      get(Tainted)
     );
-    */
 
     function setError(path: string[], newErrors: string[] | null) {
       Errors.update((errors) => {
@@ -555,7 +564,12 @@ export function superForm<
   if (browser) {
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
-        if (get(Tainted) && !window.confirm(options.taintedMessage)) {
+        const tainted = get(Tainted);
+        if (
+          tainted &&
+          tainted.length &&
+          !window.confirm(options.taintedMessage)
+        ) {
           nav.cancel();
         }
       }
@@ -571,9 +585,12 @@ export function superForm<
         return;
       }
 
-      if (get(Submitting)) return;
-      await checkEqual(data, previousForm);
+      if (!get(Submitting)) {
+        await checkValidationAndTainted(data, previousForm);
+      }
 
+      // Whether submitted or not, it will be returned here.
+      // Clone the data so it won't be marked as tainted.
       previousForm = structuredClone(data);
     });
 

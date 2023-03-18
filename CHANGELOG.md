@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `options.validators` now accepts a Zod schema, for complete client-side validation!
-- `errors`, `constraints` and `options.validators` now handles nested data structures!
-- `superValidate` finally accepts schemas modified with `refine/superRefine/transform`.
+- `errors`, `constraints` and `tainted` now supports nested data structures!
+- `superValidate` now accepts schemas modified with `refine/superRefine/transform`.
 - Added `meta` store, which is populated when `options.includeMeta = true` in `superValidate`.
 
 ### Removed

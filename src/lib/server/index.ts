@@ -286,7 +286,7 @@ export async function superValidate<
   let output: Validation<T, M>;
 
   if (!data) {
-    let errors: ValidationErrors<RawShape<T>>;
+    let errors: ValidationErrors<T>;
     let valid = false;
 
     if (hasEffects) {

@@ -1,4 +1,4 @@
-import type { RawShape, ValidationErrors } from '.';
+import type { ValidationErrors } from '.';
 import {
   type ZodTypeAny,
   ZodDefault,
@@ -64,7 +64,7 @@ export function mapErrors<T extends AnyZodObject>(
     entries[0][0] === '_errors' &&
     obj._errors.length
   ) {
-    return obj._errors as unknown as ValidationErrors<RawShape<T>>;
+    return obj._errors as unknown as ValidationErrors<T>;
   } else if (obj._errors.length) {
     output._errors = obj._errors;
   }
@@ -74,11 +74,11 @@ export function mapErrors<T extends AnyZodObject>(
     output[key] = mapErrors(value as unknown as ZodFormattedError<unknown>);
   }
 
-  return output as ValidationErrors<RawShape<T>>;
+  return output as ValidationErrors<T>;
 }
 
 export function findErrors(
-  errors: ValidationErrors<RawShape<AnyZodObject>>,
+  errors: ValidationErrors<AnyZodObject>,
   path: string[] = []
 ): { path: string[]; message: string }[] {
   const entries = Object.entries(errors);
@@ -88,7 +88,7 @@ export function findErrors(
       return value.map((message) => ({ path: currPath, message }));
     } else {
       return findErrors(
-        errors[key] as ValidationErrors<RawShape<AnyZodObject>>,
+        errors[key] as ValidationErrors<AnyZodObject>,
         path.concat([key])
       );
     }

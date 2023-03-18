@@ -1,4 +1,4 @@
-import type { z, AnyZodObject, ZodArray, ZodObject, ZodRawShape } from 'zod';
+import type { z, AnyZodObject, ZodArray, ZodObject } from 'zod';
 import type { Entity, UnwrappedEntity } from './server/entity';
 import type { Writable } from 'svelte/store';
 
@@ -11,20 +11,29 @@ export class SuperFormError extends Error {
 
 export type RawShape<T> = T extends ZodObject<infer U> ? U : never;
 
-export type ValidationErrors<S extends ZodRawShape> = {
-  [Property in keyof S]?: UnwrappedEntity<S[Property]> extends ZodObject<
-    infer P extends ZodRawShape
-  >
-    ? ValidationErrors<RawShape<UnwrappedEntity<P>>>
-    : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
-    ? { _errors?: string[] } & Record<
-        number,
-        UnwrappedEntity<A> extends ZodObject<infer V extends ZodRawShape>
-          ? ValidationErrors<V>
-          : string[]
-      >
-    : string[];
+export type SuperStruct<T extends AnyZodObject, Data, ArrayData = never> = {
+  [Property in keyof RawShape<T>]?: UnwrappedEntity<
+    RawShape<T>[Property]
+  > extends AnyZodObject
+    ? SuperStruct<UnwrappedEntity<RawShape<T>[Property]>, Data, ArrayData>
+    : UnwrappedEntity<RawShape<T>[Property]> extends ZodArray<infer A>
+    ? ArrayData &
+        Record<
+          number,
+          UnwrappedEntity<A> extends AnyZodObject
+            ? SuperStruct<UnwrappedEntity<A>, Data, ArrayData>
+            : Data
+        >
+    : Data;
 };
+
+export type TaintedFields<T extends AnyZodObject> = SuperStruct<T, boolean>;
+
+export type ValidationErrors<T extends AnyZodObject> = SuperStruct<
+  T,
+  string[],
+  { _errors?: string[] }
+>;
 
 export type InputConstraint = Partial<{
   pattern: string; // RegExp
@@ -36,19 +45,10 @@ export type InputConstraint = Partial<{
   maxlength: number;
 }>;
 
-export type InputConstraints<S extends ZodRawShape> = Partial<{
-  [Property in keyof S]: UnwrappedEntity<S[Property]> extends ZodObject<
-    infer P extends ZodRawShape
-  >
-    ? InputConstraints<RawShape<UnwrappedEntity<P>>>
-    : UnwrappedEntity<S[Property]> extends ZodArray<infer A>
-    ? /*{ _constraints?: InputConstraint; } &*/ UnwrappedEntity<A> extends ZodObject<
-        infer V extends ZodRawShape
-      >
-      ? InputConstraints<RawShape<UnwrappedEntity<V>>>
-      : InputConstraint
-    : InputConstraint;
-}>;
+export type InputConstraints<T extends AnyZodObject> = SuperStruct<
+  T,
+  InputConstraint
+>;
 
 export type Validation<
   T extends AnyZodObject,
@@ -56,7 +56,7 @@ export type Validation<
   M = any
 > = {
   valid: boolean;
-  errors: ValidationErrors<RawShape<T>>;
+  errors: ValidationErrors<T>;
   data: z.infer<T>;
   empty: boolean;
   constraints: Entity<T>['constraints'];
@@ -71,8 +71,8 @@ export type FormField<
 > = {
   name: string;
   value: Writable<z.infer<T>[Property]>;
-  errors?: ValidationErrors<RawShape<T>>[Property];
-  constraints?: InputConstraints<RawShape<T>>[Property];
+  errors?: ValidationErrors<T>[Property];
+  constraints?: InputConstraints<T>[Property];
   type?: string;
 };
 

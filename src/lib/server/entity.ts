@@ -1,8 +1,7 @@
 import {
   SuperFormError,
   type InputConstraints,
-  type InputConstraint,
-  type RawShape
+  type InputConstraint
 } from '..';
 
 import { unwrapZodType, type ZodTypeInfo } from '../entity';
@@ -46,7 +45,7 @@ export type EntityMetaData<T extends AnyZodObject> = {
 export type Entity<T extends AnyZodObject> = {
   typeInfo: EntityRecord<T, ZodTypeInfo>;
   defaultEntity: z.infer<T>;
-  constraints: InputConstraints<RawShape<T>>;
+  constraints: InputConstraints<T>;
   meta: EntityMetaData<T>;
   hash: string;
   keys: string[];
@@ -173,7 +172,7 @@ export function defaultEntity<T extends AnyZodObject>(
 
 function constraints<T extends AnyZodObject>(
   schema: T
-): InputConstraints<RawShape<T>> {
+): InputConstraints<T> {
   function constraint(
     key: string,
     zodType: ZodTypeAny,
@@ -253,7 +252,7 @@ function constraints<T extends AnyZodObject>(
       return mapField(key, obj);
     },
     (data) => !!data
-  ) as InputConstraints<RawShape<T>>;
+  ) as InputConstraints<T>;
 }
 
 function meta<T extends AnyZodObject>(schema: T) {

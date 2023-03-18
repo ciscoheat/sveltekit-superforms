@@ -8,7 +8,7 @@ import {
 } from '..';
 import { entityData, valueOrDefault, type UnwrappedEntity } from './entity';
 
-import { checkPath, unwrapZodType, type ZodTypeInfo } from '../entity';
+import { traversePath, unwrapZodType, type ZodTypeInfo } from '../entity';
 
 import {
   z,
@@ -57,7 +57,7 @@ export function setError<T extends AnyZodObject>(
   if (!form.errors) form.errors = {};
   if (typeof path === 'string') path = [path];
 
-  const leaf = checkPath(
+  const leaf = traversePath(
     form.errors,
     path as (string | number)[],
     ({ parent, key, value }) => {

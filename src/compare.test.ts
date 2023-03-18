@@ -7,7 +7,7 @@ import {
   type AnyZodObject,
   type ZodTypeAny
 } from 'zod';
-import { checkPath } from '$lib/entity';
+import { traversePath } from '$lib/entity';
 import { writable } from 'svelte/store';
 import { mapErrors, unwrapZodType } from '$lib/entity';
 
@@ -58,7 +58,7 @@ test('Mapping errors', () => {
 });
 
 test('Basic path traversal', () => {
-  const error = checkPath(mapped, ['friends', '1', 'id']);
+  const error = traversePath(mapped, ['friends', '1', 'id']);
 
   expect(error).toStrictEqual({
     parent: mapped.friends![1],
@@ -68,7 +68,7 @@ test('Basic path traversal', () => {
 });
 
 test('Basic path traversal, non-existing leaf', () => {
-  const error = checkPath(mapped, ['friends', '1', 'N/A']);
+  const error = traversePath(mapped, ['friends', '1', 'N/A']);
 
   expect(error).toStrictEqual({
     parent: mapped.friends![1],
@@ -78,12 +78,12 @@ test('Basic path traversal, non-existing leaf', () => {
 });
 
 test('Basic path traversal, non-existing node', () => {
-  const error = checkPath(mapped, ['friends', '2', 'id']);
+  const error = traversePath(mapped, ['friends', '2', 'id']);
   expect(error).toBeUndefined();
 });
 
 test('Basic path traversal, non-existing node with modifier', () => {
-  const error = checkPath(
+  const error = traversePath(
     mapped,
     ['friends', '2', 'id'],
     ({ parent, key, value }) => {
@@ -114,7 +114,7 @@ test('Setting a path', () => {
   });
 
   Errors.update((errors) => {
-    const { parent, key } = checkPath(
+    const { parent, key } = traversePath(
       errors,
       path,
       ({ parent, key, value }) => {
@@ -128,7 +128,7 @@ test('Setting a path', () => {
 });
 
 test('Traversing a Zod schema', () => {
-  const { value } = checkPath(
+  const { value } = traversePath(
     social.shape,
     ['friends', 'tags', 'name'],
     ({ value }) => {

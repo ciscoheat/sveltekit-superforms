@@ -103,7 +103,7 @@ type PathData = {
   value: any;
 };
 
-export function checkPath(
+export function traversePath(
   obj: any,
   path: (string | number)[],
   modifier?: (data: PathData) => undefined | unknown | void

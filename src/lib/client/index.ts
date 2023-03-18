@@ -28,7 +28,12 @@ import {
 import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '..';
-import { mapErrors, unwrapZodType, checkPath, findErrors } from '../entity';
+import {
+  mapErrors,
+  unwrapZodType,
+  traversePath,
+  findErrors
+} from '../entity';
 
 enum FetchStatus {
   Idle = 0,
@@ -436,7 +441,7 @@ export function superForm<
     // Update Tainted store.
     Tainted.update((tainted) => {
       if (!tainted) tainted = {};
-      const leaf = checkPath(tainted, path, ({ parent, key, value }) => {
+      const leaf = traversePath(tainted, path, ({ parent, key, value }) => {
         if (value === undefined) parent[key] = {};
         return parent[key];
       });
@@ -454,7 +459,7 @@ export function superForm<
 
     function setError(path: string[], newErrors: string[] | null) {
       Errors.update((errors) => {
-        const errorPath = checkPath(
+        const errorPath = traversePath(
           errors,
           path,
           ({ parent, key, value }) => {
@@ -483,7 +488,7 @@ export function superForm<
         if (options.validators.constructor.name === 'ZodObject') {
           // Zod validator
           const validator = options.validators as T;
-          let found: ZodTypeAny | undefined = checkPath(
+          let found: ZodTypeAny | undefined = traversePath(
             validator.shape,
             validationPath,
             ({ value }) => {
@@ -526,7 +531,7 @@ export function superForm<
           const validator = options.validators as Validators<T>;
 
           const found: Validator<T, keyof z.infer<T>> | undefined =
-            checkPath(validator, validationPath)?.value;
+            traversePath(validator, validationPath)?.value;
 
           if (found) {
             const result = await found(newObj as z.infer<T>);
@@ -544,7 +549,7 @@ export function superForm<
 
     if (!validated && options.defaultValidator == 'clear') {
       Errors.update((errors) => {
-        const leaf = checkPath(errors, path);
+        const leaf = traversePath(errors, path);
         if (leaf) delete leaf.parent[leaf.key];
         return errors;
       });

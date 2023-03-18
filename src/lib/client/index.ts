@@ -20,9 +20,10 @@ import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
 import {
   SuperFormError,
-  type RawShape,
   type TaintedFields,
-  type Validation
+  type Validation,
+  type Validator,
+  type Validators
 } from '..';
 import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
@@ -48,19 +49,6 @@ type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,
   untaint?: boolean
 ) => Promise<void>;
-
-type Validator<T extends AnyZodObject, P extends keyof z.infer<T>> = (
-  value: z.infer<T>[P]
-) => MaybePromise<string | string[] | null | undefined>;
-
-// TODO: Move to SuperStructure, cannot have a generic type due to Property
-export type Validators<T extends AnyZodObject> = {
-  [Property in keyof RawShape<T>]?: RawShape<T>[Property] extends
-    | AnyZodObject
-    | ZodArray<ZodTypeAny>
-    ? Validators<RawShape<T>[Property]>
-    : Validator<T, Property>;
-};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormOptions<T extends AnyZodObject, M> = Partial<{
@@ -490,8 +478,10 @@ export function superForm<
       // Filter out array indices, since the type for options.validation
       // doesn't have that in the structure.
       const validationPath = [...path].filter((p) => isNaN(parseInt(p)));
+
       if (validationPath.length > 0) {
         if (options.validators.constructor.name === 'ZodObject') {
+          // Zod validator
           const validator = options.validators as T;
           let found: ZodTypeAny | undefined = checkPath(
             validator.shape,

@@ -549,10 +549,8 @@ test('Deeply nested constraints', async () => {
   expect(form.constraints).toStrictEqual({
     id: { min: 0, required: true },
     users: {
-      /*_constraints: { required: true },*/
       name: { required: true, minlength: 2, pattern: 'X' },
       posts: {
-        /*_constraints: { min: 2 },*/
         subject: { required: true, minlength: 1 }
       }
     }

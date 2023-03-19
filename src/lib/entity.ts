@@ -150,7 +150,8 @@ export async function traversePaths(
     if (status === 'abort') return status;
     else if (status === 'skip') continue;
     else if (typeof value === 'object') {
-      return await traversePaths(value, modifier, pathData.path);
+      const status = await traversePaths(value, modifier, pathData.path);
+      if (status === 'abort') return status;
     }
   }
 }

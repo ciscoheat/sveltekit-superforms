@@ -846,7 +846,12 @@ function formEnhance<T extends AnyZodObject, M>(
           success = true;
 
           await traversePaths(checkData, async ({ value, path }) => {
-            const maybeValidator = await traversePathAsync(validator, path);
+            // Filter out array indices, the validator structure doesn't contain these.
+            const validationPath = path.filter((p) => isNaN(parseInt(p)));
+            const maybeValidator = await traversePathAsync(
+              validator,
+              validationPath
+            );
 
             if (typeof maybeValidator?.value === 'function') {
               const check = maybeValidator.value as Validator<unknown>;

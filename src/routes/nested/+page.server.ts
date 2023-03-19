@@ -4,7 +4,15 @@ import { superValidate } from '$lib/server';
 import { fail } from '@sveltejs/kit';
 import { redirect } from 'sveltekit-flash-message/server';
 
-const defaultData = { ids: { id: [1, 2, 3, 4] } };
+const defaultData = {
+  tags: [
+    { id: 1, name: 'A' },
+    { id: 2, name: 'Bb' },
+    { id: 3, name: 'Cc' },
+    { id: 4, name: 'Dd' }
+  ],
+  redirect: false
+};
 
 export const load = (async (event) => {
   const form = await superValidate(defaultData, schema, {

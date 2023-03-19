@@ -415,13 +415,41 @@ const { form, errors, enhance } = superForm(data.form, {
 });
 ```
 
+For nested data, just keep building on the `validators` structure. Note that arrays have a single validator:
+
+```ts
+// On the server
+const schema = z.object({
+  name: z.string().min(3),
+  tags: z
+    .object({
+      name: z.string().min(2)
+    })
+    .array()
+});
+
+// On the client
+const { form, errors, enhance } = superForm(data.form, {
+  validators: {
+    name: (name) =>
+      name.length < 3 ? 'Name must be at least 3 characters' : null,
+    tags: {
+      name: (name) =>
+        name.length < 2 ? 'Tag must be at least 2 characters' : null
+    }
+  }
+});
+```
+
+The same recursive building is also made with `errors` and `constraints`, with extra care taken for [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining).
+
 There is one additional option for specifying the default client validation behavior, when no validator exists for a field:
 
 ```ts
 defaultValidator: 'keep' | 'clear' = 'keep'
 ```
 
-The default value `keep` means that validation errors will be displayed until the form submits. `clear`, will remove the error when that field value is modified.
+The default value `keep` means that validation errors will be displayed until the form submits. `clear` will remove the error when that field value is modified.
 
 ## Submit behavior
 

@@ -11,8 +11,10 @@
     dataType: 'json',
     //validators: schema,
     validators: {
-      ids: {
-        id: (n) => (n < 3 ? 'Number must be larger than 2' : null)
+      tags: {
+        id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
+        name: (name) =>
+          name.length < 2 ? 'Tags must be at least two characters' : null
       }
     },
     flashMessage: {
@@ -36,16 +38,25 @@
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
-  {#each $form.ids.id as _, i}
+  {#each $form.tags as _, i}
     <div>
       <input
         type="number"
-        data-invalid={($errors.ids?.id && $errors.ids.id[i]) || undefined}
-        bind:value={$form.ids.id[i]}
+        data-invalid={$errors.tags?.[i]?.id}
+        bind:value={$form.tags[i].id}
       />
-      {#if $errors.ids?.id && $errors.ids.id[i]}<span class="invalid"
-          >{$errors.ids.id[i]}</span
-        >{/if}
+      <input
+        data-invalid={$errors.tags?.[i]?.name}
+        bind:value={$form.tags[i].name}
+      />
+      {#if $errors.tags?.[i]?.id}
+        <br />
+        <span class="invalid">{$errors.tags[i].id}</span>
+      {/if}
+      {#if $errors.tags?.[i]?.name}
+        <br />
+        <span class="invalid">{$errors.tags[i].name}</span>
+      {/if}
     </div>
   {/each}
   <button>Submit</button>

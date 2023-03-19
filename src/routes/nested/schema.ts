@@ -1,22 +1,11 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  ids: z.object({
-    id: z.number().int().min(3).array()
-  }),
-  redirect: z.boolean().optional()
+  tags: z
+    .object({
+      id: z.number().int().min(3),
+      name: z.string().min(2)
+    })
+    .array(),
+  redirect: z.boolean()
 });
-
-/*
-const data = {
-  ids: {
-    id: [1,2,3]
-  }
-}
-
-const data2 = {
-  ids: {
-    id: [3,4,5]
-  }
-}
-*/

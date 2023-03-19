@@ -12,46 +12,42 @@ export class SuperFormError extends Error {
 
 export type RawShape<T> = T extends ZodObject<infer U> ? U : never;
 
+type UnwrappedRawShape<
+  T extends AnyZodObject,
+  P extends keyof RawShape<T>
+> = UnwrappedEntity<RawShape<T>[P]>;
+
 type SuperStructArray<T extends AnyZodObject, Data, ArrayData = never> = {
-  [Property in keyof RawShape<T>]?: UnwrappedEntity<
-    RawShape<T>[Property]
-  > extends AnyZodObject
-    ? SuperStructArray<
-        UnwrappedEntity<RawShape<T>[Property]>,
-        Data,
-        ArrayData
-      >
-    : UnwrappedEntity<RawShape<T>[Property]> extends ZodArray<infer A>
-    ? ArrayData &
-        Record<
-          number,
-          UnwrappedEntity<A> extends AnyZodObject
-            ? SuperStructArray<UnwrappedEntity<A>, Data, ArrayData>
-            : Data
-        >
-    : Data;
+  [Property in keyof RawShape<T>]?: T extends any
+    ? UnwrappedRawShape<T, Property> extends AnyZodObject
+      ? SuperStructArray<UnwrappedRawShape<T, Property>, Data, ArrayData>
+      : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
+      ? ArrayData &
+          Record<
+            number,
+            UnwrappedEntity<A> extends AnyZodObject
+              ? SuperStructArray<UnwrappedEntity<A>, Data, ArrayData>
+              : Data
+          >
+      : Data
+    : never;
 };
 
 type SuperStruct<T extends AnyZodObject, Data> = Partial<{
-  [Property in keyof RawShape<T>]: UnwrappedEntity<
-    RawShape<T>[Property]
-  > extends AnyZodObject
-    ? SuperStruct<UnwrappedEntity<RawShape<T>[Property]>, Data>
-    : UnwrappedEntity<RawShape<T>[Property]> extends ZodArray<infer A>
-    ? UnwrappedEntity<A> extends AnyZodObject
-      ? SuperStruct<UnwrappedEntity<A>, Data>
+  [Property in keyof RawShape<T>]: T extends any
+    ? UnwrappedRawShape<T, Property> extends AnyZodObject
+      ? SuperStruct<UnwrappedRawShape<T, Property>, Data>
+      : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
+      ? UnwrappedEntity<A> extends AnyZodObject
+        ? SuperStruct<UnwrappedEntity<A>, Data>
+        : InputConstraint
       : InputConstraint
-    : InputConstraint;
+    : never;
 }>;
 
 export type Validator<V> = (
   value: V
 ) => MaybePromise<string | string[] | null | undefined>;
-
-type UnwrappedRawShape<
-  T extends AnyZodObject,
-  P extends keyof RawShape<T>
-> = UnwrappedEntity<RawShape<T>[P]>;
 
 // Cannot be a SuperStruct due to Property having to be passed on.
 // Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html

@@ -201,7 +201,7 @@
   <input type="hidden" name="nativeEnumInt" value="1" />
   <input type="hidden" name="nativeEnumString2" value="Banana" />
 
-  <input type="hidden" name="proxyString" bind:value={$form.proxyString} />
+  <input type="hidden" name="proxyString" bind:value={$proxyString} />
 
   <input type="hidden" name="numberArray" value="123" />
   <input type="hidden" name="numberArray" value="456" />

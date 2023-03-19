@@ -309,20 +309,15 @@ export function superForm<
   options.taintedMessage = undefined;
 
   // Check client validation on data change
-  let previousForm: typeof initialForm.data;
+  let previousForm = structuredClone(initialForm.data);
 
   function enableTaintedMessage() {
     options.taintedMessage = _taintedMessage;
-    if (options.taintedMessage) {
-      previousForm = structuredClone(initialForm.data);
-    }
   }
 
   function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
     if (untaint) {
-      if (options.taintedMessage) {
-        previousForm = structuredClone(form.data);
-      }
+      previousForm = structuredClone(form.data);
       Tainted.set(undefined);
     }
 
@@ -434,7 +429,7 @@ export function superForm<
         }
       } else {
         for (const prop in newObj) {
-          checkValidationAndTainted(
+          await checkValidationAndTainted(
             newObj[prop as keyof object],
             compareAgainst[prop as keyof object],
             path.concat([prop])
@@ -445,6 +440,14 @@ export function superForm<
     } else if (newObj === compareAgainst) {
       return;
     }
+
+    console.log(
+      '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
+      path,
+      newObj,
+      compareAgainst,
+      get(Tainted)
+    );
 
     // At this point, the field is modified.
     // Update Tainted store.
@@ -457,16 +460,6 @@ export function superForm<
       if (leaf) leaf.parent[leaf.key] = true;
       return tainted;
     });
-
-    /*
-    console.log(
-      '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
-      path,
-      newObj,
-      compareAgainst,
-      get(Tainted)
-    );
-    */
 
     function setError(path: string[], newErrors: string[] | null) {
       Errors.update((errors) => {

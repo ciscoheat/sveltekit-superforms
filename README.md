@@ -178,7 +178,7 @@ POST {
   errors: { email: [ 'Invalid email' ] },
   data: { name: 'Hello world!', email: '' },
   empty: false,
-  message: null,
+  message: undefined,
   constraints: {
     name: { required: true },
     email: { required: true }
@@ -192,7 +192,7 @@ This is the validation object returned from `superValidate`, containing all you 
 - `errors` - A `Record<string, string[]>` of all validation errors.
 - `data` - The coerced posted data, in this case not valid, so it should be promptly returned to the client.
 - `empty` - A `boolean` which tells you if the data passed to `superValidate` was empty, as in the load function.
-- `message` - A `string` property that can be set as a general information message.
+- `message` - A property that can be set as a general information message.
 - `constraints` - An object with [html validation constraints](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation#using_built-in_form_validation) than can be spread on input fields.
 
 And as you see in the example above, the logic for checking validation status is as simple as it gets:

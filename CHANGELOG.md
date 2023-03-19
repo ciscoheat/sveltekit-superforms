@@ -5,7 +5,7 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2023-03-18
+## [0.6.0] - 2023-03-19
 
 ### Changed
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - If `options.dataType` isn't set to `json` and a nested object is detected in the data sent to `superForm`, an error will be thrown.
 - The callback for `options.flashMessage.onError` now follows the same signature as `options.onError`.
 - `SuperFormError` is thrown instead of `Error`.
-- Each `fields` property now has a writable store for setting the value.
+- The `fields` store lists all top-level fields as an object, with writable stores for `value`, `errors` and `constraints`, so they can be passed to sub-components.
 
 ### Added
 
@@ -33,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Using `onDestroy` to unsubscribe from the `page` store.
-- The `fields` store lists all top-level fields as an object, so they can be passed to sub-components.
 - `onSubmit` wasn't called with `await`.
 - Default data is now cloned, not just referenced.
 - Last but not least, a big thanks to [Dale Ryan](https://github.com/lnfel) for making the `SuperDebug` component even more super!

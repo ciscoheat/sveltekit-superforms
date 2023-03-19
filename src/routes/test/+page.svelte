@@ -45,12 +45,12 @@
 
     assertInnerText(
       '[data-first-error]',
-      'First error: email - [Email error]'
+      'First error: proxyNumber - Number must be greater than or equal to 10'
     );
 
     assertInnerText(
       '[data-all-errors]',
-      'email: [Email error]\nproxyNumber: Number must be greater than or equal to 10\ncoercedDate: Invalid date'
+      'proxyNumber: Number must be greater than or equal to 10\ncoercedDate: Invalid date\nemail: [Email error]'
     );
 
     const fieldErrors = Array.from(

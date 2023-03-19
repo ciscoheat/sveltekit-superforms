@@ -14,6 +14,8 @@
   }
 
   $: value = field.value;
+  $: errors = field.errors;
+  $: constraints = field.constraints;
 </script>
 
 <label>
@@ -22,10 +24,10 @@
     {placeholder}
     bind:value={$value}
     name={field.name}
-    {...field.constraints}
-    data-invalid={field.errors}
+    {...$constraints}
+    data-invalid={$errors}
   />
-  {#if field.errors}<span class="invalid">{field.errors}</span>{/if}
+  {#if $errors}<span class="invalid">{$errors}</span>{/if}
 </label>
 
 <style lang="scss">

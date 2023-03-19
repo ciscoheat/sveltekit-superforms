@@ -106,11 +106,11 @@ export type FormField<
   T extends AnyZodObject,
   Property extends keyof z.infer<T>
 > = {
-  name: string;
+  readonly name: string;
   value: Writable<z.infer<T>[Property]>;
-  errors?: ValidationErrors<T>[Property];
-  constraints?: InputConstraints<T>[Property];
-  type?: string;
+  errors?: Writable<ValidationErrors<T>[Property]>;
+  constraints?: Writable<InputConstraints<T>[Property]>;
+  readonly type?: string;
 };
 
 export type FormFields<T extends AnyZodObject> = {

@@ -61,7 +61,8 @@ export const load = (async ({ url }) => {
   if (id && !user) throw error(404, 'User not found.');
 
   const form = await superValidate(user, crudSchema, {
-    includeMeta: true
+    includeMeta: true,
+    noErrors: true
   });
   return { form, users };
 }) satisfies PageServerLoad;

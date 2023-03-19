@@ -155,7 +155,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
 
-  fields: Readable<FormFields<T>>;
+  fields: FormFields<T>;
   firstError: Readable<{ path: string[]; message: string } | null>;
   allErrors: Readable<{ path: string[]; message: string }[]>;
 
@@ -308,12 +308,21 @@ export function superForm<
   const _taintedMessage = options.taintedMessage;
   options.taintedMessage = undefined;
 
+  // Check client validation on data change
+  let previousForm: typeof initialForm.data;
+
   function enableTaintedMessage() {
     options.taintedMessage = _taintedMessage;
+    if (options.taintedMessage) {
+      previousForm = structuredClone(initialForm.data);
+    }
   }
 
   function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
     if (untaint) {
+      if (options.taintedMessage) {
+        previousForm = structuredClone(form.data);
+      }
       Tainted.set(undefined);
     }
 
@@ -558,6 +567,19 @@ export function superForm<
     }
   }
 
+  const unsubscriptions: (() => void)[] = [];
+
+  onDestroy(() => {
+    /*
+    console.log(
+      '🚀 ~ file: index.ts:565 ~ onDestroy ~ removing',
+      unsubscriptions.length,
+      'subscriptions'
+    );
+    */
+    unsubscriptions.forEach((unsub) => unsub());
+  });
+
   if (browser) {
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
@@ -568,67 +590,63 @@ export function superForm<
       }
     });
 
-    // Check client validation on data change
-    let previousForm = structuredClone(initialForm.data);
-
     // Prevent client validation on first page load
     // (when it recieives data from the server)
-    let checkData = false;
+    let hasNewData = true;
 
-    Data.subscribe(async (data) => {
-      if (!checkData) {
-        checkData = true;
-        return;
-      }
+    unsubscriptions.push(
+      Data.subscribe(async (data) => {
+        //console.log('🚀 ~ Data.subscribe ~ hasNewData:', formId, hasNewData);
+        if (hasNewData) {
+          hasNewData = false;
+          return;
+        }
 
-      if (!get(Submitting)) {
-        await checkValidationAndTainted(data, previousForm);
-      }
-    });
+        if (!get(Submitting)) {
+          await checkValidationAndTainted(data, previousForm);
+        }
+      })
+    );
 
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
-      onDestroy(
-        page.subscribe(async (newData) => {
+      unsubscriptions.push(
+        page.subscribe(async (newValidation) => {
           function error(type: string) {
             throw new SuperFormError(
               `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
             );
           }
 
-          const success = newData.status >= 200 && newData.status < 300;
-          let updated = false;
+          const untaint =
+            newValidation.status >= 200 && newValidation.status < 300;
 
-          if (newData.form && typeof newData.form === 'object') {
-            const forms = findForms(newData.form);
+          if (newValidation.form && typeof newValidation.form === 'object') {
+            const forms = findForms(newValidation.form);
             if (!forms.length) error('$page.form (ActionData)');
 
             for (const newForm of forms) {
+              //console.log('🚀~ ActionData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
-              updated = true;
-              await _update(newForm as Validation<T, M>, success);
+              // Prevent client validation from overriding the new server errors.
+              hasNewData = true;
+              await _update(newForm as Validation<T, M>, untaint);
             }
-          } else if (newData.data && typeof newData.data === 'object') {
-            const forms = findForms(newData.data);
+          } else if (
+            newValidation.data &&
+            typeof newValidation.data === 'object'
+          ) {
+            const forms = findForms(newValidation.data);
 
             // It's a page reload, redirect or error/failure,
             // so don't trigger any events, just update the data.
             for (const newForm of forms) {
+              //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
-              updated = true;
-              rebind(newForm as Validation<T, M>, success);
-            }
-          }
-
-          if (updated) {
-            // Prevent client validation from overriding the new server errors.
-            checkData = false;
-
-            if (success) {
-              // Clone the data so it won't be marked as tainted.
-              previousForm = structuredClone(newData);
+              hasNewData = true;
+              rebind(newForm as Validation<T, M>, untaint);
             }
           }
         })
@@ -643,24 +661,61 @@ export function superForm<
       };`;
   }
 
-  function fieldStore<V>(fieldName: string): Writable<V> {
-    const store = writable<V>();
+  function fieldStore<V>(
+    parentStore: Writable<object>,
+    fieldName: string,
+    value: V
+  ): Writable<V> {
+    if (!browser) return writable<V>(value);
+    const store = writable<V>(value);
 
-    Data.subscribe((data) => {
-      store.set(data[fieldName]);
+    const unsub2 = parentStore.subscribe((data) => {
+      store.set(data[fieldName as keyof object]);
     });
 
     return {
-      subscribe: store.subscribe,
+      subscribe(...params: Parameters<typeof store.subscribe>) {
+        //console.log('~ fieldStore ~ subscribe', fieldName);
+        const unsub = store.subscribe(...params);
+
+        return () => {
+          //console.log('~ fieldStore ~ unsubscribe', fieldName);
+          unsub();
+          unsub2();
+        };
+      },
+      //subscribe: store.subscribe,
       set: (value: V) => {
-        Data.set({ ...get(Data), [fieldName]: value });
+        //console.log('~ fieldStore ~ set value for', fieldName, value);
+        parentStore.update((form: object) => ({
+          ...form,
+          [fieldName]: value
+        }));
       },
       update: (cb: (value: V) => V) => {
-        Data.set((form: z.infer<T>) => ({
+        //console.log('~ fieldStore ~ update value for', fieldName);
+        parentStore.update((form: object) => ({
           ...form,
-          [fieldName]: cb(form[fieldName])
+          [fieldName]: cb(form[fieldName as keyof object])
         }));
       }
+    };
+  }
+
+  const Fields = Object.fromEntries(
+    Object.keys(initialForm.data).map((key) => [
+      key,
+      Fields_create(key, initialForm)
+    ])
+  ) as FormFields<T>;
+
+  function Fields_create(key: string, validation: Validation<T, M>) {
+    return {
+      name: key,
+      value: fieldStore(Data, key, validation.data[key]),
+      errors: fieldStore(Errors, key, validation.errors[key]),
+      constraints: fieldStore(Constraints, key, validation.constraints[key]),
+      type: validation.meta?.types[key]
     };
   }
 
@@ -671,22 +726,7 @@ export function superForm<
     constraints: Constraints,
     meta: derived(Meta, ($m) => $m),
 
-    fields: derived([Errors, Constraints, Meta], ([$E, $C, $M], set) => {
-      set(
-        Object.fromEntries(
-          Object.keys(get(Data)).map((key) => [
-            key,
-            {
-              name: key,
-              value: fieldStore(key),
-              errors: $E[key],
-              constraints: $C[key],
-              type: $M?.types[key]
-            }
-          ])
-        ) as FormFields<T>
-      );
-    }),
+    fields: Fields,
 
     tainted: derived(Tainted, ($t) => $t),
     valid: derived(Valid, ($s) => $s),

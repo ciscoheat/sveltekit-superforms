@@ -50,13 +50,13 @@ export const load = (async (event) => {
 export const actions = {
   form: async (event) => {
     const formData = await event.request.formData();
-    console.log('🚀 ~ POST', formData);
+    console.log('POST', formData);
 
     const form = await superValidate(
       formData,
       _dataTypeForm.extend({ coercedDate: z.coerce.date() })
     );
-    console.log('🚀 ~ FORM', form);
+    console.log('FORM', form);
 
     if (formData.has('redirect')) throw redirect(303, '/redirected');
 

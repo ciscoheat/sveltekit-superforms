@@ -21,7 +21,6 @@
   } = superForm(data.form, {
     dataType: 'json',
     async onUpdate({ form }) {
-      console.log('onUpdate', form);
       if (form.valid) {
         await goto('?id=' + form.data.id);
       }
@@ -41,7 +40,7 @@
     form: staticform,
     errors: staticerrors,
     constraints: staticconstraints
-  } = superForm(data.form, { id: 'static' });
+  } = superForm(data.form);
 </script>
 
 <SuperDebug data={{ $form, $staticform }} />
@@ -83,8 +82,8 @@
       {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
     </label>
 
-    <Input label="E-mail" field={$fields.email} />
-    <Input label="Gender" field={$fields.gender} />
+    <Input label="E-mail" field={fields.email} />
+    <Input label="Gender" field={fields.gender} />
 
     <div>
       <button>Submit</button>
@@ -110,7 +109,6 @@
   <!--------- Static form (no javascript/enhance) ----------------------->
   <form method="POST" action="?/edit">
     <input type="hidden" name="id" bind:value={$staticform.id} />
-    <input type="hidden" name="formid" value="static" />
 
     <label>
       Name<br /><input
@@ -130,7 +128,6 @@
         name="email"
         data-invalid={$staticerrors.email}
         bind:value={$staticform.email}
-        {...$staticconstraints.email}
       />
       {#if $staticerrors.email}<span class="invalid"
           >{$staticerrors.email}</span

@@ -15,7 +15,7 @@ export const load = (async (event) => {
 export const actions = {
   default: async (event) => {
     const data = await event.request.formData();
-    console.log('🚀 ~ file: +page.server.ts:19 ~ default: ~ data:', data);
+    console.log('file: +page.server.ts:19 ~ default: ~ data:', data);
     const form = await superValidate(data, userSchema);
     console.log('FILE FORM', form);
     if (!form.valid) return fail(400, { form });

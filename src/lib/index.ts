@@ -54,21 +54,22 @@ type UnwrappedRawShape<
 > = UnwrappedEntity<RawShape<T>[P]>;
 
 // Cannot be a SuperStruct due to Property having to be passed on.
+// Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
 export type Validators<T extends AnyZodObject> = Partial<{
-  [Property in keyof RawShape<T>]: UnwrappedRawShape<
-    T,
-    Property
-  > extends AnyZodObject
-    ? Validators<UnwrappedRawShape<T, Property>>
-    : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
-    ? UnwrappedEntity<A> extends AnyZodObject
-      ? Validators<UnwrappedEntity<A>>
-      : Validator<
-          z.infer<T>[Property] extends Array<infer A2>
-            ? A2
-            : z.infer<T>[Property]
-        >
-    : Validator<z.infer<T>[Property]>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [Property in keyof RawShape<T>]: T extends any
+    ? UnwrappedRawShape<T, Property> extends AnyZodObject
+      ? Validators<UnwrappedRawShape<T, Property>>
+      : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
+      ? UnwrappedEntity<A> extends AnyZodObject
+        ? Validators<UnwrappedEntity<A>>
+        : Validator<
+            z.infer<T>[Property] extends Array<infer A2>
+              ? A2
+              : z.infer<T>[Property]
+          >
+      : Validator<z.infer<T>[Property]>
+    : never;
 }>;
 
 export type TaintedFields<T extends AnyZodObject> = SuperStructArray<

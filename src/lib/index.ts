@@ -44,21 +44,31 @@ type SuperStruct<T extends AnyZodObject, Data> = Partial<{
     : InputConstraint;
 }>;
 
-export type Validator<T extends AnyZodObject, P extends keyof z.infer<T>> = (
-  value: z.infer<T>[P]
+export type Validator<V> = (
+  value: V
 ) => MaybePromise<string | string[] | null | undefined>;
+
+type UnwrappedRawShape<
+  T extends AnyZodObject,
+  P extends keyof RawShape<T>
+> = UnwrappedEntity<RawShape<T>[P]>;
 
 // Cannot be a SuperStruct due to Property having to be passed on.
 export type Validators<T extends AnyZodObject> = Partial<{
-  [Property in keyof RawShape<T>]: UnwrappedEntity<
-    RawShape<T>[Property]
+  [Property in keyof RawShape<T>]: UnwrappedRawShape<
+    T,
+    Property
   > extends AnyZodObject
-    ? Validators<UnwrappedEntity<RawShape<T>[Property]>>
-    : UnwrappedEntity<RawShape<T>[Property]> extends ZodArray<infer A>
+    ? Validators<UnwrappedRawShape<T, Property>>
+    : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
     ? UnwrappedEntity<A> extends AnyZodObject
       ? Validators<UnwrappedEntity<A>>
-      : Validator<T, Property>
-    : Validator<T, Property>;
+      : Validator<
+          z.infer<T>[Property] extends Array<infer A2>
+            ? A2
+            : z.infer<T>[Property]
+        >
+    : Validator<z.infer<T>[Property]>;
 }>;
 
 export type TaintedFields<T extends AnyZodObject> = SuperStructArray<

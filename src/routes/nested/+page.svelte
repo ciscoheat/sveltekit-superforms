@@ -9,7 +9,12 @@
 
   const { form, errors, enhance, message } = superForm(data.form, {
     dataType: 'json',
-    validators: schema,
+    //validators: schema,
+    validators: {
+      ids: {
+        id: (n) => (n < 3 ? 'Number must be larger than 2' : null)
+      }
+    },
     flashMessage: {
       module: flashModule,
       onError({ result, message }) {

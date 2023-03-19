@@ -25,10 +25,16 @@ import {
   type Validator,
   type Validators
 } from '..';
-import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
+import type { AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '..';
-import { mapErrors, traversePath, findErrors } from '../entity';
+import {
+  mapErrors,
+  traversePath,
+  findErrors,
+  traversePaths,
+  traversePathAsync
+} from '../entity';
 import { unwrapZodType } from './entity';
 import { fieldProxy } from './proxies';
 
@@ -92,7 +98,7 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   validators: Validators<T> | T;
-  defaultValidator: 'clear' | 'keep';
+  defaultValidator: 'keep' | 'clear';
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs: number;
   timeoutMs: number;
@@ -134,7 +140,7 @@ const defaultFormOptions = {
   onError: undefined,
   dataType: 'form',
   validators: undefined,
-  defaultValidator: 'clear',
+  defaultValidator: 'keep',
   clearOnSubmit: 'errors-and-message',
   delayMs: 500,
   timeoutMs: 8000,
@@ -396,13 +402,11 @@ export function superForm<
     }
   };
 
-  async function checkValidationAndTainted(
+  async function checkTainted(
     newObj: unknown,
     compareAgainst: unknown,
     path: string[] = []
   ): Promise<Record<string, unknown> | undefined> {
-    //console.log('Entering', path, newObj, compareAgainst);
-
     if (
       newObj !== null &&
       compareAgainst !== null &&
@@ -430,7 +434,7 @@ export function superForm<
         }
       } else {
         for (const prop in newObj) {
-          await checkValidationAndTainted(
+          await checkTainted(
             newObj[prop as keyof object],
             compareAgainst[prop as keyof object],
             path.concat([prop])
@@ -443,7 +447,6 @@ export function superForm<
     }
 
     // At this point, the field is modified.
-    // Update Tainted store.
     Tainted.update((tainted) => {
       if (!tainted) tainted = {};
       const leaf = traversePath(tainted, path, ({ parent, key, value }) => {
@@ -463,97 +466,7 @@ export function superForm<
     );
     */
 
-    function setError(path: string[], newErrors: string[] | null) {
-      Errors.update((errors) => {
-        const errorPath = traversePath(
-          errors,
-          path,
-          ({ parent, key, value }) => {
-            if (value === undefined) parent[key] = {};
-            return parent[key];
-          }
-        );
-
-        if (errorPath) {
-          const { parent, key } = errorPath;
-          if (newErrors === null) delete parent[key];
-          else parent[key] = newErrors;
-        }
-        return errors;
-      });
-    }
-
-    let validated = false;
-
-    if (options.validators) {
-      // Filter out array indices, since the type for options.validation
-      // doesn't have that in the structure.
-      const validationPath = [...path].filter((p) => isNaN(parseInt(p)));
-
-      if (validationPath.length > 0) {
-        if (options.validators.constructor.name === 'ZodObject') {
-          // Zod validator
-          const validator = options.validators as T;
-          let found: ZodTypeAny | undefined = traversePath(
-            validator.shape,
-            validationPath,
-            ({ value }) => {
-              let type = unwrapZodType(value).zodType;
-
-              while (type.constructor.name === 'ZodArray') {
-                type = (type as ZodArray<ZodTypeAny>)._def.type;
-              }
-
-              if (type.constructor.name == 'ZodObject') {
-                return (type as AnyZodObject).shape;
-              } else {
-                return undefined;
-              }
-            }
-          )?.value;
-
-          if (found) {
-            // If we land on an array (can happen when an array index has errors)
-            // go into the array schema and extract the underlying type
-            while (found && found.constructor.name === 'ZodArray') {
-              found = unwrapZodType(
-                (found as unknown as ZodArray<ZodTypeAny>)._def.type
-              ).zodType;
-            }
-
-            const result = await found.spa(newObj);
-
-            setError(
-              path,
-              result.success
-                ? null
-                : result.error.errors.map((err) => err.message)
-            );
-
-            validated = true;
-          }
-        } else {
-          // SuperForms validator
-          const validator = options.validators as Validators<T>;
-
-          const found: Validator<T, keyof z.infer<T>> | undefined =
-            traversePath(validator, validationPath)?.value;
-
-          if (found) {
-            const result = await found(newObj as z.infer<T>);
-
-            setError(
-              path,
-              typeof result === 'string' ? [result] : result ?? null
-            );
-
-            validated = true;
-          }
-        }
-      }
-    }
-
-    if (!validated && options.defaultValidator == 'clear') {
+    if (options.defaultValidator == 'clear') {
       Errors.update((errors) => {
         const leaf = traversePath(errors, path);
         if (leaf) delete leaf.parent[leaf.key];
@@ -598,7 +511,7 @@ export function superForm<
         }
 
         if (!get(Submitting)) {
-          await checkValidationAndTainted(data, previousForm);
+          await checkTainted(data, previousForm);
         }
       })
     );
@@ -732,6 +645,34 @@ function formEnhance<T extends AnyZodObject, M>(
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
+
+  function setError(path: string[], newErrors: string[] | null) {
+    errors.update((err) => {
+      const errorPath = traversePath(err, path, ({ parent, key, value }) => {
+        if (value === undefined) parent[key] = {};
+        return parent[key];
+      });
+
+      if (errorPath) {
+        const { parent, key } = errorPath;
+        if (newErrors === null) delete parent[key];
+        else parent[key] = newErrors;
+      }
+      return err;
+    });
+  }
+
+  async function validate(
+    validator: Validator<unknown>,
+    value: unknown,
+    path: string[]
+  ) {
+    const errors = await validator(value);
+    console.log('🚀 ~ file: index.ts:671 ~ errors:', errors);
+
+    setError(path, typeof errors === 'string' ? [errors] : errors ?? null);
+    return !errors;
+  }
 
   /**
    * @DCI-context
@@ -880,15 +821,60 @@ function formEnhance<T extends AnyZodObject, M>(
     } else {
       // Client validation
       if (options.validators) {
+        const checkData = get(data);
+        let success: boolean;
+
         if (options.validators.constructor.name == 'ZodObject') {
+          // Zod validator
           const validator = options.validators as AnyZodObject;
-          const result = await validator.safeParseAsync(get(data));
+          const result = await validator.safeParseAsync(checkData);
+
+          success = result.success;
 
           if (!result.success) {
             errors.set(mapErrors<T>(result.error.format()) as any);
-            cancel();
-            htmlForm.scrollToFirstError();
           }
+        } else {
+          // SuperForms validator
+
+          const validator = options.validators as Validators<T>;
+          console.log(
+            '🚀 ~ file: index.ts:810 ~ returnenhance ~ validator:',
+            validator
+          );
+
+          success = true;
+
+          await traversePaths(checkData, async ({ value, path }) => {
+            const maybeValidator = await traversePathAsync(validator, path);
+
+            if (typeof maybeValidator?.value === 'function') {
+              const check = maybeValidator.value as Validator<unknown>;
+
+              if (Array.isArray(value)) {
+                for (const key in value) {
+                  if (
+                    !(await validate(check, value[key], path.concat([key])))
+                  ) {
+                    success = false;
+                  }
+                }
+                return;
+              } else if (!(await validate(check, value, path))) {
+                success = false;
+              }
+            }
+          });
+        }
+
+        console.log(
+          '🚀 ~ file: index.ts:854 ~ validation ~ success:',
+          success
+        );
+
+        if (!success) {
+          cancel();
+          htmlForm.scrollToFirstError();
         }
       }
 

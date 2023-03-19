@@ -418,10 +418,10 @@ const { form, errors, enhance } = superForm(data.form, {
 There is one additional option for specifying the default client validation behavior, when no validator exists for a field:
 
 ```ts
-defaultValidator: 'keep' | 'clear' = 'clear'
+defaultValidator: 'keep' | 'clear' = 'keep'
 ```
 
-The default value `clear`, will remove the error when that field value is modified. If set to `keep`, validation errors will be kept displayed until the form submits.
+The default value `keep` means that validation errors will be displayed until the form submits. `clear`, will remove the error when that field value is modified.
 
 ## Submit behavior
 

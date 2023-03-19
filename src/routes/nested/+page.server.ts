@@ -6,11 +6,11 @@ import { redirect } from 'sveltekit-flash-message/server';
 
 const defaultData = { ids: { id: [1, 2, 3, 4] } };
 
-export const load = (async () => {
+export const load = (async (event) => {
   const form = await superValidate(defaultData, schema, {
     noErrors: true
   });
-  return { form };
+  return { form, useZod: event.url.searchParams.has('zod') };
 }) satisfies PageServerLoad;
 
 export const actions = {

@@ -1,5 +1,6 @@
 import type { ValidationErrors } from '.';
 import type { ZodTypeAny, AnyZodObject, ZodFormattedError } from 'zod';
+import type { MaybePromise } from '$app/forms';
 
 export type ZodTypeInfo = {
   zodType: ZodTypeAny;
@@ -59,6 +60,42 @@ type PathData = {
   value: any;
 };
 
+type FullPathData = PathData & {
+  path: string[];
+};
+
+export async function traversePathAsync(
+  obj: any,
+  path: (string | number)[],
+  modifier?: (data: PathData) => MaybePromise<undefined | unknown | void>
+): Promise<PathData | undefined> {
+  if (!path.length) return undefined;
+  path = [...path];
+
+  let parent = obj;
+
+  while (path.length > 1) {
+    const key = path.shift() || '';
+    const value = modifier
+      ? await modifier({
+          parent,
+          key: String(key),
+          value: parent[key]
+        })
+      : parent[key];
+
+    if (value === undefined) return undefined;
+    else parent = value;
+  }
+
+  const key = path[0];
+  return {
+    parent,
+    key: String(key),
+    value: parent[key]
+  };
+}
+
 export function traversePath(
   obj: any,
   path: (string | number)[],
@@ -72,7 +109,11 @@ export function traversePath(
   while (path.length > 1) {
     const key = path.shift() || '';
     const value = modifier
-      ? modifier({ parent, key: String(key), value: parent[key] })
+      ? modifier({
+          parent,
+          key: String(key),
+          value: parent[key]
+        })
       : parent[key];
 
     if (value === undefined) return undefined;
@@ -80,5 +121,36 @@ export function traversePath(
   }
 
   const key = path[0];
-  return { parent, key: String(key), value: parent[key] };
+  return {
+    parent,
+    key: String(key),
+    value: parent[key]
+  };
+}
+
+type TraverseStatus = 'abort' | 'skip' | unknown | void;
+
+export async function traversePaths(
+  parent: object,
+  modifier: (data: FullPathData) => MaybePromise<TraverseStatus>,
+  path: string[] = []
+): Promise<TraverseStatus> {
+  for (const key in parent) {
+    const value = parent[key as keyof object] as any;
+
+    const pathData: FullPathData = {
+      parent,
+      key: String(key),
+      value,
+      path: path.concat([key])
+    };
+
+    const status = await modifier(pathData);
+
+    if (status === 'abort') return status;
+    else if (status === 'skip') continue;
+    else if (typeof value === 'object') {
+      return await traversePaths(value, modifier, pathData.path);
+    }
+  }
 }

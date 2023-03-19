@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `form.message` is now default `any` type, and uses `undefined` instead of `null` to signify no value. This means that `superValidate` and `superForm`, as well as some of the types, like `Validation` and `FormOptions`, can take a second generic parametr that can specify the `message` type.
 - `options.onError` can now only be set to `apply`, or a callback `({result, message}) => void` for handling the error result. It does not automatically set the error message anymore, since it can be of any type.
+- Default value for `options.defaultValidator` is now `keep`, to give the user better error feedback.
 - The signature for `allErrors` and `firstError` is now `{ path: string[], message: string }`.
 - If `options.dataType` isn't set to `json` and a nested object is detected in the data sent to `superForm`, an error will be thrown.
 - The callback for `options.flashMessage.onError` now follows the same signature as `options.onError`.

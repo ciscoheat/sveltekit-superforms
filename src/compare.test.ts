@@ -7,7 +7,7 @@ import {
   type AnyZodObject,
   type ZodTypeAny
 } from 'zod';
-import { traversePath } from '$lib/entity';
+import { traversePath, traversePathAsync } from '$lib/entity';
 import { writable } from 'svelte/store';
 import { mapErrors } from '$lib/entity';
 import { unwrapZodType } from '$lib/server/entity';
@@ -68,6 +68,16 @@ test('Basic path traversal', () => {
   });
 });
 
+test('Basic path traversal, async', async () => {
+  const error = await traversePathAsync(mapped, ['friends', '1', 'id']);
+
+  expect(error).toStrictEqual({
+    parent: mapped.friends![1],
+    key: 'id',
+    value: mapped.friends![1].id
+  });
+});
+
 test('Basic path traversal, non-existing leaf', () => {
   const error = traversePath(mapped, ['friends', '1', 'N/A']);
 
@@ -83,8 +93,8 @@ test('Basic path traversal, non-existing node', () => {
   expect(error).toBeUndefined();
 });
 
-test('Basic path traversal, non-existing node with modifier', () => {
-  const error = traversePath(
+test('Basic path traversal, non-existing node with modifier', async () => {
+  const error = await traversePathAsync(
     mapped,
     ['friends', '2', 'id'],
     ({ parent, key, value }) => {
@@ -128,8 +138,8 @@ test('Setting a path', () => {
   });
 });
 
-test('Traversing a Zod schema', () => {
-  const { value } = traversePath(
+test('Traversing a Zod schema', async () => {
+  const path = await traversePathAsync(
     social.shape,
     ['friends', 'tags', 'name'],
     ({ value }) => {
@@ -147,7 +157,7 @@ test('Traversing a Zod schema', () => {
     }
   )!;
 
-  assert(value instanceof ZodString);
-  expect(value.safeParse('').success).toBeFalsy();
-  expect(value.safeParse('ok').success).toBeTruthy();
+  assert(path && path.value instanceof ZodString);
+  expect(path.value.safeParse('').success).toBeFalsy();
+  expect(path.value.safeParse('ok').success).toBeTruthy();
 });

@@ -3,21 +3,28 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
   import { schema } from './schema';
+  import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: PageData;
 
-  const { form, errors, enhance, message, constraints } = superForm(
-    data.form,
-    {
-      dataType: 'json',
-      validators: schema
+  const { form, errors, enhance, message } = superForm(data.form, {
+    dataType: 'json',
+    validators: schema,
+    flashMessage: {
+      module: flashModule,
+      onError({ result, message }) {
+        message.set({
+          type: 'error',
+          message: result.error.message
+        });
+      }
     }
-  );
+  });
+
+  // <SuperDebug data={{ $form, $errors }} />
 </script>
 
 <h2>Nested forms</h2>
-
-<SuperDebug data={{ $form, $errors }} />
 
 <a href="/">&lt; Back to start</a>
 
@@ -37,10 +44,18 @@
     </div>
   {/each}
   <button>Submit</button>
+  <span
+    ><input type="checkbox" name="redirect" bind:checked={$form.redirect} /> Redirect
+    on success</span
+  >
 </form>
 
 <style lang="scss">
-  input {
+  button {
+    margin-right: 20px;
+  }
+
+  input:not([type='checkbox']) {
     width: 100px;
   }
 

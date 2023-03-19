@@ -315,7 +315,9 @@ export function superForm<
   }
 
   function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
-    if (untaint) Tainted.set(undefined);
+    if (untaint) {
+      Tainted.set(undefined);
+    }
 
     Data.set(form.data);
     Message.set(message ?? form.message);
@@ -562,11 +564,7 @@ export function superForm<
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
         const tainted = get(Tainted);
-        if (
-          tainted &&
-          tainted.length &&
-          !window.confirm(options.taintedMessage)
-        ) {
+        if (tainted && !window.confirm(options.taintedMessage)) {
           nav.cancel();
         }
       }
@@ -574,56 +572,65 @@ export function superForm<
 
     // Check client validation on data change
     let previousForm = structuredClone(initialForm.data);
-    let loaded = false;
+
+    // Prevent client validation on first page load
+    // (when it recieives data from the server)
+    let checkData = false;
 
     Data.subscribe(async (data) => {
-      if (!loaded) {
-        loaded = true;
+      if (!checkData) {
+        checkData = true;
         return;
       }
 
       if (!get(Submitting)) {
         await checkValidationAndTainted(data, previousForm);
       }
-
-      // Whether submitted or not, it will be returned here.
-      // Clone the data so it won't be marked as tainted.
-      previousForm = structuredClone(data);
     });
 
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
       onDestroy(
-        page.subscribe(async (p) => {
+        page.subscribe(async (newData) => {
           function error(type: string) {
             throw new SuperFormError(
-              `No form data found in ${type}. Make sure you return { form } in the form actions and load function.`
+              `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
             );
           }
 
-          if (p.form && typeof p.form === 'object') {
-            const forms = findForms(p.form);
+          const success = newData.status >= 200 && newData.status < 300;
+          let updated = false;
+
+          if (newData.form && typeof newData.form === 'object') {
+            const forms = findForms(newData.form);
             if (!forms.length) error('$page.form (ActionData)');
 
             for (const newForm of forms) {
               if (newForm === form || newForm.id !== formId) continue;
-              await _update(
-                newForm as Validation<T, M>,
-                p.status >= 200 && p.status < 300
-              );
+
+              updated = true;
+              await _update(newForm as Validation<T, M>, success);
             }
-          } else if (p.data && typeof p.data === 'object') {
-            const forms = findForms(p.data);
+          } else if (newData.data && typeof newData.data === 'object') {
+            const forms = findForms(newData.data);
 
             // It's a page reload, redirect or error/failure,
             // so don't trigger any events, just update the data.
             for (const newForm of forms) {
               if (newForm === form || newForm.id !== formId) continue;
 
-              rebind(
-                newForm as Validation<T, M>,
-                p.status >= 200 && p.status < 300
-              );
+              updated = true;
+              rebind(newForm as Validation<T, M>, success);
+            }
+          }
+
+          if (updated) {
+            // Prevent client validation from overriding the new server errors.
+            checkData = false;
+
+            if (success) {
+              // Clone the data so it won't be marked as tainted.
+              previousForm = structuredClone(newData);
             }
           }
         })

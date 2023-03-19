@@ -20,21 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `options.validators` now accepts a Zod schema, for complete client-side validation!
+- `options.validators` now also accepts a Zod schema, for complete client-side validation!
 - `errors`, `constraints` and `tainted` now supports nested data structures!
 - `superValidate` now accepts schemas modified with `refine/superRefine/transform`.
 - Added `meta` store, which is populated when `options.includeMeta = true` in `superValidate`.
 
 ### Removed
 
-- The undocumented `defaults` option of `superValidate` is removed, it can be replaced with `transform/refine` in the validation schema.
+- The undocumented `defaults` option of `superValidate` is removed, it can be replaced with `transform/refine/superRefine` in the validation schema.
 - `formdata` is removed from `options.dataType`. Use `json` instead, it will cover all cases except some very narrow ones.
 - The `update` parameter in `onResult` is removed. It has the same effect as not cancelling the event, so it's redundant.
 - Proxies cannot set an initial value to avoid interfering with `tainted`, so the last parameter when creating a proxy is removed.
 
 ### Fixed
 
-- Using `onDestroy` to unsubscribe from the `page` store.
+- Using `onDestroy` to unsubscribe from the `page` store, preventing memory leaks.
 - `onSubmit` wasn't called with `await`.
 - Default data is now cloned, not just referenced.
 - Last but not least, a big thanks to [Dale Ryan](https://github.com/lnfel) for making the `SuperDebug` component even more super!

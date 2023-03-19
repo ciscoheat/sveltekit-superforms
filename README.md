@@ -441,7 +441,7 @@ const { form, errors, enhance } = superForm(data.form, {
 });
 ```
 
-The same recursive building is also made with `errors` and `constraints`, with extra care taken for [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining).
+A similar recursive structure is also made with `errors` and `constraints`, but with array indices, that can be used with extra care taken for [optional chaining](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining).
 
 There is one additional option for specifying the default client validation behavior, when no validator exists for a field:
 

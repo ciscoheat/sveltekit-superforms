@@ -4,7 +4,7 @@ import {
   type InputConstraint
 } from '..';
 
-import { unwrapZodType, type ZodTypeInfo } from '../entity';
+import type { ZodTypeInfo } from '../entity';
 
 import {
   z,
@@ -50,6 +50,42 @@ export type Entity<T extends AnyZodObject> = {
   hash: string;
   keys: string[];
 };
+
+export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
+  let _wrapped = true;
+  let isNullable = false;
+  let isOptional = false;
+  let hasDefault = false;
+  let defaultValue: unknown = undefined;
+
+  //let i = 0;
+  while (_wrapped) {
+    //console.log(' '.repeat(++i * 2) + zodType.constructor.name);
+    if (zodType instanceof ZodNullable) {
+      isNullable = true;
+      zodType = zodType.unwrap();
+    } else if (zodType instanceof ZodDefault) {
+      hasDefault = true;
+      defaultValue = zodType._def.defaultValue();
+      zodType = zodType._def.innerType;
+    } else if (zodType instanceof ZodOptional) {
+      isOptional = true;
+      zodType = zodType.unwrap();
+    } else if (zodType instanceof ZodEffects) {
+      zodType = zodType._def.schema;
+    } else {
+      _wrapped = false;
+    }
+  }
+
+  return {
+    zodType,
+    isNullable,
+    isOptional,
+    hasDefault,
+    defaultValue
+  };
+}
 
 // https://stackoverflow.com/a/8831937/70894
 function hashCode(str: string) {

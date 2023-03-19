@@ -28,12 +28,10 @@ import {
 import type { z, AnyZodObject, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '..';
-import {
-  mapErrors,
-  unwrapZodType,
-  traversePath,
-  findErrors
-} from '../entity';
+import { mapErrors, traversePath, findErrors } from '../entity';
+import { unwrapZodType } from './entity';
+
+unwrapZodType;
 
 enum FetchStatus {
   Idle = 0,

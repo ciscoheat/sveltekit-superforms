@@ -9,7 +9,8 @@ import {
 } from 'zod';
 import { traversePath } from '$lib/entity';
 import { writable } from 'svelte/store';
-import { mapErrors, unwrapZodType } from '$lib/entity';
+import { mapErrors } from '$lib/entity';
+import { unwrapZodType } from '$lib/server/entity';
 
 const user = z.object({
   id: z.number().int().positive(),

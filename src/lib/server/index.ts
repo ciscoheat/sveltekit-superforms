@@ -6,9 +6,14 @@ import {
   type Validation,
   type ValidationErrors
 } from '..';
-import { entityData, valueOrDefault, type UnwrappedEntity } from './entity';
+import {
+  entityData,
+  unwrapZodType,
+  valueOrDefault,
+  type UnwrappedEntity
+} from './entity';
 
-import { traversePath, unwrapZodType, type ZodTypeInfo } from '../entity';
+import { traversePath, type ZodTypeInfo } from '../entity';
 
 import {
   z,

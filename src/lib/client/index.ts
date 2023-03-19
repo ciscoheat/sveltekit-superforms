@@ -30,6 +30,7 @@ import { stringify } from 'devalue';
 import type { FormFields } from '..';
 import { mapErrors, traversePath, findErrors } from '../entity';
 import { unwrapZodType } from './entity';
+import { fieldProxy } from './proxies';
 
 unwrapZodType;
 
@@ -441,14 +442,6 @@ export function superForm<
       return;
     }
 
-    console.log(
-      '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
-      path,
-      newObj,
-      compareAgainst,
-      get(Tainted)
-    );
-
     // At this point, the field is modified.
     // Update Tainted store.
     Tainted.update((tainted) => {
@@ -460,6 +453,15 @@ export function superForm<
       if (leaf) leaf.parent[leaf.key] = true;
       return tainted;
     });
+
+    /*
+    console.log(
+      '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
+      path,
+      newObj,
+      get(Tainted)
+    );
+    */
 
     function setError(path: string[], newErrors: string[] | null) {
       Errors.update((errors) => {
@@ -654,47 +656,6 @@ export function superForm<
       };`;
   }
 
-  function fieldStore<V>(
-    parentStore: Writable<object>,
-    fieldName: string,
-    value: V
-  ): Writable<V> {
-    if (!browser) return writable<V>(value);
-    const store = writable<V>(value);
-
-    const unsub2 = parentStore.subscribe((data) => {
-      store.set(data[fieldName as keyof object]);
-    });
-
-    return {
-      subscribe(...params: Parameters<typeof store.subscribe>) {
-        //console.log('~ fieldStore ~ subscribe', fieldName);
-        const unsub = store.subscribe(...params);
-
-        return () => {
-          //console.log('~ fieldStore ~ unsubscribe', fieldName);
-          unsub();
-          unsub2();
-        };
-      },
-      //subscribe: store.subscribe,
-      set: (value: V) => {
-        //console.log('~ fieldStore ~ set value for', fieldName, value);
-        parentStore.update((form: object) => ({
-          ...form,
-          [fieldName]: value
-        }));
-      },
-      update: (cb: (value: V) => V) => {
-        //console.log('~ fieldStore ~ update value for', fieldName);
-        parentStore.update((form: object) => ({
-          ...form,
-          [fieldName]: cb(form[fieldName as keyof object])
-        }));
-      }
-    };
-  }
-
   const Fields = Object.fromEntries(
     Object.keys(initialForm.data).map((key) => [
       key,
@@ -705,9 +666,9 @@ export function superForm<
   function Fields_create(key: string, validation: Validation<T, M>) {
     return {
       name: key,
-      value: fieldStore(Data, key, validation.data[key]),
-      errors: fieldStore(Errors, key, validation.errors[key]),
-      constraints: fieldStore(Constraints, key, validation.constraints[key]),
+      value: fieldProxy(Data, key),
+      errors: fieldProxy(Errors, key),
+      constraints: fieldProxy(Constraints, key),
       type: validation.meta?.types[key]
     };
   }

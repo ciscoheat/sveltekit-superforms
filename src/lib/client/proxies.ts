@@ -132,11 +132,7 @@ export function jsonProxy<
   T extends Record<string, unknown>,
   Field extends keyof T,
   S = T[Field] extends string ? T[Field] : never
->(
-  form: Writable<T>,
-  field: Field,
-  initialValue?: K
-): Writable<S extends never ? never : K> {
+>(form: Writable<T>, field: Field): Writable<S extends never ? never : K> {
   function unserialize(val: string) {
     try {
       return parse(val);
@@ -144,9 +140,6 @@ export function jsonProxy<
       return undefined;
     }
   }
-
-  if (initialValue !== undefined)
-    form.update((f) => ({ ...f, [field]: initialValue }));
 
   const proxy = derived(form, ($form) =>
     unserialize($form[field] as string)
@@ -166,6 +159,39 @@ export function jsonProxy<
     update,
     set(val: S extends never ? never : K) {
       form.update((f) => ({ ...f, [field]: stringify(val) }));
+    }
+  };
+}
+
+export function fieldProxy<
+  T extends Record<string, unknown>,
+  Field extends keyof T
+>(form: Writable<T>, field: Field): Writable<T[Field]> {
+  const proxy = derived(form, ($form) => $form[field]);
+
+  return {
+    subscribe(...params: Parameters<typeof proxy.subscribe>) {
+      //console.log('~ fieldproxy ~ subscribe', field);
+      const unsub = proxy.subscribe(...params);
+
+      return () => {
+        //console.log('~ fieldproxy ~ unsubscribe', field);
+        unsub();
+      };
+    },
+    //subscribe: proxy.subscribe,
+    update(upd: Updater<T[Field]>) {
+      //console.log('~ fieldStore ~ update value for', field);
+      form.update((f) => {
+        return {
+          ...f,
+          [field]: upd(f[field])
+        };
+      });
+    },
+    set(value: T[Field]) {
+      //console.log('~ fieldStore ~ set value for', field, value);
+      form.update((f) => ({ ...f, [field]: value }));
     }
   };
 }

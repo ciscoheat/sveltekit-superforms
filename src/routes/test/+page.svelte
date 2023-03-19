@@ -112,12 +112,12 @@
     invalidateAll: false
   });
 
-  const proxyString = jsonProxy(form, 'proxyString', $form.coercedNumber);
-  proxyString.set(123);
-
-  const bool = booleanProxy(form, 'bool', { trueStringValue: '1' });
+  const proxyString = jsonProxy(form, 'proxyString');
+  const proxyBool = booleanProxy(form, 'bool');
   const proxyNumber = intProxy(form, 'proxyNumber');
-  const date = dateProxy(form, 'date', { format: 'datetime-local' });
+  const proxyDate = dateProxy(form, 'date', {
+    format: 'datetime-local'
+  });
   const coercedDate = dateProxy(form, 'coercedDate', {
     format: 'date-local'
   });
@@ -234,6 +234,7 @@
     bind:value={$form.email}
   />
   {#if $errors.email}<span data-invalid>{$errors.email}</span>{/if}
+  {#if $tainted?.email}Field is tainted{/if}
 
   <div>
     <input type="checkbox" name="agree" bind:checked={$form.agree} />
@@ -241,7 +242,7 @@
   </div>
 
   <label for="bool">bool</label>
-  <select name="bool" bind:value={$bool}>
+  <select name="bool" bind:value={$proxyBool}>
     <option value="1">true</option>
     <option value="">false</option>
   </select>
@@ -268,7 +269,7 @@
     type="datetime-local"
     data-invalid={$errors.date}
     name="date"
-    bind:value={$date}
+    bind:value={$proxyDate}
   />
   {#if $errors.date}<span data-invalid>{$errors.date}</span>{/if}
 

@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The undocumented `defaults` option of `superValidate` is removed, it can be replaced with `transform/refine` in the validation schema.
 - `formdata` is removed from `options.dataType`. Use `json` instead, it will cover all cases except some very narrow ones.
 - The `update` parameter in `onResult` is removed. It has the same effect as not cancelling the event, so it's redundant.
+- Proxies cannot set an initial value to avoid interfering with `tainted`, so the last parameter when creating a proxy is removed.
 
 ### Fixed
 

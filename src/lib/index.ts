@@ -63,7 +63,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
 
 export type TaintedFields<T extends AnyZodObject> = SuperStructArray<
   T,
-  boolean
+  true
 >;
 
 export type ValidationErrors<T extends AnyZodObject> = SuperStructArray<

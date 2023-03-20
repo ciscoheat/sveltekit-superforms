@@ -1,24 +1,13 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import {
-  SuperFormError,
-  type RawShape,
-  type Validation,
-  type ValidationErrors
-} from '..';
-import {
-  entityData,
-  unwrapZodType,
-  valueOrDefault,
-  type UnwrappedEntity
-} from './entity';
+import { SuperFormError, type Validation, type ValidationErrors } from '..';
+import { entityData, unwrapZodType, valueOrDefault } from './entity';
 
 import { traversePath, type ZodTypeInfo } from '../entity';
 
 import {
   z,
   type AnyZodObject,
-  type ZodTypeAny,
   ZodObject,
   ZodAny,
   ZodString,

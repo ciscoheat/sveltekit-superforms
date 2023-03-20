@@ -229,17 +229,17 @@ export function superForm<
 
   const formId = typeof form === 'string' ? form : options.id ?? form?.id;
 
-  // Detect if a form is posted (without JavaScript).
-  const actionForm = get(page).form;
-
-  if (options.applyAction && actionForm) {
-    const postedFormId = isValidationObject(actionForm.form);
-    if (postedFormId === false) {
-      throw new SuperFormError(
-        "ActionData didn't return a Validation object. Make sure you return { form } in the form actions."
-      );
+  // Detect if a form is posted without JavaScript.
+  {
+    const postedForm = get(page).form;
+    if (postedForm && typeof postedForm === 'object') {
+      for (const superForm of findForms(postedForm).reverse()) {
+        if (superForm.id === formId) {
+          form = superForm as Validation<T, M>;
+          break;
+        }
+      }
     }
-    if (postedFormId === formId) form = actionForm.form as Validation<T, M>;
   }
 
   // Check for nested objects, throw if datatype isn't json
@@ -250,7 +250,7 @@ export function superForm<
       if (value.length > 0) checkJson(key, value[0]);
     } else if (!(value instanceof Date)) {
       throw new SuperFormError(
-        `Object found in form field "${key}". Set options.dataType = 'json' and use:enhance to use nested structures.`
+        `Object found in form field "${key}". Set options.dataType = 'json' and use:enhance to use nested data structures.`
       );
     }
   }
@@ -517,7 +517,7 @@ export function superForm<
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
       unsubscriptions.push(
-        page.subscribe(async (newValidation) => {
+        page.subscribe(async (pageUpdate) => {
           function error(type: string) {
             throw new SuperFormError(
               `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
@@ -525,10 +525,10 @@ export function superForm<
           }
 
           const untaint =
-            newValidation.status >= 200 && newValidation.status < 300;
+            pageUpdate.status >= 200 && pageUpdate.status < 300;
 
-          if (newValidation.form && typeof newValidation.form === 'object') {
-            const forms = findForms(newValidation.form);
+          if (pageUpdate.form && typeof pageUpdate.form === 'object') {
+            const forms = findForms(pageUpdate.form);
             if (!forms.length) error('$page.form (ActionData)');
 
             for (const newForm of forms) {
@@ -540,10 +540,10 @@ export function superForm<
               await _update(newForm as Validation<T, M>, untaint);
             }
           } else if (
-            newValidation.data &&
-            typeof newValidation.data === 'object'
+            pageUpdate.data &&
+            typeof pageUpdate.data === 'object'
           ) {
-            const forms = findForms(newValidation.data);
+            const forms = findForms(pageUpdate.data);
 
             // It's a page reload, redirect or error/failure,
             // so don't trigger any events, just update the data.
@@ -666,8 +666,6 @@ function formEnhance<T extends AnyZodObject, M>(
     path: string[]
   ) {
     const errors = await validator(value);
-    console.log('🚀 ~ file: index.ts:671 ~ errors:', errors);
-
     setError(path, typeof errors === 'string' ? [errors] : errors ?? null);
     return !errors;
   }
@@ -836,11 +834,6 @@ function formEnhance<T extends AnyZodObject, M>(
           // SuperForms validator
 
           const validator = options.validators as Validators<T>;
-          console.log(
-            '🚀 ~ file: index.ts:810 ~ returnenhance ~ validator:',
-            validator
-          );
-
           success = true;
 
           await traversePaths(checkData, async ({ value, path }) => {
@@ -869,11 +862,6 @@ function formEnhance<T extends AnyZodObject, M>(
             }
           });
         }
-
-        console.log(
-          '🚀 ~ file: index.ts:854 ~ validation ~ success:',
-          success
-        );
 
         if (!success) {
           cancel();

@@ -16,8 +16,8 @@
     constraints
   } = superForm(data.form, {
     onUpdated({ form }) {
-      console.log(data.form.id);
-      if (form.valid && !data.form.id) {
+      console.log(data.form.id, form.id, form);
+      if (form.valid && form.empty) {
         reset({ keepMessage: true });
       }
     }

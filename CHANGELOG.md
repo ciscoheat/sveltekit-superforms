@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - For internal data cloning, if `structuredClone` is not available, using [devalue](https://github.com/Rich-Harris/devalue) instead.
+- Multiple forms should now be detected in `page.form` even when javascript is disabled.
+- Removed some debug messages.
 
 ## [0.6.0] - 2023-03-19
 

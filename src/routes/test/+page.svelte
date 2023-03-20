@@ -234,7 +234,7 @@
     bind:value={$form.email}
   />
   {#if $errors.email}<span data-invalid>{$errors.email}</span>{/if}
-  {#if $tainted?.email}Field is tainted{/if}
+  {#if $tainted?.email}<span data-tainted>Field is tainted</span>{/if}
 
   <div>
     <input type="checkbox" name="agree" bind:checked={$form.agree} />

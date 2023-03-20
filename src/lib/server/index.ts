@@ -35,17 +35,10 @@ import {
   ZodEffects
 } from 'zod';
 
-import { mapErrors } from '$lib/entity';
+import { mapErrors } from '../entity';
+import { clone } from '../utils';
 
 export { defaultEntity } from './entity';
-
-type NonObjectArrayFields<T extends AnyZodObject> = keyof {
-  [Property in keyof z.infer<T> as UnwrappedEntity<
-    RawShape<T>[Property]
-  > extends AnyZodObject | ZodArray<ZodTypeAny>
-    ? never
-    : Property]: true;
-};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(
@@ -321,7 +314,7 @@ export async function superValidate<
     output = {
       valid,
       errors,
-      data: data ?? structuredClone(entityInfo.defaultEntity),
+      data: data ?? clone(entityInfo.defaultEntity),
       empty: true,
       constraints: entityInfo.constraints
     };
@@ -342,7 +335,7 @@ export async function superValidate<
             key,
             key in partialData
               ? partialData[key]
-              : structuredClone(entityInfo.defaultEntity[key])
+              : clone(entityInfo.defaultEntity[key])
           ])
         ),
         empty: false,

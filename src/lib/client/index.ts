@@ -35,10 +35,8 @@ import {
   traversePaths,
   traversePathAsync
 } from '../entity';
-import { unwrapZodType } from './entity';
 import { fieldProxy } from './proxies';
-
-unwrapZodType;
+import { clone } from '../utils';
 
 enum FetchStatus {
   Idle = 0,
@@ -316,7 +314,7 @@ export function superForm<
   options.taintedMessage = undefined;
 
   // Check client validation on data change
-  let previousForm = structuredClone(initialForm.data);
+  let untaintedForm = clone(initialForm.data);
 
   function enableTaintedMessage() {
     options.taintedMessage = _taintedMessage;
@@ -324,7 +322,7 @@ export function superForm<
 
   function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
     if (untaint) {
-      previousForm = structuredClone(form.data);
+      untaintedForm = clone(form.data);
       Tainted.set(undefined);
     }
 
@@ -511,7 +509,7 @@ export function superForm<
         }
 
         if (!get(Submitting)) {
-          await checkTainted(data, previousForm);
+          await checkTainted(data, untaintedForm);
         }
       })
     );

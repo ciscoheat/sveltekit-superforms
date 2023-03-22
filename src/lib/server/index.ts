@@ -287,7 +287,7 @@ export async function superValidate<
     let valid = false;
 
     if (hasEffects) {
-      const result = originalSchema.safeParse(entityInfo.defaultEntity);
+      const result = await originalSchema.spa(entityInfo.defaultEntity);
 
       valid = result.success;
       data = result.success ? result.data : data;
@@ -309,7 +309,7 @@ export async function superValidate<
     };
   } else {
     const partialData = data as Partial<z.infer<T>>;
-    const result = originalSchema.safeParse(partialData);
+    const result = await originalSchema.spa(partialData);
 
     if (!result.success) {
       const errors = options.noErrors

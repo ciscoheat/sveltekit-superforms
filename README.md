@@ -12,6 +12,8 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/ciscoheat/sveltekit-superforms/discussions">Discussions</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://discord.gg/AptebvVuhB">Discord</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ">FAQ</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/sveltekit-superforms">npm</a>

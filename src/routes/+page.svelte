@@ -33,7 +33,8 @@
           message: result.error.message
         });
       }
-    }
+    },
+    selectErrorText: true
   });
 
   const {

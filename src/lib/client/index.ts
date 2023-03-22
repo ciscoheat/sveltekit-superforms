@@ -67,6 +67,7 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
   scrollToError: 'auto' | 'smooth' | 'off';
   autoFocusOnError: boolean | 'detect';
   errorSelector: string;
+  selectErrorText: boolean;
   stickyNavbar: string;
   taintedMessage: string | false | null;
   onSubmit: (
@@ -128,6 +129,7 @@ const defaultFormOptions = {
   autoFocusOnError: 'detect',
   scrollToError: 'smooth',
   errorSelector: '[data-invalid]',
+  selectErrorText: false,
   stickyNavbar: undefined,
   taintedMessage:
     'Do you want to leave this page? Changes you made may not be saved.',
@@ -699,11 +701,52 @@ function formEnhance<T extends AnyZodObject, M>(
     return !errors;
   }
 
+  const ErrorTextEvents = new Set<HTMLFormElement>();
+
+  function ErrorTextEvents_selectText(e: Event) {
+    const target = e.target as HTMLInputElement;
+    if (options.selectErrorText) target.select();
+  }
+
+  function ErrorTextEvents_addErrorTextListeners(formEl: HTMLFormElement) {
+    formEl.querySelectorAll('input').forEach((el) => {
+      el.addEventListener('invalid', ErrorTextEvents_selectText);
+    });
+  }
+
+  function ErrorTextEvents_removeErrorTextListeners(
+    formEl: HTMLFormElement
+  ) {
+    formEl
+      .querySelectorAll('input')
+      .forEach((el) =>
+        el.removeEventListener('invalid', ErrorTextEvents_selectText)
+      );
+  }
+
+  onDestroy(() => {
+    ErrorTextEvents.forEach((formEl) =>
+      ErrorTextEvents_removeErrorTextListeners(formEl)
+    );
+    ErrorTextEvents.clear();
+  });
+
   /**
    * @DCI-context
    */
   function Form(formEl: HTMLFormElement) {
     function rebind() {
+      if (options.selectErrorText) {
+        if (Form && formEl !== Form) {
+          ErrorTextEvents_removeErrorTextListeners(Form as HTMLFormElement);
+          ErrorTextEvents.delete(Form as HTMLFormElement);
+        }
+        if (!ErrorTextEvents.has(formEl)) {
+          ErrorTextEvents_addErrorTextListeners(formEl);
+          ErrorTextEvents.add(formEl);
+        }
+      }
+
       Form = formEl;
     }
 
@@ -758,10 +801,15 @@ function formEnhance<T extends AnyZodObject, M>(
         );
       }
 
-      try {
-        focusEl?.focus({ preventScroll: true });
-      } catch (err) {
-        // Some hidden inputs like from flatpickr cannot be focused.
+      if (focusEl) {
+        try {
+          focusEl.focus({ preventScroll: true });
+          if (options.selectErrorText && focusEl.tagName == 'INPUT') {
+            (focusEl as HTMLInputElement).select();
+          }
+        } catch (err) {
+          // Some hidden inputs like from flatpickr cannot be focused.
+        }
       }
     };
 

@@ -17,7 +17,7 @@ export function clone<T>(data: T): T {
  * @param store - store to make readonly
  */
 export function readonly<T>(store: Readable<T>): Readable<T> {
-	return {
-		subscribe: store.subscribe.bind(store)
-	};
+  return {
+    subscribe: store.subscribe.bind(store)
+  };
 }

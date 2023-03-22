@@ -168,6 +168,7 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = {
   form: Writable<Validation<T, M>['data']>;
+  formId: Writable<string | undefined>;
   errors: Writable<Validation<T, M>['errors']>;
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
@@ -252,7 +253,19 @@ export function superForm<
     );
   }
 
-  const formId = typeof form === 'string' ? form : options.id ?? form?.id;
+  const unsubscriptions: (() => void)[] = [];
+
+  onDestroy(() => {
+    unsubscriptions.forEach((unsub) => unsub());
+
+    for (const events of Object.values(formEvents)) {
+      events.length = 0;
+    }
+  });
+
+  let formId = typeof form === 'string' ? form : options.id ?? form?.id;
+  const FormId = writable<string | undefined>(formId);
+  unsubscriptions.push(FormId.subscribe((id) => (formId = id)));
 
   // Detect if a form is posted without JavaScript.
   {
@@ -512,16 +525,6 @@ export function superForm<
     }
   }
 
-  const unsubscriptions: (() => void)[] = [];
-
-  onDestroy(() => {
-    unsubscriptions.forEach((unsub) => unsub());
-
-    for (const events of Object.values(formEvents)) {
-      events.length = 0;
-    }
-  });
-
   ///// When use:enhance is enabled ///////////////////////////////////////////
 
   if (browser) {
@@ -624,6 +627,7 @@ export function superForm<
 
   return {
     form: Data,
+    formId: FormId,
     errors: Errors,
     message: Message,
     constraints: Constraints,

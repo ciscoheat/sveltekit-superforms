@@ -48,7 +48,8 @@ const users: z.infer<typeof userSchema>[] = [
 //
 // So we extend the user schema.
 const crudSchema = userSchema.extend({
-  id: userSchema.shape.id.optional()
+  id: userSchema.shape.id.optional(),
+  cancel: z.boolean().optional()
 });
 
 export const load = (async ({ url }) => {

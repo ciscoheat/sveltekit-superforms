@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for [snapshots](https://kit.svelte.dev/docs/snapshots) with the `capture` and `restore` functions, returned from `superForm`.
 - Added `options.selectErrorText` for selecting all text in the first invalid text field, instead of just focusing on it and the cursor is placed at the end of the text.
+- `use:enhance` can now take all events as a parameter, in case you want to pass it on to other components.
 
 ## [0.6.1] - 2023-03-20
 

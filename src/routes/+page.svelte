@@ -25,6 +25,12 @@
         await goto('?id=' + form.data.id);
       }
     },
+    onUpdated({ form }) {
+      updates = [...updates, '1:' + String(form.valid)];
+    },
+    onError({ result, message }) {
+      message.set(result.error.message);
+    },
     flashMessage: {
       module: flashModule,
       onError({ result, message }) {
@@ -42,6 +48,8 @@
     errors: staticerrors,
     constraints: staticconstraints
   } = superForm(data.form);
+
+  let updates: string[] = [];
 </script>
 
 <SuperDebug data={{ $form, $staticform }} />
@@ -59,6 +67,8 @@
   <h4 class:error={$page.status >= 400} class="message">{$message}</h4>
 {/if}
 
+<div class="updates">Updates: {updates.join(',')}</div>
+
 <h1>sveltekit-superforms</h1>
 
 <div class="users">
@@ -74,7 +84,15 @@
 <h2>{data.form.empty ? 'Create' : 'Update'} user</h2>
 
 <div class="forms">
-  <form method="POST" action="?/edit" use:enhance>
+  <form
+    method="POST"
+    action="?/edit"
+    use:enhance={{
+      onUpdated: ({ form }) => {
+        updates = [...updates, '2:' + String(form.valid)];
+      }
+    }}
+  >
     <input type="hidden" name="id" bind:value={$form.id} />
     <input type="hidden" name="notInSchema" value="123" />
 
@@ -83,7 +101,6 @@
         name="name"
         data-invalid={$errors.name}
         bind:value={$form.name}
-        {...$constraints.name}
       />
       {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
     </label>

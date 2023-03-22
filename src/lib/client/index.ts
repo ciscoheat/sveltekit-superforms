@@ -154,6 +154,17 @@ type SuperFormSnapshot<T extends AnyZodObject, M = any> = Validation<
   M
 > & { tainted: TaintedFields<T> | undefined };
 
+type SuperFormEvents<T extends AnyZodObject, M> = Pick<
+  FormOptions<T, M>,
+  'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'
+>;
+
+type SuperFormEventList<T extends AnyZodObject, M> = {
+  [Property in keyof SuperFormEvents<T, M>]-?: NonNullable<
+    SuperFormEvents<T, M>[Property]
+  >[];
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = {
   form: Writable<Validation<T, M>['data']>;
@@ -174,7 +185,10 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
 
   tainted: Readable<TaintedFields<T> | undefined>;
 
-  enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
+  enhance: (
+    el: HTMLFormElement,
+    events?: SuperFormEvents<T, M>
+  ) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: (options?: { keepMessage: boolean }) => void;
 
@@ -350,17 +364,19 @@ export function superForm<
   }
 
   async function _update(form: Validation<T, M>, untaint: boolean) {
-    if (options.onUpdate) {
-      let cancelled = false;
-      await options.onUpdate({
-        form,
-        cancel: () => (cancelled = true)
-      });
+    let cancelled = false;
+    const data = {
+      form,
+      cancel: () => (cancelled = true)
+    };
 
-      if (cancelled) {
-        cancelFlash();
-        return;
-      }
+    for (const event of formEvents.onUpdate) {
+      await event(data);
+    }
+
+    if (cancelled) {
+      cancelFlash();
+      return;
     }
 
     if (form.valid && options.resetForm) {
@@ -370,8 +386,8 @@ export function superForm<
     }
 
     // Do not await on onUpdated, since we're already finished with the request
-    if (options.onUpdated) {
-      options.onUpdated({ form });
+    for (const event of formEvents.onUpdated) {
+      event({ form });
     }
   }
 
@@ -413,6 +429,14 @@ export function superForm<
         untaint ?? (result.status >= 200 && result.status < 300)
       );
     }
+  };
+
+  const formEvents: SuperFormEventList<T, M> = {
+    onSubmit: options.onSubmit ? [options.onSubmit] : [],
+    onResult: options.onResult ? [options.onResult] : [],
+    onUpdate: options.onUpdate ? [options.onUpdate] : [],
+    onUpdated: options.onUpdated ? [options.onUpdated] : [],
+    onError: options.onError ? [options.onError] : []
   };
 
   async function checkTainted(
@@ -491,15 +515,14 @@ export function superForm<
   const unsubscriptions: (() => void)[] = [];
 
   onDestroy(() => {
-    /*
-    console.log(
-      '🚀 ~ file: index.ts:565 ~ onDestroy ~ removing',
-      unsubscriptions.length,
-      'subscriptions'
-    );
-    */
     unsubscriptions.forEach((unsub) => unsub());
+
+    for (const events of Object.values(formEvents)) {
+      events.length = 0;
+    }
   });
+
+  ///// When use:enhance is enabled ///////////////////////////////////////////
 
   if (browser) {
     beforeNavigate((nav) => {
@@ -632,8 +655,28 @@ export function superForm<
       rebind(snapshot, snapshot.tainted ?? true);
     },
 
-    enhance: (el: HTMLFormElement) =>
-      formEnhance(
+    enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => {
+      if (events) {
+        if (events.onError) {
+          if (options.onError === 'apply') {
+            throw new SuperFormError(
+              'options.onError is set to "apply", cannot add any onError events.'
+            );
+          } else if (events.onError === 'apply') {
+            throw new SuperFormError(
+              'Cannot add "apply" as onError event in use:enhance.'
+            );
+          }
+
+          formEvents.onError.push(events.onError);
+        }
+        if (events.onResult) formEvents.onResult.push(events.onResult);
+        if (events.onSubmit) formEvents.onSubmit.push(events.onSubmit);
+        if (events.onUpdate) formEvents.onUpdate.push(events.onUpdate);
+        if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
+      }
+
+      return formEnhance(
         el,
         Submitting,
         Delayed,
@@ -644,8 +687,10 @@ export function superForm<
         Data,
         Message,
         enableTaintedMessage,
-        cancelFlash
-      ),
+        cancelFlash,
+        formEvents
+      );
+    },
 
     firstError: FirstError,
     allErrors: AllErrors,
@@ -670,7 +715,8 @@ function formEnhance<T extends AnyZodObject, M>(
   data: Writable<Validation<T, M>['data']>,
   message: Writable<Validation<T, M>['message']>,
   enableTaintedForm: () => void,
-  cancelFlash: () => void
+  cancelFlash: () => void,
+  formEvents: SuperFormEventList<T, M>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -884,8 +930,10 @@ function formEnhance<T extends AnyZodObject, M>(
       }
       currentRequest = submit.controller;
 
-      if (options.onSubmit) {
-        await options.onSubmit({ ...submit, cancel });
+      const data = { ...submit, cancel };
+
+      for (const event of formEvents.onSubmit) {
+        await event(data);
       }
     }
 
@@ -984,12 +1032,14 @@ function formEnhance<T extends AnyZodObject, M>(
       currentRequest = null;
       let cancelled = false;
 
-      if (options.onResult) {
-        await options.onResult({
-          result,
-          formEl,
-          cancel: () => (cancelled = true)
-        });
+      const data = {
+        result,
+        formEl,
+        cancel: () => (cancelled = true)
+      };
+
+      for (const event of formEvents.onResult) {
+        await event(data);
       }
 
       if (!cancelled) {
@@ -1021,8 +1071,14 @@ function formEnhance<T extends AnyZodObject, M>(
           }
 
           // Check if the error message should be replaced
-          if (options.onError && options.onError != 'apply') {
-            await options.onError({ result, message });
+          if (options.onError !== 'apply') {
+            // TODO: Omit 'apply' and undefined from the type
+            // They are already filtered out, but type shouldn't be any.
+            const data = { result, message };
+
+            for (const event of formEvents.onError) {
+              if (event !== 'apply') await event(data);
+            }
           }
         }
 

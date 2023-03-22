@@ -322,9 +322,9 @@ You get a bit more control with `onUpdate`, which lets you enter just before the
 onError: (({ result, message }) => void) | 'apply'
 ```
 
-It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. `onError` gives you more control over the error. You can use the `message` store parameter to set an error value.
+It's soon explained that [ActionResult](https://kit.svelte.dev/docs/types#public-types-actionresult) errors are handled separately, to avoid data loss. `onError` gives you control over the error handling. You can use the `message` store parameter to set an error value here.
 
-By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary. You can instead set it to a custom error message, or ignore errors altogether with `ignore`.
+By setting onError to `apply`, the default `applyAction` behaviour will be used, effectively rendering the nearest `+error` boundary (and wiping out the form, so be careful).
 
 ```ts
 onSubmit: SubmitFunction;

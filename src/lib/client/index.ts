@@ -147,6 +147,12 @@ const defaultFormOptions = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SuperFormSnapshot<T extends AnyZodObject, M = any> = Validation<
+  T,
+  M
+> & { tainted: TaintedFields<T> | undefined };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = {
   form: Writable<Validation<T, M>['data']>;
   errors: Writable<Validation<T, M>['errors']>;
@@ -169,6 +175,9 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   enhance: (el: HTMLFormElement) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: (options?: { keepMessage: boolean }) => void;
+
+  capture: () => SuperFormSnapshot<T, M>;
+  restore: (snapshot: SuperFormSnapshot<T, M>) => void;
 };
 
 /**
@@ -320,10 +329,14 @@ export function superForm<
     options.taintedMessage = _taintedMessage;
   }
 
-  function rebind(form: Validation<T, M>, untaint: boolean, message?: M) {
+  function rebind(
+    form: Validation<T, M>,
+    untaint: TaintedFields<T> | boolean,
+    message?: M
+  ) {
     if (untaint) {
       untaintedForm = clone(form.data);
-      Tainted.set(undefined);
+      Tainted.set(typeof untaint === 'boolean' ? undefined : untaint);
     }
 
     Data.set(form.data);
@@ -600,6 +613,22 @@ export function superForm<
     submitting: derived(Submitting, ($s) => $s),
     delayed: derived(Delayed, ($d) => $d),
     timeout: derived(Timeout, ($t) => $t),
+
+    capture: () => ({
+      valid: get(Valid),
+      errors: get(Errors),
+      data: get(Data),
+      empty: get(Empty),
+      constraints: get(Constraints),
+      message: get(Message),
+      id: formId,
+      meta: get(Meta),
+      tainted: get(Tainted)
+    }),
+
+    restore: (snapshot: SuperFormSnapshot<T, M>) => {
+      rebind(snapshot, snapshot.tainted ?? true);
+    },
 
     enhance: (el: HTMLFormElement) =>
       formEnhance(

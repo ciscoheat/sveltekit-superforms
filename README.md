@@ -31,7 +31,7 @@
 - Automatically coerces the string data from `FormData` into correct types.
 - For advanced data structures, forget about the limitations of `FormData` - Send your forms as devalued JSON, transparently.
 - Generates default form values from validation schemas.
-- Supports for nested forms and [multiple forms](https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ#are-multiple-forms-on-the-same-page-supported) on the same page.
+- Support for nested forms, [snapshots](https://kit.svelte.dev/docs/snapshots) and [multiple forms](https://github.com/ciscoheat/sveltekit-superforms/wiki/FAQ#are-multiple-forms-on-the-same-page-supported) on the same page.
 - Proxy objects for handling data conversions to string and back again.
 - Client-side validators for immediate user feedback.
 - Provide long response time feedback with auto-updating timers, based on [The 3 important limits](https://www.nngroup.com/articles/response-times-3-important-limits/).
@@ -512,6 +512,22 @@ flashMessage: {
 ```
 
 The flash message is set automatically for every `ActionResult` except `error`, so the `onError` callback is needed to transform errors into your flash message type, or leave it out to disregard them.
+
+## Snapshots
+
+A Superform can be captured and restored as a [snapshot](https://kit.svelte.dev/docs/snapshots), a relatively new SvelteKit feature that saves the form data when navigating away, and restores it when you come back to the page. As always, it's super simple to use!
+
+```svelte
+<script lang="ts">
+  import type { Snapshot } from './$types';
+  const { form, errors, capture, restore } = superForm(data.form);
+
+  export const snapshot: Snapshot = {
+    capture,
+    restore
+  };
+</script>
+```
 
 ## The last one: Breaking free from FormData
 

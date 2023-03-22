@@ -36,7 +36,7 @@ import {
   traversePathAsync
 } from '../entity';
 import { fieldProxy } from './proxies';
-import { clone } from '../utils';
+import { clone, readonly } from '../utils';
 
 enum FetchStatus {
   Idle = 0,
@@ -589,17 +589,17 @@ export function superForm<
     errors: Errors,
     message: Message,
     constraints: Constraints,
-    meta: derived(Meta, ($m) => $m),
+    meta: readonly(Meta),
 
     fields: Fields,
 
-    tainted: derived(Tainted, ($t) => $t),
-    valid: derived(Valid, ($s) => $s),
-    empty: derived(Empty, ($e) => $e),
+    tainted: readonly(Tainted),
+    valid: readonly(Valid),
+    empty: readonly(Empty),
 
-    submitting: derived(Submitting, ($s) => $s),
-    delayed: derived(Delayed, ($d) => $d),
-    timeout: derived(Timeout, ($t) => $t),
+    submitting: readonly(Submitting),
+    delayed: readonly(Delayed),
+    timeout: readonly(Timeout),
 
     enhance: (el: HTMLFormElement) =>
       formEnhance(

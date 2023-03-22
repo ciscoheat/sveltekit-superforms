@@ -25,6 +25,12 @@
         await goto('?id=' + form.data.id);
       }
     },
+    onSubmit({ data, cancel }) {
+      if (data.has('cancel')) {
+        console.log('Cancelling');
+        cancel();
+      }
+    },
     onUpdated({ form }) {
       updates = [...updates, '1:' + String(form.valid)];
     },
@@ -102,18 +108,25 @@
         data-invalid={$errors.name}
         bind:value={$form.name}
       />
-      {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+      {#if $errors.name}<br /><span class="invalid">{$errors.name}</span
+        >{/if}
     </label>
 
     <Input label="E-mail" field={fields.email} />
     <Input label="Gender" field={fields.gender} />
 
-    <div>
+    <div class="submit">
       <button>Submit</button>
-      <input type="checkbox" name="error" style="margin-left:1rem;" />
-      Trigger error
-      {#if $delayed}Working...{/if}
+      <span
+        ><input type="checkbox" name="error" style="margin-left:1rem;" /> Trigger
+        error</span
+      >
+      <span
+        ><input type="checkbox" name="cancel" style="margin-left:1rem;" /> Cancel
+        request</span
+      >
     </div>
+    {#if $delayed}Working...{/if}
 
     <div style="height:1200px;">&nbsp;</div>
 
@@ -171,8 +184,10 @@
 
     <div>
       <button>Submit</button>
-      <input type="checkbox" name="error" style="margin-left:1rem;" />
-      Trigger error
+      <span
+        ><input type="checkbox" name="error" style="margin-left:1rem;" /> Trigger
+        error</span
+      >
       {#if $delayed}Working...{/if}
     </div>
 
@@ -194,10 +209,23 @@
 <button on:click={() => ($form.id = 'Test')}>Set form id</button>
 
 <style lang="scss">
+  .submit {
+    display: grid;
+    grid-template-columns: 30% 70%;
+  }
+
+  .submit span {
+    grid-column: 2;
+  }
+
   .forms {
     display: flex;
     justify-content: space-between;
-    gap: 50px;
+    gap: 30px;
+
+    form {
+      width: 300px;
+    }
   }
 
   .invalid {

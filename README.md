@@ -40,7 +40,7 @@
 - Even more care for the user: No form data loss, by preventing error page rendering as default.
 - Hook into a number of events for full control over submitting, `ActionResult` and validation updates.
 - Complete customization with options like `applyAction`, `invalidateAll`, `autoFocus`, `resetForm`, etc...
-- Comes with a Super Form Debugging Svelte Component.
+- Comes with a Superform Debugging Svelte Component.
 - ...and probably a lot more!
 
 ## Installation
@@ -55,7 +55,7 @@
 
 ## Get started
 
-Let's gradually build up a super form, with the data for a name and an email address.
+Let's gradually build up a Superform, with the data for a name and an email address.
 
 **src/routes/+page.server.ts**
 
@@ -394,7 +394,7 @@ The constraints field is an object, with validation properties mapped from the s
 
 ### Custom validation
 
-If think the built-in browser validation is too constraining (pun intented), you can either use a Zod schema, or set the `validators` option:
+If you think the built-in browser validation is too constraining (pun intented), you can either use a Zod schema, or set the `validators` option:
 
 ```ts
 validators: AnyZodObject | {

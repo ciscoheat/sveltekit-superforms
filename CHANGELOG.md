@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2023-03-23
+
+### Fixed
+
+- Array values wasn't coerced to their correct type if empty, i.e. strings were resolved to `[]` instead of `""`.
+
 ## [0.6.2] - 2023-03-22
 
 ### Added

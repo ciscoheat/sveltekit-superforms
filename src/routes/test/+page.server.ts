@@ -28,7 +28,7 @@ export const _dataTypeForm = z.object({
   optionalString: z.string().optional(),
   proxyString: z.string(),
   trimmedString: z.string().trim(),
-  numberArray: z.number().int().array().min(3),
+  numberArray: z.number().int().default(NaN).array().min(3),
   date: z.date().optional().default(new Date()),
   coercedNumber: z.coerce.number().default(0).optional(),
   coercedDate: z.coerce.date().optional(),

@@ -79,12 +79,16 @@ function formDataToValidation<T extends AnyZodObject>(
   const output: Record<string, unknown> = {};
   const entityInfo = entityData(schema);
 
-  function parseSingleEntry(key: string, entry: FormDataEntryValue) {
+  function parseSingleEntry(
+    key: string,
+    entry: FormDataEntryValue,
+    typeInfo: ZodTypeInfo
+  ) {
     if (entry && typeof entry !== 'string') {
       // File object, not supported
       return undefined;
     } else {
-      return parseEntry(key, entry, entityInfo.typeInfo[key]);
+      return parseEntry(key, entry, typeInfo);
     }
   }
 
@@ -93,9 +97,10 @@ function formDataToValidation<T extends AnyZodObject>(
     const entries = data.getAll(key);
 
     if (!(typeInfo.zodType instanceof ZodArray)) {
-      output[key] = parseSingleEntry(key, entries[0]);
+      output[key] = parseSingleEntry(key, entries[0], typeInfo);
     } else {
-      output[key] = entries.map((e) => parseSingleEntry(key, e));
+      const arrayType = unwrapZodType(typeInfo.zodType._def.type);
+      output[key] = entries.map((e) => parseSingleEntry(key, e, arrayType));
     }
   }
 

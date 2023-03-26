@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Zod schemas on client now handles `ZodEffects` properly.
+- Zod schemas on client now accepts `ZodEffects` (refine/transform/superRefine).
+- Empty data gives no errors when `ZodEffects` are used.
 
 ## [0.6.3] - 2023-03-23
 

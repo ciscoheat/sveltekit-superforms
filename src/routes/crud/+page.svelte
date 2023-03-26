@@ -16,8 +16,10 @@
     constraints
   } = superForm(data.form, {
     onUpdated({ form }) {
-      console.log(data.form.id, form.id, form);
-      if (form.valid && form.empty) {
+      // Need to do this because messages can't be preserved on redirect.
+      // sveltekit-flash-message fixes this issue:
+      // https://github.com/ciscoheat/sveltekit-flash-message
+      if (form.valid && data.form.empty) {
         reset({ keepMessage: true });
       }
     }
@@ -48,12 +50,7 @@
 
   <label>
     Name<br />
-    <input
-      name="name"
-      data-invalid={$errors.name}
-      bind:value={$form.name}
-      {...$constraints.name}
-    />
+    <input name="name" data-invalid={$errors.name} bind:value={$form.name} />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
   </label>
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.4] - 2023-03-26
 
+### Added
+
+- `message` helper on the server, to make it easier to send a message with the form.
+
 ### Fixed
 
 - Zod schemas on client now accepts `ZodEffects` (refine/transform/superRefine).

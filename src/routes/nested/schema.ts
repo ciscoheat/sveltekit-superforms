@@ -10,6 +10,4 @@ export const schema = z
       .array(),
     redirect: z.boolean()
   })
-  .refine((data) => {
-    console.log('refine');
-  });
+  .refine((data) => data);

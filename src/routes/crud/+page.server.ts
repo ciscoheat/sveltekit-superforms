@@ -1,4 +1,4 @@
-import { superValidate } from '$lib/server';
+import { message, superValidate } from '$lib/server';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -29,14 +29,14 @@ export const actions = {
     const data = await event.request.formData();
 
     const form = await superValidate(data, schema);
-    if (!form.valid) return fail(400, { form });
+    if (!form.valid) return message(form, 'Invalid form');
 
     if (!form.data.id) {
       // CREATE user
       const user = { ...form.data, id: userId() };
       users.push(user);
 
-      form.message = 'User created!';
+      return message(form, 'User created!');
     } else {
       const user = users.find((u) => u.id == form.data.id);
       if (!user) throw error(404, 'User not found.');
@@ -50,9 +50,8 @@ export const actions = {
       } else {
         // UPDATE user
         users[index] = { ...form.data, id: user.id };
-        form.message = 'User updated!';
+        return message(form, 'User updated!');
       }
     }
-    return { form };
   }
 } satisfies Actions;

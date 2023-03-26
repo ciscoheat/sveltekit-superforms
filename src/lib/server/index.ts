@@ -1,6 +1,6 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import { SuperFormError, type Validation, type ValidationErrors } from '..';
+import { SuperFormError, type Validation } from '..';
 import { entityData, unwrapZodType, valueOrDefault } from './entity';
 
 import { traversePath, type ZodTypeInfo } from '../entity';
@@ -28,6 +28,20 @@ import { mapErrors } from '../entity';
 import { clone } from '../utils';
 
 export { defaultEntity } from './entity';
+
+export function message<T extends AnyZodObject, M>(
+  form: Validation<T, M>,
+  message: M,
+  options?: {
+    status?: number;
+  }
+) {
+  form.message = message;
+
+  const failure = (options?.status && options.status >= 400) || !form.valid;
+
+  return failure ? fail(options?.status ?? 400, { form }) : { form };
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(

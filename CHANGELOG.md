@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `message` helper on the server, to make it easier to send a message with the form.
+- `options.syncFlashMessage` when using [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-superforms#sveltekit-flash-message-support), to sync the flash message with `form.message`, so you don't have to use both.
 
 ### Fixed
 
 - Zod schemas on client now accepts `ZodEffects` (refine/transform/superRefine).
 - Empty data gives no errors when `ZodEffects` are used.
+- `formId` wasn't updated properly.
 
 ## [0.6.3] - 2023-03-23
 

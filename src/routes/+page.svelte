@@ -35,7 +35,7 @@
       updates = [...updates, '1:' + String(form.valid)];
     },
     onError({ result, message }) {
-      message.set(result.error.message);
+      message.set({ type: 'error', message: result.error.message });
     },
     flashMessage: {
       module: flashModule,
@@ -46,6 +46,7 @@
         });
       }
     },
+    syncFlashMessage: true,
     selectErrorText: true
   });
 
@@ -70,7 +71,9 @@
 </nav>
 
 {#if $message}
-  <h4 class:error={$page.status >= 400} class="message">{$message}</h4>
+  <h4 class:error={$message.type == 'error'} class="message">
+    {$message.message}
+  </h4>
 {/if}
 
 <div class="updates">Updates: {updates.join(',')}</div>

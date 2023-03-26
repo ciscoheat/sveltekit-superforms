@@ -109,6 +109,7 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
   delayMs: number;
   timeoutMs: number;
   multipleSubmits: 'prevent' | 'allow' | 'abort';
+  syncFlashMessage?: boolean;
   flashMessage: {
     module: {
       getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
@@ -126,6 +127,7 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
       message: Writable<App.PageData['flash']>;
     }) => MaybePromise<unknown | void>;
     cookiePath?: string;
+    cookieName?: string;
   };
 }>;
 
@@ -375,12 +377,22 @@ export function superForm<
       Tainted.set(typeof untaint === 'boolean' ? undefined : untaint);
     }
 
+    message = message ?? form.message;
+
     Data.set(form.data);
-    Message.set(message ?? form.message);
+    Message.set(message);
     Empty.set(form.empty);
     Valid.set(form.valid);
     Errors.set(form.errors);
     Meta.set(form.meta);
+    FormId.set(form.id);
+
+    if (options.flashMessage && shouldSyncFlash(options)) {
+      const flash = options.flashMessage.module.getFlash(page);
+      if (message && get(flash) === undefined) {
+        flash.set(message as any);
+      }
+    }
   }
 
   async function _update(form: Validation<T, M>, untaint: boolean) {
@@ -395,7 +407,7 @@ export function superForm<
     }
 
     if (cancelled) {
-      cancelFlash();
+      if (options.flashMessage) cancelFlash(options);
       return;
     }
 
@@ -608,13 +620,6 @@ export function superForm<
     }
   }
 
-  function cancelFlash() {
-    if (options.flashMessage && browser)
-      document.cookie = `flash=; Max-Age=0; Path=${
-        options.flashMessage.cookiePath ?? '/'
-      };`;
-  }
-
   const Fields = Object.fromEntries(
     Object.keys(initialForm.data).map((key) => [
       key,
@@ -698,7 +703,6 @@ export function superForm<
         Data,
         Message,
         enableTaintedMessage,
-        cancelFlash,
         formEvents
       );
     },
@@ -709,6 +713,22 @@ export function superForm<
     reset: (options?) =>
       _resetForm(options?.keepMessage ? get(Message) : undefined)
   };
+}
+
+function cancelFlash<T extends AnyZodObject, M>(options: FormOptions<T, M>) {
+  if (!options.flashMessage || !browser) return;
+  if (!shouldSyncFlash(options)) return;
+
+  document.cookie = `flash=; Max-Age=0; Path=${
+    options.flashMessage.cookiePath ?? '/'
+  };`;
+}
+
+function shouldSyncFlash<T extends AnyZodObject, M>(
+  options: FormOptions<T, M>
+) {
+  if (!options.flashMessage || !browser) return false;
+  return options.syncFlashMessage;
 }
 
 /**
@@ -726,7 +746,6 @@ function formEnhance<T extends AnyZodObject, M>(
   data: Writable<Validation<T, M>['data']>,
   message: Writable<Validation<T, M>['message']>,
   enableTaintedForm: () => void,
-  cancelFlash: () => void,
   formEvents: SuperFormEventList<T, M>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
@@ -949,7 +968,7 @@ function formEnhance<T extends AnyZodObject, M>(
     }
 
     if (cancelled) {
-      cancelFlash();
+      if (options.flashMessage) cancelFlash(options);
     } else {
       // Client validation
       if (options.validators) {
@@ -1027,7 +1046,8 @@ function formEnhance<T extends AnyZodObject, M>(
         if (
           options.flashMessage &&
           (options.clearOnSubmit == 'errors-and-message' ||
-            options.clearOnSubmit == 'message')
+            options.clearOnSubmit == 'message') &&
+          shouldSyncFlash(options)
         ) {
           options.flashMessage.module.getFlash(page).set(undefined);
         }
@@ -1097,7 +1117,7 @@ function formEnhance<T extends AnyZodObject, M>(
         }
 
         // Set flash message, which should be set in all cases, even
-        // if we have redirected (which is the point with the flash message!)
+        // if we have redirected (which is the point of the flash message!)
         if (options.flashMessage) {
           if (result.type == 'error' && options.flashMessage.onError) {
             await options.flashMessage.onError({
@@ -1109,7 +1129,8 @@ function formEnhance<T extends AnyZodObject, M>(
           }
         }
       } else {
-        cancelFlash();
+        // Cancelled
+        if (options.flashMessage) cancelFlash(options);
       }
 
       htmlForm.completed(cancelled);

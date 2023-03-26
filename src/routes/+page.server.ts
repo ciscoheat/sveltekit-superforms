@@ -61,10 +61,14 @@ export const load = (async ({ url }) => {
 
   if (id && !user) throw error(404, 'User not found.');
 
-  const form = await superValidate(user, crudSchema, {
-    includeMeta: true,
-    noErrors: true
-  });
+  const form = await superValidate<typeof crudSchema, App.PageData['flash']>(
+    user,
+    crudSchema,
+    {
+      includeMeta: true,
+      noErrors: true
+    }
+  );
   return { form, users };
 }) satisfies PageServerLoad;
 
@@ -75,10 +79,10 @@ export const actions = {
 
     console.log('POST', data);
 
-    const form = await superValidate<typeof crudSchema, string>(
-      data,
-      crudSchema
-    );
+    const form = await superValidate<
+      typeof crudSchema,
+      App.PageData['flash']
+    >(data, crudSchema);
     form.id = data.get('formid')?.toString();
 
     console.log('FORM', form);
@@ -86,7 +90,7 @@ export const actions = {
 
     if (!(await limiter.check(event))) {
       form.valid = false;
-      form.message = 'You are rate limited';
+      form.message = { type: 'error', message: 'You are rate limited' };
       return fail(429, { form });
     }
 
@@ -111,7 +115,10 @@ export const actions = {
 
       users[users.indexOf(user)] = { ...form.data, id: user.id };
 
-      form.message = 'User updated!';
+      form.message = {
+        type: 'success',
+        message: 'User updated!'
+      };
       return { form };
     }
   }

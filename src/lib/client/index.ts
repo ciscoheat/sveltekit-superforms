@@ -25,7 +25,7 @@ import {
   type Validator,
   type Validators
 } from '..';
-import type { AnyZodObject } from 'zod';
+import type { AnyZodObject, ZodEffects } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '..';
 import {
@@ -96,7 +96,14 @@ export type FormOptions<T extends AnyZodObject, M> = Partial<{
         message: Writable<Validation<T, M>['message']>;
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
-  validators: Validators<T> | T;
+  validators:
+    | Validators<T>
+    | T
+    | ZodEffects<T>
+    | ZodEffects<ZodEffects<T>>
+    | ZodEffects<ZodEffects<ZodEffects<T>>>
+    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
   defaultValidator: 'keep' | 'clear';
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs: number;
@@ -949,7 +956,10 @@ function formEnhance<T extends AnyZodObject, M>(
         const checkData = get(data);
         let success: boolean;
 
-        if (options.validators.constructor.name == 'ZodObject') {
+        if (
+          options.validators.constructor.name == 'ZodObject' ||
+          options.validators.constructor.name == 'ZodEffects'
+        ) {
           // Zod validator
           const validator = options.validators as AnyZodObject;
           const result = await validator.safeParseAsync(checkData);

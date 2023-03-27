@@ -2,9 +2,9 @@ import {
   SuperFormError,
   type InputConstraints,
   type InputConstraint
-} from '..';
+} from '../index.js';
 
-import type { ZodTypeInfo } from '../entity';
+import type { ZodTypeInfo } from '../entity.js';
 
 import {
   z,

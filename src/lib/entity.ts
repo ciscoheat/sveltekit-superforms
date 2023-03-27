@@ -1,4 +1,4 @@
-import type { ValidationErrors } from '.';
+import type { ValidationErrors } from './index.js';
 import type { ZodTypeAny, AnyZodObject, ZodFormattedError } from 'zod';
 import type { MaybePromise } from '$app/forms';
 

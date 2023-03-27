@@ -1,9 +1,9 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import { SuperFormError, type Validation } from '..';
-import { entityData, unwrapZodType, valueOrDefault } from './entity';
+import { SuperFormError, type Validation } from '../index.js';
+import { entityData, unwrapZodType, valueOrDefault } from './entity.js';
 
-import { traversePath, type ZodTypeInfo } from '../entity';
+import { traversePath, type ZodTypeInfo } from '../entity.js';
 
 import {
   z,
@@ -24,10 +24,10 @@ import {
   ZodEffects
 } from 'zod';
 
-import { mapErrors } from '../entity';
-import { clone } from '../utils';
+import { mapErrors } from '../entity.js';
+import { clone } from '../utils.js';
 
-export { defaultEntity } from './entity';
+export { defaultEntity } from './entity.js';
 
 export function message<T extends AnyZodObject, M>(
   form: Validation<T, M>,

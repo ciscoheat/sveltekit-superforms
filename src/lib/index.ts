@@ -1,5 +1,5 @@
 import type { z, AnyZodObject, ZodArray, ZodObject } from 'zod';
-import type { Entity, UnwrappedEntity } from './server/entity';
+import type { Entity, UnwrappedEntity } from './server/entity.js';
 import type { Writable } from 'svelte/store';
 import type { MaybePromise } from '$app/forms';
 

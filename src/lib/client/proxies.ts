@@ -1,6 +1,6 @@
 import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
-import { SuperFormError } from '..';
+import { SuperFormError } from '../index.js';
 
 type DefaultOptions = {
   trueStringValue: string;

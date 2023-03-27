@@ -1,4 +1,4 @@
-import type { ZodTypeInfo } from '../entity';
+import type { ZodTypeInfo } from '../entity.js';
 
 /**
  * Client-side version of unwrapZodType, to prevent including the whole Zod library

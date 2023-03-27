@@ -8,7 +8,7 @@ import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
 import type { Page } from '@sveltejs/kit';
-import { isElementInViewport, scrollToAndCenter } from './elements';
+import { isElementInViewport, scrollToAndCenter } from './elements.js';
 import {
   derived,
   get,
@@ -24,19 +24,19 @@ import {
   type Validation,
   type Validator,
   type Validators
-} from '..';
+} from '../index.js';
 import type { AnyZodObject, ZodEffects } from 'zod';
 import { stringify } from 'devalue';
-import type { FormFields } from '..';
+import type { FormFields } from '../index.js';
 import {
   mapErrors,
   traversePath,
   findErrors,
   traversePaths,
   traversePathAsync
-} from '../entity';
-import { fieldProxy } from './proxies';
-import { clone } from '../utils';
+} from '../entity.js';
+import { fieldProxy } from './proxies.js';
+import { clone } from '../utils.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -51,7 +51,7 @@ export {
   numberProxy,
   booleanProxy,
   dateProxy
-} from './proxies';
+} from './proxies.js';
 
 type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,

@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Description**
-A clear and concise description of what the bug is, and what you expected instead.
+A clear and concise description of what the bug is, and, unless obvious, what you expected instead.
 
 **If applicable, a MRE**
 Use this stackblitz template to create a minimal reproducible example that you can link to here:

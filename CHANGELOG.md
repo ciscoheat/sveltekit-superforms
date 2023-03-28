@@ -5,6 +5,10 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+- Added `valid` option to `message`, so form validity can be set at the same time as returning a message.
+
 ## [0.6.5] - 2023-03-27
 
 ### Fixed

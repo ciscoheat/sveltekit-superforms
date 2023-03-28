@@ -34,11 +34,14 @@ export function message<T extends AnyZodObject, M>(
   message: M,
   options?: {
     status?: number;
+    valid?: boolean;
   }
 ) {
   form.message = message;
+  if (options?.valid !== undefined) form.valid = options.valid;
 
-  const failure = (options?.status && options.status >= 400) || !form.valid;
+  const failure =
+    (options?.status !== undefined && options.status >= 400) || !form.valid;
 
   return failure ? fail(options?.status ?? 400, { form }) : { form };
 }

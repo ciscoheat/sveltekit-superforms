@@ -1,4 +1,4 @@
-import { superValidate } from '$lib/server';
+import { message, superValidate } from '$lib/server';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -29,7 +29,6 @@ export const actions = {
     const data = await event.request.formData();
     const form = await superValidate(data, schema);
 
-    if (!form.valid) return fail(400, { form });
-    return { form };
+    return message(form, form.valid ? 'OK' : 'Errors');
   }
 } satisfies Actions;

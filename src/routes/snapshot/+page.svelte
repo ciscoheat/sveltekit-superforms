@@ -2,6 +2,7 @@
   import type { PageData, Snapshot } from './$types';
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
 
   export let data: PageData;
 
@@ -20,10 +21,18 @@
   });
 
   export const snapshot: Snapshot = {
-    capture,
-    restore
+    capture: () => {
+      console.log('Capture', $page);
+      return capture();
+    },
+    restore: (value) => {
+      console.log('Restore', value, $page);
+      restore(value);
+    }
   };
 </script>
+
+<SuperDebug data={{ $form, capture: capture() }} />
 
 <a href="/">&lt; Back to start</a>
 
@@ -33,11 +42,7 @@
   <h3 class:invalid={$page.status >= 400}>{$message}</h3>
 {/if}
 
-<h2>{$empty ? 'Create' : 'Update'} user</h2>
-
 <form method="POST" use:enhance>
-  <input type="hidden" name="id" bind:value={$form.id} />
-
   <label>
     Name<br />
     <input name="name" data-invalid={$errors.name} bind:value={$form.name} />

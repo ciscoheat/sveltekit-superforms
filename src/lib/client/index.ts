@@ -417,7 +417,12 @@ export function superForm<
       rebind(form, untaint);
     }
 
-    // Do not await on onUpdated, since we're already finished with the request
+    // onUpdated may check stores, so need to wait for them to update.
+    if (formEvents.onUpdated.length) {
+      await tick();
+    }
+
+    // But do not await on onUpdated itself, since we're already finished with the request
     for (const event of formEvents.onUpdated) {
       event({ form });
     }

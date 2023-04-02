@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Stores weren't updated until after `onUpdated` was called.
 
+### Added
+
+- Implicit default value for `ZodRecord` (empty object)
+
 ## [0.6.6] - 2023-03-31
 
 ### Added

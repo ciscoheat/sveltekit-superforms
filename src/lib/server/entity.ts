@@ -21,7 +21,8 @@ import {
   ZodEffects,
   ZodBigInt,
   ZodObject,
-  ZodSymbol
+  ZodSymbol,
+  ZodRecord
 } from 'zod';
 
 export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
@@ -173,6 +174,7 @@ export function valueOrDefault(
     if (zodType instanceof ZodBoolean) return false;
     if (zodType instanceof ZodArray) return [];
     if (zodType instanceof ZodObject) return defaultEntity(zodType);
+    if (zodType instanceof ZodRecord) return {};
     if (zodType instanceof ZodBigInt) return BigInt(0);
     if (zodType instanceof ZodSymbol) return Symbol();
   }

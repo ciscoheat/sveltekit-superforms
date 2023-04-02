@@ -4,16 +4,16 @@ export const schema = z.object({
   str: z.string().datetime(),
 
   plain: z.date(),
-  plainUtc: z.date().transform((val) => convertDateToUTC(val)),
+  //plainUtc: z.date().transform((val) => convertDateToUTC(val)),
 
   coerced: z.coerce.date(),
-  coercedUtc: z.coerce.date().transform((val) => convertDateToUTC(val)),
+  //coercedUtc: z.coerce.date().transform((val) => convertDateToUTC(val)),
 
   proxy: z.date(),
-  proxyUtc: z.coerce.date().transform((val) => convertDateToUTC(val)),
+  //proxyUtc: z.coerce.date().transform((val) => convertDateToUTC(val)),
 
-  proxyCoerce: z.coerce.date(),
-  proxyCoerceUtc: z.coerce.date().transform((val) => convertDateToUTC(val))
+  proxyCoerce: z.coerce.date()
+  //proxyCoerceUtc: z.coerce.date().transform((val) => convertDateToUTC(val))
 });
 
 function convertDateToUTC(date: Date) {

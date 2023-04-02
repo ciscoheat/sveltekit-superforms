@@ -10,14 +10,10 @@ export const load = (async ({ url }) => {
 
   const data: z.infer<typeof schema> = {
     plain: date,
-    plainUtc: date,
     str: date.toISOString(),
     coerced: date,
-    coercedUtc: date,
     proxy: date,
-    proxyUtc: date,
-    proxyCoerce: date,
-    proxyCoerceUtc: date
+    proxyCoerce: date
   };
 
   const form = await superValidate<typeof schema>(

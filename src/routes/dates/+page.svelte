@@ -33,7 +33,7 @@
   log(data.log);
 
   const { form, errors, enhance, fields } = superForm(data.form, {
-    //dataType: 'json'
+    //dataType: 'json',
     onResult({ result }) {
       if (result.type == 'success') {
         log(result.data?.form.data);
@@ -43,11 +43,7 @@
   });
 
   let proxy = dateProxy(form, 'proxy', { format: 'date-local' });
-  let proxyUtc = dateProxy(form, 'proxyUtc', { format: 'date-local' });
   let proxyCoerce = dateProxy(form, 'proxyCoerce', { format: 'date-local' });
-  let proxyCoerceUtc = dateProxy(form, 'proxyCoerceUtc', {
-    format: 'date-local'
-  });
 </script>
 
 <SuperDebug data={$form} />
@@ -55,13 +51,6 @@
 <form method="POST" use:enhance>
   <label
     >plain <input type="text" name="plain" bind:value={$form.plain} /></label
-  >
-  <label
-    >plainUtc <input
-      type="text"
-      name="plainUtc"
-      bind:value={$form.plainUtc}
-    /></label
   >
   <label>str <input type="text" name="str" bind:value={$form.str} /></label>
   <label
@@ -71,32 +60,15 @@
       bind:value={$form.coerced}
     /></label
   >
-  <label
-    >coercedUtc <input
-      type="text"
-      name="coercedUtc"
-      bind:value={$form.coercedUtc}
-    /></label
-  >
 
   <label>
     proxy <input type="date" bind:value={$proxy} name="proxy" />
-  </label>
-  <label>
-    proxyUtc <input type="date" bind:value={$proxyUtc} name="proxyUtc" />
   </label>
   <label>
     proxyCoerce <input
       type="date"
       bind:value={$proxyCoerce}
       name="proxyCoerce"
-    />
-  </label>
-  <label>
-    proxyCoerceUtc <input
-      type="date"
-      bind:value={$proxyCoerceUtc}
-      name="proxyCoerceUtc"
     />
   </label>
 

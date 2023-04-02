@@ -67,7 +67,8 @@
   <a href="/super-debug">SuperDebug</a> |
   <a href="/nested">Nested</a> |
   <a href="/multiple">Multiple</a> |
-  <a href="/snapshot">Snapshot</a>
+  <a href="/snapshot">Snapshot</a> |
+  <a href="/dates">Dates</a>
 </nav>
 
 {#if $message}

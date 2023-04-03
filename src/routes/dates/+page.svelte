@@ -42,8 +42,8 @@
     }
   });
 
-  let proxy = dateProxy(form, 'proxy', { format: 'date-utc' });
-  let proxyCoerce = dateProxy(form, 'proxyCoerce', { format: 'date-utc' });
+  let proxy = dateProxy(form, 'proxy', { format: 'date' });
+  let proxyCoerce = dateProxy(form, 'proxyCoerce', { format: 'date' });
 </script>
 
 <SuperDebug data={$form} />

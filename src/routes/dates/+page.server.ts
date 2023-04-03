@@ -7,6 +7,7 @@ export const load = (async ({ url }) => {
   //console.log('GET /dates', new Date());
 
   const date = new Date('1984-09-02');
+  //const date = new Date(1984, 8, 2, 0, 0, 0);
 
   const data: z.infer<typeof schema> = {
     plain: date,

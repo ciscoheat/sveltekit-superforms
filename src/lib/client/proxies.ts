@@ -5,6 +5,9 @@ import { SuperFormError } from '../index.js';
 type DefaultOptions = {
   trueStringValue: string;
   dateFormat:
+    | 'date'
+    | 'datetime'
+    | 'time'
     | 'date-utc'
     | 'datetime-utc'
     | 'time-utc'
@@ -55,14 +58,7 @@ export function dateProxy<T extends Record<string, unknown>>(
   form: Writable<T>,
   field: keyof T,
   options: {
-    format:
-      | 'date-utc'
-      | 'datetime-utc'
-      | 'time-utc'
-      | 'date-local'
-      | 'datetime-local'
-      | 'time-local'
-      | 'iso';
+    format: DefaultOptions['dateFormat'];
   } = {
     format: 'iso'
   }
@@ -111,21 +107,28 @@ function stringProxy<
     } else if (type == 'date') {
       const date = value as unknown as Date;
       if (isNaN(date as unknown as number)) return '';
-      if (options.dateFormat == 'date-utc') {
-        return UTCDate(date);
-      } else if (options.dateFormat == 'datetime-utc') {
-        return UTCDate(date) + 'T' + UTCTime(date);
-      } else if (options.dateFormat == 'time-utc') {
-        return UTCTime(date);
-      } else if (options.dateFormat == 'date-local') {
-        return localDate(date);
-      } else if (options.dateFormat == 'datetime-local') {
-        return localDate(date) + 'T' + localTime(date);
-      } else if (options.dateFormat == 'time-local') {
-        return localTime(date);
-      } else {
-        // iso
-        return date.toISOString();
+
+      switch (options.dateFormat) {
+        case 'iso':
+          return date.toISOString();
+        case 'date':
+          return date.toISOString().slice(0, 10);
+        case 'datetime':
+          return date.toISOString().slice(0, 16);
+        case 'time':
+          return date.toISOString().slice(11, 16);
+        case 'date-utc':
+          return UTCDate(date);
+        case 'datetime-utc':
+          return UTCDate(date) + 'T' + UTCTime(date);
+        case 'time-utc':
+          return UTCTime(date);
+        case 'date-local':
+          return localDate(date);
+        case 'datetime-local':
+          return localDate(date) + 'T' + localTime(date);
+        case 'time-local':
+          return localTime(date);
       }
     } else {
       // boolean
@@ -249,5 +252,16 @@ function UTCTime(date: Date) {
     String(date.getUTCHours()).padStart(2, '0') +
     ':' +
     String(date.getUTCMinutes()).padStart(2, '0')
+  );
+}
+
+function dateToUTC(date: Date) {
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
   );
 }

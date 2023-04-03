@@ -25,6 +25,7 @@
     <span>{label}</span>
     <div class="relative block">
       <input
+        type="number"
         data-lpignore="true"
         use:setType
         {placeholder}

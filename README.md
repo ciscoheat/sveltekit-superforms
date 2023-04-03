@@ -5,10 +5,6 @@
 
 <div align="center">
   <a align="center" href="https://superforms.vercel.app/">https://superforms.vercel.app/</a>
-  <br /><br />
-  <span>
-    Supercharge your SvelteKit forms with this powerhouse of a library!
-  </span>
   <br />
   <a href="https://discord.gg/AptebvVuhB">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>

@@ -316,26 +316,20 @@ export async function superValidate<
 
   if (!data) {
     let valid = false;
-    const errors: Validation<T, M>['errors'] = {};
 
     if (hasEffects) {
       const result = await originalSchema.spa(entityInfo.defaultEntity);
 
       valid = result.success;
+
       if (result.success) {
         data = result.data;
-      } else {
-        const formLevelErrors = result.error.issues.filter(
-          (i) => i.path.length == 0
-        );
-        if (formLevelErrors.length)
-          errors._errors = formLevelErrors.map((err) => err.message);
       }
     }
 
     output = {
       valid,
-      errors,
+      errors: {},
       // Copy the default entity so it's not modified
       data: data ?? clone(entityInfo.defaultEntity),
       empty: true,

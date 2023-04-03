@@ -631,20 +631,34 @@ test('AllErrors', async () => {
 
 test('Form-level errors', async () => {
   const refined = z
-    .object({ name: z.string() })
+    .object({ name: z.string().min(1) })
     .refine(() => false, 'Form-level error');
 
   const form = await superValidate(null, refined);
 
   assert(form.valid === false);
-  expect(form.errors._errors).toStrictEqual(['Form-level error']);
+  expect(form.errors).toStrictEqual({});
 
   setError(form, [], 'Form-level problem');
   setError(form, null, 'Another form-level problem');
 
   expect(form.errors._errors).toStrictEqual([
-    'Form-level error',
     'Form-level problem',
     'Another form-level problem'
   ]);
+
+  const form2 = await superValidate({ name: '' }, refined);
+
+  assert(form2.valid === false);
+  expect(form2.errors).toStrictEqual({
+    _errors: ['Form-level error'],
+    name: ['String must contain at least 1 character(s)']
+  });
+
+  setError(form2, [], 'Form-level problem');
+
+  expect(form2.errors).toStrictEqual({
+    _errors: ['Form-level error', 'Form-level problem'],
+    name: ['String must contain at least 1 character(s)']
+  });
 });

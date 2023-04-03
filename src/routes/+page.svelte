@@ -112,11 +112,21 @@
         data-invalid={$errors.name}
         bind:value={$form.name}
       />
-      {#if $errors.name}<br /><span class="invalid">{$errors.name}</span
+      {#if $errors.name}<br /><span class="invalid">{$errors.name[0]}</span
         >{/if}
     </label>
 
-    <Input label="E-mail" field={fields.email} />
+    <label>
+      E-mail<br /><input
+        type="email"
+        name="email"
+        data-invalid={$errors.email}
+        bind:value={$form.email}
+      />
+      {#if $errors.email}<br /><span class="invalid">{$errors.email[0]}</span
+        >{/if}
+    </label>
+
     <Input label="Gender" field={fields.gender} />
 
     <div class="submit">

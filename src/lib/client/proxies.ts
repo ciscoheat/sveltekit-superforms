@@ -4,7 +4,14 @@ import { SuperFormError } from '../index.js';
 
 type DefaultOptions = {
   trueStringValue: string;
-  dateFormat: 'date-local' | 'datetime-local' | 'time-local' | 'iso';
+  dateFormat:
+    | 'date-utc'
+    | 'datetime-utc'
+    | 'time-utc'
+    | 'date-local'
+    | 'datetime-local'
+    | 'time-local'
+    | 'iso';
 };
 
 const defaultOptions: DefaultOptions = {
@@ -48,7 +55,14 @@ export function dateProxy<T extends Record<string, unknown>>(
   form: Writable<T>,
   field: keyof T,
   options: {
-    format: 'date-local' | 'datetime-local' | 'time-local' | 'iso';
+    format:
+      | 'date-utc'
+      | 'datetime-utc'
+      | 'time-utc'
+      | 'date-local'
+      | 'datetime-local'
+      | 'time-local'
+      | 'iso';
   } = {
     format: 'iso'
   }
@@ -97,7 +111,13 @@ function stringProxy<
     } else if (type == 'date') {
       const date = value as unknown as Date;
       if (isNaN(date as unknown as number)) return '';
-      if (options.dateFormat == 'date-local') {
+      if (options.dateFormat == 'date-utc') {
+        return UTCDate(date);
+      } else if (options.dateFormat == 'datetime-utc') {
+        return UTCDate(date) + 'T' + UTCTime(date);
+      } else if (options.dateFormat == 'time-utc') {
+        return UTCTime(date);
+      } else if (options.dateFormat == 'date-local') {
         return localDate(date);
       } else if (options.dateFormat == 'datetime-local') {
         return localDate(date) + 'T' + localTime(date);
@@ -211,5 +231,23 @@ function localTime(date: Date) {
     String(date.getHours()).padStart(2, '0') +
     ':' +
     String(date.getMinutes()).padStart(2, '0')
+  );
+}
+
+function UTCDate(date: Date) {
+  return (
+    date.getUTCFullYear() +
+    '-' +
+    String(date.getUTCMonth() + 1).padStart(2, '0') +
+    '-' +
+    String(date.getUTCDate()).padStart(2, '0')
+  );
+}
+
+function UTCTime(date: Date) {
+  return (
+    String(date.getUTCHours()).padStart(2, '0') +
+    ':' +
+    String(date.getUTCMinutes()).padStart(2, '0')
   );
 }

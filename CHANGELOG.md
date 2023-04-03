@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Implicit default value for `ZodRecord` (empty object)
+- UTC date/time formats for `dateProxy`.
 
 ## [0.6.6] - 2023-03-31
 

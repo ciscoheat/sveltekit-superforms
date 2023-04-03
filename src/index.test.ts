@@ -628,3 +628,23 @@ test('AllErrors', async () => {
     }
   ]);
 });
+
+test('Form-level errors', async () => {
+  const refined = z
+    .object({ name: z.string() })
+    .refine(() => false, 'Form-level error');
+
+  const form = await superValidate(null, refined);
+
+  assert(form.valid === false);
+  expect(form.errors._errors).toStrictEqual(['Form-level error']);
+
+  setError(form, [], 'Form-level problem');
+  setError(form, null, 'Another form-level problem');
+
+  expect(form.errors._errors).toStrictEqual([
+    'Form-level error',
+    'Form-level problem',
+    'Another form-level problem'
+  ]);
+});

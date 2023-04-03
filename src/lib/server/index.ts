@@ -49,7 +49,11 @@ export function message<T extends AnyZodObject, M>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(
   form: Validation<T, unknown>,
-  path: keyof z.infer<T> | [keyof z.infer<T>, ...(string | number)[]],
+  path:
+    | keyof z.infer<T>
+    | [keyof z.infer<T>, ...(string | number)[]]
+    | []
+    | null,
   error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
@@ -59,22 +63,28 @@ export function setError<T extends AnyZodObject>(
   const errArr = Array.isArray(error) ? error : [error];
 
   if (!form.errors) form.errors = {};
-  if (typeof path === 'string') path = [path];
 
-  const leaf = traversePath(
-    form.errors,
-    path as (string | number)[],
-    ({ parent, key, value }) => {
-      if (value === undefined) parent[key] = {};
-      return parent[key];
+  if (path === null || (Array.isArray(path) && path.length === 0)) {
+    if (!form.errors._errors) form.errors._errors = [];
+    form.errors._errors = form.errors._errors.concat(errArr);
+  } else {
+    if (!Array.isArray(path)) path = [path];
+
+    const leaf = traversePath(
+      form.errors,
+      path as (string | number)[],
+      ({ parent, key, value }) => {
+        if (value === undefined) parent[key] = {};
+        return parent[key];
+      }
+    );
+
+    if (leaf) {
+      leaf.parent[leaf.key] =
+        Array.isArray(leaf.value) && !options.overwrite
+          ? leaf.value.concat(errArr)
+          : errArr;
     }
-  );
-
-  if (leaf) {
-    leaf.parent[leaf.key] =
-      Array.isArray(leaf.value) && !options.overwrite
-        ? leaf.value.concat(errArr)
-        : errArr;
   }
 
   form.valid = false;
@@ -306,17 +316,26 @@ export async function superValidate<
 
   if (!data) {
     let valid = false;
+    const errors: Validation<T, M>['errors'] = {};
 
     if (hasEffects) {
       const result = await originalSchema.spa(entityInfo.defaultEntity);
 
       valid = result.success;
-      if (result.success) data = result.data;
+      if (result.success) {
+        data = result.data;
+      } else {
+        const formLevelErrors = result.error.issues.filter(
+          (i) => i.path.length == 0
+        );
+        if (formLevelErrors.length)
+          errors._errors = formLevelErrors.map((err) => err.message);
+      }
     }
 
     output = {
       valid,
-      errors: {},
+      errors,
       // Copy the default entity so it's not modified
       data: data ?? clone(entityInfo.defaultEntity),
       empty: true,

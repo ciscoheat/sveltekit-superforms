@@ -61,16 +61,6 @@
 
 <SuperDebug data={{ $form, $staticform }} />
 
-<nav>
-  <a href="/test">Test page</a> |
-  <a href="/crud">CRUD</a> |
-  <a href="/super-debug">SuperDebug</a> |
-  <a href="/nested">Nested</a> |
-  <a href="/multiple">Multiple</a> |
-  <a href="/snapshot">Snapshot</a> |
-  <a href="/dates">Dates</a>
-</nav>
-
 {#if $message}
   <h4 class:error={$message.type == 'error'} class="message">
     {$message.message}

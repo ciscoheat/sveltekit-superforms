@@ -17,6 +17,18 @@
   <div style:background-color={bg} class="flash">{$flash.message}</div>
 {/if}
 
+<nav>
+  <a href="/">Start</a> |
+  <a href="/test">Test page</a> |
+  <a href="/crud">CRUD</a> |
+  <a href="/super-debug">SuperDebug</a> |
+  <a href="/nested">Nested</a> |
+  <a href="/multiple">Multiple</a> |
+  <a href="/snapshot">Snapshot</a> |
+  <a href="/dates">Dates</a> |
+  <a href="/reset">Reset</a>
+</nav>
+
 <slot />
 
 <style lang="scss">
@@ -24,5 +36,10 @@
     padding: 5px 10px;
     color: white;
     border-radius: 3px;
+  }
+
+  nav {
+    text-align: center;
+    margin-bottom: 12px;
   }
 </style>

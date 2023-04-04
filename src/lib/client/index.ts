@@ -22,10 +22,11 @@ import {
   SuperFormError,
   type TaintedFields,
   type Validation,
+  type ValidationErrors,
   type Validator,
   type Validators
 } from '../index.js';
-import type { AnyZodObject, ZodEffects } from 'zod';
+import type { z, AnyZodObject, ZodEffects } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
 import {
@@ -310,26 +311,20 @@ export function superForm<
     }
   }
 
-  // Make an "as deep copy as needed" of the original, in case of reset
-  const initialForm: Validation<T, M> = {
-    ...form,
-    data: { ...form.data },
-    errors: { ...form.errors },
-    constraints: { ...form.constraints },
-    meta: form.meta ? { ...form.meta } : undefined
-  };
+  const initialForm = clone(form);
+  const storeForm = clone(form);
 
   // Stores for the properties of Validation<T, M>
   // Need to make a copy here too, in case the form variable
   // is used to populate multiple forms.
-  const Valid = writable(form.valid);
-  const Empty = writable(form.empty);
-  const Message = writable<M | undefined>(form.message);
-  const Errors = writable({ ...form.errors });
-  const Data = writable({ ...form.data });
-  const Constraints = writable({ ...form.constraints });
+  const Valid = writable(storeForm.valid);
+  const Empty = writable(storeForm.empty);
+  const Message = writable<M | undefined>(storeForm.message);
+  const Errors = writable(storeForm.errors);
+  const Data = writable(storeForm.data);
+  const Constraints = writable(storeForm.constraints);
   const Meta = writable<Validation<T, M>['meta'] | undefined>(
-    form.meta ? { ...form.meta } : undefined
+    storeForm.meta
   );
 
   const Tainted = writable<TaintedFields<T> | undefined>();
@@ -429,7 +424,7 @@ export function superForm<
   }
 
   function _resetForm(message?: M) {
-    rebind(initialForm, true, message);
+    rebind(clone(initialForm), true, message);
   }
 
   const Data_update: FormUpdate = async (result, untaint?: boolean) => {
@@ -745,16 +740,19 @@ function formEnhance<T extends AnyZodObject, M>(
   submitting: Writable<boolean>,
   delayed: Writable<boolean>,
   timeout: Writable<boolean>,
-  errors: Writable<Validation<T, M>['errors']>,
+  errs: Writable<unknown>,
   Data_update: FormUpdate,
   options: FormOptions<T, M>,
-  data: Writable<Validation<T, M>['data']>,
-  message: Writable<Validation<T, M>['message']>,
+  data: Writable<z.infer<T>>,
+  message: Writable<M | undefined>,
   enableTaintedForm: () => void,
   formEvents: SuperFormEventList<T, M>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
+
+  // Using this type in the function argument causes a type recursion error.
+  const errors = errs as Writable<ValidationErrors<T>>;
 
   function setError(path: string[], newErrors: string[] | null) {
     errors.update((err) => {

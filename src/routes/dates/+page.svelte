@@ -48,6 +48,8 @@
 
 <SuperDebug data={$form} />
 
+<a href="/">&lt; Back to start</a>
+
 <form method="POST" use:enhance>
   <label
     >plain <input type="text" name="plain" bind:value={$form.plain} /></label

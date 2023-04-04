@@ -1,5 +1,5 @@
 import { message, superValidate } from '$lib/server';
-import { error, fail, redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 import { users, userId, userSchema } from '../users';

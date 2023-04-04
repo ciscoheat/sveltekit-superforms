@@ -26,6 +26,8 @@
   });
 </script>
 
+<a href="/">&lt; Back to start</a>
+
 <h1>sveltekit-superforms</h1>
 
 <div class="users">

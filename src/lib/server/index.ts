@@ -299,7 +299,13 @@ export async function superValidate<
     let formData: FormData | undefined = undefined;
     try {
       formData = await request.formData();
-    } catch {
+    } catch (e) {
+      if (
+        e instanceof TypeError &&
+        e.message.includes('already been consumed')
+      ) {
+        throw e;
+      }
       return null;
     }
     return parseFormData(formData);

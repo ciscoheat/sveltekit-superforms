@@ -9,11 +9,9 @@ export const load = (async (event) => {
 }) satisfies PageServerLoad;
 
 export const actions = {
-  default: async ({ request }) => {
-    //console.log('--- POST -------------------------------------------');
-    const data = await request.formData();
-    //console.log(data);
-    const form = await superValidate(data, schema);
+  default: async (event) => {
+    const data = await event.request.formData();
+    const form = await superValidate(event, schema);
     console.log('POST', form);
 
     return { form };

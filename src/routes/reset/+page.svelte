@@ -10,8 +10,8 @@
 
   const { form, enhance, reset } = superForm(data.form, {
     resetForm: true,
-    onUpdated() {
-      resets = resets + 1;
+    onUpdated({ form }) {
+      if (form.valid) resets = resets + 1;
     }
   });
 </script>

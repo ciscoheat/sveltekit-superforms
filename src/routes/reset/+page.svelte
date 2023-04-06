@@ -17,6 +17,7 @@
 
   $: form = superF.form;
   $: enhance = superF.enhance;
+  $: errors = superF.errors;
 </script>
 
 <SuperDebug data={$form} />
@@ -25,6 +26,7 @@
 
 <form method="POST" use:enhance>
   <input type="text" name="name" bind:value={$form.name} /><br />
+  {#if $errors.name}<span>{$errors.name}</span><br />{/if}
   <button>Submit</button>
 </form>
 

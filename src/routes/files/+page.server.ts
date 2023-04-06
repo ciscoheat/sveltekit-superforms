@@ -7,8 +7,8 @@ const userSchema = z.object({
   filename: z.string().min(1)
 });
 
-export const load = (async (event) => {
-  const form = await superValidate(event, userSchema);
+export const load = (async () => {
+  const form = await superValidate(userSchema);
   return { form };
 }) satisfies PageServerLoad;
 

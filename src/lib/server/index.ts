@@ -220,13 +220,15 @@ type ZodValidation<T extends AnyZodObject> =
   | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
   | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
-/**
- * Validates a Zod schema for usage in a SvelteKit form.
- * @param data Data structure for a Zod schema, or RequestEvent/FormData. If falsy, the schema's defaultEntity will be used.
- * @param schema The Zod schema to validate against.
- * @param options.defaults An object with keys that can be a default value, or a function that will be called to get the default value.
- * @param options.noErrors For load requests, this is usually set to prevent validation errors from showing directly on a GET request.
- */
+export async function superValidate<
+  T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
+  schema: T,
+  options?: SuperValidateOptions
+): Promise<Validation<UnwrapEffects<T>, M>>;
+
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -241,17 +243,41 @@ export async function superValidate<
     | Partial<z.infer<UnwrapEffects<T>>>
     | null
     | undefined,
-  // This looks silly but recursively unwrapping the type with infer simply didn't work...
   schema: T,
-  options: SuperValidateOptions = {}
+  options?: SuperValidateOptions
+): Promise<Validation<UnwrapEffects<T>, M>>;
+
+/**
+ * Validates a Zod schema for usage in a SvelteKit form.
+ * @param data Data structure for a Zod schema, or RequestEvent/FormData/URL. If falsy, the schema's defaultEntity will be used.
+ * @param schema The Zod schema to validate against.
+ */
+export async function superValidate<
+  T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
+  data: unknown,
+  schema?: T | SuperValidateOptions,
+  options?: SuperValidateOptions
 ): Promise<Validation<UnwrapEffects<T>, M>> {
+  if (
+    data &&
+    (data.constructor.name === 'ZodObject' ||
+      data.constructor.name === 'ZodEffects')
+  ) {
+    options = schema as SuperValidateOptions | undefined;
+    schema = data as T;
+    data = null;
+  }
+
   options = {
     noErrors: false,
     includeMeta: false,
     ...options
   };
 
-  const originalSchema = schema;
+  const originalSchema = schema as T;
 
   let wrappedSchema = schema;
   let hasEffects = false;
@@ -304,6 +330,8 @@ export async function superValidate<
         e instanceof TypeError &&
         e.message.includes('already been consumed')
       ) {
+        // Pass through the "body already consumed" error, which applies to
+        // POST requests when event/request is used after formData has been fetched.
         throw e;
       }
       return null;
@@ -324,13 +352,19 @@ export async function superValidate<
   // If FormData exists, don't check for missing fields.
   // Checking only at GET requests, basically, where
   // the data is coming from the DB.
+
   if (data instanceof FormData) {
     data = parseFormData(data);
   } else if (data instanceof Request) {
     data = await tryParseFormData(data);
   } else if (data instanceof URL || data instanceof URLSearchParams) {
     data = parseSearchParams(data);
-  } else if (data && data.request instanceof Request) {
+  } else if (
+    data &&
+    typeof data === 'object' &&
+    'request' in data &&
+    data.request instanceof Request
+  ) {
     data = await tryParseFormData(data.request);
   }
 

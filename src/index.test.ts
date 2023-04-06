@@ -708,3 +708,35 @@ test('URL and URLSearchParams validation', async () => {
 
   expect(form2).toMatchObject(expected);
 });
+
+test('Call without data', async () => {
+  const schema = z.object({
+    name: z.string(),
+    id: z.number()
+  });
+
+  const form = await superValidate(schema, { id: 'test' });
+
+  expect(form).toStrictEqual({
+    id: 'test',
+    valid: false,
+    errors: {},
+    data: { name: '', id: 0 },
+    empty: true,
+    constraints: { name: { required: true }, id: { required: true } }
+  });
+
+  const form2 = await superValidate(
+    schema.refine(() => false, 'Some error'),
+    { id: 'test2' }
+  );
+
+  expect(form2).toStrictEqual({
+    id: 'test2',
+    valid: false,
+    errors: {},
+    data: { name: '', id: 0 },
+    empty: true,
+    constraints: { name: { required: true }, id: { required: true } }
+  });
+});

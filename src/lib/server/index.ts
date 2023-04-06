@@ -206,6 +206,20 @@ export type SuperValidateOptions = {
   id?: true | string;
 };
 
+type UnwrapEffects<T> = T extends ZodEffects<infer U>
+  ? UnwrapEffects<U>
+  : T extends AnyZodObject
+  ? T
+  : never;
+
+type ZodValidation<T extends AnyZodObject> =
+  | T
+  | ZodEffects<T>
+  | ZodEffects<ZodEffects<T>>
+  | ZodEffects<ZodEffects<ZodEffects<T>>>
+  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
+
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
  * @param data Data structure for a Zod schema, or RequestEvent/FormData. If falsy, the schema's defaultEntity will be used.
@@ -214,7 +228,7 @@ export type SuperValidateOptions = {
  * @param options.noErrors For load requests, this is usually set to prevent validation errors from showing directly on a GET request.
  */
 export async function superValidate<
-  T extends AnyZodObject,
+  T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
 >(
@@ -222,19 +236,13 @@ export async function superValidate<
     | RequestEvent
     | Request
     | FormData
-    | Partial<z.infer<T>>
+    | Partial<z.infer<UnwrapEffects<T>>>
     | null
     | undefined,
   // This looks silly but recursively unwrapping the type with infer simply didn't work...
-  schema:
-    | T
-    | ZodEffects<T>
-    | ZodEffects<ZodEffects<T>>
-    | ZodEffects<ZodEffects<ZodEffects<T>>>
-    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
-    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>, // 5 should be enough
+  schema: T,
   options: SuperValidateOptions = {}
-): Promise<Validation<T, M>> {
+): Promise<Validation<UnwrapEffects<T>, M>> {
   options = {
     noErrors: false,
     includeMeta: false,
@@ -257,7 +265,7 @@ export async function superValidate<
     );
   }
 
-  const realSchema = wrappedSchema as T;
+  const realSchema = wrappedSchema as UnwrapEffects<T>;
 
   const entityInfo = entityData(realSchema);
   const schemaKeys = entityInfo.keys;
@@ -312,7 +320,7 @@ export async function superValidate<
   }
   */
 
-  let output: Validation<T, M>;
+  let output: Validation<UnwrapEffects<T>, M>;
 
   if (!data) {
     let valid = false;
@@ -342,7 +350,7 @@ export async function superValidate<
     if (!result.success) {
       const errors = options.noErrors
         ? {}
-        : mapErrors<T>(result.error.format());
+        : mapErrors<UnwrapEffects<T>>(result.error.format());
 
       output = {
         valid: false,

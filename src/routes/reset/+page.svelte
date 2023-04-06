@@ -1,19 +1,22 @@
 <script lang="ts">
-  import { superForm } from '$lib/client';
+  import { superForm, type SuperForm } from '$lib/client';
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import { schema } from './schemas';
+  import type { schema } from './schemas';
 
   export let data: PageData;
 
   let resets = 0;
 
-  const { form, enhance, reset } = superForm(data.form, {
+  const superF: SuperForm<typeof schema> = superForm(data.form, {
     resetForm: true,
     onUpdated({ form }) {
       if (form.valid) resets = resets + 1;
     }
   });
+
+  $: form = superF.form;
+  $: enhance = superF.enhance;
 </script>
 
 <SuperDebug data={$form} />

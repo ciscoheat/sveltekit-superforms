@@ -207,11 +207,14 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   restore: (snapshot: SuperFormSnapshot<T, M>) => void;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SuperForm<T extends AnyZodObject, M = any> = EnhancedForm<T, M>;
+
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {Validation} form Usually data.form from PageData.
  * @param {FormOptions} options Configuration for the form.
- * @returns {EnhancedForm} An object with properties for the form.
+ * @returns {SuperForm} An object with properties for the form.
  */
 export function superForm<
   T extends AnyZodObject = AnyZodObject,
@@ -220,7 +223,7 @@ export function superForm<
 >(
   form: Validation<T, M> | null | undefined | string,
   options: FormOptions<T, M> = {}
-): EnhancedForm<T, M> {
+): SuperForm<T, M> {
   options = { ...(defaultFormOptions as FormOptions<T, M>), ...options };
 
   function emptyForm(): Validation<T, M> {

@@ -5,15 +5,19 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.10] - 2023-04-06
 
 ### Fixed
 
-- If POST request body has already been used, an error is thrown instead of returning an empty object
+- If POST request body has already been used, an error is thrown instead of returning an empty object.
 
 ### Added
 
 - Finally, `event` is no longer needed in the load function call to `superValidate`.
+
+### Deprecated
+
+- The `EnhancedForm` type should now be referred to as `SuperForm`.
 
 ## [0.6.9] - 2023-04-06
 

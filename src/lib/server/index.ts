@@ -236,6 +236,8 @@ export async function superValidate<
     | RequestEvent
     | Request
     | FormData
+    | URLSearchParams
+    | URL
     | Partial<z.infer<UnwrapEffects<T>>>
     | null
     | undefined,
@@ -303,6 +305,16 @@ export async function superValidate<
     return parseFormData(formData);
   }
 
+  function parseSearchParams(data: URL | URLSearchParams) {
+    if (data instanceof URL) data = data.searchParams;
+
+    const convert = new FormData();
+    for (const [key, value] of data.entries()) {
+      convert.append(key, value);
+    }
+    return parseFormData(convert);
+  }
+
   // If FormData exists, don't check for missing fields.
   // Checking only at GET requests, basically, where
   // the data is coming from the DB.
@@ -310,15 +322,11 @@ export async function superValidate<
     data = parseFormData(data);
   } else if (data instanceof Request) {
     data = await tryParseFormData(data);
+  } else if (data instanceof URL || data instanceof URLSearchParams) {
+    data = parseSearchParams(data);
   } else if (data && data.request instanceof Request) {
     data = await tryParseFormData(data.request);
   }
-  /*
-   else if (data) {
-    // Make a copy of the data, so defaults can be applied to it.
-    data = { ...data };
-  }
-  */
 
   let output: Validation<UnwrapEffects<T>, M>;
 

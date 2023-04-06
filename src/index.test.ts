@@ -662,3 +662,49 @@ test('Form-level errors', async () => {
     name: ['String must contain at least 1 character(s)']
   });
 });
+
+test('URL and URLSearchParams validation', async () => {
+  const urlSchema = z.object({
+    id: z.number().int().positive(),
+    createdAt: z.coerce.date().default(testDate),
+    name: z.string().min(2).nullable(),
+    tags: z.string().regex(/^\w+$/).array()
+  });
+
+  const url = new URL(
+    'https://example.com/test?id=123&createdAt=2023-04-06&name=A%20test&tags=A&tags=B&tags=C'
+  );
+
+  const form = await superValidate(url, urlSchema);
+
+  const expected = {
+    valid: true,
+    errors: {},
+    data: {
+      id: 123,
+      name: 'A test',
+      tags: ['A', 'B', 'C']
+    },
+    empty: false,
+    constraints: {
+      id: { min: 0, required: true },
+      createdAt: { required: true },
+      name: { minlength: 2 },
+      tags: { pattern: '^\\w+$', required: true }
+    }
+  };
+
+  expect(form.data.createdAt.getTime()).toEqual(
+    new Date('2023-04-06').getTime()
+  );
+
+  expect(form).toMatchObject(expected);
+
+  const form2 = await superValidate(url.searchParams, urlSchema);
+
+  expect(form2.data.createdAt.getTime()).toEqual(
+    new Date('2023-04-06').getTime()
+  );
+
+  expect(form2).toMatchObject(expected);
+});

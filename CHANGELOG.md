@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Finally, `event` is no longer needed in the load function call to `superValidate`.
+- Finally, `event` is no longer needed in the function call to `superValidate` for empty forms. Just pass the schema as the first parameter.
 
 ### Deprecated
 

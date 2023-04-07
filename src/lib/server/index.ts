@@ -396,9 +396,18 @@ export async function superValidate<
     const result = await originalSchema.spa(partialData);
 
     if (!result.success) {
+      const formattedErrors = result.error.format();
+      const onlyTopLevelErrors =
+        Object.entries(formattedErrors).length == 1 &&
+        formattedErrors._errors.length;
+
       const errors = options.noErrors
         ? {}
+        : onlyTopLevelErrors
+        ? formattedErrors
         : mapErrors<UnwrapEffects<T>>(result.error.format());
+
+      //console.log(result.error.format(), errors);
 
       output = {
         valid: false,

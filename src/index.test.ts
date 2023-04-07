@@ -634,15 +634,23 @@ test('Form-level errors', async () => {
     .object({ name: z.string().min(1) })
     .refine(() => false, 'Form-level error');
 
-  const form = await superValidate(null, refined);
+  const form0 = await superValidate(null, refined);
+
+  assert(form0.valid === false);
+  expect(form0.errors).toStrictEqual({});
+
+  const form = await superValidate({ name: 'Abc' }, refined);
 
   assert(form.valid === false);
-  expect(form.errors).toStrictEqual({});
+  expect(form.errors).toStrictEqual({
+    _errors: ['Form-level error']
+  });
 
   setError(form, [], 'Form-level problem');
   setError(form, null, 'Another form-level problem');
 
   expect(form.errors._errors).toStrictEqual([
+    'Form-level error',
     'Form-level problem',
     'Another form-level problem'
   ]);
@@ -660,6 +668,36 @@ test('Form-level errors', async () => {
   expect(form2.errors).toStrictEqual({
     _errors: ['Form-level error', 'Form-level problem'],
     name: ['String must contain at least 1 character(s)']
+  });
+});
+
+test('Form-level errors only with refine', async () => {
+  const schema = z
+    .object({
+      scoops: z.number().int().min(1).default(1),
+      flavours: z.string().min(1).array().default(['Mint choc chip'])
+    })
+    .refine(
+      (data) => data.flavours.length < data.scoops,
+      "Can't order more flavours than scoops!"
+    );
+
+  const data = new FormData();
+  data.set('scoops', '1');
+  data.append('flavours', 'Mint choc chip');
+  data.append('flavours', 'Raspberry ripple');
+
+  const form = await superValidate(data, schema);
+
+  expect(form).toStrictEqual({
+    valid: false,
+    errors: { _errors: ["Can't order more flavours than scoops!"] },
+    data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
+    empty: false,
+    constraints: {
+      scoops: { min: 1, required: true },
+      flavours: { minlength: 1, required: true }
+    }
   });
 });
 

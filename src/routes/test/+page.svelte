@@ -239,6 +239,9 @@
   <div>
     <input type="checkbox" name="agree" bind:checked={$form.agree} />
     Agree to terms
+    {#if $errors.agree}<br /><span data-invalid
+        >You must agree to the terms.</span
+      >{/if}
   </div>
 
   <label for="bool">bool</label>

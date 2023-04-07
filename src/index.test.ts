@@ -740,3 +740,36 @@ test('Call without data', async () => {
     constraints: { name: { required: true }, id: { required: true } }
   });
 });
+
+test('ZodObject defaults', async () => {
+  const imageCreationFormSchema = z.object({
+    textresource: z.string().trim(),
+    promptExtra: z.string().trim().optional(),
+    promptMetaData: z.object({
+      textServiceId: z.enum(['a', 'b']).nullable().optional(),
+      imageServiceId: z.enum(['c', 'd']).nullable().optional()
+    }),
+    provider: z.string().optional(),
+    numbers: z.record(z.number())
+  });
+
+  const form = await superValidate(imageCreationFormSchema);
+
+  expect(form).toStrictEqual({
+    valid: false,
+    errors: {},
+    data: {
+      textresource: '',
+      promptExtra: undefined,
+      promptMetaData: { textServiceId: null, imageServiceId: null },
+      provider: undefined,
+      numbers: {}
+    },
+    empty: true,
+    constraints: {
+      textresource: { required: true },
+      promptMetaData: {},
+      numbers: { required: true }
+    }
+  });
+});

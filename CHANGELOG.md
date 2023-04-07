@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.11] - 2023-04-07
+
+### Added
+
+- `$tainted` store is now writable.
+
 ## [0.6.10] - 2023-04-06
 
 ### Fixed

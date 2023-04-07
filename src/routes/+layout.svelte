@@ -12,6 +12,8 @@
   });
 </script>
 
+<svelte:head><title>Superforms testing grounds</title></svelte:head>
+
 {#if $flash}
   {@const bg = $flash.type == 'success' ? '#3D9970' : '#FF4136'}
   <div style:background-color={bg} class="flash">{$flash.message}</div>
@@ -22,12 +24,14 @@
   <a href="/test">Test page</a> |
   <a href="/crud">CRUD</a> |
   <a href="/super-debug">SuperDebug</a> |
-  <a href="/nested">Nested</a><br />
-  <a href="/multiple">Multiple</a> |
+  <a href="/nested">Nested</a> |
+  <a href="/multiple">Multiple</a>
+  <br />
   <a href="/snapshot">Snapshot</a> |
   <a href="/dates">Dates</a> |
   <a href="/reset">Reset</a> |
-  <a href="/url">URL</a>
+  <a href="/url">URL</a> |
+  <a href="/tainted">Tainted</a>
 </nav>
 
 <slot />

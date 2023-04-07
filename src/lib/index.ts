@@ -17,7 +17,7 @@ type UnwrappedRawShape<
   P extends keyof RawShape<T>
 > = UnwrappedEntity<RawShape<T>[P]>;
 
-type SuperStructArray<T extends AnyZodObject, Data, ArrayData = never> = {
+type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
   [Property in keyof RawShape<T>]?: T extends any
     ? UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStructArray<UnwrappedRawShape<T, Property>, Data, ArrayData>
@@ -70,7 +70,7 @@ export type Validators<T extends AnyZodObject> = Partial<{
 
 export type TaintedFields<T extends AnyZodObject> = SuperStructArray<
   T,
-  true
+  boolean
 >;
 
 export type ValidationErrors<T extends AnyZodObject> = {

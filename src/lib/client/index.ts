@@ -182,6 +182,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   errors: Writable<Validation<T, M>['errors']>;
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
+  tainted: Writable<TaintedFields<T> | undefined>;
   meta: Readable<Validation<T, M>['meta']>;
 
   valid: Readable<boolean>;
@@ -193,8 +194,6 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   fields: FormFields<T>;
   firstError: Readable<{ path: string[]; message: string } | null>;
   allErrors: Readable<{ path: string[]; message: string }[]>;
-
-  tainted: Readable<TaintedFields<T> | undefined>;
 
   enhance: (
     el: HTMLFormElement,
@@ -549,11 +548,27 @@ export function superForm<
 
   ///// When use:enhance is enabled ///////////////////////////////////////////
 
+  function isTainted(obj: unknown): boolean {
+    if (obj === null)
+      throw new SuperFormError('$tainted store contained null');
+
+    if (typeof obj === 'object') {
+      for (const obj2 of Object.values(obj)) {
+        if (isTainted(obj2)) return true;
+      }
+    }
+    return obj === true;
+  }
+
   if (browser) {
     beforeNavigate((nav) => {
       if (options.taintedMessage && !get(Submitting)) {
-        const tainted = get(Tainted);
-        if (tainted && !window.confirm(options.taintedMessage)) {
+        const taintStatus = get(Tainted);
+        if (
+          taintStatus &&
+          isTainted(taintStatus) &&
+          !window.confirm(options.taintedMessage)
+        ) {
           nav.cancel();
         }
       }
@@ -650,7 +665,7 @@ export function superForm<
 
     fields: Fields,
 
-    tainted: derived(Tainted, ($t) => $t),
+    tainted: Tainted,
     valid: derived(Valid, ($s) => $s),
     empty: derived(Empty, ($e) => $e),
 

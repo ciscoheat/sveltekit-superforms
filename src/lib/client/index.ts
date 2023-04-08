@@ -357,9 +357,6 @@ export function superForm<
   const _taintedMessage = options.taintedMessage;
   options.taintedMessage = undefined;
 
-  // Check client validation on data change
-  let untaintedForm = clone(initialForm.data);
-
   function enableTaintedMessage() {
     options.taintedMessage = _taintedMessage;
   }
@@ -370,7 +367,6 @@ export function superForm<
     message?: M
   ) {
     if (untaint) {
-      untaintedForm = clone(form.data);
       Tainted.set(typeof untaint === 'boolean' ? undefined : untaint);
     }
 
@@ -576,18 +572,19 @@ export function superForm<
 
     // Prevent client validation on first page load
     // (when it recieives data from the server)
-    let hasNewData = true;
+    let previousForm: typeof initialForm.data | undefined;
 
     unsubscriptions.push(
       Data.subscribe(async (data) => {
         //console.log('🚀 ~ Data.subscribe ~ hasNewData:', formId, hasNewData);
-        if (hasNewData) {
-          hasNewData = false;
+        if (!previousForm) {
+          previousForm = initialForm.data;
           return;
         }
 
         if (!get(Submitting)) {
-          await checkTainted(data, untaintedForm);
+          await checkTainted(data, previousForm);
+          previousForm = clone(data);
         }
       })
     );
@@ -614,7 +611,7 @@ export function superForm<
               if (newForm === form || newForm.id !== formId) continue;
 
               // Prevent client validation from overriding the new server errors.
-              hasNewData = true;
+              previousForm = undefined;
               await _update(newForm as Validation<T, M>, untaint);
             }
           } else if (
@@ -629,7 +626,7 @@ export function superForm<
               //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
-              hasNewData = true;
+              previousForm = undefined;
               rebind(newForm as Validation<T, M>, untaint);
             }
           }

@@ -368,6 +368,7 @@ export function superForm<
   ) {
     if (untaint) {
       Tainted.set(typeof untaint === 'boolean' ? undefined : untaint);
+      checkedTaintedFormState = clone(form.data);
     }
 
     message = message ?? form.message;
@@ -544,6 +545,10 @@ export function superForm<
 
   ///// When use:enhance is enabled ///////////////////////////////////////////
 
+  // Prevent client validation on first page load
+  // (when it recieives data from the server)
+  let checkedTaintedFormState: typeof initialForm.data | undefined;
+
   function isTainted(obj: unknown): boolean {
     if (obj === null)
       throw new SuperFormError('$tainted store contained null');
@@ -570,21 +575,17 @@ export function superForm<
       }
     });
 
-    // Prevent client validation on first page load
-    // (when it recieives data from the server)
-    let previousForm: typeof initialForm.data | undefined;
-
     unsubscriptions.push(
       Data.subscribe(async (data) => {
         //console.log('🚀 ~ Data.subscribe ~ hasNewData:', formId, hasNewData);
-        if (!previousForm) {
-          previousForm = initialForm.data;
+        if (!checkedTaintedFormState) {
+          checkedTaintedFormState = initialForm.data;
           return;
         }
 
         if (!get(Submitting)) {
-          await checkTainted(data, previousForm);
-          previousForm = clone(data);
+          await checkTainted(data, checkedTaintedFormState);
+          checkedTaintedFormState = clone(data);
         }
       })
     );
@@ -611,7 +612,7 @@ export function superForm<
               if (newForm === form || newForm.id !== formId) continue;
 
               // Prevent client validation from overriding the new server errors.
-              previousForm = undefined;
+              checkedTaintedFormState = undefined;
               await _update(newForm as Validation<T, M>, untaint);
             }
           } else if (
@@ -626,7 +627,7 @@ export function superForm<
               //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
-              previousForm = undefined;
+              checkedTaintedFormState = undefined;
               rebind(newForm as Validation<T, M>, untaint);
             }
           }

@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.13] - 2023-04-07
+
+### Fixed
+
+- Tainted store check fixed for multiple updates.
+
 ## [0.6.12] - 2023-04-07
 
 ### Fixed

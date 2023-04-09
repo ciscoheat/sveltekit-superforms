@@ -32,6 +32,8 @@
 
 <SuperDebug data={{ $tainted }} />
 
+<a href="/tainted/multiple-tainted">Multiple tainted &gt;</a>
+
 <h2>Tainted modification test</h2>
 
 {#if $message}<h4>{$message}</h4>{/if}

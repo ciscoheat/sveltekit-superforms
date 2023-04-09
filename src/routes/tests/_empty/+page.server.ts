@@ -3,15 +3,15 @@ import { superValidate } from '$lib/server';
 import type { z } from 'zod';
 import { schema } from './schemas';
 
-export const load = (async (event) => {
-  const form = await superValidate(event, schema);
+export const load = (async () => {
+  const form = await superValidate(schema);
   return { form };
 }) satisfies PageServerLoad;
 
 export const actions = {
-  default: async (event) => {
-    const data = await event.request.formData();
-    const form = await superValidate(event, schema);
+  default: async ({ request }) => {
+    const formData = await request.formData();
+    const form = await superValidate(formData, schema);
     console.log('POST', form);
 
     return { form };

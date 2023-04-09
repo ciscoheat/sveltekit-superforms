@@ -8,9 +8,12 @@ import {
   type ZodTypeAny
 } from 'zod';
 import { traversePath, traversePathAsync } from '$lib/entity';
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { mapErrors } from '$lib/entity';
 import { unwrapZodType } from '$lib/server/entity';
+import { superValidate } from '$lib/server';
+import { fieldProxy } from '$lib/client/proxies';
+import type { FormPath, FieldPath } from '$lib';
 
 const user = z.object({
   id: z.number().int().positive(),
@@ -160,4 +163,52 @@ test('Traversing a Zod schema', async () => {
   assert(path && path.value instanceof ZodString);
   expect(path.value.safeParse('').success).toBeFalsy();
   expect(path.value.safeParse('ok').success).toBeTruthy();
+});
+
+test('proxyField traverse', async () => {
+  const person: z.infer<typeof user> = {
+    id: 123,
+    name: 'Test',
+    email: 'test@example.com',
+    tags: [{ name: 'tag1' }, { name: 'tag2' }]
+  };
+
+  const form = await superValidate(person, user);
+
+  type U = z.infer<typeof user>;
+
+  type S1 = FormPath<U, ['tags']>;
+  type S2 = FormPath<U, ['tags', 3]>;
+  type S3 = FormPath<U, ['tags', 3, 'name']>;
+
+  assert(form.valid);
+
+  const store = writable(form.data);
+
+  const proxy1 = fieldProxy(store, ['tags']);
+  const proxy2 = fieldProxy(store, ['tags', 0]);
+  const proxy3 = fieldProxy(store, ['tags', 1, 'name']);
+
+  proxy3.set('tag2-proxy3');
+  expect(get(store).tags?.[1].name).toEqual('tag2-proxy3');
+
+  proxy2.set({ name: 'tag1-proxy2' });
+  expect(get(store).tags?.[0].name).toEqual('tag1-proxy2');
+
+  const tags = get(store).tags!;
+
+  proxy1.set([tags[1], tags[0]]);
+
+  expect(get(store)).toStrictEqual({
+    id: 123,
+    name: 'Test',
+    email: 'test@example.com',
+    tags: [{ name: 'tag2-proxy3' }, { name: 'tag1-proxy2' }]
+  });
+
+  const idProxy = fieldProxy(store, ['id']);
+
+  idProxy.update((id) => id + 1);
+
+  expect(get(store).id).toEqual(124);
 });

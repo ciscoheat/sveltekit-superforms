@@ -1,6 +1,7 @@
 import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
-import { SuperFormError } from '../index.js';
+import { SuperFormError, type FormPath, type FieldPath } from '../index.js';
+import { traversePath } from '../entity.js';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -188,13 +189,16 @@ export function jsonProxy<
 
 export function fieldProxy<
   T extends Record<string, unknown>,
-  Field extends keyof T
->(form: Writable<T>, field: Field): Writable<T[Field]> {
-  const proxy = derived(form, ($form) => $form[field]);
+  Path extends FieldPath<T>
+>(form: Writable<T>, path: Path): Writable<FormPath<T, Path>> {
+  const proxy = derived(form, ($form) => {
+    const data = traversePath($form, path as (string | number)[]);
+    return data?.value;
+  });
 
   return {
     subscribe(...params: Parameters<typeof proxy.subscribe>) {
-      //console.log('~ fieldproxy ~ subscribe', field);
+      //console.log('~ fieldproxy ~ subscribe', path);
       const unsub = proxy.subscribe(...params);
 
       return () => {
@@ -203,18 +207,26 @@ export function fieldProxy<
       };
     },
     //subscribe: proxy.subscribe,
-    update(upd: Updater<T[Field]>) {
-      //console.log('~ fieldStore ~ update value for', field);
+    update(upd: Updater<FormPath<T, Path>>) {
+      //console.log('~ fieldStore ~ update value for', path);
       form.update((f) => {
-        return {
-          ...f,
-          [field]: upd(f[field])
-        };
+        const output = traversePath(f, path as (string | number)[]);
+        if (output) output.parent[output.key] = upd(output.value);
+        //else console.log('[update] Not found:', path, 'in', f);
+        return f;
       });
     },
-    set(value: T[Field]) {
-      //console.log('~ fieldStore ~ set value for', field, value);
-      form.update((f) => ({ ...f, [field]: value }));
+    set(value: FormPath<T, Path>) {
+      //console.log('~ fieldStore ~ set value for', path, value);
+      form.update((f) => {
+        const output = traversePath(
+          f,
+          path as unknown as (string | number)[]
+        );
+        if (output) output.parent[output.key] = value;
+        //else console.log('[set] Not found:', path, 'in', f);
+        return f;
+      });
     }
   };
 }

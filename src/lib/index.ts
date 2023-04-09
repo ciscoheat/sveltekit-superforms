@@ -121,3 +121,22 @@ export type FormField<
 export type FormFields<T extends AnyZodObject> = {
   [Property in keyof z.infer<T>]-?: FormField<T, Property>;
 };
+
+export type FieldPath<T> = [keyof T, ...any[]];
+
+// Thanks to https://stackoverflow.com/a/71859443/70894
+export type FormPath<T, K> = K extends []
+  ? T
+  : K extends [keyof NonNullable<T>]
+  ? NonNullable<T>[K[0]]
+  : K extends [number]
+  ? T extends (infer U)[]
+    ? U
+    : T
+  : K extends [number, ...infer RR]
+  ? FormPath<T extends (infer U)[] ? U : T, RR>
+  : K extends [keyof NonNullable<T>, ...infer RR]
+  ? FormPath<NonNullable<T>[K[0]], RR>
+  : K extends (infer U)[]
+  ? U
+  : never;

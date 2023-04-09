@@ -172,6 +172,7 @@ export function valueOrDefault(
     if (zodType instanceof ZodString) return '';
     if (zodType instanceof ZodNumber) return 0;
     if (zodType instanceof ZodBoolean) return false;
+    if (zodType instanceof ZodDate) return new Date(NaN);
     if (zodType instanceof ZodArray) return [];
     if (zodType instanceof ZodObject) return defaultEntity(zodType);
     if (zodType instanceof ZodRecord) return {};

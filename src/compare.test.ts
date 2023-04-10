@@ -8,12 +8,12 @@ import {
   type ZodTypeAny
 } from 'zod';
 import { traversePath, traversePathAsync } from '$lib/entity';
-import { get, writable, type Writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { mapErrors } from '$lib/entity';
 import { unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
 import { fieldProxy } from '$lib/client/proxies';
-import type { FormPath, FieldPath } from '$lib';
+import type { FormPath } from '$lib';
 
 const user = z.object({
   id: z.number().int().positive(),
@@ -47,7 +47,7 @@ beforeEach(() => {
 });
 
 test('Mapping errors', () => {
-  expect(mapped).toStrictEqual({
+  const check = {
     user: {
       name: ['String must contain at least 2 character(s)'],
       email: ['Required']
@@ -58,7 +58,9 @@ test('Mapping errors', () => {
         email: ['Required']
       }
     }
-  });
+  };
+
+  expect(mapped).toStrictEqual(check);
 });
 
 test('Basic path traversal', () => {

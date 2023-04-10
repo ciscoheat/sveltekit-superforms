@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Default value for `Date` was missing.
+- Fixed form-level errors on client.
+
+### Removed
+
+- Removed undocumented support for array validation errors.
 
 ## [0.6.13] - 2023-04-07
 

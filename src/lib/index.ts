@@ -75,7 +75,7 @@ export type TaintedFields<T extends AnyZodObject> = SuperStructArray<
 
 export type ValidationErrors<T extends AnyZodObject> = {
   _errors?: string[];
-} & SuperStructArray<T, string[], { _errors?: string[] }>;
+} & SuperStructArray<T, string[]>;
 
 export type InputConstraint = Partial<{
   pattern: string; // RegExp

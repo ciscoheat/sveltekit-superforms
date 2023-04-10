@@ -11,7 +11,8 @@ export type ZodTypeInfo = {
 };
 
 export function mapErrors<T extends AnyZodObject>(
-  obj: ZodFormattedError<unknown>
+  obj: ZodFormattedError<unknown>,
+  top = true
 ) {
   const output: Record<string, unknown> = {};
   const entries = Object.entries(obj);
@@ -21,14 +22,17 @@ export function mapErrors<T extends AnyZodObject>(
     entries[0][0] === '_errors' &&
     obj._errors.length
   ) {
-    return obj._errors as unknown as ValidationErrors<T>;
+    return top ? obj : (obj._errors as unknown as ValidationErrors<T>);
   } else if (obj._errors.length) {
     output._errors = obj._errors;
   }
 
   for (const [key, value] of entries.filter(([key]) => key !== '_errors')) {
     // _errors are filtered out, so casting is fine
-    output[key] = mapErrors(value as unknown as ZodFormattedError<unknown>);
+    output[key] = mapErrors(
+      value as unknown as ZodFormattedError<unknown>,
+      false
+    );
   }
 
   return output as ValidationErrors<T>;

@@ -701,6 +701,32 @@ test('Form-level errors only with refine', async () => {
   });
 });
 
+test('Array errors', async () => {
+  const schema = z.object({
+    name: z.string(),
+    tags: z.string().min(1).array().min(2)
+  });
+
+  const form = await superValidate({ tags: [''] }, schema);
+
+  assert(!form.valid);
+  expect(form.errors).toStrictEqual({
+    name: ['Required'],
+    tags: {
+      '0': ['String must contain at least 1 character(s)'],
+      _errors: ['Array must contain at least 2 element(s)']
+    }
+  });
+
+  const form2 = await superValidate({ tags: ['only one'] }, schema);
+
+  assert(!form2.valid);
+  expect(form2.errors).toStrictEqual({
+    name: ['Required'],
+    tags: ['Array must contain at least 2 element(s)']
+  });
+});
+
 test('URL and URLSearchParams validation', async () => {
   const urlSchema = z.object({
     id: z.number().int().positive(),

@@ -519,6 +519,11 @@ export function superForm<
       if (!tainted) tainted = {};
       const leaf = traversePath(tainted, path, ({ parent, key, value }) => {
         if (value === undefined) parent[key] = {};
+        else if (value === true) {
+          // If a previous check tainted the node, but the search goes deeper,
+          // so it needs to be replaced with a (parent) node
+          parent[key] = {};
+        }
         return parent[key];
       });
       if (leaf) leaf.parent[leaf.key] = true;

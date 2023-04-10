@@ -5,10 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.14] - 2023-04-10
 
 ### Fixed
 
+- Tainted check errored for nested properties.
 - Default value for `Date` was missing.
 - Fixed form-level errors on client.
 

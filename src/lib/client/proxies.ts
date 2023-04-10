@@ -2,6 +2,8 @@ import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
 import { SuperFormError, type FormPath, type FieldPath } from '../index.js';
 import { traversePath } from '../entity.js';
+import type { SuperForm } from './index.js';
+import type { AnyZodObject } from 'zod';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -184,6 +186,22 @@ export function jsonProxy<
     set(val: S extends never ? never : K) {
       form.update((f) => ({ ...f, [field]: stringify(val) }));
     }
+  };
+}
+
+function formFieldProxy<
+  T extends AnyZodObject,
+  Path extends FieldPath<T>,
+  M
+>(path: Path, form: SuperForm<T, M>) {
+  return {
+    path: (typeof path === 'string' ? [path] : path) as Exclude<
+      Path,
+      keyof T
+    >,
+    value: fieldProxy(form.form, path),
+    errors: fieldProxy(form.errors, path),
+    constraints: fieldProxy(form.constraints, path)
   };
 }
 

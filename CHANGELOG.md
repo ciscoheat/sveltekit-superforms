@@ -10,7 +10,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Tainted check errored for nested properties.
-- Default value for `Date` was missing.
 - Fixed form-level errors on client.
 
 ### Removed

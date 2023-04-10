@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { assert, beforeEach, expect, test } from 'vitest';
+import { assert, beforeEach, expect, expectTypeOf, test } from 'vitest';
 import {
   z,
   ZodArray,
@@ -8,7 +8,7 @@ import {
   type ZodTypeAny
 } from 'zod';
 import { traversePath, traversePathAsync } from '$lib/entity';
-import { get, writable } from 'svelte/store';
+import { get, writable, type Writable } from 'svelte/store';
 import { mapErrors } from '$lib/entity';
 import { unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
@@ -166,20 +166,40 @@ test('Traversing a Zod schema', async () => {
 });
 
 test('proxyField traverse', async () => {
-  const person: z.infer<typeof user> = {
+  const schema = z.object({
+    id: z.number().int().positive(),
+    name: z.string().min(2),
+    email: z.string().email().nullable(),
+    tags: z
+      .object({ name: z.string().min(1) })
+      .nullable()
+      .array()
+      .optional()
+  });
+
+  const person: z.infer<typeof schema> = {
     id: 123,
     name: 'Test',
     email: 'test@example.com',
     tags: [{ name: 'tag1' }, { name: 'tag2' }]
   };
 
-  const form = await superValidate(person, user);
+  const form = await superValidate(person, schema);
 
-  type U = z.infer<typeof user>;
+  type U = z.infer<typeof schema>;
 
-  type S1 = FormPath<U, ['tags']>;
-  type S2 = FormPath<U, ['tags', 3]>;
-  type S3 = FormPath<U, ['tags', 3, 'name']>;
+  const s0: FormPath<U, 'email'> = 'test@example.com';
+  const s1: FormPath<U, 'id'> = 123;
+  const s2: FormPath<U, ['tags']> = [{ name: 's2' }, null];
+
+  const s3: FormPath<U, ['tags', 3]> = { name: 's3' };
+  const s4: FormPath<U, ['tags', 3, 'name']> = 's4';
+
+  expectTypeOf(s0).toMatchTypeOf('test@example.com');
+  expectTypeOf(s1).toMatchTypeOf(123);
+  expectTypeOf(s2).toMatchTypeOf([{ name: 's2' }, null]);
+  expectTypeOf(s3).toMatchTypeOf({ name: 's3' });
+  expectTypeOf(s4).toMatchTypeOf('s4');
 
   assert(form.valid);
 
@@ -190,10 +210,10 @@ test('proxyField traverse', async () => {
   const proxy3 = fieldProxy(store, ['tags', 1, 'name']);
 
   proxy3.set('tag2-proxy3');
-  expect(get(store).tags?.[1].name).toEqual('tag2-proxy3');
+  expect(get(store).tags?.[1]?.name).toEqual('tag2-proxy3');
 
   proxy2.set({ name: 'tag1-proxy2' });
-  expect(get(store).tags?.[0].name).toEqual('tag1-proxy2');
+  expect(get(store).tags?.[0]?.name).toEqual('tag1-proxy2');
 
   const tags = get(store).tags!;
 

@@ -122,10 +122,13 @@ export type FormFields<T extends AnyZodObject> = {
   [Property in keyof z.infer<T>]-?: FormField<T, Property>;
 };
 
-export type FieldPath<T> = [keyof T, ...any[]];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type FieldPath<T> = keyof T | [keyof T, ...any[]];
 
 // Thanks to https://stackoverflow.com/a/71859443/70894
-export type FormPath<T, K> = K extends []
+export type FormPath<T, K> = K extends string
+  ? FormPath<T, [K]>
+  : K extends []
   ? T
   : K extends [keyof NonNullable<T>]
   ? NonNullable<T>[K[0]]

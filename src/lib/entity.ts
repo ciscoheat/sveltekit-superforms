@@ -22,7 +22,7 @@ export function mapErrors<T extends AnyZodObject>(
     entries[0][0] === '_errors' &&
     obj._errors.length
   ) {
-    return top ? obj : (obj._errors as unknown as ValidationErrors<T>);
+    return (top ? obj : obj._errors) as ValidationErrors<T>;
   } else if (obj._errors.length) {
     output._errors = obj._errors;
   }

@@ -191,6 +191,7 @@ export function fieldProxy<
   T extends Record<string, unknown>,
   Path extends FieldPath<T>
 >(form: Writable<T>, path: Path): Writable<FormPath<T, Path>> {
+  if (typeof path === 'string') path = [path] as unknown as Path;
   const proxy = derived(form, ($form) => {
     const data = traversePath($form, path as (string | number)[]);
     return data?.value;

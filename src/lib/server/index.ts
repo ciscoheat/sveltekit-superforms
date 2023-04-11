@@ -1,6 +1,10 @@
 import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
-import { SuperFormError, type Validation } from '../index.js';
+import {
+  SuperFormError,
+  type FieldPath,
+  type Validation
+} from '../index.js';
 import { entityData, unwrapZodType, valueOrDefault } from './entity.js';
 
 import { traversePath, type ZodTypeInfo } from '../entity.js';
@@ -49,11 +53,7 @@ export function message<T extends AnyZodObject, M>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends AnyZodObject>(
   form: Validation<T, unknown>,
-  path:
-    | keyof z.infer<T>
-    | [keyof z.infer<T>, ...(string | number)[]]
-    | []
-    | null,
+  path: keyof z.infer<T> | FieldPath<z.infer<T>> | [] | null,
   error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
@@ -68,11 +68,13 @@ export function setError<T extends AnyZodObject>(
     if (!form.errors._errors) form.errors._errors = [];
     form.errors._errors = form.errors._errors.concat(errArr);
   } else {
-    if (!Array.isArray(path)) path = [path];
+    const realPath = (Array.isArray(path) ? path : [path]) as FieldPath<
+      z.infer<T>
+    >;
 
     const leaf = traversePath(
       form.errors,
-      path as (string | number)[],
+      realPath,
       ({ parent, key, value }) => {
         if (value === undefined) parent[key] = {};
         return parent[key];
@@ -202,6 +204,7 @@ function formDataToValidation<T extends AnyZodObject>(
 
 export type SuperValidateOptions = {
   noErrors?: boolean;
+  errors?: boolean;
   includeMeta?: boolean;
   id?: true | string;
 };
@@ -273,6 +276,7 @@ export async function superValidate<
 
   options = {
     noErrors: false,
+    errors: undefined,
     includeMeta: false,
     ...options
   };
@@ -371,34 +375,41 @@ export async function superValidate<
   let output: Validation<UnwrapEffects<T>, M>;
 
   if (!data) {
-    let valid = false;
+    const addErrors = options.errors === true;
 
-    if (hasEffects) {
+    let valid = false;
+    let errors = {};
+
+    if (hasEffects || addErrors) {
       const result = await originalSchema.spa(entityInfo.defaultEntity);
 
       valid = result.success;
 
       if (result.success) {
         data = result.data;
+      } else if (addErrors) {
+        errors = mapErrors<UnwrapEffects<T>>(result.error.format());
       }
     }
 
     output = {
       valid,
-      errors: {},
+      errors,
       // Copy the default entity so it's not modified
       data: data ?? clone(entityInfo.defaultEntity),
       empty: true,
       constraints: entityInfo.constraints
     };
   } else {
+    const addErrors = options.errors !== false && options.noErrors !== true;
+
     const partialData = data as Partial<z.infer<T>>;
     const result = await originalSchema.spa(partialData);
 
     if (!result.success) {
-      const errors = options.noErrors
-        ? {}
-        : mapErrors<UnwrapEffects<T>>(result.error.format());
+      const errors = addErrors
+        ? mapErrors<UnwrapEffects<T>>(result.error.format())
+        : {};
 
       //console.log(result.error.format(), errors);
 

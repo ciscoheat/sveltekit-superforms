@@ -4,7 +4,7 @@ import {
   superValidate,
   defaultEntity
 } from '$lib/server';
-import { assert, expect, test } from 'vitest';
+import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
@@ -214,71 +214,6 @@ test('Optional values', async () => {
   expect(output2.data.name).equals('Name');
   expect(output2.data.other).equals('Test');
   expect(output.errors).toStrictEqual({});
-});
-
-test('Adding errors with setError', async () => {
-  const schema = z.object({
-    scopeId: z.number().int().min(1),
-    name: z.string().nullable(),
-    object: z.object({ name: z.string() }).optional(),
-    arr: z.string().array().optional(),
-    enumber: z.enum(['test', 'testing']).optional()
-  });
-
-  const output = await superValidate({ scopeId: 3, name: null }, schema);
-
-  expect(output.valid).equals(true);
-  expect(output.errors).toStrictEqual({});
-  expect(output.data.scopeId).toEqual(3);
-  expect(output.data.name).toBeNull();
-
-  const err = {
-    scopeId: ['This is an error'],
-    enumber: ['This should be ok', 'Still ok'],
-    arr: { 3: ['Array error'] },
-    object: { name: ['Object error'] }
-  };
-
-  setError(output, 'scopeId', 'This should not be displayed.');
-  setError(output, 'scopeId', 'This is an error', { overwrite: true });
-  setError(output, ['object', 'name'], 'Object error');
-  setError(output, ['arr', 3], 'Array error');
-  setError(output, 'enumber', 'This should be ok');
-  setError(output, 'enumber', 'Still ok');
-
-  assert(!output.valid);
-  expect(output.errors).toStrictEqual(err);
-
-  // Should fail, since name does not exist.
-  const output2 = await superValidate({ scopeId: 3 }, schema);
-
-  assert(!output2.valid);
-  expect(output2.errors.name?.length).toEqual(1);
-  expect(output2.data.scopeId).toEqual(3);
-  expect(output2.data.name).toBeNull();
-});
-
-test('Clearing errors with noErrors', async () => {
-  const schema = z.object({
-    scopeId: z.number().int().min(1),
-    name: z.string().nullable()
-  });
-
-  const output = await superValidate({ scopeId: 0, name: 'abc' }, schema);
-
-  assert(!output.valid);
-  expect(output.empty).toEqual(false);
-  expect(output.errors.scopeId?.length).toEqual(1);
-  expect(Object.keys(output.errors).length).toEqual(1);
-  expect(output.data.scopeId).toEqual(0);
-  expect(output.data.name).toEqual('abc');
-
-  const cleared = noErrors(output);
-  assert(!cleared.valid);
-  expect(cleared.empty).toEqual(false);
-  expect(cleared.errors).toStrictEqual({});
-  expect(cleared.data.scopeId).toEqual(output.data.scopeId);
-  expect(cleared.data.name).toEqual(output.data.name);
 });
 
 test('Default values', async () => {
@@ -605,125 +540,205 @@ test('Deeply nested objects', async () => {
   });
 });
 
-test('AllErrors', async () => {
-  const form = await superValidate(
-    { users: [{ name: 'A', posts: [{ subject: '' }] }] },
-    nestedSchema
-  );
+describe('Errors', async () => {
+  test('Adding errors with setError', async () => {
+    const schema = z.object({
+      scopeId: z.number().int().min(1),
+      name: z.string().nullable(),
+      object: z.object({ name: z.string() }).optional(),
+      arr: z.string().array().optional(),
+      enumber: z.enum(['test', 'testing']).optional()
+    });
 
-  expect(findErrors(form.errors)).toStrictEqual([
-    { path: ['id'], message: 'Required' },
-    {
-      path: ['users', '0', 'name'],
-      message: 'String must contain at least 2 character(s)'
-    },
-    { path: ['users', '0', 'name'], message: 'Invalid' },
-    {
-      path: ['users', '0', 'posts', '0', 'subject'],
-      message: 'String must contain at least 1 character(s)'
-    },
-    {
-      path: ['users', '0', 'posts', '_errors'],
-      message: 'Array must contain at least 2 element(s)'
-    }
-  ]);
-});
+    const output = await superValidate({ scopeId: 3, name: null }, schema);
 
-test('Form-level errors', async () => {
-  const refined = z
-    .object({ name: z.string().min(1) })
-    .refine(() => false, 'Form-level error');
+    expect(output.valid).equals(true);
+    expect(output.errors).toStrictEqual({});
+    expect(output.data.scopeId).toEqual(3);
+    expect(output.data.name).toBeNull();
 
-  const form0 = await superValidate(null, refined);
+    const err = {
+      scopeId: ['This is an error'],
+      enumber: ['This should be ok', 'Still ok'],
+      arr: { 3: ['Array error'] },
+      object: { name: ['Object error'] }
+    };
 
-  assert(form0.valid === false);
-  expect(form0.errors).toStrictEqual({});
+    setError(output, 'scopeId', 'This should not be displayed.');
+    setError(output, 'scopeId', 'This is an error', { overwrite: true });
+    setError(output, ['object', 'name'], 'Object error');
+    setError(output, ['arr', 3], 'Array error');
+    setError(output, 'enumber', 'This should be ok');
+    setError(output, 'enumber', 'Still ok');
 
-  const form = await superValidate({ name: 'Abc' }, refined);
+    assert(!output.valid);
+    expect(output.errors).toStrictEqual(err);
 
-  assert(form.valid === false);
-  expect(form.errors).toStrictEqual({
-    _errors: ['Form-level error']
+    // Should fail, since name does not exist.
+    const output2 = await superValidate({ scopeId: 3 }, schema);
+
+    assert(!output2.valid);
+    expect(output2.errors.name?.length).toEqual(1);
+    expect(output2.data.scopeId).toEqual(3);
+    expect(output2.data.name).toBeNull();
   });
 
-  setError(form, [], 'Form-level problem');
-  setError(form, null, 'Another form-level problem');
+  test('Clearing errors with noErrors', async () => {
+    const schema = z.object({
+      scopeId: z.number().int().min(1),
+      name: z.string().nullable()
+    });
 
-  expect(form.errors._errors).toStrictEqual([
-    'Form-level error',
-    'Form-level problem',
-    'Another form-level problem'
-  ]);
+    const output = await superValidate({ scopeId: 0, name: 'abc' }, schema);
 
-  const form2 = await superValidate({ name: '' }, refined);
+    assert(!output.valid);
+    expect(output.empty).toEqual(false);
+    expect(output.errors.scopeId?.length).toEqual(1);
+    expect(Object.keys(output.errors).length).toEqual(1);
+    expect(output.data.scopeId).toEqual(0);
+    expect(output.data.name).toEqual('abc');
 
-  assert(form2.valid === false);
-  expect(form2.errors).toStrictEqual({
-    _errors: ['Form-level error'],
-    name: ['String must contain at least 1 character(s)']
+    const cleared = noErrors(output);
+    assert(!cleared.valid);
+    expect(cleared.empty).toEqual(false);
+    expect(cleared.errors).toStrictEqual({});
+    expect(cleared.data.scopeId).toEqual(output.data.scopeId);
+    expect(cleared.data.name).toEqual(output.data.name);
   });
 
-  setError(form2, [], 'Form-level problem');
-
-  expect(form2.errors).toStrictEqual({
-    _errors: ['Form-level error', 'Form-level problem'],
-    name: ['String must contain at least 1 character(s)']
-  });
-});
-
-test('Form-level errors only with refine', async () => {
-  const schema = z
-    .object({
-      scoops: z.number().int().min(1).default(1),
-      flavours: z.string().min(1).array().default(['Mint choc chip'])
-    })
-    .refine(
-      (data) => data.flavours.length < data.scoops,
-      "Can't order more flavours than scoops!"
+  test('AllErrors', async () => {
+    const form = await superValidate(
+      { users: [{ name: 'A', posts: [{ subject: '' }] }] },
+      nestedSchema
     );
 
-  const data = new FormData();
-  data.set('scoops', '1');
-  data.append('flavours', 'Mint choc chip');
-  data.append('flavours', 'Raspberry ripple');
-
-  const form = await superValidate(data, schema);
-
-  expect(form).toStrictEqual({
-    valid: false,
-    errors: { _errors: ["Can't order more flavours than scoops!"] },
-    data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
-    empty: false,
-    constraints: {
-      scoops: { min: 1, required: true },
-      flavours: { minlength: 1, required: true }
-    }
-  });
-});
-
-test('Array errors', async () => {
-  const schema = z.object({
-    name: z.string(),
-    tags: z.string().min(1).array().min(2)
+    expect(findErrors(form.errors)).toStrictEqual([
+      { path: ['id'], message: 'Required' },
+      {
+        path: ['users', '0', 'name'],
+        message: 'String must contain at least 2 character(s)'
+      },
+      { path: ['users', '0', 'name'], message: 'Invalid' },
+      {
+        path: ['users', '0', 'posts', '0', 'subject'],
+        message: 'String must contain at least 1 character(s)'
+      },
+      {
+        path: ['users', '0', 'posts', '_errors'],
+        message: 'Array must contain at least 2 element(s)'
+      }
+    ]);
   });
 
-  const form = await superValidate({ tags: [''] }, schema);
+  test('Form-level errors', async () => {
+    const refined = z
+      .object({ name: z.string().min(1) })
+      .refine(() => false, 'Form-level error');
 
-  assert(!form.valid);
-  expect(form.errors).toStrictEqual({
-    name: ['Required'],
-    tags: {
-      '0': ['String must contain at least 1 character(s)'],
-      _errors: ['Array must contain at least 2 element(s)']
-    }
+    const form0 = await superValidate(null, refined);
+
+    assert(form0.valid === false);
+    expect(form0.errors).toStrictEqual({});
+
+    const form = await superValidate({ name: 'Abc' }, refined);
+
+    assert(form.valid === false);
+    expect(form.errors).toStrictEqual({
+      _errors: ['Form-level error']
+    });
+
+    setError(form, [], 'Form-level problem');
+    setError(form, null, 'Another form-level problem');
+
+    expect(form.errors._errors).toStrictEqual([
+      'Form-level error',
+      'Form-level problem',
+      'Another form-level problem'
+    ]);
+
+    const form2 = await superValidate({ name: '' }, refined);
+
+    assert(form2.valid === false);
+    expect(form2.errors).toStrictEqual({
+      _errors: ['Form-level error'],
+      name: ['String must contain at least 1 character(s)']
+    });
+
+    setError(form2, [], 'Form-level problem');
+
+    expect(form2.errors).toStrictEqual({
+      _errors: ['Form-level error', 'Form-level problem'],
+      name: ['String must contain at least 1 character(s)']
+    });
   });
 
-  const form2 = await superValidate({ tags: ['only one'] }, schema);
+  test('Errors with errors === false', async () => {
+    const refined = z
+      .object({ name: z.string().min(1) })
+      .refine(() => false, 'Form-level error');
 
-  assert(!form2.valid);
-  expect(form2.errors).toStrictEqual({
-    name: ['Required'],
-    tags: ['Array must contain at least 2 element(s)']
+    const form = await superValidate({ name: '' }, refined, {
+      errors: false
+    });
+
+    assert(form.valid === false);
+    expect(form.errors).toStrictEqual({});
+  });
+
+  test('Form-level errors only with refine', async () => {
+    const schema = z
+      .object({
+        scoops: z.number().int().min(1).default(1),
+        flavours: z.string().min(1).array().default(['Mint choc chip'])
+      })
+      .refine(
+        (data) => data.flavours.length < data.scoops,
+        "Can't order more flavours than scoops!"
+      );
+
+    const data = new FormData();
+    data.set('scoops', '1');
+    data.append('flavours', 'Mint choc chip');
+    data.append('flavours', 'Raspberry ripple');
+
+    const form = await superValidate(data, schema);
+
+    expect(form).toStrictEqual({
+      valid: false,
+      errors: { _errors: ["Can't order more flavours than scoops!"] },
+      data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
+      empty: false,
+      constraints: {
+        scoops: { min: 1, required: true },
+        flavours: { minlength: 1, required: true }
+      }
+    });
+  });
+
+  test('Array errors', async () => {
+    const schema = z.object({
+      name: z.string(),
+      tags: z.string().min(1).array().min(2)
+    });
+
+    const form = await superValidate({ tags: [''] }, schema);
+
+    assert(!form.valid);
+    expect(form.errors).toStrictEqual({
+      name: ['Required'],
+      tags: {
+        '0': ['String must contain at least 1 character(s)'],
+        _errors: ['Array must contain at least 2 element(s)']
+      }
+    });
+
+    const form2 = await superValidate({ tags: ['only one'] }, schema);
+
+    assert(!form2.valid);
+    expect(form2.errors).toStrictEqual({
+      name: ['Required'],
+      tags: ['Array must contain at least 2 element(s)']
+    });
   });
 });
 

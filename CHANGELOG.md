@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed timing for auto-focus on error field.
 
+### Added
+
+- Added `errors` option for `superValidate`
+
+### Deprecated
+
+- superValidate options: `noErrors` is deprecated, use `errors` instead.
+- Use `SuperForm` instead of `EnhancedForm`.
+
 ## [0.6.14] - 2023-04-10
 
 ### Fixed

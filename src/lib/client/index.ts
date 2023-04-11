@@ -177,7 +177,7 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type EnhancedForm<T extends AnyZodObject, M = any> = {
+export type SuperForm<T extends AnyZodObject, M = any> = {
   form: Writable<Validation<T, M>['data']>;
   formId: Writable<string | undefined>;
   errors: Writable<Validation<T, M>['errors']>;
@@ -207,8 +207,10 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = {
   restore: (snapshot: SuperFormSnapshot<T, M>) => void;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SuperForm<T extends AnyZodObject, M = any> = EnhancedForm<T, M>;
+/**
+ * @deprecated Use SuperForm instead.
+ */
+export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.

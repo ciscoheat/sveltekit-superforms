@@ -203,6 +203,9 @@ function formDataToValidation<T extends AnyZodObject>(
 }
 
 export type SuperValidateOptions = {
+  /**
+   * @deprecated Use errors instead.
+   */
   noErrors?: boolean;
   errors?: boolean;
   includeMeta?: boolean;

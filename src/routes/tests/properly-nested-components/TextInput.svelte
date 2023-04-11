@@ -9,3 +9,10 @@
   <span>{name}</span><br />
   <input type="text" {name} bind:value={$field} {...$$restProps} />
 </label>
+
+<style lang="scss">
+  input,
+  label {
+    margin-bottom: 0;
+  }
+</style>

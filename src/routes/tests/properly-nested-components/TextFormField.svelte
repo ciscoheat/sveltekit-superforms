@@ -8,23 +8,43 @@
   type T = $$Generic<AnyZodObject>;
 
   export let form: SuperForm<T, any>;
-  export let path: keyof z.infer<T> | FieldPath<z.infer<T>>;
+  export let field: keyof z.infer<T> | FieldPath<z.infer<T>>;
 
-  const data = formFieldProxy(form, path);
+  const data = formFieldProxy(form, field);
 
-  $: name = String(path);
+  $: name = String(field);
   $: value = data.value;
   $: errors = data.errors;
   $: constraints = data.constraints;
 </script>
 
-<label>
-  {name}<br />
-  <input
-    type="text"
-    data-invalid={$errors}
-    bind:value={$value}
-    {...$$restProps}
-  />
+<div>
+  <label>
+    {name}<br />
+    <input
+      type="text"
+      data-invalid={$errors}
+      bind:value={$value}
+      {...$$restProps}
+    />
+  </label>
   {#if $errors}<span class="invalid">{$errors}</span>{/if}
-</label>
+</div>
+
+<style lang="scss">
+  div {
+    margin-top: 1rem;
+
+    input {
+      margin-bottom: 0;
+    }
+
+    label {
+      margin-top: 2rem;
+    }
+  }
+
+  .invalid {
+    color: orangered;
+  }
+</style>

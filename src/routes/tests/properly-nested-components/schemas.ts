@@ -12,6 +12,7 @@ export const schema = z.object({
     })
     .array()
     .min(1)
+    .default([{ name: 'tag1' }, { name: '2' }])
 });
 
 export type Schema = typeof schema;

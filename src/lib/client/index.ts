@@ -955,10 +955,10 @@ function formEnhance<T extends AnyZodObject, M>(
           delayedTimeout = timeoutTimeout = 0;
 
           setState(FetchStatus.Idle);
-          if (!cancelled) Form_scrollToFirstError();
+          if (!cancelled) setTimeout(Form_scrollToFirstError);
         },
 
-        scrollToFirstError: () => Form_scrollToFirstError(),
+        scrollToFirstError: () => setTimeout(Form_scrollToFirstError),
 
         isSubmitting: () =>
           state === FetchStatus.Submitting || state === FetchStatus.Delayed

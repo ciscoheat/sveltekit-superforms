@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(2),
+  address: z.string().min(2),
+  city: z.string().min(2),
   birth: z.date(),
   luckyNumber: z.number(),
   tags: z

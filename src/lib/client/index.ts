@@ -24,7 +24,8 @@ import {
   type Validation,
   type ValidationErrors,
   type Validator,
-  type Validators
+  type Validators,
+  type FieldPath
 } from '../index.js';
 import type { z, AnyZodObject, ZodEffects } from 'zod';
 import { stringify } from 'devalue';
@@ -384,6 +385,7 @@ export function superForm<
     if (options.flashMessage && shouldSyncFlash(options)) {
       const flash = options.flashMessage.module.getFlash(page);
       if (message && get(flash) === undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         flash.set(message as any);
       }
     }
@@ -517,15 +519,19 @@ export function superForm<
     // At this point, the field is modified.
     Tainted.update((tainted) => {
       if (!tainted) tainted = {};
-      const leaf = traversePath(tainted, path, ({ parent, key, value }) => {
-        if (value === undefined) parent[key] = {};
-        else if (value === true) {
-          // If a previous check tainted the node, but the search goes deeper,
-          // so it needs to be replaced with a (parent) node
-          parent[key] = {};
+      const leaf = traversePath(
+        tainted,
+        path as FieldPath<typeof tainted>,
+        ({ parent, key, value }) => {
+          if (value === undefined) parent[key] = {};
+          else if (value === true) {
+            // If a previous check tainted the node, but the search goes deeper,
+            // so it needs to be replaced with a (parent) node
+            parent[key] = {};
+          }
+          return parent[key];
         }
-        return parent[key];
-      });
+      );
       if (leaf) leaf.parent[leaf.key] = true;
       return tainted;
     });
@@ -541,7 +547,7 @@ export function superForm<
 
     if (options.defaultValidator == 'clear') {
       Errors.update((errors) => {
-        const leaf = traversePath(errors, path);
+        const leaf = traversePath(errors, path as FieldPath<typeof errors>);
         if (leaf) delete leaf.parent[leaf.key];
         return errors;
       });
@@ -646,9 +652,12 @@ export function superForm<
       key,
       Fields_create(key, initialForm)
     ])
-  ) as FormFields<T>;
+  ) as unknown as FormFields<T>;
 
-  function Fields_create(key: string, validation: Validation<T, M>) {
+  function Fields_create(
+    key: keyof z.infer<T>,
+    validation: Validation<T, M>
+  ) {
     return {
       name: key,
       value: fieldProxy(Data, key),
@@ -775,7 +784,9 @@ function formEnhance<T extends AnyZodObject, M>(
   // Using this type in the function argument causes a type recursion error.
   const errors = errs as Writable<ValidationErrors<T>>;
 
-  function setError(path: string[], newErrors: string[] | null) {
+  type ErrorPath = FieldPath<ValidationErrors<T>>;
+
+  function setError(path: ErrorPath, newErrors: string[] | null) {
     errors.update((err) => {
       const errorPath = traversePath(err, path, ({ parent, key, value }) => {
         if (value === undefined) parent[key] = {};
@@ -794,7 +805,7 @@ function formEnhance<T extends AnyZodObject, M>(
   async function validate(
     validator: Validator<unknown>,
     value: unknown,
-    path: string[]
+    path: ErrorPath
   ) {
     const errors = await validator(value);
     setError(path, typeof errors === 'string' ? [errors] : errors ?? null);
@@ -1010,6 +1021,7 @@ function formEnhance<T extends AnyZodObject, M>(
           success = result.success;
 
           if (!result.success) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             errors.set(mapErrors<T>(result.error.format()) as any);
           }
         } else {
@@ -1023,7 +1035,7 @@ function formEnhance<T extends AnyZodObject, M>(
             const validationPath = path.filter((p) => isNaN(parseInt(p)));
             const maybeValidator = await traversePathAsync(
               validator,
-              validationPath
+              validationPath as FieldPath<typeof validator>
             );
 
             if (typeof maybeValidator?.value === 'function') {
@@ -1032,13 +1044,23 @@ function formEnhance<T extends AnyZodObject, M>(
               if (Array.isArray(value)) {
                 for (const key in value) {
                   if (
-                    !(await validate(check, value[key], path.concat([key])))
+                    !(await validate(
+                      check,
+                      value[key],
+                      path.concat([key]) as FieldPath<typeof check>
+                    ))
                   ) {
                     success = false;
                   }
                 }
                 return;
-              } else if (!(await validate(check, value, path))) {
+              } else if (
+                !(await validate(
+                  check,
+                  value,
+                  path as FieldPath<typeof check>
+                ))
+              ) {
                 success = false;
               }
             }

@@ -18,6 +18,7 @@ type UnwrappedRawShape<
 > = UnwrappedEntity<RawShape<T>[P]>;
 
 type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Property in keyof RawShape<T>]?: T extends any
     ? UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStructArray<UnwrappedRawShape<T, Property>, Data, ArrayData>
@@ -34,6 +35,7 @@ type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
 };
 
 type SuperStruct<T extends AnyZodObject, Data> = Partial<{
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Property in keyof RawShape<T>]: T extends any
     ? UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStruct<UnwrappedRawShape<T, Property>, Data>
@@ -123,12 +125,13 @@ export type FormFields<T extends AnyZodObject> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FieldPath<T> = keyof T | [keyof T, ...any[]];
+export type FieldPath<T extends object> = [
+  keyof T,
+  ...(string | number | symbol)[]
+];
 
 // Thanks to https://stackoverflow.com/a/71859443/70894
-export type FormPath<T, K> = K extends string
-  ? FormPath<T, [K]>
-  : K extends []
+export type FormPath<T, K> = K extends []
   ? T
   : K extends [keyof NonNullable<T>]
   ? NonNullable<T>[K[0]]

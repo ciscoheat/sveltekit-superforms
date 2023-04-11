@@ -1,4 +1,4 @@
-import type { ValidationErrors } from './index.js';
+import type { ValidationErrors, FieldPath } from './index.js';
 import type { ZodTypeAny, AnyZodObject, ZodFormattedError } from 'zod';
 import type { MaybePromise } from '$app/forms';
 
@@ -68,9 +68,9 @@ type FullPathData = PathData & {
   path: string[];
 };
 
-export async function traversePathAsync(
-  obj: any,
-  path: (string | number)[],
+export async function traversePathAsync<T extends object>(
+  obj: T,
+  path: FieldPath<T>,
   modifier?: (data: PathData) => MaybePromise<undefined | unknown | void>
 ): Promise<PathData | undefined> {
   if (!path.length) return undefined;
@@ -79,7 +79,7 @@ export async function traversePathAsync(
   let parent = obj;
 
   while (path.length > 1) {
-    const key = path.shift() || '';
+    const key = path[0];
     const value = modifier
       ? await modifier({
           parent,
@@ -89,7 +89,9 @@ export async function traversePathAsync(
       : parent[key];
 
     if (value === undefined) return undefined;
-    else parent = value;
+    else parent = value as T; // TODO: Handle non-object values
+
+    path.shift();
   }
 
   const key = path[0];
@@ -100,9 +102,9 @@ export async function traversePathAsync(
   };
 }
 
-export function traversePath(
-  obj: any,
-  path: (string | number)[],
+export function traversePath<T extends object>(
+  obj: T,
+  path: FieldPath<T>,
   modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
   if (!path.length) return undefined;
@@ -111,7 +113,7 @@ export function traversePath(
   let parent = obj;
 
   while (path.length > 1) {
-    const key = path.shift() || '';
+    const key = path[0];
     const value = modifier
       ? modifier({
           parent,
@@ -121,7 +123,9 @@ export function traversePath(
       : parent[key];
 
     if (value === undefined) return undefined;
-    else parent = value;
+    else parent = value as T; // TODO: Handle non-object values
+
+    path.shift();
   }
 
   const key = path[0];
@@ -134,19 +138,22 @@ export function traversePath(
 
 type TraverseStatus = 'abort' | 'skip' | unknown | void;
 
-export async function traversePaths(
-  parent: object,
+export async function traversePaths<
+  T extends object,
+  Path extends FieldPath<T>
+>(
+  parent: T,
   modifier: (data: FullPathData) => MaybePromise<TraverseStatus>,
-  path: string[] = []
+  path: Path | [] = []
 ): Promise<TraverseStatus> {
   for (const key in parent) {
-    const value = parent[key as keyof object] as any;
+    const value = parent[key] as any;
 
     const pathData: FullPathData = {
       parent,
-      key: String(key),
+      key,
       value,
-      path: path.concat([key])
+      path: path.map(String).concat([key])
     };
 
     const status = await modifier(pathData);
@@ -154,7 +161,11 @@ export async function traversePaths(
     if (status === 'abort') return status;
     else if (status === 'skip') continue;
     else if (typeof value === 'object') {
-      const status = await traversePaths(value, modifier, pathData.path);
+      const status = await traversePaths(
+        value,
+        modifier,
+        pathData.path as any
+      );
       if (status === 'abort') return status;
     }
   }

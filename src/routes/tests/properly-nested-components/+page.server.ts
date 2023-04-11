@@ -9,8 +9,8 @@ export const load = (async (event) => {
 
 export const actions = {
   default: async (event) => {
-    const data = await event.request.formData();
-    const form = await superValidate(event, schema);
+    const formData = await event.request.formData();
+    const form = await superValidate(formData, schema);
     console.log('POST', form);
 
     return { form };

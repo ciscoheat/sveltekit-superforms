@@ -3,7 +3,7 @@ import { stringify, parse } from 'devalue';
 import { SuperFormError, type FormPath, type FieldPath } from '../index.js';
 import { traversePath } from '../entity.js';
 import type { SuperForm } from './index.js';
-import type { AnyZodObject } from 'zod';
+import type { z, AnyZodObject } from 'zod';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -25,51 +25,72 @@ const defaultOptions: DefaultOptions = {
   dateFormat: 'iso'
 };
 
+type NormalizeFormPath<T, Path> = Path extends keyof T
+  ? FormPath<T, [Path]>
+  : FormPath<T, Path>;
+
 export function intProxy<
   T extends Record<string, unknown>,
-  K extends keyof T
->(form: Writable<T>, field: K) {
-  return stringProxy(
-    form,
-    field,
-    'int',
-    defaultOptions
-  ) as T[K] extends number ? Writable<string> : never;
+  Path extends keyof T | FieldPath<T>
+>(form: Writable<T>, path: Path) {
+  return stringProxy(form, path, 'int', defaultOptions) as NormalizeFormPath<
+    T,
+    Path
+  > extends number
+    ? Writable<string>
+    : never;
 }
 
-export function booleanProxy<T extends Record<string, unknown>>(
+export function booleanProxy<
+  T extends Record<string, unknown>,
+  Path extends keyof T | FieldPath<T>
+>(
   form: Writable<T>,
-  field: keyof T,
+  path: Path,
   options: Pick<DefaultOptions, 'trueStringValue'> = {
     trueStringValue: 'true'
   }
 ): Writable<string> {
-  return stringProxy(form, field, 'boolean', {
+  return stringProxy(form, path, 'boolean', {
     ...defaultOptions,
     ...options
-  });
+  }) as NormalizeFormPath<T, Path> extends boolean
+    ? Writable<string>
+    : never;
 }
 
-export function numberProxy<T extends Record<string, unknown>>(
-  form: Writable<T>,
-  field: keyof T
-): Writable<string> {
-  return stringProxy(form, field, 'number', defaultOptions);
+export function numberProxy<
+  T extends Record<string, unknown>,
+  Path extends keyof T | FieldPath<T>
+>(form: Writable<T>, path: Path): Writable<string> {
+  return stringProxy(
+    form,
+    path,
+    'number',
+    defaultOptions
+  ) as NormalizeFormPath<T, Path> extends number ? Writable<string> : never;
 }
 
-export function dateProxy<T extends Record<string, unknown>>(
+export function dateProxy<
+  T extends Record<string, unknown>,
+  Path extends keyof T | FieldPath<T>
+>(
   form: Writable<T>,
-  field: keyof T,
+  path: Path,
   options: {
     format: DefaultOptions['dateFormat'];
   } = {
     format: 'iso'
   }
 ): Writable<string> {
-  return stringProxy(form, field, 'date', {
+  return stringProxy(form, path, 'date', {
     ...defaultOptions,
     dateFormat: options.format
-  });
+  }) as NormalizeFormPath<T, Path> extends Date ? Writable<string> : never;
+}
+
+function normalizePath<T extends object>(path: keyof T | FieldPath<T>) {
+  return (typeof path === 'string' ? [path] : path) as FieldPath<T>;
 }
 
 /**
@@ -80,10 +101,11 @@ export function dateProxy<T extends Record<string, unknown>>(
  */
 function stringProxy<
   T extends Record<string, unknown>,
-  Type extends 'number' | 'int' | 'boolean' | 'date'
+  Type extends 'number' | 'int' | 'boolean' | 'date',
+  Path extends FieldPath<T>
 >(
   form: Writable<T>,
-  field: keyof T,
+  path: keyof T | Path,
   type: Type,
   options: DefaultOptions
 ): Writable<string> {
@@ -100,8 +122,9 @@ function stringProxy<
     }
   }
 
-  const proxy = derived(form, ($form) => {
-    const value = $form[field];
+  const proxy2 = fieldProxy(form, path);
+
+  const proxy = derived(proxy2, (value) => {
     if (value === undefined || value === null) return '';
 
     if (type == 'int' || type == 'number') {
@@ -142,13 +165,17 @@ function stringProxy<
   return {
     subscribe: proxy.subscribe,
     set(val: string) {
-      form.update((f) => ({ ...f, [field]: toValue(val) }));
+      proxy2.set(toValue(val) as FormPath<T, Path>);
+      //form.update((f) => ({ ...f, [field as any]: toValue(val) }));
     },
     update(updater) {
+      proxy2.update((f) => toValue(updater(String(f))) as FormPath<T, Path>);
+      /*
       form.update((f) => ({
         ...f,
-        [field]: toValue(updater(String(f[field])))
+        [field as any]: toValue(updater(String(f[field as any])))
       }));
+      */
     }
   };
 }
@@ -189,29 +216,27 @@ export function jsonProxy<
   };
 }
 
-function formFieldProxy<
-  T extends AnyZodObject,
-  Path extends FieldPath<T>,
-  M
->(path: Path, form: SuperForm<T, M>) {
+export function formFieldProxy<T extends AnyZodObject, M>(
+  form: SuperForm<T, M>,
+  path: keyof z.infer<T> | FieldPath<z.infer<T>>
+) {
+  const path2 = normalizePath(path);
   return {
-    path: (typeof path === 'string' ? [path] : path) as Exclude<
-      Path,
-      keyof T
-    >,
-    value: fieldProxy(form.form, path),
-    errors: fieldProxy(form.errors, path),
-    constraints: fieldProxy(form.constraints, path)
+    path: path2,
+    value: fieldProxy(form.form, path2),
+    errors: fieldProxy(form.errors, path2),
+    constraints: fieldProxy(form.constraints, path2)
   };
 }
 
 export function fieldProxy<
   T extends Record<string, unknown>,
   Path extends FieldPath<T>
->(form: Writable<T>, path: Path): Writable<FormPath<T, Path>> {
-  if (typeof path === 'string') path = [path] as unknown as Path;
+>(form: Writable<T>, path: keyof T | Path): Writable<FormPath<T, Path>> {
+  const path2 = normalizePath(path);
+
   const proxy = derived(form, ($form) => {
-    const data = traversePath($form, path as (string | number)[]);
+    const data = traversePath($form, path2);
     return data?.value;
   });
 
@@ -229,7 +254,7 @@ export function fieldProxy<
     update(upd: Updater<FormPath<T, Path>>) {
       //console.log('~ fieldStore ~ update value for', path);
       form.update((f) => {
-        const output = traversePath(f, path as (string | number)[]);
+        const output = traversePath(f, path2);
         if (output) output.parent[output.key] = upd(output.value);
         //else console.log('[update] Not found:', path, 'in', f);
         return f;
@@ -238,10 +263,7 @@ export function fieldProxy<
     set(value: FormPath<T, Path>) {
       //console.log('~ fieldStore ~ set value for', path, value);
       form.update((f) => {
-        const output = traversePath(
-          f,
-          path as unknown as (string | number)[]
-        );
+        const output = traversePath(f, path2);
         if (output) output.parent[output.key] = value;
         //else console.log('[set] Not found:', path, 'in', f);
         return f;
@@ -286,6 +308,7 @@ function UTCTime(date: Date) {
   );
 }
 
+/*
 function dateToUTC(date: Date) {
   return new Date(
     date.getUTCFullYear(),
@@ -296,3 +319,4 @@ function dateToUTC(date: Date) {
     date.getUTCSeconds()
   );
 }
+*/

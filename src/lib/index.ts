@@ -1,4 +1,4 @@
-import type { z, AnyZodObject, ZodArray, ZodObject } from 'zod';
+import type { z, AnyZodObject, ZodArray, ZodObject, ZodEffects } from 'zod';
 import type { Entity, UnwrappedEntity } from './server/entity.js';
 import type { Writable } from 'svelte/store';
 import type { MaybePromise } from '$app/forms';
@@ -9,6 +9,20 @@ export class SuperFormError extends Error {
     Object.setPrototypeOf(this, SuperFormError.prototype);
   }
 }
+
+export type UnwrapEffects<T> = T extends ZodEffects<infer U>
+  ? UnwrapEffects<U>
+  : T extends AnyZodObject
+  ? T
+  : never;
+
+export type ZodValidation<T extends AnyZodObject> =
+  | T
+  | ZodEffects<T>
+  | ZodEffects<ZodEffects<T>>
+  | ZodEffects<ZodEffects<ZodEffects<T>>>
+  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
 export type RawShape<T> = T extends ZodObject<infer U> ? U : never;
 

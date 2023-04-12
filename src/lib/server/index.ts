@@ -3,7 +3,9 @@ import { parse, stringify } from 'devalue';
 import {
   SuperFormError,
   type FieldPath,
-  type Validation
+  type Validation,
+  type ZodValidation,
+  type UnwrapEffects
 } from '../index.js';
 import { entityData, unwrapZodType, valueOrDefault } from './entity.js';
 
@@ -211,20 +213,6 @@ export type SuperValidateOptions = {
   includeMeta?: boolean;
   id?: true | string;
 };
-
-type UnwrapEffects<T> = T extends ZodEffects<infer U>
-  ? UnwrapEffects<U>
-  : T extends AnyZodObject
-  ? T
-  : never;
-
-type ZodValidation<T extends AnyZodObject> =
-  | T
-  | ZodEffects<T>
-  | ZodEffects<ZodEffects<T>>
-  | ZodEffects<ZodEffects<ZodEffects<T>>>
-  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
-  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,

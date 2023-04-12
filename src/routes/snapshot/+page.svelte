@@ -17,7 +17,10 @@
     capture,
     restore
   } = superForm(data.form, {
-    taintedMessage: null
+    taintedMessage: null,
+    onUpdated(event) {
+      console.log($page.status);
+    }
   });
 
   export const snapshot: Snapshot = {

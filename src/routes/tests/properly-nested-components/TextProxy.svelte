@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { UnwrapEffects } from '$lib';
   import type { SuperForm } from '$lib/client';
+  import type { Writable } from 'svelte/store';
 
   import { formFieldProxy } from '$lib/client/proxies';
   import type { FieldPath } from '$lib';
@@ -8,7 +8,7 @@
 
   type T = $$Generic<AnyZodObject>;
 
-  export let form: SuperForm<UnwrapEffects<T>, any>;
+  export let form: SuperForm<T, any>;
   export let field: keyof z.infer<T> | FieldPath<z.infer<T>>;
 
   const data = formFieldProxy(form, field);
@@ -16,7 +16,7 @@
   $: name = String(field);
   $: value = data.value;
   $: errors = data.errors;
-  $: constraints = data.constraints;
+  $: constraints = data.constraints as Writable<object>;
 </script>
 
 <div>

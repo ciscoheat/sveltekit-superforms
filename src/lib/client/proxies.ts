@@ -1,9 +1,15 @@
 import { derived, type Updater, type Writable } from 'svelte/store';
 import { stringify, parse } from 'devalue';
-import { SuperFormError, type FormPath, type FieldPath } from '../index.js';
+import {
+  SuperFormError,
+  type FormPath,
+  type FieldPath,
+  type InputConstraint,
+  type UnwrapEffects
+} from '../index.js';
 import { traversePath } from '../entity.js';
 import type { SuperForm } from './index.js';
-import type { z, AnyZodObject } from 'zod';
+import type { z, AnyZodObject, ZodEffects } from 'zod';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -89,10 +95,6 @@ export function dateProxy<
   }) as NormalizeFormPath<T, Path> extends Date ? Writable<string> : never;
 }
 
-function normalizePath<T extends object>(path: keyof T | FieldPath<T>) {
-  return (typeof path === 'string' ? [path] : path) as FieldPath<T>;
-}
-
 /**
  * Creates a string store that will pass its value to a field in the form.
  * @param form The form
@@ -102,10 +104,11 @@ function normalizePath<T extends object>(path: keyof T | FieldPath<T>) {
 function stringProxy<
   T extends Record<string, unknown>,
   Type extends 'number' | 'int' | 'boolean' | 'date',
-  Path extends FieldPath<T>
+  P extends FieldPath<T>,
+  Path extends keyof T | P
 >(
   form: Writable<T>,
-  path: keyof T | Path,
+  path: Path,
   type: Type,
   options: DefaultOptions
 ): Writable<string> {
@@ -165,11 +168,14 @@ function stringProxy<
   return {
     subscribe: proxy.subscribe,
     set(val: string) {
-      proxy2.set(toValue(val) as FormPath<T, Path>);
+      proxy2.set(toValue(val) as FormPath<T, NormalizePath<T, Path>>);
       //form.update((f) => ({ ...f, [field as any]: toValue(val) }));
     },
     update(updater) {
-      proxy2.update((f) => toValue(updater(String(f))) as FormPath<T, Path>);
+      proxy2.update(
+        (f) =>
+          toValue(updater(String(f))) as FormPath<T, NormalizePath<T, Path>>
+      );
       /*
       form.update((f) => ({
         ...f,
@@ -216,27 +222,64 @@ export function jsonProxy<
   };
 }
 
-export function formFieldProxy<T extends AnyZodObject, M>(
-  form: SuperForm<T, M>,
-  path: keyof z.infer<T> | FieldPath<z.infer<T>>
-) {
-  const path2 = normalizePath(path);
+export type FieldProxy<
+  T extends AnyZodObject,
+  Path extends keyof z.infer<T> | FieldPath<z.infer<T>>
+> = {
+  readonly path: FieldPath<z.infer<T>>;
+  value: Writable<FormPath<z.infer<T>, Path>>;
+  errors?: Writable<string[] | undefined>;
+  constraints?: Writable<InputConstraint | undefined>;
+};
+
+type NormalizePath<
+  T extends object,
+  Path extends keyof T | FieldPath<T>
+> = Path extends keyof T ? [Path] : Exclude<Path, keyof T>;
+
+function normalizePath(path: unknown) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (Array.isArray(path) ? path : [path]) as any;
+}
+
+//type UnwrapPath<T extends object, P extends keyof T | FieldPath<T>> = P extends FieldPath<T> ? P : [Extract<P, keyof T>]
+
+export function formFieldProxy<
+  T extends AnyZodObject,
+  P extends FieldPath<z.infer<T>>,
+  Path extends keyof z.infer<T> | P
+>(form: SuperForm<UnwrapEffects<T>, unknown>, path: Path) {
+  const path2: NormalizePath<z.infer<T>, Path> = normalizePath(path);
+  // Filter out array indices, the constraints structure doesn't contain these.
+  const constraintsPath = (path2 as unknown[]).filter((p) =>
+    isNaN(parseInt(String(p)))
+  );
+
   return {
     path: path2,
     value: fieldProxy(form.form, path2),
-    errors: fieldProxy(form.errors, path2),
-    constraints: fieldProxy(form.constraints, path2)
+    errors: fieldProxy(form.errors, path2) as unknown as Writable<
+      string[] | undefined
+    >,
+    constraints: fieldProxy(
+      form.constraints,
+      constraintsPath as FieldPath<typeof form.constraints>
+    ) as Writable<InputConstraint | undefined>
   };
 }
 
 export function fieldProxy<
-  T extends Record<string, unknown>,
-  Path extends FieldPath<T>
->(form: Writable<T>, path: keyof T | Path): Writable<FormPath<T, Path>> {
-  const path2 = normalizePath(path);
+  T extends object,
+  P extends FieldPath<T>,
+  Path extends keyof T | P
+>(
+  form: Writable<T>,
+  path: Path
+): Writable<FormPath<T, NormalizePath<T, Path>>> {
+  const path2: NormalizePath<T, Path> = normalizePath(path);
 
   const proxy = derived(form, ($form) => {
-    const data = traversePath($form, path2);
+    const data = traversePath($form, path2 as any);
     return data?.value;
   });
 
@@ -251,19 +294,19 @@ export function fieldProxy<
       };
     },
     //subscribe: proxy.subscribe,
-    update(upd: Updater<FormPath<T, Path>>) {
+    update(upd: Updater<FormPath<T, NormalizePath<T, Path>>>) {
       //console.log('~ fieldStore ~ update value for', path);
       form.update((f) => {
-        const output = traversePath(f, path2);
+        const output = traversePath(f, path2 as any);
         if (output) output.parent[output.key] = upd(output.value);
         //else console.log('[update] Not found:', path, 'in', f);
         return f;
       });
     },
-    set(value: FormPath<T, Path>) {
+    set(value: FormPath<T, NormalizePath<T, Path>>) {
       //console.log('~ fieldStore ~ set value for', path, value);
       form.update((f) => {
-        const output = traversePath(f, path2);
+        const output = traversePath(f, path2 as any);
         if (output) output.parent[output.key] = value;
         //else console.log('[set] Not found:', path, 'in', f);
         return f;

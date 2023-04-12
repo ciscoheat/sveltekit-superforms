@@ -650,10 +650,9 @@ export function superForm<
   }
 
   const Fields = Object.fromEntries(
-    Object.keys(initialForm.data).map((key) => [
-      key,
-      Fields_create(key, initialForm)
-    ])
+    Object.keys(initialForm.data).map((key) => {
+      return [key, Fields_create(key, initialForm)];
+    })
   ) as unknown as FormFields<T>;
 
   function Fields_create(

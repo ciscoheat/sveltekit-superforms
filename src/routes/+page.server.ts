@@ -66,7 +66,7 @@ export const load = (async ({ url }) => {
     crudSchema,
     {
       includeMeta: true,
-      noErrors: true
+      errors: false
     }
   );
   return { form, users };

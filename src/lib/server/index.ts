@@ -95,7 +95,9 @@ export function setError<T extends AnyZodObject>(
   return fail(options.status ?? 400, { form });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/**
+ * @deprecated Use options.errors = false instead.
+ */
 export function noErrors<T extends AnyZodObject, M = any>(
   form: Validation<T, M>
 ): Validation<T, M> {

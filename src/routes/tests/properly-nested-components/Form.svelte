@@ -88,10 +88,6 @@
     }
   }
 
-  .invalid {
-    color: crimson;
-  }
-
   h4 {
     margin: 0;
   }

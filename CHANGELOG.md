@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- superValidate options: `noErrors` is deprecated, use `errors` instead.
+- superValidate: `noErrors` is deprecated, use the `errors` option instead.
 - Use `SuperForm` instead of `EnhancedForm`.
 
 ## [0.6.14] - 2023-04-10

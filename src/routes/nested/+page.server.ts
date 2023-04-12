@@ -16,7 +16,7 @@ const defaultData = {
 
 export const load = (async (event) => {
   const form = await superValidate(defaultData, schema, {
-    noErrors: true
+    errors: false
   });
   return { form, useZod: event.url.searchParams.has('zod') };
 }) satisfies PageServerLoad;

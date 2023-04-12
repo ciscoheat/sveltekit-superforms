@@ -3,7 +3,7 @@
   import type { SuperForm } from '$lib/client';
   import type { z, AnyZodObject } from 'zod';
 
-  import { formFieldProxy } from '$lib/client/proxies';
+  import { formFieldProxy } from '$lib/client';
 
   type T = $$Generic<AnyZodObject>;
 

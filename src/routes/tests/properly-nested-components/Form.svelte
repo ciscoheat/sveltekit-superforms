@@ -5,7 +5,7 @@
   import TextInput from './TextInput.svelte';
   import TextField from './TextField.svelte';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import { fieldProxy, formFieldProxy } from '$lib/client/proxies';
+  import { fieldProxy, formFieldProxy } from '$lib/client';
 
   export let data: Validation<Schema>;
 

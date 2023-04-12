@@ -25,7 +25,7 @@ import {
   fieldProxy,
   intProxy,
   numberProxy
-} from '$lib/client/proxies';
+} from '$lib/client';
 import type { FormPath } from '$lib';
 
 const user = z.object({

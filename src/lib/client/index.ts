@@ -53,7 +53,9 @@ export {
   intProxy,
   numberProxy,
   booleanProxy,
-  dateProxy
+  dateProxy,
+  fieldProxy,
+  formFieldProxy
 } from './proxies.js';
 
 type FormUpdate = (

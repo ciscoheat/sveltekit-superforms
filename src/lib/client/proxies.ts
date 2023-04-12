@@ -9,7 +9,7 @@ import {
 } from '../index.js';
 import { traversePath } from '../entity.js';
 import type { SuperForm } from './index.js';
-import type { z, AnyZodObject, ZodEffects } from 'zod';
+import type { z, AnyZodObject } from 'zod';
 
 type DefaultOptions = {
   trueStringValue: string;

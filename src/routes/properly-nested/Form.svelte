@@ -5,22 +5,31 @@
   import TextInput from './TextInput.svelte';
   import TextField from './TextField.svelte';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import { fieldProxy, formFieldProxy } from '$lib/client';
+  import { fieldProxy, formFieldProxy, dateProxy } from '$lib/client';
 
   export let data: Validation<Schema>;
 
   const form = superForm(data, {
     dataType: 'json'
   });
-  const { form: formData, errors, enhance, constraints, tainted } = form;
+  const {
+    form: formData,
+    errors,
+    enhance,
+    constraints,
+    tainted,
+    message
+  } = form;
 
   const proxy1 = formFieldProxy(form, 'name');
   const proxy2 = formFieldProxy(form, ['name']);
   const proxy3 = formFieldProxy(form, ['tags', 3]);
   const proxy4 = formFieldProxy(form, ['luckyNumber']);
 
+  const bool = fieldProxy(formData, 'agree');
   const tag1 = fieldProxy(formData, ['tags', 0, 'name']);
   let field1 = fieldProxy(formData, 'luckyNumber');
+
   /*
   field1 = 123;
 
@@ -31,15 +40,22 @@
   */
 
   function randomLuckyNumber() {
-    field1.set(Math.ceil(Math.random() * 99) + 1);
+    field1.update((num) => (num ? Math.ceil(Math.random() * 99) + 1 : 7));
   }
 </script>
 
-<SuperDebug data={{ $formData, $tainted }} />
+<SuperDebug data={$formData} />
+<br />
+<SuperDebug label="Tainted" status={false} data={$tainted} />
+
+{#if $message}
+  <h5 class="message">{$message}</h5>
+{/if}
 
 <form method="POST" use:enhance>
   <section>
     <TextInput label="name" bind:value={$formData.name} />
+    {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
 
     <TextInput
       type="number"
@@ -106,5 +122,15 @@
   h4 {
     margin: 0;
     margin-bottom: 1rem;
+  }
+
+  .message {
+    padding: 1rem;
+    color: mediumslateblue;
+    background-color: springgreen;
+  }
+
+  .invalid {
+    color: firebrick;
   }
 </style>

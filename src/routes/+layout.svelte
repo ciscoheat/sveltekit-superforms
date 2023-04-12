@@ -26,12 +26,14 @@
   <a href="/super-debug">SuperDebug</a> |
   <a href="/nested">Nested</a> |
   <a href="/multiple">Multiple</a>
-  <br />
   <a href="/snapshot">Snapshot</a> |
+  <br />
   <a href="/dates">Dates</a> |
   <a href="/reset">Reset</a> |
   <a href="/url">URL</a> |
-  <a href="/tainted">Tainted</a>
+  <a href="/tainted">Tainted</a> |
+  <a href="/proxies">Proxies</a> |
+  <a href="/properly-nested">Properly nested</a>
 </nav>
 
 <slot />

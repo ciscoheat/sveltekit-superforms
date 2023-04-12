@@ -4,7 +4,7 @@ export const schema = z.object({
   name: z.string().min(2),
   address: z.string().min(2),
   city: z.string().min(2),
-  birth: z.date(),
+  agree: z.boolean(),
   luckyNumber: z.number(),
   tags: z
     .object({

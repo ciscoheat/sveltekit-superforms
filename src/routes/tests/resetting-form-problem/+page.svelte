@@ -2,27 +2,16 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
   import { superForm } from '$lib/client';
-  import { z } from 'zod';
+  import { schema } from './schemas';
 
   export let data: PageData;
 
   let lockEmail: boolean = true;
   let lockName: boolean = true;
   let lockPassword: boolean = true;
-  const schema = z.object({
-    name: z.string().min(1, {
-      message: 'Enter your name'
-    }),
-    email: z.string().email(),
-    password: z.string().min(1, {
-      message: 'Enter your password'
-    }),
-    confirmPassword: z.string().min(1, {
-      message: 'Confirm your password'
-    })
-  });
+
   // Client API:
-  const { form, errors, enhance, delayed, restore, capture, message } =
+  const { form, errors, enhance, tainted, restore, capture, message } =
     superForm(data.form, {
       scrollToError: 'smooth',
       autoFocusOnError: true,

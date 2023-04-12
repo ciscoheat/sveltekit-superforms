@@ -1,23 +1,10 @@
 import type { Actions, PageServerLoad } from './$types';
 import { message, setError, superValidate } from '$lib/server';
-import { z } from 'zod';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
+import { schema } from './schemas';
 
-const schema = z.object({
-  name: z.string().min(1, {
-    message: 'Enter your name'
-  }),
-  email: z.string().email(),
-  password: z.string().min(6, {
-    message: 'Your password must be at least 6 characters long'
-  }),
-  confirmPassword: z.string().min(6, {
-    message: 'Confirm your password'
-  })
-});
-
-export const load = (async (event) => {
-  const form = await superValidate(event, schema);
+export const load = (async () => {
+  const form = await superValidate(schema);
 
   // Always return { form } in load and form actions.
   return { form };
@@ -39,9 +26,5 @@ export const actions = {
     }
 
     return message(form, 'Submitted!');
-
-    // TODO: Do something with the validated data
-    // throw redirect with the registered email
-    throw redirect(302, '/login?email=' + form.data.email);
   }
 } satisfies Actions;

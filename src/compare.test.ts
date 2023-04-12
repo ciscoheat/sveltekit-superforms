@@ -201,6 +201,9 @@ describe('Path traversals', () => {
 
     const form = await superValidate(person, schema);
 
+    expectTypeOf(form.data).toMatchTypeOf(person);
+    expectTypeOf(form.errors).toMatchTypeOf({});
+
     type U = z.infer<typeof schema>;
 
     const s0: FormPath<U, ['email']> = 'test@example.com';

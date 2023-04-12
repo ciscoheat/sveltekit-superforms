@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed timing for auto-focus on error field.
+- All types now handle schemas with effects.
 
 ### Added
 

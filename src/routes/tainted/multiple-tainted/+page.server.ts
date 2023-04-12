@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { message, superValidate } from '$lib/server';
+import { superValidate } from '$lib/server';
 import { schema } from './schemas';
 import { fail } from '@sveltejs/kit';
 

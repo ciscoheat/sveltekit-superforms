@@ -8,7 +8,7 @@
 
   type T = $$Generic<AnyZodObject>;
 
-  export let form: SuperForm<UnwrapEffects<T>, any>;
+  export let form: SuperForm<UnwrapEffects<T>, unknown>;
   export let field: keyof z.infer<T> | FieldPath<z.infer<T>>;
 
   const data = formFieldProxy(form, field);
@@ -19,19 +19,17 @@
   $: constraints = data.constraints;
 </script>
 
-<div>
-  <label>
-    {name}<br />
-    <input
-      type="text"
-      data-invalid={$errors}
-      bind:value={$value}
-      {...$constraints}
-      {...$$restProps}
-    />
-  </label>
-  {#if $errors}<span class="invalid">{$errors}</span>{/if}
-</div>
+<label>
+  {name}<br />
+  <input
+    type="text"
+    data-invalid={$errors}
+    bind:value={$value}
+    {...$constraints}
+    {...$$restProps}
+  />
+</label>
+{#if $errors}<span class="invalid">{$errors}</span>{/if}
 
 <style lang="scss">
   div {

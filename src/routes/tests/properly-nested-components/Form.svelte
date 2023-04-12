@@ -1,68 +1,66 @@
 <script lang="ts">
-  import type { FormPath, Validation } from '$lib';
+  import type { Validation } from '$lib';
   import type { Schema } from './schemas';
   import { superForm } from '$lib/client';
   import TextInput from './TextInput.svelte';
-  import TextFormField from './TextFormField.svelte';
+  import TextFormField from './TextField.svelte';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { fieldProxy, formFieldProxy } from '$lib/client/proxies';
 
-  import type { z } from 'zod';
-
   export let data: Validation<Schema>;
 
-  const theForm = superForm(data, {
+  const form = superForm(data, {
     dataType: 'json'
   });
-  const { form, errors, enhance, constraints } = theForm;
+  const { form: formData, errors, enhance, constraints } = form;
 
-  const proxy1 = formFieldProxy(theForm, 'name');
-  const proxy2 = formFieldProxy(theForm, ['name']);
-  const proxy3 = formFieldProxy(theForm, ['tags', 3]);
-  const proxy4 = formFieldProxy(theForm, ['luckyNumber']);
+  const proxy1 = formFieldProxy(form, 'name');
+  const proxy2 = formFieldProxy(form, ['name']);
+  const proxy3 = formFieldProxy(form, ['tags', 3]);
+  const proxy4 = formFieldProxy(form, ['luckyNumber']);
 
-  let field1 = fieldProxy(form, 'luckyNumber');
+  let field1 = fieldProxy(formData, 'luckyNumber');
   /*
   field1 = 123;
 
-  proxy1.value = '123';
-  proxy2.value = '123';
+  proxy1.value = 'abc';
+  proxy2.value = 'abc';
   proxy3.value = { name: 'Test' };
   proxy4.value = 123;
   */
 </script>
 
-<SuperDebug data={$form} />
+<SuperDebug data={$formData} />
 
 <form method="POST" use:enhance>
   <section>
-    <div>
-      <TextInput label="name" bind:value={$form.name} />
-    </div>
+    <TextInput label="name" bind:value={$formData.name} />
 
-    <TextFormField form={theForm} field="address" />
+    <TextFormField {form} field="address" />
 
-    <div>
-      <TextInput
-        label="city"
-        bind:value={$form.city}
-        errors={$errors.city}
-        constraints={$constraints.city}
-        name="city"
-      />
-    </div>
+    <TextInput
+      name="city"
+      label="city"
+      bind:value={$formData.city}
+      errors={$errors.city}
+      constraints={$constraints.city}
+    />
   </section>
 
   <section>
     <h4>Tags</h4>
-    {#each $form.tags as _, i}
-      <TextInput
-        label="Name"
-        name="tags"
-        bind:value={$form.tags[i].name}
-        errors={$errors.tags?.[i]?.name}
-        constraints={$constraints.tags?.name}
-      />
+    {#each $formData.tags as _, i}
+      {#if i % 2}
+        <TextInput
+          name="tags"
+          label="Name"
+          bind:value={$formData.tags[i].name}
+          errors={$errors.tags?.[i]?.name}
+          constraints={$constraints.tags?.name}
+        />
+      {:else}
+        <TextFormField {form} field={['tags', i, 'name']} />
+      {/if}
     {/each}
   </section>
 
@@ -90,5 +88,6 @@
 
   h4 {
     margin: 0;
+    margin-bottom: 1rem;
   }
 </style>

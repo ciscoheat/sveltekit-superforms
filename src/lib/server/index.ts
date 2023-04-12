@@ -35,7 +35,7 @@ import { clone } from '../utils.js';
 
 export { defaultEntity } from './entity.js';
 
-export function message<T extends AnyZodObject, M>(
+export function message<T extends UnwrapEffects<AnyZodObject>, M>(
   form: Validation<T, M>,
   message: M,
   options?: {
@@ -53,7 +53,7 @@ export function message<T extends AnyZodObject, M>(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function setError<T extends AnyZodObject>(
+export function setError<T extends UnwrapEffects<AnyZodObject>>(
   form: Validation<T, unknown>,
   path: keyof z.infer<T> | FieldPath<z.infer<T>> | [] | null,
   error: string | string[],

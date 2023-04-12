@@ -25,7 +25,8 @@ import {
   type ValidationErrors,
   type Validator,
   type Validators,
-  type FieldPath
+  type FieldPath,
+  type UnwrapEffects
 } from '../index.js';
 import type { z, AnyZodObject, ZodEffects } from 'zod';
 import { stringify } from 'devalue';
@@ -61,7 +62,7 @@ type FormUpdate = (
 ) => Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FormOptions<T extends AnyZodObject, M> = Partial<{
+export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
   id: string;
   applyAction: boolean;
   invalidateAll: boolean;
@@ -177,7 +178,7 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SuperForm<T extends AnyZodObject, M = any> = {
+export type SuperForm<T extends UnwrapEffects<AnyZodObject>, M = any> = {
   form: Writable<Validation<T, M>['data']>;
   formId: Writable<string | undefined>;
   errors: Writable<Validation<T, M>['errors']>;
@@ -210,6 +211,7 @@ export type SuperForm<T extends AnyZodObject, M = any> = {
 /**
  * @deprecated Use SuperForm instead.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
 /**
@@ -219,7 +221,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
  * @returns {SuperForm} An object with properties for the form.
  */
 export function superForm<
-  T extends AnyZodObject = AnyZodObject,
+  T extends UnwrapEffects<AnyZodObject> = UnwrapEffects<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
 >(

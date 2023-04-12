@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { InputConstraint } from '$lib';
 
-  export let value: string;
+  export let value: string | number;
 
+  export let type: 'text' | 'number' = 'text';
   export let label: string | undefined = undefined;
   export let errors: string[] | undefined = undefined;
   export let constraints: InputConstraint | undefined = undefined;
@@ -11,7 +12,11 @@
 <div>
   <label>
     {#if label}<span>{label}</span><br />{/if}
-    <input type="text" bind:value {...constraints} {...$$restProps} />
+    {#if type == 'text'}
+      <input type="text" bind:value {...constraints} {...$$restProps} />
+    {:else}
+      <input type="number" bind:value {...constraints} {...$$restProps} />
+    {/if}
   </label>
   {#if errors}<span class="invalid">{errors}</span>{/if}
 </div>

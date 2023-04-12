@@ -3,7 +3,7 @@
   import type { Schema } from './schemas';
   import { superForm } from '$lib/client';
   import TextInput from './TextInput.svelte';
-  import TextFormField from './TextField.svelte';
+  import TextField from './TextField.svelte';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { fieldProxy, formFieldProxy } from '$lib/client/proxies';
 
@@ -12,13 +12,14 @@
   const form = superForm(data, {
     dataType: 'json'
   });
-  const { form: formData, errors, enhance, constraints } = form;
+  const { form: formData, errors, enhance, constraints, tainted } = form;
 
   const proxy1 = formFieldProxy(form, 'name');
   const proxy2 = formFieldProxy(form, ['name']);
   const proxy3 = formFieldProxy(form, ['tags', 3]);
   const proxy4 = formFieldProxy(form, ['luckyNumber']);
 
+  const tag1 = fieldProxy(formData, ['tags', 0, 'name']);
   let field1 = fieldProxy(formData, 'luckyNumber');
   /*
   field1 = 123;
@@ -28,15 +29,25 @@
   proxy3.value = { name: 'Test' };
   proxy4.value = 123;
   */
+
+  function randomLuckyNumber() {
+    field1.set(Math.ceil(Math.random() * 99) + 1);
+  }
 </script>
 
-<SuperDebug data={$formData} />
+<SuperDebug data={{ $formData, $tainted }} />
 
 <form method="POST" use:enhance>
   <section>
     <TextInput label="name" bind:value={$formData.name} />
 
-    <TextFormField {form} field="address" />
+    <TextInput
+      type="number"
+      label="luckyNumber"
+      bind:value={$formData.luckyNumber}
+    />
+
+    <TextField {form} field="address" />
 
     <TextInput
       name="city"
@@ -59,14 +70,20 @@
           constraints={$constraints.tags?.name}
         />
       {:else}
-        <TextFormField {form} field={['tags', i, 'name']} />
+        <TextField name="tags" {form} field={['tags', i, 'name']} />
       {/if}
     {/each}
   </section>
 
-  <section>
-    <button>Submit</button>
-  </section>
+  <button>Submit</button>
+
+  <button on:click={randomLuckyNumber} type="button">
+    Random lucky number
+  </button>
+
+  <button type="button" on:click={() => ($tag1 = '')}>
+    Clear first tag
+  </button>
 </form>
 
 <style lang="scss">
@@ -77,13 +94,13 @@
     gap: 2rem;
   }
 
+  button {
+    width: min-content;
+  }
+
   section {
     display: flex;
     flex-direction: column;
-
-    button {
-      align-self: flex-start;
-    }
   }
 
   h4 {

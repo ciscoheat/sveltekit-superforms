@@ -199,6 +199,8 @@ export type SuperForm<T extends UnwrapEffects<AnyZodObject>, M = any> = {
   firstError: Readable<{ path: string[]; message: string } | null>;
   allErrors: Readable<{ path: string[]; message: string }[]>;
 
+  options: FormOptions<T, M>;
+
   enhance: (
     el: HTMLFormElement,
     events?: SuperFormEvents<T, M>
@@ -689,6 +691,8 @@ export function superForm<
     submitting: derived(Submitting, ($s) => $s),
     delayed: derived(Delayed, ($d) => $d),
     timeout: derived(Timeout, ($t) => $t),
+
+    options,
 
     capture: () => ({
       valid: get(Valid),

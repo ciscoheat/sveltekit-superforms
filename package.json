@@ -12,9 +12,25 @@
     "forms"
   ],
   "license": "MIT",
+  "homepage": "https://superforms.vercel.app",
+  "bugs": "https://github.com/ciscoheat/sveltekit-superforms/issues",
   "repository": {
     "url": "https://github.com/ciscoheat/sveltekit-superforms"
   },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/ciscoheat"
+    },
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/ciscoheat"
+    },
+    {
+      "type": "paypal",
+      "url": "https://www.paypal.com/donate/?hosted_button_id=NY7F5ALHHSVQS"
+    }
+  ],
   "scripts": {
     "dev": "vite dev --open",
     "build": "vite build && npm run test && npm run package",

@@ -15,14 +15,17 @@ export const load = (async () => {
 export const actions = {
   default: async (event) => {
     const data = await event.request.formData();
-    console.log('file: +page.server.ts:19 ~ default: ~ data:', data);
+    console.log('Formdata', data);
     const form = await superValidate(data, userSchema);
-    console.log('FILE FORM', form);
+    console.log('Form', form);
     if (!form.valid) return fail(400, { form });
 
     const file = data.get('file');
     if (file instanceof File) {
       console.log(file.name, file);
+      form.message = 'Uploaded: ' + file.name
+    } else {
+      form.message = 'No file uploaded.'
     }
 
     return { form };

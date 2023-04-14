@@ -10,7 +10,8 @@
   export let data: Validation<Schema>;
 
   const form = superForm(data, {
-    dataType: 'json'
+    dataType: 'json',
+    taintedMessage: null
   });
   const {
     form: formData,

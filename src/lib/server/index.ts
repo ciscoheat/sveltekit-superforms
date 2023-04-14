@@ -475,8 +475,8 @@ export function actionResult<
         headers:
           typeof options === 'object' && options.message
             ? {
-                'Set-Cookie': `flash=${JSON.stringify(
-                  options.message
+                'Set-Cookie': `flash=${encodeURIComponent(
+                  JSON.stringify(options.message)
                 )}; Path=/; Max-Age=120`
               }
             : undefined

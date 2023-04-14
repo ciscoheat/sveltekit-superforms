@@ -22,7 +22,7 @@ export const POST = (async (event) => {
 
   if (data.has('redirect')) {
     return actionResult('redirect', '/redirected', {
-      message: { message: 'Redirected from login', type: 'success' }
+      message: { message: 'Redirected from; "login"', type: 'success' }
     });
   }
 

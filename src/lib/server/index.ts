@@ -450,16 +450,38 @@ export async function superValidate<
 }
 
 export function actionResult<
-  T extends Record<string, unknown> | App.Error | string
->(
-  type: T extends string
+  T extends Record<string, unknown> | App.Error | string,
+  Type extends T extends string
     ? 'redirect' | 'error'
-    : 'success' | 'failure' | 'error',
+    : 'success' | 'failure' | 'error'
+>(
+  type: Type,
   data?: T,
-  status?: number
+  options?:
+    | number
+    | {
+        status?: number;
+        message?: Type extends 'redirect' ? App.PageData['flash'] : never;
+      }
 ) {
+  const status =
+    options && typeof options !== 'number' ? options.status : options;
+
   const result = <T extends { status: number }>(struct: T) => {
-    return json({ type, ...struct }, { status: struct.status });
+    return json(
+      { type, ...struct },
+      {
+        status: struct.status,
+        headers:
+          typeof options === 'object' && options.message
+            ? {
+                'Set-Cookie': `flash=${JSON.stringify(
+                  options.message
+                )}; Path=/; Max-Age=120`
+              }
+            : undefined
+      }
+    );
   };
 
   if (type == 'error') {

@@ -9,6 +9,7 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { tick } from 'svelte';
   import type { PageData } from './$types';
+  import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: PageData;
 
@@ -95,7 +96,10 @@
       email: (n) =>
         /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
     },
-    onUpdated: runFormTests
+    onUpdated: runFormTests,
+    flashMessage: {
+      module: flashModule
+    }
   });
 
   // Testing null
@@ -109,7 +113,10 @@
     resetForm: true,
     taintedMessage: null,
     dataType: 'json',
-    invalidateAll: false
+    invalidateAll: false,
+    flashMessage: {
+      module: flashModule
+    }
   });
 
   const proxyString = jsonProxy(form, 'proxyString');

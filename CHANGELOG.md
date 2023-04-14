@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - When `dataType = 'json'`, file data is now returned even when it has the same name as a schema field.
 
+### Added
+
+- Flash messages can now be sent in `actionResult`.
+
 ## [0.6.17] - 2023-04-13
 
 ### Added

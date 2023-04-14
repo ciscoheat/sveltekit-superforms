@@ -1112,7 +1112,15 @@ function formEnhance<T extends AnyZodObject, M>(
         if (options.dataType === 'json') {
           const postData = get(data);
           submit.data.set('__superform_json', stringify(postData));
-          Object.keys(postData).forEach((key) => submit.data.delete(key));
+
+          // Clear post data to reduce transfer size,
+          // since $form should be serialized and sent as json.
+          Object.keys(postData).forEach((key) => {
+            // Files should be kept though, even if same key.
+            if (typeof submit.data.get(key) === 'string') {
+              submit.data.delete(key);
+            }
+          });
         }
       }
     }

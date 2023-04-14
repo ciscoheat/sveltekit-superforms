@@ -1,9 +1,10 @@
-import { superValidate } from '$lib/server';
+import { message, superValidate } from '$lib/server';
 import { z } from 'zod';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 const userSchema = z.object({
+  file: z.string(),
   filename: z.string().min(1)
 });
 
@@ -23,9 +24,11 @@ export const actions = {
     const file = data.get('file');
     if (file instanceof File) {
       console.log(file.name, file);
-      form.message = 'Uploaded: ' + file.name
+      form.message = 'Uploaded: ' + file.name;
     } else {
-      form.message = 'No file uploaded.'
+      const output = message(form, 'No file uploaded.', { status: 400 });
+      console.log(form);
+      return output;
     }
 
     return { form };

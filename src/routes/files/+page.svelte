@@ -7,7 +7,8 @@
   export let data: PageData;
 
   const { form, errors, enhance, delayed, message } = superForm(data.form, {
-    dataType: $page.url.searchParams.has('json') ? 'json' : 'form'
+    dataType: $page.url.searchParams.has('json') ? 'json' : 'form',
+    taintedMessage: null
   });
 </script>
 
@@ -24,11 +25,21 @@
       data-invalid={$errors.filename}
       bind:value={$form.filename}
     />
-    {#if $errors.filename}<span class="invalid">{$errors.filename}</span
-      >{/if}
+    {#if $errors.filename}
+      <span class="invalid">{$errors.filename}</span>
+    {/if}
   </label>
 
-  <input type="file" name="file" />
+  <input
+    name="file"
+    type="file"
+    accept="image/png, image/gif, image/jpeg"
+    data-invalid={$errors.file}
+    bind:value={$form.file}
+  />
+  {#if $errors.file}
+    <span class="invalid">{$errors.file}</span>
+  {/if}
 
   <div>
     <button>Submit</button>

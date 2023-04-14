@@ -119,6 +119,13 @@ function formDataToValidation<T extends AnyZodObject>(
   ) {
     if (entry && typeof entry !== 'string') {
       // File object, not supported
+      /*
+      throw new SuperFormError(
+        `Field "${key}" contains a file, which is not supported by Superforms. Remove it from the schema and use FormData directly instead.`
+      );
+      return (entry.valueOf() as File).name;
+      return entry as File;
+      */
       return undefined;
     } else {
       return parseEntry(key, entry, typeInfo);

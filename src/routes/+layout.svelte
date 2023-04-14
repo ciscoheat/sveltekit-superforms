@@ -26,8 +26,9 @@
   <a href="/super-debug">SuperDebug</a> |
   <a href="/nested">Nested</a> |
   <a href="/multiple">Multiple</a> |
-  <a href="/snapshot">Snapshot</a>
+  <a href="/multiple2">Multiple 2</a>
   <br />
+  <a href="/snapshot">Snapshot</a> |
   <a href="/dates">Dates</a> |
   <a href="/reset">Reset</a> |
   <a href="/url">URL</a> |

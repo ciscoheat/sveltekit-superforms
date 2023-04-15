@@ -40,6 +40,7 @@ import {
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
+import type { Entity } from '$lib/server/entity.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -75,6 +76,8 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
   selectErrorText: boolean;
   stickyNavbar: string;
   taintedMessage: string | false | null;
+  SPA: boolean;
+
   onSubmit: (
     ...params: Parameters<SubmitFunction>
   ) => MaybePromise<unknown | void>;
@@ -159,7 +162,8 @@ const defaultFormOptions = {
   delayMs: 500,
   timeoutMs: 8000,
   multipleSubmits: 'prevent',
-  validation: undefined
+  validation: undefined,
+  SPA: undefined
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -742,7 +746,10 @@ export function superForm<
         Data,
         Message,
         enableTaintedMessage,
-        formEvents
+        formEvents,
+        FormId,
+        Meta,
+        Constraints
       );
     },
 
@@ -785,7 +792,10 @@ function formEnhance<T extends AnyZodObject, M>(
   data: Writable<z.infer<T>>,
   message: Writable<M | undefined>,
   enableTaintedForm: () => void,
-  formEvents: SuperFormEventList<T, M>
+  formEvents: SuperFormEventList<T, M>,
+  id: Readable<string | undefined>,
+  meta: Readable<Entity<T>['meta'] | undefined>,
+  constraints: Readable<Entity<T>['constraints']>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -795,29 +805,39 @@ function formEnhance<T extends AnyZodObject, M>(
 
   type ErrorPath = FieldPath<ValidationErrors<T>>;
 
-  function setError(path: ErrorPath, newErrors: string[] | null) {
-    errors.update((err) => {
-      const errorPath = traversePath(err, path, ({ parent, key, value }) => {
-        if (value === undefined) parent[key] = {};
-        return parent[key];
-      });
+  async function validate(
+    clientErrors: ValidationErrors<T>,
+    validator: Validator<unknown>,
+    value: unknown,
+    path: ErrorPath
+  ) {
+    function setError(
+      clientErrors: ValidationErrors<T>,
+      path: ErrorPath,
+      newErrors: string[] | null
+    ) {
+      const errorPath = traversePath(
+        clientErrors,
+        path,
+        ({ parent, key, value }) => {
+          if (value === undefined) parent[key] = {};
+          return parent[key];
+        }
+      );
 
       if (errorPath) {
         const { parent, key } = errorPath;
         if (newErrors === null) delete parent[key];
         else parent[key] = newErrors;
       }
-      return err;
-    });
-  }
+    }
 
-  async function validate(
-    validator: Validator<unknown>,
-    value: unknown,
-    path: ErrorPath
-  ) {
     const errors = await validator(value);
-    setError(path, typeof errors === 'string' ? [errors] : errors ?? null);
+    setError(
+      clientErrors,
+      path,
+      typeof errors === 'string' ? [errors] : errors ?? null
+    );
     return !errors;
   }
 
@@ -1025,7 +1045,8 @@ function formEnhance<T extends AnyZodObject, M>(
       // Client validation
       if (options.validators) {
         const checkData = get(data);
-        let success: boolean;
+        let valid: boolean;
+        let clientErrors: ValidationErrors<T> = {};
 
         if (
           options.validators.constructor.name == 'ZodObject' ||
@@ -1035,17 +1056,17 @@ function formEnhance<T extends AnyZodObject, M>(
           const validator = options.validators as AnyZodObject;
           const result = await validator.safeParseAsync(checkData);
 
-          success = result.success;
+          valid = result.success;
 
           if (!result.success) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            errors.set(mapErrors<T>(result.error.format()) as any);
+            clientErrors = mapErrors<T>(result.error.format()) as any;
           }
         } else {
           // SuperForms validator
 
           const validator = options.validators as Validators<T>;
-          success = true;
+          valid = true;
 
           await traversePaths(checkData, async ({ value, path }) => {
             // Filter out array indices, the validator structure doesn't contain these.
@@ -1062,32 +1083,51 @@ function formEnhance<T extends AnyZodObject, M>(
                 for (const key in value) {
                   if (
                     !(await validate(
+                      clientErrors,
                       check,
                       value[key],
                       path.concat([key]) as FieldPath<typeof check>
                     ))
                   ) {
-                    success = false;
+                    valid = false;
                   }
                 }
                 return;
               } else if (
                 !(await validate(
+                  clientErrors,
                   check,
                   value,
                   path as FieldPath<typeof check>
                 ))
               ) {
-                success = false;
+                valid = false;
               }
             }
           });
         }
 
-        if (!success) {
-          // TODO: Keep the event chain going (construct an actionresult).
+        if (!valid) {
           cancel();
-          htmlForm.scrollToFirstError();
+
+          const validationResult: Validation<T> = {
+            valid,
+            errors: clientErrors,
+            data: checkData,
+            empty: false,
+            constraints: get(constraints),
+            message: undefined,
+            id: get(id),
+            meta: get(meta)
+          };
+
+          const result = {
+            type: 'failure' as const,
+            status: 400,
+            data: { form: validationResult }
+          };
+
+          setTimeout(() => validationResponse({ result }), 0);
         }
       }
 

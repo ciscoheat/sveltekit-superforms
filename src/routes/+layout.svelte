@@ -32,10 +32,10 @@
   <a href="/dates">Dates</a> |
   <a href="/reset">Reset</a> |
   <a href="/url">URL</a> |
+  <a href="/tainted">Tainted</a> |
   <a href="/proxies">Proxies</a> |
   <a href="/properly-nested">Properly nested</a> |
-  <a href="/files">Files</a>
-  <a href="/tainted">Tainted</a> |
+  <a href="/files">Files</a> |
   <a href="/spa">SPA</a>
 </nav>
 

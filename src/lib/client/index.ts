@@ -851,6 +851,14 @@ function formEnhance<T extends AnyZodObject, M>(
     ErrorTextEvents.clear();
   });
 
+  type ValidationResponse<
+    Success extends Record<string, unknown> | undefined = Record<
+      string,
+      any
+    >,
+    Invalid extends Record<string, unknown> | undefined = Record<string, any>
+  > = { result: ActionResult<Success, Invalid> };
+
   /**
    * @DCI-context
    */
@@ -1077,6 +1085,7 @@ function formEnhance<T extends AnyZodObject, M>(
         }
 
         if (!success) {
+          // TODO: Keep the event chain going (construct an actionresult).
           cancel();
           htmlForm.scrollToFirstError();
         }
@@ -1109,6 +1118,8 @@ function formEnhance<T extends AnyZodObject, M>(
 
         htmlForm.submitting();
 
+        // TODO: If SPA, cancel request here, factor out the result callback and call it directly.
+
         if (options.dataType === 'json') {
           const postData = get(data);
           submit.data.set('__superform_json', stringify(postData));
@@ -1125,7 +1136,9 @@ function formEnhance<T extends AnyZodObject, M>(
       }
     }
 
-    return async ({ result }) => {
+    async function validationResponse(event: ValidationResponse) {
+      const result = event.result;
+
       currentRequest = null;
       let cancelled = false;
 
@@ -1197,6 +1210,8 @@ function formEnhance<T extends AnyZodObject, M>(
       }
 
       htmlForm.completed(cancelled);
-    };
+    }
+
+    return validationResponse;
   });
 }

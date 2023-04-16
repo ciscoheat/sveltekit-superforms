@@ -5,7 +5,7 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2023-04-16
+## [0.7.0] - 2023-04-16
 
 ### Added
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Event chain is fully propagated when client-side validators fail. (Previously, it stopped after `onSubmit`)
 - `form` argument in `onUpdated` is now `Readonly`, to signify that it won't affect stores at this point.
-- The default `onError` option now emits a console warning on uncaught `ActionResult` errors. Implement `onError` to handle errors in a user-friendly way.
+- The default `onError` event now emits a console warning on `ActionResult` errors. Implement `onError` to handle errors in a user-friendly way.
 - The `noErrors` function is removed, use the `errors` option of `superValidate` instead.
 
 ## [0.6.18] - 2023-04-14

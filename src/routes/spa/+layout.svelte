@@ -1,4 +1,6 @@
 <script>
+  import { page } from '$app/stores';
+
   export const ssr = false;
 </script>
 
@@ -9,6 +11,8 @@
 </nav>
 
 <h2>Superforms SPA</h2>
+
+<p>Page status: {$page.status}</p>
 
 <slot />
 

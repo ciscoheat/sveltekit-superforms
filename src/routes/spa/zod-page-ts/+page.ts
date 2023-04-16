@@ -8,17 +8,16 @@ const defaultData = {
     { id: 3, name: 'Cc' },
     { id: 4, name: 'Dd' }
   ],
-  redirect: false
+  redirect: false,
+  random: '4117'
 };
 
 export const load = async (event) => {
   console.log('SPA load');
   const form = await superValidate(defaultData, schema, { errors: false });
-  form.data.random = String(Math.random());
-  //const form = null;
+
   return {
     form,
-    useZod: event.url.searchParams.has('zod'),
-    randomString: form.data.random
+    useZod: event.url.searchParams.has('zod')
   };
 };

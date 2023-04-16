@@ -18,7 +18,7 @@
   console.log('Page loaded');
 
   const { form, errors, enhance, message } = superForm<Schema>(defaultData, {
-    SPA: true,
+    SPA: { failStatus: 401 },
     dataType: 'json',
     onUpdate({ form, cancel }) {
       if ($page.url.searchParams.has('cancel')) cancel();
@@ -44,7 +44,7 @@
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<p>{$form.random}</p>
+<p>Random: {$form.random}</p>
 
 <form method="POST" use:enhance>
   {#if $form.tags}
@@ -71,10 +71,6 @@
     {/each}
   {/if}
   <button>Submit</button>
-  <span
-    ><input type="checkbox" name="redirect" bind:checked={$form.redirect} /> Redirect
-    on success</span
-  >
 </form>
 
 <style lang="scss">

@@ -19,21 +19,12 @@
       console.log('onUpdated, valid:', form.valid);
     },
     validators: schema
-    /*
-    validators: {
-      tags: {
-        id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
-        name: (name) =>
-          name.length < 2 ? 'Tags must be at least two characters' : null
-      }
-    },
-    */
   });
 
   // <SuperDebug data={{ $form, $errors }} />
 </script>
 
-<p>{data.randomString}</p>
+<p>Random: {$form.random}</p>
 
 {#if $message}<h4>{$message}</h4>{/if}
 
@@ -62,10 +53,6 @@
     {/each}
   {/if}
   <button>Submit</button>
-  <span
-    ><input type="checkbox" name="redirect" bind:checked={$form.redirect} /> Redirect
-    on success</span
-  >
 </form>
 
 <style lang="scss">

@@ -79,7 +79,7 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
   selectErrorText: boolean;
   stickyNavbar: string;
   taintedMessage: string | false | null;
-  SPA: boolean;
+  SPA: true | { failStatus?: number };
 
   onSubmit: (
     ...params: Parameters<SubmitFunction>
@@ -1147,7 +1147,10 @@ function formEnhance<T extends AnyZodObject, M>(
 
           const result = {
             type: 'failure' as const,
-            status: 400,
+            status:
+              (typeof options.SPA === 'boolean'
+                ? undefined
+                : options.SPA?.failStatus) ?? 400,
             data: { form: validationResult }
           };
 

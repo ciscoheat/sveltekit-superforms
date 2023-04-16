@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/stores';
   import { superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
@@ -9,6 +10,9 @@
 
   const { form, errors, enhance, message } = superForm(data.form, {
     dataType: 'json',
+    onUpdate(event) {
+      if ($page.url.searchParams.has('cancel')) event.cancel();
+    },
     validators: schema,
     /*
     validators: {

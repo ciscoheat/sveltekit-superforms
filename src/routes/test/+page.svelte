@@ -44,14 +44,16 @@
       return;
     }
 
+    /////////////////////////////////////////////////////////////////
+
     assertInnerText(
       '[data-first-error]',
-      'First error: proxyNumber - Number must be greater than or equal to 10'
+      'First error: email - [Email error]'
     );
 
     assertInnerText(
       '[data-all-errors]',
-      'proxyNumber: Number must be greater than or equal to 10\ncoercedDate: Invalid date\nemail: [Email error]'
+      'email: [Email error]\nproxyNumber: Number must be greater than or equal to 10\ncoercedDate: Invalid date'
     );
 
     const fieldErrors = Array.from(
@@ -61,7 +63,7 @@
     assert(
       fieldErrors.join(', ') ==
         '[Email error], Number must be greater than or equal to 10, Invalid date',
-      'Incorrect validation errors.'
+      'Incorrect validation errors: ' + fieldErrors.join(', ')
     );
 
     const inputErrors = Array.from(
@@ -91,10 +93,6 @@
     taintedMessage: null,
     onError({ result, message }) {
       message.set(result.error.message);
-    },
-    validators: {
-      email: (n) =>
-        /[\w\.-]+@[\w\.]+\.\w+/.test(n) ? null : 'Invalid email'
     },
     onUpdated: runFormTests,
     flashMessage: {

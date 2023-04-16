@@ -64,7 +64,7 @@ export {
   superValidate,
   actionResult,
   message,
-  message as setMessage,
+  setMessage,
   setError,
   defaultData
 } from '../validate.js';

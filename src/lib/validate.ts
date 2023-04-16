@@ -56,6 +56,8 @@ export function message<T extends UnwrapEffects<AnyZodObject>, M>(
   return failure ? fail(options?.status ?? 400, { form }) : { form };
 }
 
+export const setMessage = message;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends UnwrapEffects<AnyZodObject>>(
   form: Validation<T, unknown>,

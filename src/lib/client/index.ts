@@ -26,7 +26,8 @@ import {
   type Validator,
   type Validators,
   type FieldPath,
-  type UnwrapEffects
+  type UnwrapEffects,
+  type ZodValidation
 } from '../index.js';
 import type { z, AnyZodObject, ZodEffects } from 'zod';
 import { stringify } from 'devalue';
@@ -58,6 +59,8 @@ export {
   fieldProxy,
   formFieldProxy
 } from './proxies.js';
+
+export { superValidate } from '../validate.js';
 
 type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,
@@ -105,7 +108,7 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   validators:
-    | Validators<T>
+    | Validators<UnwrapEffects<T>>
     | T
     | ZodEffects<T>
     | ZodEffects<ZodEffects<T>>
@@ -229,22 +232,29 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
  * @returns {SuperForm} An object with properties for the form.
  */
 export function superForm<
-  T extends UnwrapEffects<AnyZodObject> = UnwrapEffects<AnyZodObject>,
+  T extends ZodValidation<AnyZodObject> = ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
 >(
-  form: Validation<T, M> | null | undefined | string,
-  options: FormOptions<T, M> = {}
-): SuperForm<T, M> {
-  options = { ...(defaultFormOptions as FormOptions<T, M>), ...options };
+  form:
+    | z.infer<UnwrapEffects<T>>
+    | Validation<UnwrapEffects<T>, M>
+    | null
+    | undefined
+    | string,
+  options: FormOptions<UnwrapEffects<T>, M> = {}
+): SuperForm<UnwrapEffects<T>, M> {
+  type T2 = UnwrapEffects<T>;
 
-  function emptyForm(): Validation<T, M> {
+  options = { ...(defaultFormOptions as FormOptions<T2, M>), ...options };
+
+  function emptyForm(data: Partial<z.infer<T>> = {}): Validation<T2, M> {
     return {
       valid: false,
       errors: {},
-      data: {},
+      data,
       empty: true,
-      constraints: {} as Validation<T, M>['constraints']
+      constraints: {} as Validation<T2, M>['constraints']
     };
   }
 
@@ -254,6 +264,10 @@ export function superForm<
     ) as Validation<AnyZodObject>[];
   }
 
+  /**
+   * Return false if object isn't a validation object, otherwise the form id,
+   * which may be undefined, so a falsy check isn't enough.
+   */
   function isValidationObject(object: unknown): string | undefined | false {
     if (!object || typeof object !== 'object') return false;
 
@@ -298,7 +312,7 @@ export function superForm<
     if (postedForm && typeof postedForm === 'object') {
       for (const superForm of findForms(postedForm).reverse()) {
         if (superForm.id === formId) {
-          form = superForm as Validation<T, M>;
+          form = superForm as Validation<T2, M>;
           break;
         }
       }
@@ -318,31 +332,38 @@ export function superForm<
     }
   }
 
+  // Normalize form argument to Validation<T, M>
   if (!form || typeof form === 'string') {
-    form = emptyForm();
-  } else if (options.dataType !== 'json') {
-    for (const [key, value] of Object.entries(form.data)) {
+    form = emptyForm(); // Takes care of null | undefined | string
+  } else if (isValidationObject(form) === false) {
+    form = emptyForm(form); // Takes care of Partial<z.infer<T>>
+  }
+
+  const form2 = form as Validation<T2, M>;
+
+  if (options.dataType !== 'json') {
+    for (const [key, value] of Object.entries(form2.data)) {
       checkJson(key, value);
     }
   }
 
-  const initialForm = clone(form);
-  const storeForm = clone(form);
+  // Need to clone the validation data, in case
+  // it's used to populate multiple forms.
+  const initialForm = clone(form2);
+  const storeForm = clone(form2);
 
   // Stores for the properties of Validation<T, M>
-  // Need to make a copy here too, in case the form variable
-  // is used to populate multiple forms.
   const Valid = writable(storeForm.valid);
   const Empty = writable(storeForm.empty);
   const Message = writable<M | undefined>(storeForm.message);
   const Errors = writable(storeForm.errors);
   const Data = writable(storeForm.data);
   const Constraints = writable(storeForm.constraints);
-  const Meta = writable<Validation<T, M>['meta'] | undefined>(
+  const Meta = writable<Validation<T2, M>['meta'] | undefined>(
     storeForm.meta
   );
 
-  const Tainted = writable<TaintedFields<T> | undefined>();
+  const Tainted = writable<TaintedFields<T2> | undefined>();
 
   // Timers
   const Submitting = writable(false);
@@ -361,7 +382,8 @@ export function superForm<
 
   if (typeof initialForm.valid !== 'boolean') {
     throw new SuperFormError(
-      "A non-validation object was passed to superForm. Check what's passed to its first parameter (null/undefined is allowed)."
+      'A non-validation object was passed to superForm. ' +
+        "Check what's passed to its first parameter (null/undefined is allowed)."
     );
   }
 
@@ -375,8 +397,8 @@ export function superForm<
   }
 
   function rebind(
-    form: Validation<T, M>,
-    untaint: TaintedFields<T> | boolean,
+    form: Validation<T2, M>,
+    untaint: TaintedFields<T2> | boolean,
     message?: M
   ) {
     if (untaint) {
@@ -403,7 +425,7 @@ export function superForm<
     }
   }
 
-  async function _update(form: Validation<T, M>, untaint: boolean) {
+  async function _update(form: Validation<T2, M>, untaint: boolean) {
     let cancelled = false;
     const data = {
       form,
@@ -470,13 +492,13 @@ export function superForm<
     for (const newForm of forms) {
       if (newForm.id !== formId) continue;
       await _update(
-        newForm as Validation<T, M>,
+        newForm as Validation<T2, M>,
         untaint ?? (result.status >= 200 && result.status < 300)
       );
     }
   };
 
-  const formEvents: SuperFormEventList<T, M> = {
+  const formEvents: SuperFormEventList<T2, M> = {
     onSubmit: options.onSubmit ? [options.onSubmit] : [],
     onResult: options.onResult ? [options.onResult] : [],
     onUpdate: options.onUpdate ? [options.onUpdate] : [],
@@ -636,7 +658,7 @@ export function superForm<
 
               // Prevent client validation from overriding the new server errors.
               checkedTaintedFormState = undefined;
-              await _update(newForm as Validation<T, M>, untaint);
+              await _update(newForm as Validation<T2, M>, untaint);
             }
           } else if (
             pageUpdate.data &&
@@ -651,7 +673,7 @@ export function superForm<
               if (newForm === form || newForm.id !== formId) continue;
 
               checkedTaintedFormState = undefined;
-              rebind(newForm as Validation<T, M>, untaint);
+              rebind(newForm as Validation<T2, M>, untaint);
             }
           }
         })
@@ -663,11 +685,11 @@ export function superForm<
     Object.keys(initialForm.data).map((key) => {
       return [key, Fields_create(key, initialForm)];
     })
-  ) as unknown as FormFields<T>;
+  ) as unknown as FormFields<T2>;
 
   function Fields_create(
     key: keyof z.infer<T>,
-    validation: Validation<T, M>
+    validation: Validation<T2, M>
   ) {
     return {
       name: key,
@@ -710,11 +732,11 @@ export function superForm<
       tainted: get(Tainted)
     }),
 
-    restore: (snapshot: SuperFormSnapshot<T, M>) => {
+    restore: (snapshot: SuperFormSnapshot<T2, M>) => {
       rebind(snapshot, snapshot.tainted ?? true);
     },
 
-    enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => {
+    enhance: (el: HTMLFormElement, events?: SuperFormEvents<T2, M>) => {
       if (events) {
         if (events.onError) {
           if (options.onError === 'apply') {
@@ -874,8 +896,10 @@ function formEnhance<T extends AnyZodObject, M>(
   type ValidationResponse<
     Success extends Record<string, unknown> | undefined = Record<
       string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       any
     >,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Invalid extends Record<string, unknown> | undefined = Record<string, any>
   > = { result: ActionResult<Success, Invalid> };
 
@@ -1160,7 +1184,28 @@ function formEnhance<T extends AnyZodObject, M>(
 
         // TODO: If SPA, cancel request here, factor out the result callback and call it directly.
 
-        if (options.dataType === 'json') {
+        if (options.SPA) {
+          cancel();
+
+          const validationResult: Validation<T> = {
+            valid: true,
+            errors: {},
+            data: get(data),
+            empty: false,
+            constraints: get(constraints),
+            message: undefined,
+            id: get(id),
+            meta: get(meta)
+          };
+
+          const result = {
+            type: 'success' as const,
+            status: 200,
+            data: { form: validationResult }
+          };
+
+          setTimeout(() => validationResponse({ result }), 0);
+        } else if (options.dataType === 'json') {
           const postData = get(data);
           submit.data.set('__superform_json', stringify(postData));
 

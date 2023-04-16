@@ -2,9 +2,9 @@ import {
   SuperFormError,
   type InputConstraints,
   type InputConstraint
-} from '../index.js';
+} from './index.js';
 
-import type { ZodTypeInfo } from '../entity.js';
+import type { ZodTypeInfo } from './entity.js';
 
 import {
   z,
@@ -273,7 +273,6 @@ function constraints<T extends AnyZodObject>(
     return Object.keys(output).length > 0 ? output : undefined;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function mapField(key: string, value: ZodTypeAny): any {
     const info = unwrapZodType(value);
     value = info.zodType;

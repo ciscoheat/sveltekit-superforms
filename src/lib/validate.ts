@@ -6,10 +6,14 @@ import {
   type Validation,
   type ZodValidation,
   type UnwrapEffects
-} from '../index.js';
-import { entityData, unwrapZodType, valueOrDefault } from './entity.js';
+} from './index.js';
+import {
+  entityData,
+  unwrapZodType,
+  valueOrDefault
+} from './schemaEntity.js';
 
-import { traversePath, type ZodTypeInfo } from '../entity.js';
+import { traversePath, type ZodTypeInfo } from './entity.js';
 
 import {
   z,
@@ -30,10 +34,10 @@ import {
   ZodEffects
 } from 'zod';
 
-import { mapErrors } from '../entity.js';
-import { clone } from '../utils.js';
+import { mapErrors } from './entity.js';
+import { clone } from './utils.js';
 
-export { defaultEntity } from './entity.js';
+export { defaultEntity } from './schemaEntity.js';
 
 export function message<T extends UnwrapEffects<AnyZodObject>, M>(
   form: Validation<T, M>,
@@ -98,7 +102,6 @@ export function setError<T extends UnwrapEffects<AnyZodObject>>(
 /**
  * @deprecated Use options.errors = false instead.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function noErrors<T extends AnyZodObject, M = any>(
   form: Validation<T, M>
 ): Validation<T, M> {

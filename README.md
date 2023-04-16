@@ -34,6 +34,7 @@ Superforms is a SvelteKit library that helps you with **server-side validation**
 - For advanced data structures, forget about the limitations of `FormData` - [Send your forms as devalued JSON](https://superforms.vercel.app/concepts/nested-data), transparently.
 - Generates [default form values](https://superforms.vercel.app/default-values) from validation schemas.
 - Support for [nested data structures](https://superforms.vercel.app/concepts/nested-data), [snapshots](https://superforms.vercel.app/concepts/snapshots) and [multiple forms](https://superforms.vercel.app/concepts/multiple-forms) on the same page.
+- Works both on the server and with [single-page applications](https://superforms.vercel.app/concepts/spa) (SPA)!
 - [Proxy objects](https://superforms.vercel.app/concepts/proxy-objects) for handling data conversions to string and back again.
 - [Client-side validators](https://superforms.vercel.app/concepts/client-validation) for immediate user feedback.
 - Provide submit state feedback with three [auto-updating timers](https://superforms.vercel.app/concepts/timers), based on human perception research.

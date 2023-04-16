@@ -37,7 +37,7 @@ import {
 import { mapErrors } from './entity.js';
 import { clone } from './utils.js';
 
-export { defaultEntity } from './schemaEntity.js';
+export { defaultData } from './schemaEntity.js';
 
 export function message<T extends UnwrapEffects<AnyZodObject>, M>(
   form: Validation<T, M>,
@@ -97,15 +97,6 @@ export function setError<T extends UnwrapEffects<AnyZodObject>>(
 
   form.valid = false;
   return fail(options.status ?? 400, { form });
-}
-
-/**
- * @deprecated Use options.errors = false instead.
- */
-export function noErrors<T extends AnyZodObject, M = any>(
-  form: Validation<T, M>
-): Validation<T, M> {
-  return { ...form, errors: {} };
 }
 
 function formDataToValidation<T extends AnyZodObject>(

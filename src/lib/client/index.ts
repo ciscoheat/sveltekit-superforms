@@ -60,7 +60,13 @@ export {
   formFieldProxy
 } from './proxies.js';
 
-export { superValidate } from '../validate.js';
+export {
+  superValidate,
+  actionResult,
+  message,
+  setError,
+  defaultData
+} from '../validate.js';
 
 type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
+  //import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
-  //import { schema } from './schema';
+  import { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: PageData;
@@ -13,7 +13,8 @@
     onUpdate(event) {
       if ($page.url.searchParams.has('cancel')) event.cancel();
     },
-    //validators: schema,
+    validators: schema,
+    /*
     validators: {
       tags: {
         id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
@@ -21,6 +22,7 @@
           name.length < 2 ? 'Tags must be at least two characters' : null
       }
     },
+    */
     flashMessage: {
       module: flashModule,
       onError({ result, message }) {

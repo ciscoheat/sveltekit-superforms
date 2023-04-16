@@ -110,7 +110,7 @@ export function entityData<T extends AnyZodObject>(schema: T) {
   if (cached) return cached;
 
   const typeInfos = schemaInfo(schema);
-  const defaultEnt = defaultEntity(schema);
+  const defaultEnt = defaultData(schema);
   const metaData = meta(schema);
   const entity: Entity<T> = {
     typeInfo: typeInfos,
@@ -175,7 +175,7 @@ export function valueOrDefault(
     // Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
     //if (zodType instanceof ZodDate) return new Date(NaN);
     if (zodType instanceof ZodArray) return [];
-    if (zodType instanceof ZodObject) return defaultEntity(zodType);
+    if (zodType instanceof ZodObject) return defaultData(zodType);
     if (zodType instanceof ZodRecord) return {};
     if (zodType instanceof ZodBigInt) return BigInt(0);
     if (zodType instanceof ZodSymbol) return Symbol();
@@ -188,9 +188,7 @@ export function valueOrDefault(
  * Returns the default values for a zod validation schema.
  * The main gotcha is that undefined values are changed to null if the field is nullable.
  */
-export function defaultEntity<T extends AnyZodObject>(
-  schema: T
-): z.infer<T> {
+export function defaultData<T extends AnyZodObject>(schema: T): z.infer<T> {
   const fields = Object.keys(schema.keyof().Values);
 
   let output: Record<string, unknown> = {};
@@ -273,12 +271,12 @@ function constraints<T extends AnyZodObject>(
     return Object.keys(output).length > 0 ? output : undefined;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function mapField(key: string, value: ZodTypeAny): any {
     const info = unwrapZodType(value);
     value = info.zodType;
     if (value instanceof ZodArray) {
       return mapField(key, value._def.type);
-      /*_constraints: constraint(key, value, info)*/
     } else if (value instanceof ZodObject) {
       return constraints(value);
     } else {

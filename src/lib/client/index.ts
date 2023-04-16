@@ -114,6 +114,7 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   validators:
+    | false
     | Validators<UnwrapEffects<T>>
     | T
     | ZodEffects<T>
@@ -395,6 +396,12 @@ export function superForm<
     throw new SuperFormError(
       'A non-validation object was passed to superForm. ' +
         "Check what's passed to its first parameter (null/undefined is allowed)."
+    );
+  }
+
+  if (options.SPA && options.validators === undefined) {
+    console.warn(
+      'No validators set for Superform in SPA mode. Add them to the validators option, or set it to false to disable this warning.'
     );
   }
 

@@ -12,8 +12,12 @@
   const { form, errors, enhance, message } = superForm(data.form, {
     SPA: true,
     dataType: 'json',
-    onUpdate(event) {
-      if ($page.url.searchParams.has('cancel')) event.cancel();
+    onUpdate({ form, cancel }) {
+      if ($page.url.searchParams.has('cancel')) cancel();
+      else if (form.valid) {
+        form.message = 'Successful!';
+        form.data.random = String(Math.random()).slice(2);
+      }
     },
     onUpdated({ form }) {
       console.log('onUpdated, valid:', form.valid);

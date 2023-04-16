@@ -94,7 +94,7 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated: (event: {
-    form: Validation<T, M>;
+    form: Readonly<Validation<T, M>>;
   }) => MaybePromise<unknown | void>;
   onError:
     | 'apply'
@@ -157,7 +157,12 @@ const defaultFormOptions = {
   onResult: undefined,
   onUpdate: undefined,
   onUpdated: undefined,
-  onError: undefined,
+  onError: (event: { result: { error: unknown } }) => {
+    console.warn(
+      'Unhandled Superform error, use onError event to handle it:',
+      event.result.error
+    );
+  },
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',

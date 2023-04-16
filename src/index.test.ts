@@ -1,9 +1,4 @@
-import {
-  noErrors,
-  setError,
-  superValidate,
-  defaultEntity
-} from '$lib/server';
+import { setError, superValidate, defaultData } from '$lib/server';
 import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
@@ -170,7 +165,7 @@ test('Nullable values', async () => {
     name: z.string().nullable()
   });
 
-  const output = defaultEntity(schema);
+  const output = defaultData(schema);
   expect(output.scopeId).equals(0);
   expect(output.name).equals(null);
 
@@ -186,7 +181,7 @@ test('Nullable values', async () => {
   expect(output4.data.name).toEqual('Test7');
 
   // If null is passed in and all fields have defaults, return them
-  const output2 = defaultEntity(
+  const output2 = defaultData(
     schema.extend({ scopeId: schema.shape.scopeId.default(10) })
   );
   expect(output2.scopeId).toEqual(10);
@@ -597,13 +592,6 @@ describe('Errors', async () => {
     expect(Object.keys(output.errors).length).toEqual(1);
     expect(output.data.scopeId).toEqual(0);
     expect(output.data.name).toEqual('abc');
-
-    const cleared = noErrors(output);
-    assert(!cleared.valid);
-    expect(cleared.empty).toEqual(false);
-    expect(cleared.errors).toStrictEqual({});
-    expect(cleared.data.scopeId).toEqual(output.data.scopeId);
-    expect(cleared.data.name).toEqual(output.data.name);
   });
 
   test('AllErrors', async () => {

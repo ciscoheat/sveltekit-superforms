@@ -261,11 +261,7 @@ export async function superValidate<
   schema?: T | SuperValidateOptions,
   options?: SuperValidateOptions
 ): Promise<Validation<UnwrapEffects<T>, M>> {
-  if (
-    data &&
-    (data.constructor.name === 'ZodObject' ||
-      data.constructor.name === 'ZodEffects')
-  ) {
+  if (data && typeof data === 'object' && 'safeParseAsync' in data) {
     options = schema as SuperValidateOptions | undefined;
     schema = data as T;
     data = null;

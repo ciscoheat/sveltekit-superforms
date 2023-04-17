@@ -1091,10 +1091,7 @@ function formEnhance<T extends AnyZodObject, M>(
         let valid: boolean;
         let clientErrors: ValidationErrors<T> = {};
 
-        if (
-          options.validators.constructor.name == 'ZodObject' ||
-          options.validators.constructor.name == 'ZodEffects'
-        ) {
+        if ('safeParseAsync' in options.validators) {
           // Zod validator
           const validator = options.validators as AnyZodObject;
           const result = await validator.safeParseAsync(checkData);

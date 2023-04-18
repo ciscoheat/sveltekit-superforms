@@ -170,3 +170,61 @@ export async function traversePaths<
     }
   }
 }
+
+/**
+ * Compare two objects and return the differences as paths.
+ */
+export function comparePaths(
+  first: unknown,
+  second: unknown,
+  path: string[] = [],
+  diffPaths: string[][] = []
+): string[][] {
+  if (
+    first !== null &&
+    second !== null &&
+    typeof first === 'object' &&
+    typeof second === 'object'
+  ) {
+    if (first instanceof Date) {
+      if (second instanceof Date && first.getTime() != second.getTime()) {
+        diffPaths.push(path);
+      }
+    } else {
+      for (const prop in first) {
+        comparePaths(
+          first[prop as keyof object],
+          second[prop as keyof object],
+          path.concat([prop]),
+          diffPaths
+        );
+      }
+    }
+  } else if (first !== second) {
+    diffPaths.push(path);
+  }
+
+  return diffPaths;
+}
+
+export function setPaths(
+  obj: Record<string, unknown>,
+  paths: string[][],
+  value: unknown
+) {
+  for (const path of paths) {
+    const leaf = traversePath(
+      obj,
+      path as FieldPath<typeof obj>,
+      ({ parent, key, value }) => {
+        if (value === undefined || typeof value !== 'object') {
+          // If a previous check tainted the node, but the search goes deeper,
+          // so it needs to be replaced with a (parent) node
+          parent[key] = {};
+        }
+        return parent[key];
+      }
+    );
+    if (leaf) leaf.parent[leaf.key] = value;
+  }
+}

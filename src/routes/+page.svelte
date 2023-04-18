@@ -17,7 +17,8 @@
     delayed,
     reset,
     constraints,
-    fields
+    fields,
+    tainted
   } = superForm(data.form, {
     dataType: 'json',
     async onUpdate({ form }) {
@@ -59,7 +60,7 @@
   let updates: string[] = [];
 </script>
 
-<SuperDebug data={{ $form, $staticform }} />
+<SuperDebug data={{ $form, $tainted }} />
 
 {#if $message}
   <h4 class:error={$message.type == 'error'} class="message">

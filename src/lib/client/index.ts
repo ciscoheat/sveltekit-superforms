@@ -37,7 +37,9 @@ import {
   traversePath,
   findErrors,
   traversePaths,
-  traversePathAsync
+  traversePathAsync,
+  comparePaths,
+  setPaths
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
@@ -525,85 +527,29 @@ export function superForm<
     onError: options.onError ? [options.onError] : []
   };
 
-  async function checkTainted(
-    newObj: unknown,
-    compareAgainst: unknown,
-    path: string[] = []
-  ): Promise<Record<string, unknown> | undefined> {
-    if (
-      newObj !== null &&
-      compareAgainst !== null &&
-      typeof newObj === 'object' &&
-      typeof compareAgainst === 'object'
-    ) {
-      /*
-        // Date comparison is a mess, since it can come from the server as undefined,
-        // or be Invalid Date from a proxy.
-        if (
-          (f[key] instanceof Date || previousForm[key] instanceof Date) &&
-          ((isNaN(f[key]) && isNaN(previousForm[key])) ||
-            f[key]?.getTime() == previousForm[key]?.getTime())
-        ) {
-          continue;
-        }
-      */
+  function checkTainted(newObj: unknown, compareAgainst: unknown) {
+    const paths = comparePaths(newObj, compareAgainst);
 
-      if (newObj instanceof Date) {
-        if (
-          compareAgainst instanceof Date &&
-          newObj.getTime() == compareAgainst.getTime()
-        ) {
-          return;
-        }
-      } else {
-        for (const prop in newObj) {
-          await checkTainted(
-            newObj[prop as keyof object],
-            compareAgainst[prop as keyof object],
-            path.concat([prop])
-          );
-        }
-        return;
-      }
-    } else if (newObj === compareAgainst) {
-      return;
-    }
-
-    // At this point, the field is modified.
-    Tainted.update((tainted) => {
-      if (!tainted) tainted = {};
-      const leaf = traversePath(
-        tainted,
-        path as FieldPath<typeof tainted>,
-        ({ parent, key, value }) => {
-          if (value === undefined) parent[key] = {};
-          else if (value === true) {
-            // If a previous check tainted the node, but the search goes deeper,
-            // so it needs to be replaced with a (parent) node
-            parent[key] = {};
-          }
-          return parent[key];
-        }
-      );
-      if (leaf) leaf.parent[leaf.key] = true;
-      return tainted;
-    });
-
-    /*
-    console.log(
-      '🚀 ~ file: index.ts:460 ~ Tainted.update ~ Tainted:',
-      path,
-      newObj,
-      get(Tainted)
-    );
-    */
-
-    if (options.defaultValidator == 'clear') {
-      Errors.update((errors) => {
-        const leaf = traversePath(errors, path as FieldPath<typeof errors>);
-        if (leaf) delete leaf.parent[leaf.key];
-        return errors;
+    if (paths.length) {
+      Tainted.update((tainted) => {
+        //console.log('Update tainted:', paths, newObj, compareAgainst);
+        if (!tainted) tainted = {};
+        setPaths(tainted, paths, true);
+        return tainted;
       });
+
+      if (options.defaultValidator == 'clear') {
+        for (const path of paths) {
+          Errors.update((errors) => {
+            const leaf = traversePath(
+              errors,
+              path as FieldPath<typeof errors>
+            );
+            if (leaf) delete leaf.parent[leaf.key];
+            return errors;
+          });
+        }
+      }
     }
   }
 
@@ -641,16 +587,10 @@ export function superForm<
 
     unsubscriptions.push(
       Data.subscribe(async (data) => {
-        //console.log('🚀 ~ Data.subscribe ~ hasNewData:', formId, hasNewData);
-        if (!checkedTaintedFormState) {
-          checkedTaintedFormState = initialForm.data;
-          return;
+        if (!get(Submitting) && checkedTaintedFormState) {
+          checkTainted(data, checkedTaintedFormState);
         }
-
-        if (!get(Submitting)) {
-          await checkTainted(data, checkedTaintedFormState);
-          checkedTaintedFormState = clone(data);
-        }
+        checkedTaintedFormState = clone(data);
       })
     );
 

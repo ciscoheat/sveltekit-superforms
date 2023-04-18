@@ -27,6 +27,7 @@ import {
   numberProxy
 } from '$lib/client';
 import type { FormPath } from '$lib';
+import { comparePaths, setPaths } from '$lib/entity';
 
 const user = z.object({
   id: z.number().int().positive(),
@@ -321,5 +322,48 @@ describe('Proxies', () => {
     proxy.set(d.toISOString());
 
     expect(get(form).date).toEqual(d);
+  });
+});
+
+test('Compare paths', () => {
+  const obj1 = {
+    name: 'Obj1',
+    tags: [{ name: 'tag1' }, { name: 'tag2' }],
+    deep: {
+      test: true
+    }
+  };
+
+  const obj2 = {
+    name: 'Obj2',
+    tags: [{ name: 'tag1' }, { name: 'tag4' }]
+  };
+
+  expect(comparePaths(obj1, obj1)).toStrictEqual([]);
+  expect(comparePaths(obj1, structuredClone(obj1))).toStrictEqual([]);
+
+  expect(comparePaths(obj1, obj2)).toStrictEqual([
+    ['name'],
+    ['tags', '1', 'name'],
+    ['deep']
+  ]);
+});
+
+test('Set paths', () => {
+  const obj1 = {
+    tags: {
+      '3': true
+    },
+    deep: {
+      test: true
+    }
+  };
+
+  setPaths(obj1, [['name'], ['tags', '1']], true);
+
+  expect(obj1).toStrictEqual({
+    tags: { '1': true, '3': true },
+    deep: { test: true },
+    name: true
   });
 });

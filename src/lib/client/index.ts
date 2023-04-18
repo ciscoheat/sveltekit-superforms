@@ -849,9 +849,14 @@ async function validateField<T extends AnyZodObject, M>(
 
     const validator = traversePath(
       validators as AnyZodObject,
-      validationPath as FieldPath<AnyZodObject>,
-      (data) => {}
+      validationPath as FieldPath<AnyZodObject>
     );
+
+    if (!validator)
+      throw new SuperFormError('No Superforms validator found: ' + path);
+
+    const result = validator.value(dataToValidate.value);
+    setError(result ?? undefined);
   }
 }
 

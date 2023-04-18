@@ -1,4 +1,3 @@
-import type { Actions, PageServerLoad } from './$types';
 import { schema } from './schema';
 import { superValidate } from '$lib/server';
 import { fail } from '@sveltejs/kit';
@@ -14,12 +13,16 @@ const defaultData = {
   redirect: false
 };
 
-export const load = (async () => {
+export const load = async () => {
   const form = await superValidate(defaultData, schema, {
     errors: false
   });
-  return { form };
-}) satisfies PageServerLoad;
+  const form2 = await superValidate(defaultData, schema, {
+    errors: false
+  });
+
+  return { form, form2 };
+};
 
 export const actions = {
   default: async (event) => {
@@ -40,4 +43,4 @@ export const actions = {
     form.data = defaultData;
     return { form };
   }
-} satisfies Actions;
+};

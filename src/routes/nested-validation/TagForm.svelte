@@ -1,19 +1,40 @@
 <script lang="ts">
+  import type { Validation, UnwrapEffects } from '$lib';
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
+  import type { FormOptions } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import type { PageData } from './$types';
-  import { schema } from './schema';
+  import type { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
 
-  export let data: PageData;
+  export let data: Validation<typeof schema>;
+  export let validator: 'zod' | 'superforms';
 
-  const { form, errors, enhance, message } = superForm(data.form, {
+  const superFormValidator: FormOptions<
+    typeof schema,
+    unknown
+  >['validators'] = {
+    tags: {
+      id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
+      name: (name) =>
+        name.length < 2 ? 'Tags must be at least two characters' : null
+    }
+  };
+
+  const { form, errors, enhance, message, tainted } = superForm(data, {
+    taintedMessage: null,
     dataType: 'json',
     onUpdate(event) {
       if ($page.url.searchParams.has('cancel')) event.cancel();
     },
-    validators: schema,
+    //validators: schema,
+    validators: {
+      tags: {
+        id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
+        name: (name) =>
+          name.length < 2 ? 'Tags must be at least two characters' : null
+      }
+    },
     flashMessage: {
       module: flashModule,
       onError({ result, message }) {
@@ -26,11 +47,10 @@
   });
 </script>
 
-<h2>Nested forms</h2>
-
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
+  <small>{validator} validation</small>
   {#each $form.tags as _, i}
     <div>
       <input
@@ -53,10 +73,6 @@
     </div>
   {/each}
   <button>Submit</button>
-  <span
-    ><input type="checkbox" name="redirect" bind:checked={$form.redirect} /> Redirect
-    on success</span
-  >
 </form>
 
 <style lang="scss">

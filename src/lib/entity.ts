@@ -103,6 +103,18 @@ export async function traversePathAsync<T extends object>(
   };
 }
 
+export function pathExists<T extends object>(
+  obj: T,
+  path: string[],
+  value?: unknown
+): PathData | undefined {
+  const exists = traversePath(obj, path as FieldPath<T>);
+  if (!exists) return undefined;
+
+  if (value === undefined) return exists;
+  return exists.value === value ? exists : undefined;
+}
+
 export function traversePath<T extends object>(
   obj: T,
   path: FieldPath<T>,

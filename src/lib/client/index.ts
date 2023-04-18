@@ -39,7 +39,8 @@ import {
   traversePathsAsync,
   traversePathAsync,
   comparePaths,
-  setPaths
+  setPaths,
+  pathExists
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
@@ -527,8 +528,12 @@ export function superForm<
     onError: options.onError ? [options.onError] : []
   };
 
+  const lastChanges = writable<string[][]>([]);
+
   function checkTainted(newObj: unknown, compareAgainst: unknown) {
     const paths = comparePaths(newObj, compareAgainst);
+
+    lastChanges.set(paths);
 
     if (paths.length) {
       Tainted.update((tainted) => {
@@ -731,7 +736,8 @@ export function superForm<
         FormId,
         Meta,
         Constraints,
-        Tainted
+        Tainted,
+        lastChanges
       );
     },
 
@@ -778,40 +784,49 @@ function formEnhance<T extends AnyZodObject, M>(
   id: Readable<string | undefined>,
   meta: Readable<Entity<T>['meta'] | undefined>,
   constraints: Readable<Entity<T>['constraints']>,
-  tainted: Writable<TaintedFields<T> | undefined>
+  tainted: Writable<TaintedFields<T> | undefined>,
+  lastChanges: Writable<string[][]>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
 
+  // Using this type in the function argument causes a type recursion error.
+  const errors = errs as Writable<ValidationErrors<T>>;
+
+  function equal(one: string[][], other: string[][]) {
+    return (
+      one.map((v) => v.join()).join() == other.map((v) => v.join()).join()
+    );
+  }
+
   // Add blur event, to check tainted
-  let beforeBlur = {};
-  function checkBlur(e: FocusEvent) {
-    const currentTainted = get(tainted) ?? {};
-    const changes = comparePaths(currentTainted, beforeBlur);
-    if (changes.length) {
-      console.log('🚀 ~ file: index.ts:790 ~ checkBlur ~ changes:', changes);
-      beforeBlur = clone(currentTainted);
-    }
+  // Add input event, to check tainted
+  let lastBlur = get(lastChanges);
+  function checkBlur(e: Event) {
+    setTimeout(() => {
+      const newChanges = get(lastChanges);
+      if (equal(newChanges, lastBlur)) return;
+      lastBlur = newChanges;
+
+      for (const change of newChanges) {
+        // TODO: Validate change path (blur)
+      }
+    });
   }
   formEl.addEventListener('focusout', checkBlur);
 
   // Add input event, to check tainted
-  let beforeInput = {};
-  function checkInput(e: Event) {
-    const currentTainted = get(tainted) ?? {};
-    const changes = comparePaths(currentTainted, beforeInput);
-    if (changes.length) {
-      console.log(
-        '🚀 ~ file: index.ts:790 ~ checkInput ~ changes:',
-        changes
-      );
-      beforeInput = clone(currentTainted);
-    }
+  function checkInput() {
+    setTimeout(() => {
+      for (const change of get(lastChanges)) {
+        const errorNode = pathExists(get(errors), change);
+        if (errorNode) {
+          // TODO: Validate change path (input)
+        }
+      }
+    });
   }
   formEl.addEventListener('input', checkInput);
-
-  // Using this type in the function argument causes a type recursion error.
-  const errors = errs as Writable<ValidationErrors<T>>;
 
   type ErrorPath = FieldPath<ValidationErrors<T>>;
 
@@ -880,6 +895,7 @@ function formEnhance<T extends AnyZodObject, M>(
     );
     ErrorTextEvents.clear();
     formEl.removeEventListener('focusout', checkBlur);
+    formEl.removeEventListener('input', checkInput);
   });
 
   type ValidationResponse<

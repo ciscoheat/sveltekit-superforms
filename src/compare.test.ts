@@ -14,7 +14,7 @@ import {
   type AnyZodObject,
   type ZodTypeAny
 } from 'zod';
-import { traversePath, traversePathAsync } from '$lib/entity';
+import { pathExists, traversePath, traversePathAsync } from '$lib/entity';
 import { get, writable } from 'svelte/store';
 import { mapErrors } from '$lib/entity';
 import { unwrapZodType } from '$lib/server/entity';
@@ -365,5 +365,23 @@ test('Set paths', () => {
     tags: { '1': true, '3': true },
     deep: { test: true },
     name: true
+  });
+});
+
+test.only('Check path existence', () => {
+  const errors = {
+    tags: {
+      '0': {
+        id: true
+      }
+    }
+  };
+
+  expect(pathExists({}, ['tags', '0', 'id'])).toBeUndefined();
+
+  expect(pathExists(errors, ['tags', '0', 'id'])).toStrictEqual({
+    parent: errors.tags[0],
+    key: 'id',
+    value: true
   });
 });

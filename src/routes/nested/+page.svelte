@@ -1,14 +1,14 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
-  //import SuperDebug from '$lib/client/SuperDebug.svelte';
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
   import { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: PageData;
 
-  const { form, errors, enhance, message } = superForm(data.form, {
+  const { form, errors, enhance, message, tainted } = superForm(data.form, {
     dataType: 'json',
     onUpdate(event) {
       if ($page.url.searchParams.has('cancel')) event.cancel();
@@ -33,9 +33,9 @@
       }
     }
   });
-
-  // <SuperDebug data={{ $form, $errors }} />
 </script>
+
+<SuperDebug data={{ $errors, $tainted }} />
 
 <h2>Nested forms</h2>
 

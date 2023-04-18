@@ -36,7 +36,7 @@ import {
   mapErrors,
   traversePath,
   findErrors,
-  traversePaths,
+  traversePathsAsync,
   traversePathAsync,
   comparePaths,
   setPaths
@@ -730,7 +730,8 @@ export function superForm<
         formEvents,
         FormId,
         Meta,
-        Constraints
+        Constraints,
+        Tainted
       );
     },
 
@@ -776,10 +777,38 @@ function formEnhance<T extends AnyZodObject, M>(
   formEvents: SuperFormEventList<T, M>,
   id: Readable<string | undefined>,
   meta: Readable<Entity<T>['meta'] | undefined>,
-  constraints: Readable<Entity<T>['constraints']>
+  constraints: Readable<Entity<T>['constraints']>,
+  tainted: Writable<TaintedFields<T> | undefined>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
+
+  // Add blur event, to check tainted
+  let beforeBlur = {};
+  function checkBlur(e: FocusEvent) {
+    const currentTainted = get(tainted) ?? {};
+    const changes = comparePaths(currentTainted, beforeBlur);
+    if (changes.length) {
+      console.log('🚀 ~ file: index.ts:790 ~ checkBlur ~ changes:', changes);
+      beforeBlur = clone(currentTainted);
+    }
+  }
+  formEl.addEventListener('focusout', checkBlur);
+
+  // Add input event, to check tainted
+  let beforeInput = {};
+  function checkInput(e: Event) {
+    const currentTainted = get(tainted) ?? {};
+    const changes = comparePaths(currentTainted, beforeInput);
+    if (changes.length) {
+      console.log(
+        '🚀 ~ file: index.ts:790 ~ checkInput ~ changes:',
+        changes
+      );
+      beforeInput = clone(currentTainted);
+    }
+  }
+  formEl.addEventListener('input', checkInput);
 
   // Using this type in the function argument causes a type recursion error.
   const errors = errs as Writable<ValidationErrors<T>>;
@@ -850,6 +879,7 @@ function formEnhance<T extends AnyZodObject, M>(
       ErrorTextEvents_removeErrorTextListeners(formEl)
     );
     ErrorTextEvents.clear();
+    formEl.removeEventListener('focusout', checkBlur);
   });
 
   type ValidationResponse<
@@ -1048,7 +1078,7 @@ function formEnhance<T extends AnyZodObject, M>(
           const validator = options.validators as Validators<T>;
           valid = true;
 
-          await traversePaths(checkData, async ({ value, path }) => {
+          await traversePathsAsync(checkData, async ({ value, path }) => {
             // Filter out array indices, the validator structure doesn't contain these.
             const validationPath = path.filter((p) => isNaN(parseInt(p)));
             const maybeValidator = await traversePathAsync(

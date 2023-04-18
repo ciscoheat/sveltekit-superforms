@@ -66,6 +66,7 @@ type PathData = {
 
 type FullPathData = PathData & {
   path: string[];
+  isLeaf: boolean;
 };
 
 export async function traversePathAsync<T extends object>(
@@ -138,7 +139,35 @@ export function traversePath<T extends object>(
 
 type TraverseStatus = 'abort' | 'skip' | unknown | void;
 
-export async function traversePaths<
+export function traversePaths<T extends object, Path extends FieldPath<T>>(
+  parent: T,
+  modifier: (data: FullPathData) => TraverseStatus,
+  path: Path | [] = []
+): TraverseStatus {
+  for (const key in parent) {
+    const value = parent[key] as any;
+    const isLeaf = value === null || typeof value !== 'object';
+
+    const pathData: FullPathData = {
+      parent,
+      key,
+      value,
+      path: path.map(String).concat([key]),
+      isLeaf
+    };
+
+    const status = modifier(pathData);
+
+    if (status === 'abort') return status;
+    else if (status === 'skip') break;
+    else if (!isLeaf) {
+      const status = traversePaths(value, modifier, pathData.path as any);
+      if (status === 'abort') return status;
+    }
+  }
+}
+
+export async function traversePathsAsync<
   T extends object,
   Path extends FieldPath<T>
 >(
@@ -153,15 +182,16 @@ export async function traversePaths<
       parent,
       key,
       value,
-      path: path.map(String).concat([key])
+      path: path.map(String).concat([key]),
+      isLeaf: value === null || typeof value !== 'object'
     };
 
     const status = await modifier(pathData);
 
     if (status === 'abort') return status;
-    else if (status === 'skip') continue;
+    else if (status === 'skip') break;
     else if (typeof value === 'object') {
-      const status = await traversePaths(
+      const status = await traversePathsAsync(
         value,
         modifier,
         pathData.path as any
@@ -174,35 +204,27 @@ export async function traversePaths<
 /**
  * Compare two objects and return the differences as paths.
  */
-export function comparePaths(
-  first: unknown,
-  second: unknown,
-  path: string[] = [],
-  diffPaths: string[][] = []
-): string[][] {
-  if (
-    first !== null &&
-    second !== null &&
-    typeof first === 'object' &&
-    typeof second === 'object'
-  ) {
-    if (first instanceof Date) {
-      if (second instanceof Date && first.getTime() != second.getTime()) {
-        diffPaths.push(path);
-      }
-    } else {
-      for (const prop in first) {
-        comparePaths(
-          first[prop as keyof object],
-          second[prop as keyof object],
-          path.concat([prop]),
-          diffPaths
-        );
+export function comparePaths(newObj: unknown, oldObj: unknown) {
+  const diffPaths: string[][] = [];
+  traversePaths(newObj as object, (data) => {
+    if (data.isLeaf) {
+      const exists = traversePath(
+        oldObj as object,
+        data.path as FieldPath<object>
+      );
+      if (!exists) {
+        diffPaths.push(data.path);
+      } else if (
+        data.value instanceof Date &&
+        exists.value instanceof Date &&
+        data.value.getTime() != exists.value.getTime()
+      ) {
+        diffPaths.push(data.path);
+      } else if (data.value !== exists.value) {
+        diffPaths.push(data.path);
       }
     }
-  } else if (first !== second) {
-    diffPaths.push(path);
-  }
+  });
 
   return diffPaths;
 }

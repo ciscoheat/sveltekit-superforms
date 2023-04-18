@@ -78,7 +78,7 @@ type FormUpdate = (
 ) => Promise<void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
+export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;
   applyAction: boolean;
   invalidateAll: boolean;
@@ -100,11 +100,11 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdate: (event: {
-    form: Validation<T, M>;
+    form: Validation<UnwrapEffects<T>, M>;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated: (event: {
-    form: Readonly<Validation<T, M>>;
+    form: Readonly<Validation<UnwrapEffects<T>, M>>;
   }) => MaybePromise<unknown | void>;
   onError:
     | 'apply'
@@ -114,7 +114,7 @@ export type FormOptions<T extends UnwrapEffects<AnyZodObject>, M> = Partial<{
           status?: number;
           error: App.Error;
         };
-        message: Writable<Validation<T, M>['message']>;
+        message: Writable<Validation<UnwrapEffects<T>, M>['message']>;
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   validators:
@@ -896,14 +896,14 @@ function formEnhance<T extends AnyZodObject, M>(
 
   // Add blur event, to check tainted
   let lastBlur: string[][] = [];
-  function checkBlur(e: Event) {
+  function checkBlur() {
     setTimeout(() => {
       const newChanges = get(lastChanges);
       if (equal(newChanges, lastBlur)) return;
       lastBlur = newChanges;
 
       for (const change of newChanges) {
-        console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
+        //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
         validateField(change, options.validators, get(data), errors);
       }
     });
@@ -922,7 +922,7 @@ function formEnhance<T extends AnyZodObject, M>(
         const hasError = errorContent && pathExists(errorContent, change);
 
         if (isTainted && hasError) {
-          console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
+          //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
           validateField(change, options.validators, get(data), errors);
         }
       }

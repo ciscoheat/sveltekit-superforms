@@ -109,18 +109,18 @@ export type InputConstraints<T extends AnyZodObject> = SuperStruct<
 >;
 
 export type Validation<
-  T extends AnyZodObject,
+  T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
 > = {
   valid: boolean;
-  errors: ValidationErrors<T>;
+  errors: ValidationErrors<UnwrapEffects<T>>;
   data: z.infer<T>;
   empty: boolean;
-  constraints: Entity<T>['constraints'];
+  constraints: Entity<UnwrapEffects<T>>['constraints'];
   message?: M;
   id?: string;
-  meta?: Entity<T>['meta'];
+  meta?: Entity<UnwrapEffects<T>>['meta'];
 };
 
 export type FormField<

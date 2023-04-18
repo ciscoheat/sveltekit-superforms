@@ -765,6 +765,96 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
   return options.syncFlashMessage;
 }
 
+async function validateField<T extends AnyZodObject, M>(
+  path: string[],
+  validators: FormOptions<T, M>['validators'],
+  data: z.infer<UnwrapEffects<T>>,
+  errors: SuperForm<T, M>['errors']
+) {
+  if (typeof validators !== 'object') return;
+
+  const dataToValidate = traversePath(data, path as FieldPath<typeof data>);
+
+  if (!dataToValidate)
+    throw new SuperFormError('Validation data not found: ' + path);
+
+  // Remove array indices, they don't exist in validators.
+  const validationPath = path.filter((p) => isNaN(parseInt(p)));
+
+  function setError(errorMsgs: undefined | string | string[]) {
+    if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
+    errors.update((errors) => {
+      const error = traversePath(
+        errors,
+        path as FieldPath<typeof errors>,
+        (data) => {
+          if (data.value === undefined) {
+            data.parent[data.key] = {};
+            return data.parent[data.key];
+          } else {
+            return data.value;
+          }
+        }
+      );
+
+      if (!error)
+        throw new SuperFormError('Error path could not be created: ' + path);
+
+      error.parent[error.key] = errorMsgs;
+      return errors;
+    });
+  }
+
+  function extractValidator(data: any, key: string) {
+    const objectShape = data?._def?.schema?.shape;
+    if (objectShape) return objectShape[key];
+
+    const arrayShape = data?.element?.shape;
+    if (arrayShape) return arrayShape[key];
+
+    throw new SuperFormError(
+      'Invalid Zod validator for ' + key + ': ' + data
+    );
+  }
+
+  if ('safeParseAsync' in validators) {
+    // Zod validator
+
+    const validator = traversePath(
+      validators as AnyZodObject,
+      validationPath as FieldPath<AnyZodObject>,
+      (data) => {
+        return extractValidator(data.parent, data.key);
+      }
+    );
+
+    if (!validator)
+      throw new SuperFormError('No Zod validator found: ' + path);
+
+    const result = await extractValidator(
+      validator.parent,
+      validator.key
+    ).safeParseAsync(dataToValidate.value);
+
+    if (!result.success) {
+      const msgs = mapErrors<T>(result.error.format());
+      setError(msgs._errors);
+    } else {
+      setError(undefined);
+    }
+  } else {
+    // SuperForms validator
+
+    const validationPath = path.filter((p) => isNaN(parseInt(p)));
+
+    const validator = traversePath(
+      validators as AnyZodObject,
+      validationPath as FieldPath<AnyZodObject>,
+      (data) => {}
+    );
+  }
+}
+
 /**
  * Custom use:enhance version. Flash message support, friendly error messages, for usage with initializeForm.
  * @param formEl Form element from the use:formEnhance default parameter.
@@ -800,8 +890,7 @@ function formEnhance<T extends AnyZodObject, M>(
   }
 
   // Add blur event, to check tainted
-  // Add input event, to check tainted
-  let lastBlur = get(lastChanges);
+  let lastBlur: string[][] = [];
   function checkBlur(e: Event) {
     setTimeout(() => {
       const newChanges = get(lastChanges);
@@ -809,7 +898,8 @@ function formEnhance<T extends AnyZodObject, M>(
       lastBlur = newChanges;
 
       for (const change of newChanges) {
-        // TODO: Validate change path (blur)
+        console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
+        validateField(change, options.validators, get(data), errors);
       }
     });
   }
@@ -819,9 +909,16 @@ function formEnhance<T extends AnyZodObject, M>(
   function checkInput() {
     setTimeout(() => {
       for (const change of get(lastChanges)) {
-        const errorNode = pathExists(get(errors), change);
-        if (errorNode) {
-          // TODO: Validate change path (input)
+        const taintedContent = get(tainted);
+        const isTainted =
+          taintedContent && pathExists(taintedContent, change, true);
+
+        const errorContent = get(errors);
+        const hasError = errorContent && pathExists(errorContent, change);
+
+        if (isTainted && hasError) {
+          console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
+          validateField(change, options.validators, get(data), errors);
         }
       }
     });

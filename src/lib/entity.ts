@@ -189,25 +189,22 @@ export async function traversePathsAsync<
 ): Promise<TraverseStatus> {
   for (const key in parent) {
     const value = parent[key] as any;
+    const isLeaf = value === null || typeof value !== 'object';
 
     const pathData: FullPathData = {
       parent,
       key,
       value,
       path: path.map(String).concat([key]),
-      isLeaf: value === null || typeof value !== 'object'
+      isLeaf
     };
 
     const status = await modifier(pathData);
 
     if (status === 'abort') return status;
     else if (status === 'skip') break;
-    else if (typeof value === 'object') {
-      const status = await traversePathsAsync(
-        value,
-        modifier,
-        pathData.path as any
-      );
+    else if (!isLeaf) {
+      const status = traversePaths(value, modifier, pathData.path as any);
       if (status === 'abort') return status;
     }
   }

@@ -9,6 +9,7 @@
   export let data: PageData;
 
   const { form, errors, enhance, message, tainted } = superForm(data.form, {
+    taintedMessage: null,
     dataType: 'json',
     onUpdate(event) {
       if ($page.url.searchParams.has('cancel')) event.cancel();
@@ -35,11 +36,7 @@
   });
 </script>
 
-<SuperDebug data={{ $errors, $tainted }} />
-
-<h2>Nested forms</h2>
-
-<a href="/">&lt; Back to start</a>
+<h2>Direct client-side validation</h2>
 
 {#if $message}<h4>{$message}</h4>{/if}
 
@@ -66,10 +63,6 @@
     </div>
   {/each}
   <button>Submit</button>
-  <span
-    ><input type="checkbox" name="redirect" bind:checked={$form.redirect} /> Redirect
-    on success</span
-  >
 </form>
 
 <style lang="scss">

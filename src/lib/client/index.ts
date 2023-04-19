@@ -930,44 +930,6 @@ function formEnhance<T extends AnyZodObject, M>(
   }
   formEl.addEventListener('input', checkInput);
 
-  type ErrorPath = FieldPath<ValidationErrors<T>>;
-
-  async function validate(
-    clientErrors: ValidationErrors<T>,
-    validator: Validator<unknown>,
-    value: unknown,
-    path: ErrorPath
-  ) {
-    function setError(
-      clientErrors: ValidationErrors<T>,
-      path: ErrorPath,
-      newErrors: string[] | null
-    ) {
-      const errorPath = traversePath(
-        clientErrors,
-        path,
-        ({ parent, key, value }) => {
-          if (value === undefined) parent[key] = {};
-          return parent[key];
-        }
-      );
-
-      if (errorPath) {
-        const { parent, key } = errorPath;
-        if (newErrors === null) delete parent[key];
-        else parent[key] = newErrors;
-      }
-    }
-
-    const errors = await validator(value);
-    setError(
-      clientErrors,
-      path,
-      typeof errors === 'string' ? [errors] : errors ?? null
-    );
-    return !errors;
-  }
-
   const ErrorTextEvents = new Set<HTMLFormElement>();
 
   function ErrorTextEvents_selectText(e: Event) {
@@ -1193,13 +1155,18 @@ function formEnhance<T extends AnyZodObject, M>(
         } else {
           // SuperForms validator
 
-          const validator = options.validators as Validators<T>;
           valid = true;
+
+          const validator = options.validators as Validators<T>;
+          const newErrors: {
+            path: string[];
+            errors: string[] | undefined;
+          }[] = [];
 
           await traversePathsAsync(checkData, async ({ value, path }) => {
             // Filter out array indices, the validator structure doesn't contain these.
             const validationPath = path.filter((p) => isNaN(parseInt(p)));
-            const maybeValidator = await traversePathAsync(
+            const maybeValidator = traversePath(
               validator,
               validationPath as FieldPath<typeof validator>
             );
@@ -1209,30 +1176,49 @@ function formEnhance<T extends AnyZodObject, M>(
 
               if (Array.isArray(value)) {
                 for (const key in value) {
-                  if (
-                    !(await validate(
-                      clientErrors,
-                      check,
-                      value[key],
-                      path.concat([key]) as FieldPath<typeof check>
-                    ))
-                  ) {
+                  const errors = await check(value[key]);
+                  if (errors) {
                     valid = false;
+                    newErrors.push({
+                      path: path.concat([key]),
+                      errors:
+                        typeof errors === 'string'
+                          ? [errors]
+                          : errors ?? undefined
+                    });
                   }
                 }
-                return;
-              } else if (
-                !(await validate(
-                  clientErrors,
-                  check,
-                  value,
-                  path as FieldPath<typeof check>
-                ))
-              ) {
-                valid = false;
+              } else {
+                const errors = await check(value);
+                if (errors) {
+                  valid = false;
+                  newErrors.push({
+                    path,
+                    errors:
+                      typeof errors === 'string'
+                        ? [errors]
+                        : errors ?? undefined
+                  });
+                }
               }
             }
           });
+
+          for (const { path, errors } of newErrors) {
+            const errorPath = traversePath(
+              clientErrors,
+              path as FieldPath<typeof clientErrors>,
+              ({ parent, key, value }) => {
+                if (value === undefined) parent[key] = {};
+                return parent[key];
+              }
+            );
+
+            if (errorPath) {
+              const { parent, key } = errorPath;
+              parent[key] = errors;
+            }
+          }
         }
 
         if (!valid) {

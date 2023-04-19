@@ -47,9 +47,10 @@
   });
 </script>
 
-{#if $message}<h4>{$message}</h4>{/if}
-
 <form method="POST" use:enhance>
+  {#if $message}<h4>{$message}</h4>{/if}
+  <input type="hidden" name="id" value={validator} />
+
   <small>{validator} validation</small>
   {#each $form.tags as _, i}
     <div>

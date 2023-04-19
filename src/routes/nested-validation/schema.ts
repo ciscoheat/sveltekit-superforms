@@ -7,7 +7,6 @@ export const schema = z
         id: z.number().int().min(3),
         name: z.string().min(2)
       })
-      .array(),
-    redirect: z.boolean()
+      .array()
   })
   .refine((data) => data);

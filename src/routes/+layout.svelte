@@ -34,9 +34,11 @@
   <a href="/url">URL</a> |
   <a href="/tainted">Tainted</a> |
   <a href="/proxies">Proxies</a> |
-  <a href="/properly-nested">Properly nested</a> |
+  <a href="/properly-nested">Properly nested</a>
+  <br />
   <a href="/files">Files</a> |
-  <a href="/spa">SPA</a>
+  <a href="/spa">SPA</a> |
+  <a href="/nested-validation">Client-side validation</a>
 </nav>
 
 <slot />

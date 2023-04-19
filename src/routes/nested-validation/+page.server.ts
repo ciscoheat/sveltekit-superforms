@@ -1,7 +1,6 @@
 import { schema } from './schema';
 import { superValidate } from '$lib/server';
 import { fail } from '@sveltejs/kit';
-import { redirect } from 'sveltekit-flash-message/server';
 
 const defaultData = {
   tags: [
@@ -9,38 +8,31 @@ const defaultData = {
     { id: 2, name: 'Bb' },
     { id: 3, name: 'Cc' },
     { id: 4, name: 'Dd' }
-  ],
-  redirect: false
+  ]
 };
 
 export const load = async () => {
   const form = await superValidate(defaultData, schema, {
-    errors: false
+    errors: false,
+    id: 'zod'
   });
   const form2 = await superValidate(defaultData, schema, {
-    errors: false
+    errors: false,
+    id: 'superforms'
   });
 
   return { form, form2 };
 };
 
 export const actions = {
-  default: async (event) => {
-    const form = await superValidate(event, schema);
+  default: async ({ request }) => {
+    const formData = await request.formData();
+    const form = await superValidate(formData, schema);
+    form.id = formData.get('id')?.toString();
 
     if (!form.valid) return fail(400, { form });
     form.message = 'It works';
 
-    if (form.data.redirect) {
-      throw redirect(
-        { type: 'success', message: 'It works (redirected)' },
-        event
-      );
-    }
-
-    // Send invalid data but no errors, to see if the
-    // server errors trumps the client-side validation.
-    form.data = defaultData;
     return { form };
   }
 };

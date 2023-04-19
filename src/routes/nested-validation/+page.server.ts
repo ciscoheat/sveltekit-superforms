@@ -30,6 +30,8 @@ export const actions = {
     const form = await superValidate(formData, schema);
     form.id = formData.get('id')?.toString();
 
+    console.log('POST', form);
+
     if (!form.valid) return fail(400, { form });
     form.message = 'It works';
 

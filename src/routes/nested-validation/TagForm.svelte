@@ -4,7 +4,7 @@
   import { superForm } from '$lib/client';
   import type { FormOptions } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import type { schema } from './schema';
+  import { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: Validation<typeof schema>;
@@ -27,14 +27,8 @@
     onUpdate(event) {
       if ($page.url.searchParams.has('cancel')) event.cancel();
     },
-    //validators: schema,
-    validators: {
-      tags: {
-        id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
-        name: (name) =>
-          name.length < 2 ? 'Tags must be at least two characters' : null
-      }
-    },
+    defaultValidator: validator == 'zod' ? 'keep' : 'clear',
+    validators: validator == 'zod' ? schema : superFormValidator,
     flashMessage: {
       module: flashModule,
       onError({ result, message }) {
@@ -50,8 +44,8 @@
 <form method="POST" use:enhance>
   {#if $message}<h4>{$message}</h4>{/if}
   <input type="hidden" name="id" value={validator} />
-
   <small>{validator} validation</small>
+
   {#each $form.tags as _, i}
     <div>
       <input
@@ -73,6 +67,11 @@
       {/if}
     </div>
   {/each}
+  <div>
+    Name: <input type="text" name="name" bind:value={$form.name} />
+    {#if $errors.name}<br /><span class="invalid">{$errors.name}</span>{/if}
+  </div>
+
   <button>Submit</button>
 </form>
 

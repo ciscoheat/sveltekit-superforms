@@ -37,7 +37,6 @@ import {
   traversePath,
   findErrors,
   traversePathsAsync,
-  traversePathAsync,
   comparePaths,
   setPaths,
   pathExists
@@ -528,12 +527,12 @@ export function superForm<
     onError: options.onError ? [options.onError] : []
   };
 
-  const lastChanges = writable<string[][]>([]);
+  const LastChanges = writable<string[][]>([]);
 
   function checkTainted(newObj: unknown, compareAgainst: unknown) {
     const paths = comparePaths(newObj, compareAgainst);
 
-    lastChanges.set(paths);
+    LastChanges.set(paths);
 
     if (paths.length) {
       Tainted.update((tainted) => {
@@ -542,19 +541,6 @@ export function superForm<
         setPaths(tainted, paths, true);
         return tainted;
       });
-
-      if (options.defaultValidator == 'clear') {
-        for (const path of paths) {
-          Errors.update((errors) => {
-            const leaf = traversePath(
-              errors,
-              path as FieldPath<typeof errors>
-            );
-            if (leaf) delete leaf.parent[leaf.key];
-            return errors;
-          });
-        }
-      }
     }
   }
 
@@ -737,7 +723,7 @@ export function superForm<
         Meta,
         Constraints,
         Tainted,
-        lastChanges
+        LastChanges
       );
     },
 
@@ -769,20 +755,12 @@ async function validateField<T extends AnyZodObject, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
   data: z.infer<UnwrapEffects<T>>,
-  errors: SuperForm<T, M>['errors']
+  errors: SuperForm<T, M>['errors'],
+  defaultValidator: FormOptions<T, M>['defaultValidator']
 ) {
-  if (typeof validators !== 'object') return;
-
-  const dataToValidate = traversePath(data, path as FieldPath<typeof data>);
-
-  if (!dataToValidate)
-    throw new SuperFormError('Validation data not found: ' + path);
-
-  // Remove array indices, they don't exist in validators.
-  const validationPath = path.filter((p) => isNaN(parseInt(p)));
-
-  function setError(errorMsgs: undefined | string | string[]) {
+  function setError(errorMsgs: null | undefined | string | string[]) {
     if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
+
     errors.update((errors) => {
       const error = traversePath(
         errors,
@@ -800,10 +778,29 @@ async function validateField<T extends AnyZodObject, M>(
       if (!error)
         throw new SuperFormError('Error path could not be created: ' + path);
 
-      error.parent[error.key] = errorMsgs;
+      error.parent[error.key] = errorMsgs ?? undefined;
       return errors;
     });
   }
+
+  async function defaultValidate() {
+    if (defaultValidator == 'clear') {
+      setError(undefined);
+    }
+  }
+
+  const dataToValidate = traversePath(data, path as FieldPath<typeof data>);
+
+  if (!dataToValidate)
+    throw new SuperFormError('Validation data not found: ' + path);
+
+  if (typeof validators !== 'object') {
+    defaultValidate();
+    return;
+  }
+
+  // Remove array indices, they don't exist in validators.
+  const validationPath = path.filter((p) => isNaN(parseInt(p)));
 
   function extractValidator(data: any, key: string) {
     const objectShape = data?._def?.schema?.shape;
@@ -848,15 +845,20 @@ async function validateField<T extends AnyZodObject, M>(
     const validationPath = path.filter((p) => isNaN(parseInt(p)));
 
     const validator = traversePath(
-      validators as AnyZodObject,
-      validationPath as FieldPath<AnyZodObject>
+      validators as Validators<UnwrapEffects<T>>,
+      validationPath as FieldPath<typeof validators>
     );
 
-    if (!validator)
+    if (!validator) {
+      // Path didn't exist
       throw new SuperFormError('No Superforms validator found: ' + path);
-
-    const result = validator.value(dataToValidate.value);
-    setError(result ?? undefined);
+    } else if (validator.value === undefined) {
+      // No validator, use default
+      defaultValidate();
+    } else {
+      const result = validator.value(dataToValidate.value);
+      setError(result ?? undefined);
+    }
   }
 }
 
@@ -904,7 +906,13 @@ function formEnhance<T extends AnyZodObject, M>(
 
       for (const change of newChanges) {
         //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
-        validateField(change, options.validators, get(data), errors);
+        validateField(
+          change,
+          options.validators,
+          get(data),
+          errors,
+          options.defaultValidator
+        );
       }
     });
   }
@@ -923,7 +931,13 @@ function formEnhance<T extends AnyZodObject, M>(
 
         if (isTainted && hasError) {
           //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
-          validateField(change, options.validators, get(data), errors);
+          validateField(
+            change,
+            options.validators,
+            get(data),
+            errors,
+            options.defaultValidator
+          );
         }
       }
     });

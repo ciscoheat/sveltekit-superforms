@@ -2,27 +2,39 @@
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
+  import type { AnyZodObject } from 'zod';
   import type { PageData } from './$types';
   import { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
 
   export let data: PageData;
 
-  const { form, errors, enhance, message } = superForm(data.form, {
+  type Message = { status: 'success' | 'error'; text: string };
+
+  function yourSuperForm<T extends AnyZodObject>(
+    ...params: Parameters<typeof superForm<T>>
+  ) {
+    return superForm<T, Message>(params[0], {
+      delayMs: 300,
+      flashMessage: {
+        module: flashModule,
+        onError({ result, message }) {
+          message.set({
+            type: 'error',
+            message: result.error.message
+          });
+        }
+      },
+      ...params[1]
+    });
+  }
+
+  const { form, errors, enhance, message } = yourSuperForm(data.form, {
     dataType: 'json',
     onUpdate(event) {
       if ($page.url.searchParams.has('cancel')) event.cancel();
     },
-    validators: schema,
-    flashMessage: {
-      module: flashModule,
-      onError({ result, message }) {
-        message.set({
-          type: 'error',
-          message: result.error.message
-        });
-      }
-    }
+    validators: schema
   });
 </script>
 

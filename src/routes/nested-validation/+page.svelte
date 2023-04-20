@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
   import TagForm from './TagForm.svelte';
 

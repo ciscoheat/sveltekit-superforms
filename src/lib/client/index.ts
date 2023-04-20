@@ -26,7 +26,6 @@ import {
   type Validator,
   type Validators,
   type FieldPath,
-  type FormPath,
   type UnwrapEffects,
   type ZodValidation
 } from '../index.js';
@@ -381,11 +380,85 @@ export function superForm<
   const Empty = writable(storeForm.empty);
   const Message = writable<M | undefined>(storeForm.message);
   const Errors = writable(storeForm.errors);
-  const Data = writable(storeForm.data);
   const Constraints = writable(storeForm.constraints);
   const Meta = writable<Validation<T2, M>['meta'] | undefined>(
     storeForm.meta
   );
+
+  let taintedFormState: typeof initialForm.data = clone(initialForm.data);
+
+  const _formData = writable(storeForm.data);
+  // TODO: Is get(Submitting) really needed?
+  const Form = {
+    subscribe: _formData.subscribe,
+    set: (
+      value: Parameters<typeof _formData.set>[0],
+      options: { taint?: boolean } = {}
+    ) => {
+      console.log(
+        '🚀 ~ file: index.ts:398 ~ Form set:',
+        value,
+        taintedFormState,
+        options
+      );
+      if (options.taint !== false && !get(Submitting) && taintedFormState) {
+        checkTainted(value, taintedFormState);
+      }
+      taintedFormState = clone(value);
+      return _formData.set(value);
+    },
+    update: (
+      updater: Parameters<typeof _formData.update>[0],
+      options: { taint?: boolean } = {}
+    ) => {
+      return _formData.update((value) => {
+        console.log(
+          '🚀 ~ file: index.ts:398 ~ Form update:',
+          value,
+          taintedFormState,
+          options
+        );
+        if (
+          options.taint !== false &&
+          !get(Submitting) &&
+          taintedFormState
+        ) {
+          checkTainted(value, taintedFormState);
+        }
+        taintedFormState = clone(value);
+        return updater(value);
+      });
+    }
+  };
+
+  /*
+  unsubscriptions.push(
+    Form.subscribe(async (data) => {
+      if (!get(Submitting) && taintedFormState) {
+        checkTainted(data, taintedFormState);
+      }
+      taintedFormState = clone(data);
+    })
+  );
+  */
+
+  const LastChanges = writable<string[][]>([]);
+
+  function checkTainted(newObj: unknown, compareAgainst: unknown) {
+    const paths = comparePaths(newObj, compareAgainst);
+    console.log('🚀 ~ file: index.ts:449 ~ checkTainted ~ paths:', paths);
+
+    LastChanges.set(paths);
+
+    if (paths.length) {
+      Tainted.update((tainted) => {
+        //console.log('Update tainted:', paths, newObj, compareAgainst);
+        if (!tainted) tainted = {};
+        setPaths(tainted, paths, true);
+        return tainted;
+      });
+    }
+  }
 
   const Tainted = writable<TaintedFields<T2> | undefined>();
 
@@ -433,12 +506,12 @@ export function superForm<
   ) {
     if (untaint) {
       Tainted.set(typeof untaint === 'boolean' ? undefined : untaint);
-      checkedTaintedFormState = clone(form.data);
+      taintedFormState = clone(form.data);
     }
 
     message = message ?? form.message;
 
-    Data.set(form.data);
+    Form.set(form.data);
     Message.set(message);
     Empty.set(form.empty);
     Valid.set(form.valid);
@@ -536,28 +609,10 @@ export function superForm<
     onError: options.onError ? [options.onError] : []
   };
 
-  const LastChanges = writable<string[][]>([]);
-
-  function checkTainted(newObj: unknown, compareAgainst: unknown) {
-    const paths = comparePaths(newObj, compareAgainst);
-
-    LastChanges.set(paths);
-
-    if (paths.length) {
-      Tainted.update((tainted) => {
-        //console.log('Update tainted:', paths, newObj, compareAgainst);
-        if (!tainted) tainted = {};
-        setPaths(tainted, paths, true);
-        return tainted;
-      });
-    }
-  }
-
   ///// When use:enhance is enabled ///////////////////////////////////////////
 
   // Prevent client validation on first page load
   // (when it recieives data from the server)
-  let checkedTaintedFormState: typeof initialForm.data | undefined;
 
   function isTainted(obj: unknown): boolean {
     if (obj === null)
@@ -585,15 +640,6 @@ export function superForm<
       }
     });
 
-    unsubscriptions.push(
-      Data.subscribe(async (data) => {
-        if (!get(Submitting) && checkedTaintedFormState) {
-          checkTainted(data, checkedTaintedFormState);
-        }
-        checkedTaintedFormState = clone(data);
-      })
-    );
-
     // Need to subscribe to catch page invalidation.
     if (options.applyAction) {
       unsubscriptions.push(
@@ -612,11 +658,9 @@ export function superForm<
             if (!forms.length) error('$page.form (ActionData)');
 
             for (const newForm of forms) {
-              //console.log('🚀~ ActionData ~ newForm:', newForm.id);
+              console.log('🚀~ ActionData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
-              // Prevent client validation from overriding the new server errors.
-              checkedTaintedFormState = undefined;
               await _update(newForm as Validation<T2, M>, untaint);
             }
           } else if (
@@ -628,10 +672,9 @@ export function superForm<
             // It's a page reload, redirect or error/failure,
             // so don't trigger any events, just update the data.
             for (const newForm of forms) {
-              //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
+              console.log('🚀 ~ PageData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
-              checkedTaintedFormState = undefined;
               rebind(newForm as Validation<T2, M>, untaint);
             }
           }
@@ -652,7 +695,7 @@ export function superForm<
   ) {
     return {
       name: key,
-      value: fieldProxy(Data, key),
+      value: fieldProxy(Form, key),
       errors: fieldProxy(Errors, key),
       constraints: fieldProxy(Constraints, key),
       type: validation.meta?.types[key]
@@ -660,7 +703,7 @@ export function superForm<
   }
 
   return {
-    form: Data,
+    form: Form,
     formId: FormId,
     errors: Errors,
     message: Message,
@@ -682,7 +725,7 @@ export function superForm<
     capture: () => ({
       valid: get(Valid),
       errors: get(Errors),
-      data: get(Data),
+      data: get(Form),
       empty: get(Empty),
       constraints: get(Constraints),
       message: get(Message),
@@ -705,7 +748,7 @@ export function superForm<
       return validateField(
         (Array.isArray(path) ? path : [path]) as string[],
         options.validators,
-        get(Data),
+        get(Form),
         opts.update === false ? undefined : Errors,
         options.defaultValidator,
         opts.value
@@ -740,7 +783,7 @@ export function superForm<
         Errors,
         Data_update,
         options,
-        Data,
+        Form,
         Message,
         enableTaintedMessage,
         formEvents,
@@ -936,13 +979,44 @@ function formEnhance<T extends AnyZodObject, M>(
   // Add blur event, to check tainted
   let lastBlur: string[][] = [];
   function checkBlur() {
-    setTimeout(() => {
-      const newChanges = get(lastChanges);
-      if (equal(newChanges, lastBlur)) return;
-      lastBlur = newChanges;
+    const newChanges = get(lastChanges);
+    if (equal(newChanges, lastBlur)) return;
+    lastBlur = newChanges;
 
-      for (const change of newChanges) {
-        //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
+    for (const change of newChanges) {
+      console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
+      validateField(
+        change,
+        options.validators,
+        get(data),
+        errors,
+        options.defaultValidator
+      );
+    }
+  }
+  formEl.addEventListener('focusout', checkBlur);
+
+  // Add input event, to check tainted
+  function checkInput() {
+    const errorContent = get(errors);
+    const taintedContent = get(tainted);
+
+    for (const change of get(lastChanges)) {
+      const isTainted =
+        taintedContent &&
+        pathExists(taintedContent, change, (value) => value === true);
+
+      const errorNode = errorContent
+        ? pathExists(errorContent, change)
+        : undefined;
+
+      // Need a special check here, since if the error has never existed,
+      // there won't be a key for the error. But if it existed and was cleared,
+      // the key exists with the value undefined.
+      const hasError = errorNode && errorNode.key in errorNode.parent;
+
+      if (isTainted && hasError) {
+        console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
         validateField(
           change,
           options.validators,
@@ -951,33 +1025,7 @@ function formEnhance<T extends AnyZodObject, M>(
           options.defaultValidator
         );
       }
-    });
-  }
-  formEl.addEventListener('focusout', checkBlur);
-
-  // Add input event, to check tainted
-  function checkInput() {
-    setTimeout(() => {
-      for (const change of get(lastChanges)) {
-        const taintedContent = get(tainted);
-        const isTainted =
-          taintedContent && pathExists(taintedContent, change, true);
-
-        const errorContent = get(errors);
-        const hasError = errorContent && pathExists(errorContent, change);
-
-        if (isTainted && hasError) {
-          //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
-          validateField(
-            change,
-            options.validators,
-            get(data),
-            errors,
-            options.defaultValidator
-          );
-        }
-      }
-    });
+    }
   }
   formEl.addEventListener('input', checkInput);
 

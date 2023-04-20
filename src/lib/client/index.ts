@@ -206,11 +206,11 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
 export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   form: {
     subscribe: Readable<z.infer<T>>['subscribe'];
-    set(this: void, value: z.infer<T>, options: { taint?: boolean }): void;
+    set(this: void, value: z.infer<T>, options?: { taint?: boolean }): void;
     update(
       this: void,
       updater: Updater<z.infer<T>>,
-      options: { taint?: boolean }
+      options?: { taint?: boolean }
     ): void;
   };
   formId: Writable<string | undefined>;

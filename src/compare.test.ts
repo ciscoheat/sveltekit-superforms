@@ -385,3 +385,16 @@ test('Check path existence', () => {
     value: true
   });
 });
+
+/*
+test('String paths', () => {
+  type Social = z.infer<typeof social>;
+  const i = 5;
+  const i2 = '5';
+
+  const path1: StringPath<Social> = `user.tags.${i}.name`;
+  const path2: StringPath<Social> = `user.tags.${i2}.name`;
+
+  expect(path1).toEqual(path2);
+});
+*/

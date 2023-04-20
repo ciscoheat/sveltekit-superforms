@@ -139,10 +139,7 @@ export type FormFields<T extends AnyZodObject> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type FieldPath<T extends object> = [
-  keyof T,
-  ...(string | number | symbol)[]
-];
+export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
 
 // Thanks to https://stackoverflow.com/a/71859443/70894
 export type FormPath<T, K> = K extends []
@@ -160,3 +157,24 @@ export type FormPath<T, K> = K extends []
   : K extends (infer U)[]
   ? U
   : never;
+
+/*
+// Thanks to https://stackoverflow.com/a/76062131/70894
+type Dot<
+  BasePath extends string | number,
+  SubPath extends string
+> = '' extends SubPath ? BasePath : `${BasePath}.${SubPath}`;
+
+type DefaultTargetFields = number | string | boolean | Date;
+
+export type StringPath<
+  Obj,
+  TargetFields = DefaultTargetFields
+> = Obj extends TargetFields
+  ? ''
+  : Obj extends unknown[]
+  ? Dot<`${number}`, StringPath<Obj[number], TargetFields>>
+  : {
+      [K in keyof Obj & string]: Dot<K, StringPath<Obj[K], TargetFields>>;
+    }[keyof Obj & string];
+*/

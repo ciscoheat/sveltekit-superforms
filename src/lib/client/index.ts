@@ -395,12 +395,6 @@ export function superForm<
       value: Parameters<typeof _formData.set>[0],
       options: { taint?: boolean } = {}
     ) => {
-      console.log(
-        '🚀 ~ file: index.ts:398 ~ Form set:',
-        value,
-        taintedFormState,
-        options
-      );
       if (options.taint !== false && !get(Submitting) && taintedFormState) {
         checkTainted(value, taintedFormState);
       }
@@ -412,12 +406,6 @@ export function superForm<
       options: { taint?: boolean } = {}
     ) => {
       return _formData.update((value) => {
-        console.log(
-          '🚀 ~ file: index.ts:398 ~ Form update:',
-          value,
-          taintedFormState,
-          options
-        );
         const output = updater(value);
         if (
           options.taint !== false &&
@@ -436,7 +424,7 @@ export function superForm<
 
   function checkTainted(newObj: unknown, compareAgainst: unknown) {
     const paths = comparePaths(newObj, compareAgainst);
-    console.log('🚀 ~ file: index.ts:449 ~ checkTainted ~ paths:', paths);
+    //console.log('🚀 ~ file: index.ts:449 ~ checkTainted ~ paths:', paths);
 
     LastChanges.set(paths);
 
@@ -648,7 +636,7 @@ export function superForm<
             if (!forms.length) error('$page.form (ActionData)');
 
             for (const newForm of forms) {
-              console.log('🚀~ ActionData ~ newForm:', newForm.id);
+              //console.log('🚀~ ActionData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
               await _update(newForm as Validation<T2, M>, untaint);
@@ -662,7 +650,7 @@ export function superForm<
             // It's a page reload, redirect or error/failure,
             // so don't trigger any events, just update the data.
             for (const newForm of forms) {
-              console.log('🚀 ~ PageData ~ newForm:', newForm.id);
+              //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
               if (newForm === form || newForm.id !== formId) continue;
 
               rebind(newForm as Validation<T2, M>, untaint);
@@ -974,7 +962,7 @@ function formEnhance<T extends AnyZodObject, M>(
     lastBlur = newChanges;
 
     for (const change of newChanges) {
-      console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
+      //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
       validateField(
         change,
         options.validators,
@@ -1006,7 +994,7 @@ function formEnhance<T extends AnyZodObject, M>(
       const hasError = errorNode && errorNode.key in errorNode.parent;
 
       if (isTainted && hasError) {
-        console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
+        //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
         validateField(
           change,
           options.validators,

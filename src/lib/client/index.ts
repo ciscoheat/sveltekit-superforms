@@ -237,7 +237,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   validate: (
     path: keyof z.infer<T> | FieldPath<z.infer<T>>,
     opts?: {
-      value?: FormPath<z.infer<T>, FieldPath<z.infer<T>>>;
+      value?: unknown;
       update?: boolean;
     }
   ) => Promise<string[] | undefined>;
@@ -698,7 +698,7 @@ export function superForm<
     validate: (
       path: keyof z.infer<T> | FieldPath<z.infer<T>>,
       opts: {
-        value?: FormPath<z.infer<T>, FieldPath<z.infer<T>>>;
+        value?: unknown;
         update?: boolean;
       } = {}
     ) => {

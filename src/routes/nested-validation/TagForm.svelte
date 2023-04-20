@@ -17,6 +17,7 @@
     typeof schema,
     unknown
   >['validators'] = {
+    name: (name) => (!name.length ? 'Name is too short' : null),
     tags: {
       id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
       name: (name) =>
@@ -48,6 +49,8 @@
 
   // validate tests
   onMount(async () => {
+    if (!$page.url.searchParams.has('test')) return;
+
     output = [...output, await validate('name')];
 
     output = [

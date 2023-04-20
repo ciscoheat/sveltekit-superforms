@@ -418,29 +418,19 @@ export function superForm<
           taintedFormState,
           options
         );
+        const output = updater(value);
         if (
           options.taint !== false &&
           !get(Submitting) &&
           taintedFormState
         ) {
-          checkTainted(value, taintedFormState);
+          checkTainted(output, taintedFormState);
         }
         taintedFormState = clone(value);
-        return updater(value);
+        return output;
       });
     }
   };
-
-  /*
-  unsubscriptions.push(
-    Form.subscribe(async (data) => {
-      if (!get(Submitting) && taintedFormState) {
-        checkTainted(data, taintedFormState);
-      }
-      taintedFormState = clone(data);
-    })
-  );
-  */
 
   const LastChanges = writable<string[][]>([]);
 

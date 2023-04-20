@@ -325,7 +325,7 @@ describe('Proxies', () => {
   });
 });
 
-test.only('Compare paths', () => {
+test('Compare paths', () => {
   const obj1 = {
     name: 'Obj1',
     tags: [{ name: 'tag1' }, { name: 'tag2' }],
@@ -368,7 +368,7 @@ test('Set paths', () => {
   });
 });
 
-test.only('Check path existence', () => {
+test('Check path existence', () => {
   const errors = {
     tags: {
       '0': {

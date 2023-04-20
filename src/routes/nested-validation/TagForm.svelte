@@ -6,9 +6,12 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
+  import { onMount } from 'svelte';
 
   export let data: Validation<typeof schema>;
   export let validator: 'zod' | 'superforms';
+
+  export let output: (string[] | undefined)[] = [];
 
   const superFormValidator: FormOptions<
     typeof schema,
@@ -21,23 +24,47 @@
     }
   };
 
-  const { form, errors, enhance, message, tainted } = superForm(data, {
-    taintedMessage: null,
-    dataType: 'json',
-    onUpdate(event) {
-      if ($page.url.searchParams.has('cancel')) event.cancel();
-    },
-    defaultValidator: validator == 'zod' ? 'keep' : 'clear',
-    validators: validator == 'zod' ? schema : superFormValidator,
-    flashMessage: {
-      module: flashModule,
-      onError({ result, message }) {
-        message.set({
-          type: 'error',
-          message: result.error.message
-        });
+  const { form, errors, enhance, message, tainted, validate } = superForm(
+    data,
+    {
+      taintedMessage: null,
+      dataType: 'json',
+      onUpdate(event) {
+        if ($page.url.searchParams.has('cancel')) event.cancel();
+      },
+      defaultValidator: validator == 'zod' ? 'keep' : 'clear',
+      validators: validator == 'zod' ? schema : superFormValidator,
+      flashMessage: {
+        module: flashModule,
+        onError({ result, message }) {
+          message.set({
+            type: 'error',
+            message: result.error.message
+          });
+        }
       }
     }
+  );
+
+  // validate tests
+  onMount(async () => {
+    output = [...output, await validate('name')];
+
+    output = [
+      ...output,
+      await validate(['tags', 0, 'id'], {
+        update: false,
+        value: 1
+      })
+    ];
+
+    output = [
+      ...output,
+      (await validate(['tags', 0, 'id'], {
+        update: false,
+        value: 7
+      })) ?? ['OK']
+    ];
   });
 </script>
 

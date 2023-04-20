@@ -26,6 +26,7 @@ import {
   type Validator,
   type Validators,
   type FieldPath,
+  type FormPath,
   type UnwrapEffects,
   type ZodValidation
 } from '../index.js';
@@ -202,13 +203,13 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SuperForm<T extends UnwrapEffects<AnyZodObject>, M = any> = {
+export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   form: Writable<Validation<T, M>['data']>;
   formId: Writable<string | undefined>;
   errors: Writable<Validation<T, M>['errors']>;
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
-  tainted: Writable<TaintedFields<T> | undefined>;
+  tainted: Writable<TaintedFields<UnwrapEffects<T>> | undefined>;
   meta: Readable<Validation<T, M>['meta']>;
 
   valid: Readable<boolean>;
@@ -217,7 +218,7 @@ export type SuperForm<T extends UnwrapEffects<AnyZodObject>, M = any> = {
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
 
-  fields: FormFields<T>;
+  fields: FormFields<UnwrapEffects<T>>;
   firstError: Readable<{ path: string[]; message: string } | null>;
   allErrors: Readable<{ path: string[]; message: string }[]>;
 
@@ -225,13 +226,21 @@ export type SuperForm<T extends UnwrapEffects<AnyZodObject>, M = any> = {
 
   enhance: (
     el: HTMLFormElement,
-    events?: SuperFormEvents<T, M>
+    events?: SuperFormEvents<UnwrapEffects<T>, M>
   ) => ReturnType<typeof formEnhance>;
   update: FormUpdate;
   reset: (options?: { keepMessage: boolean }) => void;
 
-  capture: () => SuperFormSnapshot<T, M>;
-  restore: (snapshot: SuperFormSnapshot<T, M>) => void;
+  capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
+  restore: (snapshot: SuperFormSnapshot<UnwrapEffects<T>, M>) => void;
+
+  validate: (
+    path: keyof z.infer<T> | FieldPath<z.infer<T>>,
+    opts?: {
+      value?: FormPath<z.infer<T>, FieldPath<z.infer<T>>>;
+      update?: boolean;
+    }
+  ) => Promise<string[] | undefined>;
 };
 
 /**
@@ -686,6 +695,22 @@ export function superForm<
       rebind(snapshot, snapshot.tainted ?? true);
     },
 
+    validate: (
+      path: keyof z.infer<T> | FieldPath<z.infer<T>>,
+      opts: {
+        value?: FormPath<z.infer<T>, FieldPath<z.infer<T>>>;
+        update?: boolean;
+      } = {}
+    ) => {
+      return validateField(
+        (Array.isArray(path) ? path : [path]) as string[],
+        options.validators,
+        get(Data),
+        opts.update === false ? undefined : Errors,
+        options.defaultValidator,
+        opts.value
+      );
+    },
     enhance: (el: HTMLFormElement, events?: SuperFormEvents<T2, M>) => {
       if (events) {
         if (events.onError) {
@@ -754,49 +779,61 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
 async function validateField<T extends AnyZodObject, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
-  data: z.infer<UnwrapEffects<T>>,
-  errors: SuperForm<T, M>['errors'],
-  defaultValidator: FormOptions<T, M>['defaultValidator']
-) {
+  data: z.infer<T>,
+  errors: SuperForm<T, M>['errors'] | undefined,
+  defaultValidator: FormOptions<T, M>['defaultValidator'],
+  value?: unknown
+): Promise<string[] | undefined> {
   function setError(errorMsgs: null | undefined | string | string[]) {
     if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
 
-    errors.update((errors) => {
-      const error = traversePath(
-        errors,
-        path as FieldPath<typeof errors>,
-        (data) => {
-          if (data.value === undefined) {
-            data.parent[data.key] = {};
-            return data.parent[data.key];
-          } else {
-            return data.value;
+    if (errors) {
+      errors.update((errors) => {
+        const error = traversePath(
+          errors,
+          path as FieldPath<typeof errors>,
+          (data) => {
+            if (data.value === undefined) {
+              data.parent[data.key] = {};
+              return data.parent[data.key];
+            } else {
+              return data.value;
+            }
           }
-        }
-      );
+        );
 
-      if (!error)
-        throw new SuperFormError('Error path could not be created: ' + path);
+        if (!error)
+          throw new SuperFormError(
+            'Error path could not be created: ' + path
+          );
 
-      error.parent[error.key] = errorMsgs ?? undefined;
-      return errors;
-    });
+        error.parent[error.key] = errorMsgs ?? undefined;
+        return errors;
+      });
+    }
+    return errorMsgs ?? undefined;
   }
 
   async function defaultValidate() {
     if (defaultValidator == 'clear') {
       setError(undefined);
     }
+    return undefined;
   }
 
-  const dataToValidate = traversePath(data, path as FieldPath<typeof data>);
+  if (value === undefined) {
+    const dataToValidate = traversePath(
+      data,
+      path as FieldPath<typeof data>
+    );
 
-  if (!dataToValidate)
-    throw new SuperFormError('Validation data not found: ' + path);
+    if (!dataToValidate)
+      throw new SuperFormError('Validation data not found: ' + path);
+    else value = dataToValidate.value;
+  }
 
   if (typeof validators !== 'object') {
-    defaultValidate();
-    return;
+    return defaultValidate();
   }
 
   // Remove array indices, they don't exist in validators.
@@ -831,13 +868,13 @@ async function validateField<T extends AnyZodObject, M>(
     const result = await extractValidator(
       validator.parent,
       validator.key
-    ).safeParseAsync(dataToValidate.value);
+    ).safeParseAsync(value);
 
     if (!result.success) {
       const msgs = mapErrors<T>(result.error.format());
-      setError(msgs._errors);
+      return setError(msgs._errors);
     } else {
-      setError(undefined);
+      return setError(undefined);
     }
   } else {
     // SuperForms validator
@@ -854,10 +891,10 @@ async function validateField<T extends AnyZodObject, M>(
       throw new SuperFormError('No Superforms validator found: ' + path);
     } else if (validator.value === undefined) {
       // No validator, use default
-      defaultValidate();
+      return defaultValidate();
     } else {
-      const result = validator.value(dataToValidate.value);
-      setError(result ?? undefined);
+      const result = validator.value(value);
+      return setError(result);
     }
   }
 }

@@ -3,13 +3,20 @@
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { schema } from './schemas';
+  import { page } from '$app/stores';
 
   export let data: PageData;
 
   let resets = 0;
 
   const superF: SuperForm<typeof schema> = superForm(data.form, {
-    resetForm: true,
+    resetForm: $page.url.searchParams.has('function')
+      ? async () => {
+          console.log('Reset...');
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          return true;
+        }
+      : true,
     onUpdated({ form }) {
       if (form.valid) resets = resets + 1;
     }

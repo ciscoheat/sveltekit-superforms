@@ -82,7 +82,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;
   applyAction: boolean;
   invalidateAll: boolean;
-  resetForm: boolean;
+  resetForm: boolean | (() => MaybePromise<boolean>);
   scrollToError: 'auto' | 'smooth' | 'off';
   autoFocusOnError: boolean | 'detect';
   errorSelector: string;
@@ -531,7 +531,11 @@ export function superForm<
       return;
     }
 
-    if (form.valid && options.resetForm) {
+    if (
+      form.valid &&
+      options.resetForm &&
+      (options.resetForm === true || (await options.resetForm()))
+    ) {
       _resetForm(form.message);
     } else {
       rebind(form, untaint);
@@ -562,7 +566,12 @@ export function superForm<
     // All we need to do if redirected is to reset the form.
     // No events should be triggered because technically we're somewhere else.
     if (result.type == 'redirect') {
-      if (options.resetForm) _resetForm();
+      if (
+        options.resetForm &&
+        (options.resetForm === true || (await options.resetForm()))
+      ) {
+        _resetForm();
+      }
       return;
     }
 

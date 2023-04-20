@@ -1394,7 +1394,11 @@ function formEnhance<T extends AnyZodObject, M>(
           setTimeout(() => validationResponse({ result }), 0);
         } else if (options.dataType === 'json') {
           const postData = get(data);
-          submit.data.set('__superform_json', stringify(postData));
+          const chunks = chunkSubstr(stringify(postData), 500000);
+
+          for (const chunk of chunks) {
+            submit.data.append('__superform_json', chunk);
+          }
 
           // Clear post data to reduce transfer size,
           // since $form should be serialized and sent as json.
@@ -1406,6 +1410,18 @@ function formEnhance<T extends AnyZodObject, M>(
           });
         }
       }
+    }
+
+    // Thanks to https://stackoverflow.com/a/29202760/70894
+    function chunkSubstr(str: string, size: number) {
+      const numChunks = Math.ceil(str.length / size);
+      const chunks = new Array(numChunks);
+
+      for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+        chunks[i] = str.substring(o, o + size);
+      }
+
+      return chunks;
     }
 
     async function validationResponse(event: ValidationResponse) {

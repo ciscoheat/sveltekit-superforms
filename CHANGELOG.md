@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The rarely used `update` function is removed. Use `form` instead, which now has an option for not tainting the affected fields.
 
+### Fixed
+
+- `dataType: 'json'` now handles large (+1Mb) payloads.
+
 ### Added
 
 - Added `validate` to `superForm`, which can be used to validate any field, at any time.

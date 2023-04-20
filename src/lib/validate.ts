@@ -299,9 +299,7 @@ export async function superValidate<
     function tryParseSuperJson(data: FormData) {
       if (data.has('__superform_json')) {
         try {
-          const output = parse(
-            data.get('__superform_json')?.toString() ?? ''
-          );
+          const output = parse(data.getAll('__superform_json').join() ?? '');
           if (typeof output === 'object') {
             return output as Record<string, unknown>;
           }

@@ -5,6 +5,21 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Client-side validators now works in realtime, based on "reward early, validate late".
+
+### Removed
+
+- The rarely used `update` function is removed. Use `form` instead, which now has an option for not tainting the affected fields.
+
+### Added
+
+- Added `validate` to `superForm`, which can be used to validate any field, at any time.
+- The option `{ taint: boolean }` has been added to `form.set` and `form.update`.
+
 ## [0.7.1] - 2023-04-17
 
 ### Fixed

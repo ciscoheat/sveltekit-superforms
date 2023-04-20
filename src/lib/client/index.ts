@@ -236,7 +236,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     el: HTMLFormElement,
     events?: SuperFormEvents<UnwrapEffects<T>, M>
   ) => ReturnType<typeof formEnhance>;
-  update: FormUpdate;
+
   reset: (options?: { keepMessage: boolean }) => void;
 
   capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
@@ -552,7 +552,7 @@ export function superForm<
     rebind(clone(initialForm), true, message);
   }
 
-  const Data_update: FormUpdate = async (result, untaint?: boolean) => {
+  const Form_update: FormUpdate = async (result, untaint?: boolean) => {
     if (result.type == ('error' as string)) {
       throw new SuperFormError(
         `ActionResult of type "${result.type}" cannot be passed to update function.`
@@ -768,7 +768,7 @@ export function superForm<
         Delayed,
         Timeout,
         Errors,
-        Data_update,
+        Form_update,
         options,
         Form,
         Message,
@@ -784,7 +784,6 @@ export function superForm<
 
     firstError: FirstError,
     allErrors: AllErrors,
-    update: Data_update,
     reset: (options?) =>
       _resetForm(options?.keepMessage ? get(Message) : undefined)
   };

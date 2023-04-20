@@ -64,6 +64,18 @@
     </div>
   {/each}
   <button>Submit</button>
+  <button
+    type="button"
+    on:click={() => {
+      form.update(
+        ($form) => {
+          $form.tags[3].id = 7;
+          return $form;
+        },
+        { taint: false }
+      );
+    }}>Change without taint</button
+  >
 </form>
 
 <style lang="scss">

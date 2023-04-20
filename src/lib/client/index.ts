@@ -14,7 +14,8 @@ import {
   get,
   writable,
   type Readable,
-  type Writable
+  type Writable,
+  type Updater
 } from 'svelte/store';
 import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
@@ -203,7 +204,15 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
-  form: Writable<Validation<T, M>['data']>;
+  form: {
+    subscribe: Readable<z.infer<T>>['subscribe'];
+    set(this: void, value: z.infer<T>, options: { taint?: boolean }): void;
+    update(
+      this: void,
+      updater: Updater<z.infer<T>>,
+      options: { taint?: boolean }
+    ): void;
+  };
   formId: Writable<string | undefined>;
   errors: Writable<Validation<T, M>['errors']>;
   constraints: Writable<Validation<T, M>['constraints']>;

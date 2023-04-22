@@ -1,28 +1,18 @@
 <script lang="ts">
-  import { onMount, tick, afterUpdate } from 'svelte';
   import { superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
-  import { page } from '$app/stores';
-  import { afterNavigate } from '$app/navigation';
 
   export let data: PageData;
 
   const { form, errors, enhance, message, tainted } = superForm(data.form);
 
   let menu = ['Cookies and cream', 'Mint choc chip', 'Raspberry ripple'];
-
-  function join(flavours: string[]) {
-    if (flavours.length === 1) return flavours[0];
-    return `${flavours.slice(0, -1).join(', ')} and ${
-      flavours[flavours.length - 1]
-    }`;
-  }
 </script>
 
 <SuperDebug data={{ $form, $tainted }} />
 
-<form method="POST">
+<form method="POST" use:enhance>
   <h2>Size</h2>
 
   <label>
@@ -62,15 +52,65 @@
   <button>Submit</button>
 </form>
 
-<p class="info">
-  <a href="https://svelte.dev/tutorial/group-inputs"
-    >Original code from Svelte documentation</a
+<hr />
+
+<div class="buttons">
+  <button
+    on:click={() => {
+      form.update(
+        ($form) => {
+          $form.scoops = 3;
+          return $form;
+        },
+        { taint: false }
+      );
+    }}>Three scoops, no taint</button
   >
-</p>
+
+  <button
+    on:click={() => {
+      form.update(
+        ($form) => {
+          $form.flavours = ['Cookies and cream', 'Mint choc chip'];
+          return $form;
+        },
+        { taint: false }
+      );
+    }}>Cookies and mint, no taint</button
+  >
+
+  <button
+    on:click={() => {
+      form.update(
+        ($form) => {
+          $form.scoops = 2;
+          return $form;
+        },
+        { taint: 'untaint' }
+      );
+    }}>Two scoops, untaint</button
+  >
+
+  <button
+    on:click={() => {
+      form.update(
+        ($form) => {
+          $form.scoops = 3;
+          return $form;
+        },
+        { taint: 'untaint-all' }
+      );
+    }}>Three scoops, untaint all</button
+  >
+</div>
 
 <style>
-  .info {
-    border-top: 1px solid gray;
-    margin-top: 4rem;
+  hr {
+    margin: 2rem 0;
+  }
+  .buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 </style>

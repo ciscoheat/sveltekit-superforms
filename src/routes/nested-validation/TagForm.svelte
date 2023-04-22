@@ -17,11 +17,16 @@
     typeof schema,
     unknown
   >['validators'] = {
-    name: (name) => (!name.length ? 'Name is too short' : null),
+    name: (name) => {
+      return !name.length ? 'Name is too short' : null;
+    },
     tags: {
       id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
-      name: (name) =>
-        name.length < 2 ? 'Tags must be at least two characters' : null
+      name: (name) => {
+        return name.length < 2
+          ? 'Tags must be at least two characters'
+          : null;
+      }
     }
   };
 
@@ -46,6 +51,8 @@
       }
     }
   );
+
+  validate(['tags', 0, 'name'], { value: 'p', errors: 'No way' });
 
   // validate tests
   onMount(async () => {
@@ -72,6 +79,7 @@
 </script>
 
 <form method="POST" use:enhance>
+  <SuperDebug data={$tainted} />
   {#if $message}<h4>{$message}</h4>{/if}
   <input type="hidden" name="id" value={validator} />
   <small>{validator} validation</small>

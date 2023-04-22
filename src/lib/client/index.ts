@@ -202,15 +202,34 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
   >[];
 };
 
+type ValidateOptions<V> = Partial<{
+  value: V;
+  update: boolean;
+  errors: string | string[];
+}>;
+
+type Validate<
+  T extends AnyZodObject,
+  P extends FieldPath<z.infer<T>>, // = FieldPath<z.infer<T>>,
+  Path extends keyof z.infer<T> | P // = keyof z.infer<T> | P
+> = (
+  path: Path,
+  opts?: ValidateOptions<unknown>
+) => Promise<string[] | undefined>;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   form: {
     subscribe: Readable<z.infer<T>>['subscribe'];
-    set(this: void, value: z.infer<T>, options?: { taint?: boolean }): void;
+    set(
+      this: void,
+      value: z.infer<T>,
+      options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+    ): void;
     update(
       this: void,
       updater: Updater<z.infer<T>>,
-      options?: { taint?: boolean }
+      options?: { taint?: boolean | 'untaint' | 'untaint-all' }
     ): void;
   };
   formId: Writable<string | undefined>;
@@ -242,13 +261,11 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
   restore: (snapshot: SuperFormSnapshot<UnwrapEffects<T>, M>) => void;
 
-  validate: (
-    path: keyof z.infer<T> | FieldPath<z.infer<T>>,
-    opts?: {
-      value?: unknown;
-      update?: boolean;
-    }
-  ) => Promise<string[] | undefined>;
+  validate: Validate<
+    UnwrapEffects<T>,
+    FieldPath<z.infer<UnwrapEffects<T>>>,
+    keyof z.infer<UnwrapEffects<T>> | FieldPath<z.infer<UnwrapEffects<T>>>
+  >;
 };
 
 /**
@@ -402,27 +419,23 @@ export function superForm<
     subscribe: _formData.subscribe,
     set: (
       value: Parameters<typeof _formData.set>[0],
-      options: { taint?: boolean } = {}
+      options: { taint?: boolean | 'untaint' | 'untaint-all' } = {}
     ) => {
-      if (options.taint !== false && !get(Submitting) && taintedFormState) {
-        checkTainted(value, taintedFormState);
-      }
+      //if (!get(Submitting)) {
+      checkTainted(value, taintedFormState, options.taint ?? true);
+      //}
       taintedFormState = clone(value);
       return _formData.set(value);
     },
     update: (
       updater: Parameters<typeof _formData.update>[0],
-      options: { taint?: boolean } = {}
+      options: { taint?: boolean | 'untaint' | 'untaint-all' } = {}
     ) => {
       return _formData.update((value) => {
         const output = updater(value);
-        if (
-          options.taint !== false &&
-          !get(Submitting) &&
-          taintedFormState
-        ) {
-          checkTainted(output, taintedFormState);
-        }
+        //if (!get(Submitting)) {
+        checkTainted(output, taintedFormState, options.taint ?? true);
+        //}
         taintedFormState = clone(value);
         return output;
       });
@@ -431,17 +444,29 @@ export function superForm<
 
   const LastChanges = writable<string[][]>([]);
 
-  function checkTainted(newObj: unknown, compareAgainst: unknown) {
-    const paths = comparePaths(newObj, compareAgainst);
-    //console.log('🚀 ~ file: index.ts:449 ~ checkTainted ~ paths:', paths);
+  function checkTainted(
+    newObj: unknown,
+    compareAgainst: unknown,
+    options: boolean | 'untaint' | 'untaint-all'
+  ) {
+    if (options === false) {
+      return;
+    } else if (options === 'untaint-all') {
+      Tainted.set(undefined);
+      return;
+    }
 
-    LastChanges.set(paths);
+    const paths = comparePaths(newObj, compareAgainst);
+
+    if (options === true) {
+      LastChanges.set(paths);
+    }
 
     if (paths.length) {
       Tainted.update((tainted) => {
         //console.log('Update tainted:', paths, newObj, compareAgainst);
         if (!tainted) tainted = {};
-        setPaths(tainted, paths, true);
+        setPaths(tainted, paths, options === true ? true : undefined);
         return tainted;
       });
     }
@@ -734,20 +759,14 @@ export function superForm<
       rebind(snapshot, snapshot.tainted ?? true);
     },
 
-    validate: (
-      path: keyof z.infer<T> | FieldPath<z.infer<T>>,
-      opts: {
-        value?: unknown;
-        update?: boolean;
-      } = {}
-    ) => {
+    validate: (path, opts) => {
       return validateField(
         (Array.isArray(path) ? path : [path]) as string[],
         options.validators,
-        get(Form),
-        opts.update === false ? undefined : Errors,
         options.defaultValidator,
-        opts.value
+        get(Form),
+        Errors,
+        opts
       );
     },
     enhance: (el: HTMLFormElement, events?: SuperFormEvents<T2, M>) => {
@@ -817,25 +836,25 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
 async function validateField<T extends AnyZodObject, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
-  data: z.infer<T>,
-  errors: SuperForm<T, M>['errors'] | undefined,
   defaultValidator: FormOptions<T, M>['defaultValidator'],
-  value?: unknown
+  data: z.infer<T>,
+  errors: SuperForm<T, M>['errors'],
+  options: ValidateOptions<unknown> = {}
 ): Promise<string[] | undefined> {
   function setError(errorMsgs: null | undefined | string | string[]) {
     if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
 
-    if (errors) {
+    if (options.update !== false) {
       errors.update((errors) => {
         const error = traversePath(
           errors,
           path as FieldPath<typeof errors>,
-          (data) => {
-            if (data.value === undefined) {
-              data.parent[data.key] = {};
-              return data.parent[data.key];
+          (node) => {
+            if (node.value === undefined) {
+              node.parent[node.key] = {};
+              return node.parent[node.key];
             } else {
-              return data.value;
+              return node.value;
             }
           }
         );
@@ -859,16 +878,21 @@ async function validateField<T extends AnyZodObject, M>(
     return undefined;
   }
 
+  let value = options.value;
+
   if (value === undefined) {
     const dataToValidate = traversePath(
       data,
       path as FieldPath<typeof data>
     );
 
-    if (!dataToValidate)
+    if (!dataToValidate) {
       throw new SuperFormError('Validation data not found: ' + path);
-    else value = dataToValidate.value;
+    }
+
+    value = dataToValidate.value;
   }
+  //console.log('🚀 ~ file: index.ts:871 ~ validate:', path, value);
 
   if (typeof validators !== 'object') {
     return defaultValidate();
@@ -910,7 +934,7 @@ async function validateField<T extends AnyZodObject, M>(
 
     if (!result.success) {
       const msgs = mapErrors<T>(result.error.format());
-      return setError(msgs._errors);
+      return setError(options.errors ?? msgs._errors);
     } else {
       return setError(undefined);
     }
@@ -932,7 +956,7 @@ async function validateField<T extends AnyZodObject, M>(
       return defaultValidate();
     } else {
       const result = validator.value(value);
-      return setError(result);
+      return setError(result ? options.errors ?? result : result);
     }
   }
 }
@@ -983,9 +1007,9 @@ function formEnhance<T extends AnyZodObject, M>(
       validateField(
         change,
         options.validators,
+        options.defaultValidator,
         get(data),
-        errors,
-        options.defaultValidator
+        errors
       );
     }
   }
@@ -1015,9 +1039,9 @@ function formEnhance<T extends AnyZodObject, M>(
         validateField(
           change,
           options.validators,
+          options.defaultValidator,
           get(data),
-          errors,
-          options.defaultValidator
+          errors
         );
       }
     }

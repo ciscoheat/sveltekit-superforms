@@ -214,28 +214,42 @@ export async function traversePathsAsync<
  * Compare two objects and return the differences as paths.
  */
 export function comparePaths(newObj: unknown, oldObj: unknown) {
-  const diffPaths: string[][] = [];
-  traversePaths(newObj as object, (data) => {
+  const diffPaths = new Map<string, string[]>();
+
+  function checkPath(data: FullPathData, compareTo: object) {
     if (data.isLeaf) {
-      const exists = traversePath(
-        oldObj as object,
-        data.path as FieldPath<object>
-      );
+      const exists = traversePath(compareTo, data.path as FieldPath<object>);
+
+      /*
+      console.log('----------- Compare ------------ ');
+      console.log(data);
+      console.log('with');
+      console.log(exists);
+      */
+
       if (!exists) {
-        diffPaths.push(data.path);
+        diffPaths.set(data.path.join(' '), data.path);
       } else if (
         data.value instanceof Date &&
         exists.value instanceof Date &&
         data.value.getTime() != exists.value.getTime()
       ) {
-        diffPaths.push(data.path);
+        diffPaths.set(data.path.join(' '), data.path);
       } else if (data.value !== exists.value) {
-        diffPaths.push(data.path);
+        diffPaths.set(data.path.join(' '), data.path);
       }
     }
-  });
+  }
 
-  return diffPaths;
+  traversePaths(newObj as object, (data) =>
+    checkPath(data, oldObj as object)
+  );
+
+  traversePaths(oldObj as object, (data) =>
+    checkPath(data, newObj as object)
+  );
+
+  return Array.from(diffPaths.values());
 }
 
 export function setPaths(

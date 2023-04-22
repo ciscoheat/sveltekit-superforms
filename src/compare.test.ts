@@ -325,28 +325,58 @@ describe('Proxies', () => {
   });
 });
 
-test('Compare paths', () => {
-  const obj1 = {
-    name: 'Obj1',
-    tags: [{ name: 'tag1' }, { name: 'tag2' }],
-    deep: {
-      test: true
-    }
-  };
+describe('Path comparisons', () => {
+  test('Basic path comparison', () => {
+    const obj1 = {
+      name: 'Obj1',
+      tags: [{ name: 'tag1' }, { name: 'tag2' }],
+      deep: {
+        test: true
+      }
+    };
 
-  const obj2 = {
-    name: 'Obj2',
-    tags: [{ name: 'tag1' }, { name: 'tag4' }]
-  };
+    const obj2 = {
+      name: 'Obj2',
+      tags: [{ name: 'tag1' }, { name: 'tag4' }]
+    };
 
-  //expect(comparePaths(obj1, obj1)).toStrictEqual([]);
-  //expect(comparePaths(obj1, structuredClone(obj1))).toStrictEqual([]);
+    //expect(comparePaths(obj1, obj1)).toStrictEqual([]);
+    //expect(comparePaths(obj1, structuredClone(obj1))).toStrictEqual([]);
 
-  expect(comparePaths(obj1, obj2)).toStrictEqual([
-    ['name'],
-    ['tags', '1', 'name'],
-    ['deep', 'test']
-  ]);
+    expect(comparePaths(obj1, obj2)).toStrictEqual([
+      ['name'],
+      ['tags', '1', 'name'],
+      ['deep', 'test']
+    ]);
+  });
+
+  test('Paths with empty arrays', () => {
+    const obj1 = {
+      flavours: [],
+      scoops: 1
+    };
+
+    const obj2 = {
+      flavours: [],
+      scoops: 1
+    };
+
+    expect(comparePaths(obj1, obj2)).toStrictEqual([]);
+  });
+
+  test('Paths with arrays', () => {
+    const obj1 = {
+      flavours: [],
+      scoops: 1
+    };
+
+    const obj2 = {
+      flavours: ['Mint choc chip'],
+      scoops: 1
+    };
+
+    expect(comparePaths(obj1, obj2)).toStrictEqual([['flavours', '0']]);
+  });
 });
 
 test('Set paths', () => {

@@ -17,12 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `tainted` wasn't updated correctly for array data.
 - `dataType: 'json'` now handles large (+1Mb) payloads.
 
 ### Added
 
 - Added `validate` to `superForm`, which can be used to validate any field, at any time.
-- The option `{ taint: boolean }` has been added to `form.set` and `form.update`.
+- The option `{ taint: boolean | 'untaint' | 'untaint-all' }` has been added to `form.set` and `form.update`.
 - The `resetForm` option can now take an `async () => boolean` function to determine whether the form should be resetted or not.
 
 ## [0.7.1] - 2023-04-17

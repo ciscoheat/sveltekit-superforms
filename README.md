@@ -21,13 +21,13 @@
 
 <br/>
 
-Superforms is a SvelteKit library that helps you with **server-side validation** and **client-side display** of forms.
+Making SvelteKit **validation** and **display** of forms easier than ever!
 
 # Feature list
 
 - Merging `PageData` and `ActionData` consistently - Forget about which one to use and how, just focus on your data.
 - Server-side data validation using [Zod](https://zod.dev), with output that can be used directly on the client.
-- [Auto-centering and auto-focusing](https://superforms.vercel.app/concepts/error-handling) on invalid form fields.
+- [Auto-centering and auto-focusing](https://superforms.vercel.app/concepts/error-handling#usage-client) on invalid form fields.
 - [Tainted form detection](https://superforms.vercel.app/concepts/tainted), prevents the user from losing data if navigating away from an unsaved form.
 - No JS required as default, but full support for [progressive enhancement](https://superforms.vercel.app/concepts/enhance).
 - Automatically coerces the string data from `FormData` into correct types.
@@ -61,4 +61,4 @@ You can also watch this excellent introduction video to see what's possible: htt
 
 # Feedback wanted!
 
-Ideas, feedback, bug reports, PR:s, etc, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues) or [discussion](https://github.com/ciscoheat/sveltekit-superforms/discussions)!
+Ideas, general feedback, bug reports, PR:s, etc, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues), [discussion](https://github.com/ciscoheat/sveltekit-superforms/discussions), or on the [Discord server](https://discord.gg/AptebvVuhB)!

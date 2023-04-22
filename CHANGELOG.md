@@ -5,11 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.8.0] - 2023-04-21
+## [0.8.0] - 2023-04-22
 
 ### Changed
 
-- Client-side validators now works in realtime, based on "reward early, validate late"; If no error, validate on `focusout`. If error exists, validate on `input`.
+- Client-side validators now works in realtime, based on "reward early, validate late": If no field error, validate on `blur`. If field error exists, validate on `input`.
 
 ### Removed
 
@@ -17,12 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `tainted` wasn't updated correctly for array data.
+- `tainted` wasn't updated properly for array data.
 - `dataType: 'json'` now handles large (+1Mb) payloads.
 
 ### Added
 
 - Added `validate` to `superForm`, which can be used to validate any field, at any time.
+- Client-side validation can be customized with the `validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only'` option.
 - The option `{ taint: boolean | 'untaint' | 'untaint-all' }` has been added to `form.set` and `form.update`.
 - The `resetForm` option can now take an `async () => boolean` function to determine whether the form should be resetted or not.
 

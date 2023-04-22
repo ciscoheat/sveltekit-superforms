@@ -126,6 +126,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
     | ZodEffects<ZodEffects<ZodEffects<T>>>
     | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
     | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
+  validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
   defaultValidator: 'keep' | 'clear';
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs: number;
@@ -182,7 +183,8 @@ const defaultFormOptions = {
   timeoutMs: 8000,
   multipleSubmits: 'prevent',
   validation: undefined,
-  SPA: undefined
+  SPA: undefined,
+  validateMethod: 'auto'
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -202,9 +204,12 @@ type SuperFormEventList<T extends AnyZodObject, M> = {
   >[];
 };
 
+type TaintOption = boolean | 'untaint' | 'untaint-all';
+
 type ValidateOptions<V> = Partial<{
   value: V;
-  update: boolean;
+  update: boolean | 'errors' | 'value';
+  taint: TaintOption;
   errors: string | string[];
 }>;
 
@@ -224,12 +229,12 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     set(
       this: void,
       value: z.infer<T>,
-      options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+      options?: { taint?: TaintOption }
     ): void;
     update(
       this: void,
       updater: Updater<z.infer<T>>,
-      options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+      options?: { taint?: TaintOption }
     ): void;
   };
   formId: Writable<string | undefined>;
@@ -414,28 +419,23 @@ export function superForm<
   let taintedFormState: typeof initialForm.data = clone(initialForm.data);
 
   const _formData = writable(storeForm.data);
-  // TODO: Is get(Submitting) really needed?
   const Form = {
     subscribe: _formData.subscribe,
     set: (
       value: Parameters<typeof _formData.set>[0],
-      options: { taint?: boolean | 'untaint' | 'untaint-all' } = {}
+      options: { taint?: TaintOption } = {}
     ) => {
-      //if (!get(Submitting)) {
       checkTainted(value, taintedFormState, options.taint ?? true);
-      //}
       taintedFormState = clone(value);
       return _formData.set(value);
     },
     update: (
       updater: Parameters<typeof _formData.update>[0],
-      options: { taint?: boolean | 'untaint' | 'untaint-all' } = {}
+      options: { taint?: TaintOption } = {}
     ) => {
       return _formData.update((value) => {
         const output = updater(value);
-        //if (!get(Submitting)) {
         checkTainted(output, taintedFormState, options.taint ?? true);
-        //}
         taintedFormState = clone(value);
         return output;
       });
@@ -447,7 +447,7 @@ export function superForm<
   function checkTainted(
     newObj: unknown,
     compareAgainst: unknown,
-    options: boolean | 'untaint' | 'untaint-all'
+    options: TaintOption
   ) {
     if (options === false) {
       return;
@@ -764,7 +764,7 @@ export function superForm<
         (Array.isArray(path) ? path : [path]) as string[],
         options.validators,
         options.defaultValidator,
-        get(Form),
+        Form,
         Errors,
         opts
       );
@@ -837,14 +837,17 @@ async function validateField<T extends AnyZodObject, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
   defaultValidator: FormOptions<T, M>['defaultValidator'],
-  data: z.infer<T>,
+  data: SuperForm<T, M>['form'],
   errors: SuperForm<T, M>['errors'],
   options: ValidateOptions<unknown> = {}
 ): Promise<string[] | undefined> {
+  if (options.update === undefined) options.update = true;
+  if (options.taint === undefined) options.taint = false;
+
   function setError(errorMsgs: null | undefined | string | string[]) {
     if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
 
-    if (options.update !== false) {
+    if (options.update === true || options.update == 'errors') {
       errors.update((errors) => {
         const error = traversePath(
           errors,
@@ -879,11 +882,12 @@ async function validateField<T extends AnyZodObject, M>(
   }
 
   let value = options.value;
+  const currentData = get(data);
 
-  if (value === undefined) {
+  if (!('value' in options)) {
     const dataToValidate = traversePath(
-      data,
-      path as FieldPath<typeof data>
+      currentData,
+      path as FieldPath<typeof currentData>
     );
 
     if (!dataToValidate) {
@@ -891,7 +895,16 @@ async function validateField<T extends AnyZodObject, M>(
     }
 
     value = dataToValidate.value;
+  } else if (options.update === true || options.update === 'value') {
+    data.update(
+      ($data) => {
+        setPaths($data, [path], value);
+        return $data;
+      },
+      { taint: options.taint }
+    );
   }
+
   //console.log('🚀 ~ file: index.ts:871 ~ validate:', path, value);
 
   if (typeof validators !== 'object') {
@@ -998,8 +1011,22 @@ function formEnhance<T extends AnyZodObject, M>(
   // Add blur event, to check tainted
   let lastBlur: string[][] = [];
   function checkBlur() {
+    if (
+      options.validationMethod == 'oninput' ||
+      options.validationMethod == 'submit-only'
+    ) {
+      return;
+    }
+
     const newChanges = get(lastChanges);
-    if (equal(newChanges, lastBlur)) return;
+
+    if (
+      options.validationMethod != 'onblur' &&
+      equal(newChanges, lastBlur)
+    ) {
+      return;
+    }
+
     lastBlur = newChanges;
 
     for (const change of newChanges) {
@@ -1008,7 +1035,7 @@ function formEnhance<T extends AnyZodObject, M>(
         change,
         options.validators,
         options.defaultValidator,
-        get(data),
+        data,
         errors
       );
     }
@@ -1017,30 +1044,43 @@ function formEnhance<T extends AnyZodObject, M>(
 
   // Add input event, to check tainted
   function checkInput() {
+    if (
+      options.validationMethod == 'onblur' ||
+      options.validationMethod == 'submit-only'
+    ) {
+      return;
+    }
+
     const errorContent = get(errors);
     const taintedContent = get(tainted);
 
     for (const change of get(lastChanges)) {
-      const isTainted =
-        taintedContent &&
-        pathExists(taintedContent, change, (value) => value === true);
+      let shouldValidate = options.validationMethod === 'oninput';
 
-      const errorNode = errorContent
-        ? pathExists(errorContent, change)
-        : undefined;
+      if (!shouldValidate) {
+        const isTainted =
+          taintedContent &&
+          pathExists(taintedContent, change, (value) => value === true);
 
-      // Need a special check here, since if the error has never existed,
-      // there won't be a key for the error. But if it existed and was cleared,
-      // the key exists with the value undefined.
-      const hasError = errorNode && errorNode.key in errorNode.parent;
+        const errorNode = errorContent
+          ? pathExists(errorContent, change)
+          : undefined;
 
-      if (isTainted && hasError) {
+        // Need a special check here, since if the error has never existed,
+        // there won't be a key for the error. But if it existed and was cleared,
+        // the key exists with the value undefined.
+        const hasError = errorNode && errorNode.key in errorNode.parent;
+
+        shouldValidate = !!isTainted && !!hasError;
+      }
+
+      if (shouldValidate) {
         //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
         validateField(
           change,
           options.validators,
           options.defaultValidator,
-          get(data),
+          data,
           errors
         );
       }

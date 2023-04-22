@@ -13,6 +13,8 @@
 
   export let output: (string[] | undefined)[] = [];
 
+  $: testMode = $page.url.searchParams.has('test');
+
   const superFormValidator: FormOptions<
     typeof schema,
     unknown
@@ -54,30 +56,61 @@
 
   // validate tests
   onMount(async () => {
-    if (!$page.url.searchParams.has('test')) return;
+    if (!testMode) return;
 
-    validate(['tags', 0, 'name'], { value: 'p', errors: 'Custom error' });
+    await validate(['tags', 0, 'name'], {
+      value: 'p',
+      update: 'errors',
+      errors: 'Custom error'
+    });
+
     output = [...output, await validate('name')];
 
     output = [
       ...output,
-      await validate(['tags', 0, 'id'], {
-        update: false,
-        value: 1
+      await validate(['tags', 2, 'id'], {
+        value: 2
       })
     ];
 
     output = [
       ...output,
       (await validate(['tags', 0, 'id'], {
-        update: false,
+        update: 'errors',
         value: 7
-      })) ?? ['OK']
+      })) ?? ['Update errors OK']
     ];
+
+    const errors = await validate(['tags', 1, 'id']);
+    if (
+      errors?.length == 1 &&
+      errors[0] == 'Number must be greater than or equal to 3'
+    ) {
+      output = [...output, ['Error check OK']];
+    } else {
+      output = [...output, ['FAIL']];
+    }
+
+    const errors2 = await validate(['tags', 1, 'id'], {
+      value: 0,
+      update: false
+    });
+    if (
+      errors2?.length == 1 &&
+      errors2[0] == 'Number must be greater than or equal to 3'
+    ) {
+      output = [...output, ['Error check 2 OK']];
+    } else {
+      output = [...output, ['FAIL']];
+    }
   });
 </script>
 
 <form method="POST" use:enhance>
+  {#if testMode}
+    <SuperDebug data={$tainted} />
+  {/if}
+
   {#if $message}<h4>{$message}</h4>{/if}
   <input type="hidden" name="id" value={validator} />
   <small>{validator} validation</small>

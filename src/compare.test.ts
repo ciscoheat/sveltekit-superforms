@@ -377,6 +377,30 @@ describe('Path comparisons', () => {
 
     expect(comparePaths(obj1, obj2)).toStrictEqual([['flavours', '0']]);
   });
+
+  test('Paths with different array values', () => {
+    /* 
+      Array comparisons can unfortunately break the illusion that the form
+      fields themselves are tainted.
+      If you click on a checkbox to add an item, the array comparison will
+      taint more than one field.
+    */
+
+    const obj1 = {
+      flavours: ['Mint choc chip'],
+      scoops: 1
+    };
+
+    const obj2 = {
+      flavours: ['Cookies and cream', 'Mint choc chip'],
+      scoops: 1
+    };
+
+    expect(comparePaths(obj1, obj2)).toStrictEqual([
+      ['flavours', '0'],
+      ['flavours', '1']
+    ]);
+  });
 });
 
 test('Set paths', () => {

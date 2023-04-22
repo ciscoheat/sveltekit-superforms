@@ -1393,8 +1393,6 @@ function formEnhance<T extends AnyZodObject, M>(
 
         htmlForm.submitting();
 
-        // TODO: If SPA, cancel request here, factor out the result callback and call it directly.
-
         if (options.SPA) {
           cancel();
 

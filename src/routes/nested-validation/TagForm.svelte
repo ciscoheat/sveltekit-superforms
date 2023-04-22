@@ -52,12 +52,11 @@
     }
   );
 
-  validate(['tags', 0, 'name'], { value: 'p', errors: 'No way' });
-
   // validate tests
   onMount(async () => {
     if (!$page.url.searchParams.has('test')) return;
 
+    validate(['tags', 0, 'name'], { value: 'p', errors: 'Custom error' });
     output = [...output, await validate('name')];
 
     output = [
@@ -79,7 +78,6 @@
 </script>
 
 <form method="POST" use:enhance>
-  <SuperDebug data={$tainted} />
   {#if $message}<h4>{$message}</h4>{/if}
   <input type="hidden" name="id" value={validator} />
   <small>{validator} validation</small>

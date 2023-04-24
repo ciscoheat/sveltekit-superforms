@@ -43,7 +43,7 @@ export function findErrors(
   path: string[] = []
 ): { path: string[]; message: string }[] {
   const entries = Object.entries(errors);
-  return entries.flatMap(([key, value]) => {
+  return entries.filter(([, value]) => value !== undefined).flatMap(([key, value]) => {
     if (Array.isArray(value) && value.length > 0) {
       const currPath = path.concat([key]);
       return value.map((message) => ({ path: currPath, message }));

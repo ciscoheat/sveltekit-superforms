@@ -915,11 +915,15 @@ async function validateField<T extends AnyZodObject, M>(
   const validationPath = path.filter((p) => isNaN(parseInt(p)));
 
   function extractValidator(data: any, key: string) {
-    const objectShape = data?._def?.schema?.shape;
-    if (objectShape) return objectShape[key];
+    const def = data?._def
 
-    const arrayShape = data?.element?.shape;
-    if (arrayShape) return arrayShape[key];
+    if(def) {
+      const objectShape = 'shape' in def ? def.shape() : def.schema?.shape;
+      if (objectShape) return objectShape[key];
+
+      const arrayShape = data?.element?.shape;
+      if (arrayShape) return arrayShape[key];
+    }
 
     throw new SuperFormError(
       'Invalid Zod validator for ' + key + ': ' + data

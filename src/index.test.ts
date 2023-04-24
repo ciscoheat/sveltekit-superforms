@@ -160,10 +160,12 @@ test('FormData array data', async () => {
 });
 
 test('Nullable values', async () => {
-  const schema = z.object({
+  const refinedSchema = z.object({
     scopeId: z.number().int().min(1),
     name: z.string().nullable()
-  });
+  }).refine(data => data);
+
+  const schema = refinedSchema._def.schema
 
   const output = defaultData(schema);
   expect(output.scopeId).equals(0);

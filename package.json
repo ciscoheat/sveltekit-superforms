@@ -1,6 +1,6 @@
 {
   "name": "sveltekit-superforms",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
   "description": "Making SvelteKit validation and displaying of forms easier than ever!",
   "keywords": [

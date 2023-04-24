@@ -117,6 +117,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
         message: Writable<Validation<UnwrapEffects<T>, M>['message']>;
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
+  jsonChunkSize: number;
   validators:
     | false
     | Validators<UnwrapEffects<T>>
@@ -1460,7 +1461,7 @@ function formEnhance<T extends AnyZodObject, M>(
           setTimeout(() => validationResponse({ result }), 0);
         } else if (options.dataType === 'json') {
           const postData = get(data);
-          const chunks = chunkSubstr(stringify(postData), 500000);
+          const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
 
           for (const chunk of chunks) {
             submit.data.append('__superform_json', chunk);

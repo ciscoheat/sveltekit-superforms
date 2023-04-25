@@ -24,7 +24,6 @@ export const basicSchema = z.object({
       }
     )
     .array()
-    .nullable()
     .default([{ min: 5, max: 10 }])
 });
 

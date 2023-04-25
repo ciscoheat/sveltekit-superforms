@@ -34,9 +34,10 @@ import type {
   z,
   AnyZodObject,
   ZodEffects,
+  ZodArray,
+  ZodAny,
   ZodTypeAny,
-  SafeParseReturnType,
-  ZodArray
+  SafeParseReturnType
 } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
@@ -47,7 +48,8 @@ import {
   traversePathsAsync,
   comparePaths,
   setPaths,
-  pathExists
+  pathExists,
+  type ZodTypeInfo
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
@@ -920,9 +922,68 @@ async function validateField<T extends AnyZodObject, M>(
     return defaultValidate();
   }
 
+  // Remove numeric indices, they're not used for validators.
+  const validationPath = path.filter((p) => isNaN(parseInt(p)));
+
+  function extractValidator(
+    data: ZodTypeInfo,
+    key: string
+  ): ZodTypeAny | undefined {
+    if (data.effects) return undefined;
+
+    // No effects, check if ZodObject or ZodArray, which are the
+    // "allowed" objects in the path above the leaf.
+    const type = data.zodType;
+
+    if (type._def.typeName == 'ZodObject') {
+      const nextType = (type as AnyZodObject)._def.shape()[key];
+      const unwrapped = unwrapZodType(nextType);
+      return unwrapped.effects ? undefined : unwrapped.zodType;
+    } else if (type._def.typeName == 'ZodArray') {
+      const array = type as ZodArray<ZodAny>;
+      const unwrapped = unwrapZodType(array.element);
+      if (unwrapped.effects) return undefined;
+      return extractValidator(unwrapped, key);
+    } else {
+      throw new SuperFormError('Invalid validator');
+    }
+  }
+
   if ('safeParseAsync' in validators) {
     // Zod validator
-    const result = await (validators as AnyZodObject).safeParseAsync(
+    // Check if any effects exist for the path, then parse the entire schema.
+    const leaf = traversePath(
+      validators,
+      validationPath as FieldPath<typeof validators>,
+      (pathData) => {
+        return extractValidator(
+          unwrapZodType(pathData.parent),
+          pathData.key
+        );
+      }
+    );
+
+    if (leaf) {
+      const validator = extractValidator(
+        unwrapZodType(leaf.parent),
+        leaf.key
+      );
+      if (validator) {
+        console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
+        const result = await validator.safeParseAsync(value);
+        if (!result.success) {
+          const errors = result.error.format();
+          return setError(errors._errors);
+        } else {
+          return setError(undefined);
+        }
+      }
+    }
+
+    console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
+
+    // Effects are found, validate entire data, unfortunately
+    const result = await (validators as ZodTypeAny).safeParseAsync(
       get(data)
     );
 
@@ -935,9 +996,6 @@ async function validateField<T extends AnyZodObject, M>(
     }
   } else {
     // SuperForms validator
-
-    // Remove numeric indices, they're not used for validators.
-    const validationPath = path.filter((p) => isNaN(parseInt(p)));
 
     const validator = traversePath(
       validators as Validators<UnwrapEffects<T>>,

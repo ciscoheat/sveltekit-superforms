@@ -1,5 +1,10 @@
 import type { ValidationErrors, FieldPath } from './index.js';
-import type { ZodTypeAny, AnyZodObject, ZodFormattedError } from 'zod';
+import type {
+  ZodTypeAny,
+  AnyZodObject,
+  ZodFormattedError,
+  ZodEffects
+} from 'zod';
 import type { MaybePromise } from '$app/forms';
 
 export type ZodTypeInfo = {
@@ -7,6 +12,7 @@ export type ZodTypeInfo = {
   isNullable: boolean;
   isOptional: boolean;
   hasDefault: boolean;
+  effects: ZodEffects<ZodTypeAny> | undefined;
   defaultValue: unknown;
 };
 
@@ -43,17 +49,19 @@ export function findErrors(
   path: string[] = []
 ): { path: string[]; message: string }[] {
   const entries = Object.entries(errors);
-  return entries.filter(([, value]) => value !== undefined).flatMap(([key, value]) => {
-    if (Array.isArray(value) && value.length > 0) {
-      const currPath = path.concat([key]);
-      return value.map((message) => ({ path: currPath, message }));
-    } else {
-      return findErrors(
-        errors[key] as ValidationErrors<AnyZodObject>,
-        path.concat([key])
-      );
-    }
-  });
+  return entries
+    .filter(([, value]) => value !== undefined)
+    .flatMap(([key, value]) => {
+      if (Array.isArray(value) && value.length > 0) {
+        const currPath = path.concat([key]);
+        return value.map((message) => ({ path: currPath, message }));
+      } else {
+        return findErrors(
+          errors[key] as ValidationErrors<AnyZodObject>,
+          path.concat([key])
+        );
+      }
+    });
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -62,44 +70,46 @@ type PathData = {
   parent: any;
   key: string;
   value: any;
-};
-
-type FullPathData = PathData & {
   path: string[];
   isLeaf: boolean;
 };
 
 export async function traversePathAsync<T extends object>(
   obj: T,
-  path: FieldPath<T>,
+  realPath: FieldPath<T>,
   modifier?: (data: PathData) => MaybePromise<undefined | unknown | void>
 ): Promise<PathData | undefined> {
-  if (!path.length) return undefined;
-  path = [...path];
+  if (!realPath.length) return undefined;
+  const path: FieldPath<T> = [realPath[0]];
 
   let parent = obj;
 
-  while (path.length > 1) {
-    const key = path[0];
+  while (path.length < realPath.length) {
+    const key = path.at(-1) as keyof typeof parent;
+
     const value = modifier
       ? await modifier({
           parent,
           key: String(key),
-          value: parent[key]
+          value: parent[key],
+          path: path.map((p) => String(p)),
+          isLeaf: false
         })
       : parent[key];
 
     if (value === undefined) return undefined;
     else parent = value as T; // TODO: Handle non-object values
 
-    path.shift();
+    path.push(realPath[path.length]);
   }
 
-  const key = path[0];
+  const key = realPath.at(-1);
   return {
     parent,
     key: String(key),
-    value: parent[key]
+    value: parent[key as keyof typeof parent],
+    path: realPath.map((p) => String(p)),
+    isLeaf: true
   };
 }
 
@@ -117,35 +127,40 @@ export function pathExists<T extends object>(
 
 export function traversePath<T extends object>(
   obj: T,
-  path: FieldPath<T>,
+  realPath: FieldPath<T>,
   modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
-  if (!path.length) return undefined;
-  path = [...path];
+  if (!realPath.length) return undefined;
+  const path: FieldPath<T> = [realPath[0]];
 
   let parent = obj;
 
-  while (path.length > 1) {
-    const key = path[0];
+  while (path.length < realPath.length) {
+    const key = path.at(-1) as keyof typeof parent;
+
     const value = modifier
       ? modifier({
           parent,
           key: String(key),
-          value: parent[key]
+          value: parent[key],
+          path: path.map((p) => String(p)),
+          isLeaf: false
         })
       : parent[key];
 
     if (value === undefined) return undefined;
     else parent = value as T; // TODO: Handle non-object values
 
-    path.shift();
+    path.push(realPath[path.length]);
   }
 
-  const key = path[0];
+  const key = realPath.at(-1);
   return {
     parent,
     key: String(key),
-    value: parent[key]
+    value: parent[key as keyof typeof parent],
+    path: realPath.map((p) => String(p)),
+    isLeaf: true
   };
 }
 
@@ -153,14 +168,14 @@ type TraverseStatus = 'abort' | 'skip' | unknown | void;
 
 export function traversePaths<T extends object, Path extends FieldPath<T>>(
   parent: T,
-  modifier: (data: FullPathData) => TraverseStatus,
+  modifier: (data: PathData) => TraverseStatus,
   path: Path | [] = []
 ): TraverseStatus {
   for (const key in parent) {
     const value = parent[key] as any;
     const isLeaf = value === null || typeof value !== 'object';
 
-    const pathData: FullPathData = {
+    const pathData: PathData = {
       parent,
       key,
       value,
@@ -184,14 +199,14 @@ export async function traversePathsAsync<
   Path extends FieldPath<T>
 >(
   parent: T,
-  modifier: (data: FullPathData) => MaybePromise<TraverseStatus>,
+  modifier: (data: PathData) => MaybePromise<TraverseStatus>,
   path: Path | [] = []
 ): Promise<TraverseStatus> {
   for (const key in parent) {
     const value = parent[key] as any;
     const isLeaf = value === null || typeof value !== 'object';
 
-    const pathData: FullPathData = {
+    const pathData: PathData = {
       parent,
       key,
       value,
@@ -216,7 +231,7 @@ export async function traversePathsAsync<
 export function comparePaths(newObj: unknown, oldObj: unknown) {
   const diffPaths = new Map<string, string[]>();
 
-  function checkPath(data: FullPathData, compareTo: object) {
+  function checkPath(data: PathData, compareTo: object) {
     if (data.isLeaf) {
       const exists = traversePath(compareTo, data.path as FieldPath<object>);
 

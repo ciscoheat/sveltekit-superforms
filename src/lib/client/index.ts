@@ -30,7 +30,13 @@ import {
   type UnwrapEffects,
   type ZodValidation
 } from '../index.js';
-import type { z, AnyZodObject, ZodEffects } from 'zod';
+import type {
+  z,
+  AnyZodObject,
+  ZodEffects,
+  ZodTypeAny,
+  SafeParseReturnType
+} from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
 import {
@@ -44,7 +50,8 @@ import {
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
-import type { Entity } from '$lib/server/entity.js';
+import type { Entity } from '../schemaEntity.js';
+import { unwrapZodType } from '../schemaEntity.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -912,19 +919,18 @@ async function validateField<T extends AnyZodObject, M>(
     return defaultValidate();
   }
 
-  // Remove array indices, they don't exist in validators.
-  const validationPath = path.filter((p) => isNaN(parseInt(p)));
-
   function extractValidator(data: any, key: string) {
-    const def = data?._def
+    const zodData = unwrapZodType(data);
+    if (zodData.effects)
+      return { effects: true, validator: zodData.effects } as const;
+    data = zodData.zodType;
 
-    if(def) {
-      const objectShape = 'shape' in def ? def.shape() : def.schema?.shape;
-      if (objectShape) return objectShape[key];
+    // ZodObject
 
-      const arrayShape = data?.element?.shape;
-      if (arrayShape) return arrayShape[key];
-    }
+    // ZodArray
+    const arrayShape = data?.element?.shape;
+    if (arrayShape)
+      return { effects: false, validator: arrayShape[key] } as const;
 
     throw new SuperFormError(
       'Invalid Zod validator for ' + key + ': ' + data
@@ -933,26 +939,54 @@ async function validateField<T extends AnyZodObject, M>(
 
   if ('safeParseAsync' in validators) {
     // Zod validator
+    let resultPromise: Promise<SafeParseReturnType<any, any>> | undefined =
+      undefined;
 
-    const validator = traversePath(
+    let effectPath = [];
+
+    const extracted = traversePath(
       validators as AnyZodObject,
-      validationPath as FieldPath<AnyZodObject>,
-      (data) => {
-        return extractValidator(data.parent, data.key);
+      path as FieldPath<AnyZodObject>,
+      (pathdata) => {
+        if (!isNaN(parseInt(pathdata.key))) {
+          return value;
+        }
+        const extracted = extractValidator(pathdata.parent, pathdata.key);
+        if (extracted.effects) {
+          // ZodEffects found, validate tree from this point
+          const validator = extracted.validator;
+          const partialData = traversePath(
+            get(data),
+            pathdata.path as FieldPath<z.infer<T>>
+          );
+          resultPromise = validator.safeParseAsync(partialData?.parent);
+          effectPath = pathdata.path.slice(0, -1);
+          return undefined;
+        } else {
+          // No effects, keep going down the tree.
+          return extracted.validator;
+        }
       }
     );
 
-    if (!validator)
-      throw new SuperFormError('No Zod validator found: ' + path);
+    if (!resultPromise) {
+      if (!extracted) {
+        throw new SuperFormError('No Zod validator found: ' + path);
+      }
+      resultPromise = extracted.value.safeParseAsync(value);
+    }
 
-    const result = await extractValidator(
-      validator.parent,
-      validator.key
-    ).safeParseAsync(value);
+    const result = await (resultPromise as NonNullable<
+      typeof resultPromise
+    >);
+
+    console.log('Validated', path, result, get(data));
 
     if (!result.success) {
       const msgs = mapErrors<T>(result.error.format());
-      return setError(options.errors ?? msgs._errors);
+      const current = traversePath(msgs, path as FieldPath<typeof msgs>);
+      //if (!current) throw new SuperFormError('Error not found: ' + path);
+      return setError(current?.value);
     } else {
       return setError(undefined);
     }
@@ -1461,7 +1495,10 @@ function formEnhance<T extends AnyZodObject, M>(
           setTimeout(() => validationResponse({ result }), 0);
         } else if (options.dataType === 'json') {
           const postData = get(data);
-          const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
+          const chunks = chunkSubstr(
+            stringify(postData),
+            options.jsonChunkSize ?? 500000
+          );
 
           for (const chunk of chunks) {
             submit.data.append('__superform_json', chunk);

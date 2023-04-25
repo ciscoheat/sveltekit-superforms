@@ -26,7 +26,7 @@ import {
   intProxy,
   numberProxy
 } from '$lib/client';
-import type { FormPath } from '$lib';
+import type { FormPath, FieldPath } from '$lib';
 import { comparePaths, setPaths } from '$lib/entity';
 
 const user = z.object({
@@ -79,32 +79,44 @@ test('Mapping errors', () => {
 
 describe('Path traversals', () => {
   test('Basic path traversal', () => {
-    const error = traversePath(mapped, ['friends', '1', 'id']);
+    const path = ['friends', '1', 'id'];
+    const error = traversePath(mapped, path as FieldPath<typeof mapped>);
 
     expect(error).toStrictEqual({
       parent: mapped.friends![1],
       key: 'id',
-      value: mapped.friends![1].id
+      value: mapped.friends![1].id,
+      path,
+      isLeaf: true
     });
   });
 
   test('Basic path traversal, async', async () => {
-    const error = await traversePathAsync(mapped, ['friends', '1', 'id']);
+    const path = ['friends', '1', 'id'];
+    const error = await traversePathAsync(
+      mapped,
+      path as FieldPath<typeof mapped>
+    );
 
     expect(error).toStrictEqual({
       parent: mapped.friends![1],
       key: 'id',
-      value: mapped.friends![1].id
+      value: mapped.friends![1].id,
+      path,
+      isLeaf: true
     });
   });
 
   test('Basic path traversal, non-existing leaf', () => {
-    const error = traversePath(mapped, ['friends', '1', 'N/A']);
+    const path = ['friends', '1', 'N/A'];
+    const error = traversePath(mapped, path as FieldPath<typeof mapped>);
 
     expect(error).toStrictEqual({
       parent: mapped.friends![1],
       key: 'N/A',
-      value: undefined
+      value: undefined,
+      isLeaf: true,
+      path
     });
   });
 
@@ -114,9 +126,10 @@ describe('Path traversals', () => {
   });
 
   test('Basic path traversal, non-existing node with modifier', async () => {
+    const path = ['friends', '2', 'id'];
     const error = await traversePathAsync(
       mapped,
-      ['friends', '2', 'id'],
+      path as FieldPath<typeof mapped>,
       ({ parent, key, value }) => {
         if (value === undefined) parent[key] = {};
         return parent[key];
@@ -125,7 +138,9 @@ describe('Path traversals', () => {
     expect(error).toStrictEqual({
       parent: mapped.friends![2],
       key: 'id',
-      value: undefined
+      value: undefined,
+      isLeaf: true,
+      path
     });
   });
 
@@ -436,7 +451,9 @@ test('Check path existence', () => {
   expect(pathExists(errors, ['tags', '0', 'id'])).toStrictEqual({
     parent: errors.tags[0],
     key: 'id',
-    value: true
+    value: true,
+    isLeaf: true,
+    path: ['tags', '0', 'id']
   });
 });
 

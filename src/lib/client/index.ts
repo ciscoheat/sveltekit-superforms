@@ -35,7 +35,8 @@ import type {
   AnyZodObject,
   ZodEffects,
   ZodTypeAny,
-  SafeParseReturnType
+  SafeParseReturnType,
+  ZodArray
 } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
@@ -919,80 +920,23 @@ async function validateField<T extends AnyZodObject, M>(
     return defaultValidate();
   }
 
-  function extractValidator(data: any, key: string) {
-    const zodData = unwrapZodType(data);
-    if (zodData.effects)
-      return { effects: true, validator: zodData.effects } as const;
-    data = zodData.zodType;
-
-    // ZodObject
-
-    // ZodArray
-    const arrayShape = data?.element?.shape;
-    if (arrayShape)
-      return { effects: false, validator: arrayShape[key] } as const;
-
-    throw new SuperFormError(
-      'Invalid Zod validator for ' + key + ': ' + data
-    );
-  }
-
   if ('safeParseAsync' in validators) {
     // Zod validator
-    let resultPromise: Promise<SafeParseReturnType<any, any>> | undefined =
-      undefined;
-
-    let effectPath = [];
-
-    const extracted = traversePath(
-      validators as AnyZodObject,
-      path as FieldPath<AnyZodObject>,
-      (pathdata) => {
-        if (!isNaN(parseInt(pathdata.key))) {
-          return value;
-        }
-        const extracted = extractValidator(pathdata.parent, pathdata.key);
-        if (extracted.effects) {
-          // ZodEffects found, validate tree from this point
-          const validator = extracted.validator;
-          const partialData = traversePath(
-            get(data),
-            pathdata.path as FieldPath<z.infer<T>>
-          );
-          resultPromise = validator.safeParseAsync(partialData?.parent);
-          effectPath = pathdata.path.slice(0, -1);
-          return undefined;
-        } else {
-          // No effects, keep going down the tree.
-          return extracted.validator;
-        }
-      }
+    const result = await (validators as AnyZodObject).safeParseAsync(
+      get(data)
     );
 
-    if (!resultPromise) {
-      if (!extracted) {
-        throw new SuperFormError('No Zod validator found: ' + path);
-      }
-      resultPromise = extracted.value.safeParseAsync(value);
-    }
-
-    const result = await (resultPromise as NonNullable<
-      typeof resultPromise
-    >);
-
-    console.log('Validated', path, result, get(data));
-
     if (!result.success) {
-      const msgs = mapErrors<T>(result.error.format());
-      const current = traversePath(msgs, path as FieldPath<typeof msgs>);
-      //if (!current) throw new SuperFormError('Error not found: ' + path);
-      return setError(current?.value);
+      const errors = result.error.format();
+      const current = traversePath(errors, path as FieldPath<typeof errors>);
+      return setError(current?.value?._errors);
     } else {
       return setError(undefined);
     }
   } else {
     // SuperForms validator
 
+    // Remove numeric indices, they're not used for validators.
     const validationPath = path.filter((p) => isNaN(parseInt(p)));
 
     const validator = traversePath(

@@ -11,7 +11,7 @@
     data.form,
     {
       dataType: 'json',
-      validators: refined,
+      validators: basicSchema,
       validationMethod: ($page.url.searchParams.get('method') ??
         undefined) as any
     }

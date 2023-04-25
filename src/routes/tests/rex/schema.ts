@@ -11,7 +11,6 @@ export const basicSchema = z.object({
       min: z.number().int().min(5),
       max: z.number().int().min(5)
     })
-    /*
     .refine(
       (data) => {
         if (data.min && data.max) {
@@ -24,7 +23,6 @@ export const basicSchema = z.object({
         message: 'Max must be greater or equal to min'
       }
     )
-		*/
     .array()
     .nullable()
     .default([{ min: 5, max: 10 }])

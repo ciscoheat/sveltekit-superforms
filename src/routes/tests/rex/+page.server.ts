@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { basicSchema } from './schema';
+import { basicSchema, subRefined, refined } from './schema';
 import { message, superValidate } from '$lib/server';
 
 export const load = (async () => {
   // Server API:
-  const form = await superValidate(basicSchema);
+  const form = await superValidate(subRefined);
 
   // Always return { form } in load and form actions.
   return { form };
@@ -13,7 +13,7 @@ export const load = (async () => {
 
 export const actions: Actions = {
   default: async ({ request }) => {
-    const form = await superValidate(request, basicSchema);
+    const form = await superValidate(request, subRefined);
     console.log('POST', form);
 
     // Convenient validation check:

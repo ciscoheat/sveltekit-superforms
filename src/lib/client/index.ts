@@ -36,8 +36,7 @@ import type {
   ZodEffects,
   ZodArray,
   ZodAny,
-  ZodTypeAny,
-  SafeParseReturnType
+  ZodTypeAny
 } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
@@ -969,7 +968,7 @@ async function validateField<T extends AnyZodObject, M>(
         leaf.key
       );
       if (validator) {
-        console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
+        //console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
         const result = await validator.safeParseAsync(value);
         if (!result.success) {
           const errors = result.error.format();
@@ -980,7 +979,7 @@ async function validateField<T extends AnyZodObject, M>(
       }
     }
 
-    console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
+    //console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
 
     // Effects are found, validate entire data, unfortunately
     const result = await (validators as ZodTypeAny).safeParseAsync(
@@ -1049,6 +1048,16 @@ function formEnhance<T extends AnyZodObject, M>(
     );
   }
 
+  function validateChange(change: string[]) {
+    validateField(
+      change,
+      options.validators,
+      options.defaultValidator,
+      data,
+      errors
+    );
+  }
+
   // Add blur event, to check tainted
   let lastBlur: string[][] = [];
   function checkBlur() {
@@ -1072,13 +1081,7 @@ function formEnhance<T extends AnyZodObject, M>(
 
     for (const change of newChanges) {
       //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
-      validateField(
-        change,
-        options.validators,
-        options.defaultValidator,
-        data,
-        errors
-      );
+      validateChange(change);
     }
   }
   formEl.addEventListener('focusout', checkBlur);
@@ -1117,13 +1120,7 @@ function formEnhance<T extends AnyZodObject, M>(
 
       if (shouldValidate) {
         //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
-        validateField(
-          change,
-          options.validators,
-          options.defaultValidator,
-          data,
-          errors
-        );
+        validateChange(change);
       }
     }
   }

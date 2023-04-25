@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { superForm } from '$lib/client';
-  import { basicSchema, refined } from './schema';
+  import { basicSchema, subRefined, refined } from './schema';
   import { page } from '$app/stores';
 
   export let data: PageData;
@@ -11,7 +11,7 @@
     data.form,
     {
       dataType: 'json',
-      validators: basicSchema,
+      validators: subRefined,
       validationMethod: ($page.url.searchParams.get('method') ??
         undefined) as any
     }

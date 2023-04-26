@@ -22,7 +22,8 @@ import {
   ZodBigInt,
   ZodObject,
   ZodSymbol,
-  ZodRecord
+  ZodRecord,
+  ZodAny
 } from 'zod';
 
 export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
@@ -51,6 +52,25 @@ export type Entity<T extends AnyZodObject> = {
   hash: string;
   keys: string[];
 };
+
+export function hasEffects(zodType: ZodTypeAny): boolean {
+  const type = unwrapZodType(zodType);
+  if (type.effects) return true;
+
+  const name = type.zodType._def.typeName;
+
+  if (name == 'ZodObject') {
+    const obj = type.zodType as AnyZodObject;
+    for (const field of Object.values(obj._def.shape())) {
+      if (hasEffects(field as ZodTypeAny)) return true;
+    }
+  } else if (name == 'ZodArray') {
+    const array = type.zodType as ZodArray<ZodTypeAny>;
+    return hasEffects(array.element);
+  }
+
+  return false;
+}
 
 export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
   let _wrapped = true;

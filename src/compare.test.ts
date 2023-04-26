@@ -17,7 +17,7 @@ import {
 import { pathExists, traversePath, traversePathAsync } from '$lib/entity';
 import { get, writable } from 'svelte/store';
 import { mapErrors } from '$lib/entity';
-import { unwrapZodType } from '$lib/server/entity';
+import { hasEffects, unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
 import {
   booleanProxy,
@@ -457,15 +457,18 @@ test('Check path existence', () => {
   });
 });
 
-/*
-test('String paths', () => {
-  type Social = z.infer<typeof social>;
-  const i = 5;
-  const i2 = '5';
-
-  const path1: StringPath<Social> = `user.tags.${i}.name`;
-  const path2: StringPath<Social> = `user.tags.${i2}.name`;
-
-  expect(path1).toEqual(path2);
+const refined = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(2),
+  email: z.string().email().nullable(),
+  tags: z
+    .object({ name: z.string().min(1) })
+    .refine((data) => data.name.length > 5)
+    .array()
+    .optional()
 });
-*/
+
+test.only('Checking side effects', () => {
+  expect(hasEffects(social)).toStrictEqual(false);
+  expect(hasEffects(refined)).toStrictEqual(true);
+});

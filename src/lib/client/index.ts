@@ -52,7 +52,7 @@ import {
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
-import type { Entity } from '../schemaEntity.js';
+import { hasEffects, type Entity } from '../schemaEntity.js';
 import { unwrapZodType } from '../schemaEntity.js';
 
 enum FetchStatus {
@@ -843,6 +843,8 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
   return options.syncFlashMessage;
 }
 
+const effectMapCache = new WeakMap<object, boolean>();
+
 async function validateField<T extends AnyZodObject, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
@@ -940,7 +942,7 @@ async function validateField<T extends AnyZodObject, M>(
       const unwrapped = unwrapZodType(nextType);
       return unwrapped.effects ? undefined : unwrapped.zodType;
     } else if (type._def.typeName == 'ZodArray') {
-      const array = type as ZodArray<ZodAny>;
+      const array = type as ZodArray<ZodTypeAny>;
       const unwrapped = unwrapZodType(array.element);
       if (unwrapped.effects) return undefined;
       return extractValidator(unwrapped, key);
@@ -952,16 +954,24 @@ async function validateField<T extends AnyZodObject, M>(
   if ('safeParseAsync' in validators) {
     // Zod validator
     // Check if any effects exist for the path, then parse the entire schema.
-    const noEffects = traversePath(
-      validators,
-      validationPath as FieldPath<typeof validators>,
-      (pathData) => {
-        return extractValidator(
-          unwrapZodType(pathData.parent),
-          pathData.key
+    if (!effectMapCache.has(validators)) {
+      effectMapCache.set(validators, hasEffects(validators as ZodTypeAny));
+    }
+
+    const effects = effectMapCache.get(validators);
+
+    const noEffects = effects
+      ? undefined
+      : traversePath(
+          validators,
+          validationPath as FieldPath<typeof validators>,
+          (pathData) => {
+            return extractValidator(
+              unwrapZodType(pathData.parent),
+              pathData.key
+            );
+          }
         );
-      }
-    );
 
     if (noEffects) {
       const validator = extractValidator(

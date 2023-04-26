@@ -10,20 +10,19 @@ import {
   z,
   type ZodTypeAny,
   type AnyZodObject,
-  ZodDefault,
-  ZodNullable,
-  ZodOptional,
+  type ZodDefault,
+  type ZodNullable,
+  type ZodOptional,
+  type ZodEffects,
   ZodString,
   ZodNumber,
   ZodBoolean,
   ZodDate,
   ZodArray,
-  ZodEffects,
   ZodBigInt,
   ZodObject,
   ZodSymbol,
-  ZodRecord,
-  ZodAny
+  ZodRecord
 } from 'zod';
 
 export type UnwrappedEntity<T> = T extends ZodOptional<infer U>

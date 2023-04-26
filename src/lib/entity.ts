@@ -186,7 +186,7 @@ export function traversePaths<T extends object, Path extends FieldPath<T>>(
     const status = modifier(pathData);
 
     if (status === 'abort') return status;
-    else if (status === 'skip') break;
+    else if (status === 'skip') continue;
     else if (!isLeaf) {
       const status = traversePaths(value, modifier, pathData.path as any);
       if (status === 'abort') return status;

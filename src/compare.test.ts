@@ -468,7 +468,7 @@ const refined = z.object({
     .optional()
 });
 
-test.only('Checking side effects', () => {
+test('Checking side effects', () => {
   expect(hasEffects(social)).toStrictEqual(false);
   expect(hasEffects(refined)).toStrictEqual(true);
 });

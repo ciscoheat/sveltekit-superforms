@@ -48,7 +48,8 @@ import {
   comparePaths,
   setPaths,
   pathExists,
-  type ZodTypeInfo
+  type ZodTypeInfo,
+  traversePaths
 } from '../entity.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
@@ -642,9 +643,6 @@ export function superForm<
 
   ///// When use:enhance is enabled ///////////////////////////////////////////
 
-  // Prevent client validation on first page load
-  // (when it recieives data from the server)
-
   function isTainted(obj: unknown): boolean {
     if (obj === null)
       throw new SuperFormError('$tainted store contained null');
@@ -776,6 +774,7 @@ export function superForm<
         options.defaultValidator,
         Form,
         Errors,
+        Tainted,
         opts
       );
     },
@@ -843,6 +842,16 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
   return options.syncFlashMessage;
 }
 
+function isPathTainted(
+  path: string[],
+  tainted: TaintedFields<AnyZodObject> | undefined
+) {
+  if (tainted === undefined) return false;
+  const leaf = traversePath(tainted, path as FieldPath<typeof tainted>);
+  if (!leaf) return false;
+  return leaf.value === true;
+}
+
 const effectMapCache = new WeakMap<object, boolean>();
 
 async function validateField<T extends AnyZodObject, M>(
@@ -851,6 +860,7 @@ async function validateField<T extends AnyZodObject, M>(
   defaultValidator: FormOptions<T, M>['defaultValidator'],
   data: SuperForm<T, M>['form'],
   errors: SuperForm<T, M>['errors'],
+  tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown> = {}
 ): Promise<string[] | undefined> {
   if (options.update === undefined) options.update = true;
@@ -1006,9 +1016,35 @@ async function validateField<T extends AnyZodObject, M>(
     );
 
     if (!result.success) {
-      const errors = result.error.format();
-      const current = traversePath(errors, path as FieldPath<typeof errors>);
-      return setError(options.errors ?? current?.value?._errors);
+      const newErrors = mapErrors(result.error.format());
+
+      if (options.update === true || options.update == 'errors') {
+        console.log('🚀 ~ file: index.ts:1020 ~ newErrors:', newErrors);
+
+        // Set errors for other (tainted) fields, that may have been changed
+        const taintedFields = get(tainted);
+        const currentErrors = get(errors);
+        let updated = false;
+
+        traversePaths(newErrors, (pathData) => {
+          if (!Array.isArray(pathData.value)) return;
+          if (isPathTainted(pathData.path, taintedFields)) {
+            setPaths(currentErrors, [pathData.path], pathData.value);
+            updated = true;
+          }
+          return 'skip';
+        });
+
+        if (updated) errors.set(currentErrors);
+      }
+
+      // Finally, set errors for the specific field
+      const current = traversePath(
+        newErrors,
+        path as FieldPath<typeof newErrors>
+      );
+
+      return setError(options.errors ?? current?.value);
     } else {
       return setError(undefined);
     }
@@ -1073,7 +1109,8 @@ function formEnhance<T extends AnyZodObject, M>(
       options.validators,
       options.defaultValidator,
       data,
-      errors
+      errors,
+      tainted
     );
   }
 

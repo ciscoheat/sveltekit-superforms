@@ -892,20 +892,19 @@ async function validateField<T extends AnyZodObject, M>(
   }
 
   let value = options.value;
+  let shouldUpdate = true;
   const currentData = get(data);
 
   if (!('value' in options)) {
+    // Use value from data
     const dataToValidate = traversePath(
       currentData,
       path as FieldPath<typeof currentData>
     );
 
-    if (!dataToValidate) {
-      throw new SuperFormError('Validation data not found: ' + path);
-    }
-
-    value = dataToValidate.value;
+    value = dataToValidate?.value;
   } else if (options.update === true || options.update === 'value') {
+    // Value should be updating the data
     data.update(
       ($data) => {
         setPaths($data, [path], value);
@@ -913,6 +912,8 @@ async function validateField<T extends AnyZodObject, M>(
       },
       { taint: options.taint }
     );
+  } else {
+    shouldUpdate = false;
   }
 
   //console.log('🚀 ~ file: index.ts:871 ~ validate:', path, value);
@@ -951,7 +952,7 @@ async function validateField<T extends AnyZodObject, M>(
   if ('safeParseAsync' in validators) {
     // Zod validator
     // Check if any effects exist for the path, then parse the entire schema.
-    const leaf = traversePath(
+    const noEffects = traversePath(
       validators,
       validationPath as FieldPath<typeof validators>,
       (pathData) => {
@@ -962,10 +963,10 @@ async function validateField<T extends AnyZodObject, M>(
       }
     );
 
-    if (leaf) {
+    if (noEffects) {
       const validator = extractValidator(
-        unwrapZodType(leaf.parent),
-        leaf.key
+        unwrapZodType(noEffects.parent),
+        noEffects.key
       );
       if (validator) {
         //console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
@@ -982,14 +983,22 @@ async function validateField<T extends AnyZodObject, M>(
     //console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
 
     // Effects are found, validate entire data, unfortunately
+    let dataToValidate = currentData;
+
+    if (!shouldUpdate) {
+      // If value shouldn't update, clone and set the new value
+      dataToValidate = clone(currentData);
+      setPaths(dataToValidate, [path], value);
+    }
+
     const result = await (validators as ZodTypeAny).safeParseAsync(
-      get(data)
+      dataToValidate
     );
 
     if (!result.success) {
       const errors = result.error.format();
       const current = traversePath(errors, path as FieldPath<typeof errors>);
-      return setError(current?.value?._errors);
+      return setError(options.errors ?? current?.value?._errors);
     } else {
       return setError(undefined);
     }

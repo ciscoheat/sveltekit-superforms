@@ -1,17 +1,21 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { superForm } from '$lib/client';
-  import { basicSchema, subRefined, refined } from './schema';
+  import { basicSchema, refined } from './schema';
   import { page } from '$app/stores';
 
   export let data: PageData;
+
+  const validators = $page.url.searchParams.has('refined')
+    ? refined
+    : basicSchema;
 
   // Client API:
   const { form, errors, constraints, message, enhance } = superForm(
     data.form,
     {
       dataType: 'json',
-      validators: subRefined,
+      validators: validators,
       validationMethod: ($page.url.searchParams.get('method') ??
         undefined) as any
     }
@@ -19,6 +23,9 @@
 </script>
 
 <h4>Validation method: {$page.url.searchParams.get('method') ?? 'auto'}</h4>
+<h4>
+  Schema: {$page.url.searchParams.has('refined') ? 'refined' : 'simple'}
+</h4>
 
 <form method="POST" use:enhance>
   {#if $message}
@@ -45,7 +52,7 @@
   <!-- {...$constraints.email} -->
   {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
 
-  <div>
+  <div class="tags">
     {#each $form.tags as _, i}
       <div>
         <label for="min">Min</label>

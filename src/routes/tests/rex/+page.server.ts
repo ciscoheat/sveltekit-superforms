@@ -1,19 +1,24 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { basicSchema, subRefined, refined } from './schema';
+import { basicSchema, refined } from './schema';
 import { message, superValidate } from '$lib/server';
 
-export const load = (async () => {
+export const load = (async ({ url }) => {
   // Server API:
-  const form = await superValidate(subRefined);
+  const form = await superValidate(
+    url.searchParams.has('refined') ? refined : basicSchema
+  );
 
   // Always return { form } in load and form actions.
   return { form };
 }) satisfies PageServerLoad;
 
 export const actions: Actions = {
-  default: async ({ request }) => {
-    const form = await superValidate(request, subRefined);
+  default: async ({ request, url }) => {
+    const form = await superValidate(
+      request,
+      url.searchParams.has('refined') ? refined : basicSchema
+    );
     console.log('POST', form);
 
     // Convenient validation check:

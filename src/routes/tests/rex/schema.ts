@@ -15,40 +15,39 @@ export const basicSchema = z.object({
     .default([{ min: 5, max: 10 }])
 });
 
-export const subRefined = z.object({
-  name: z.string().min(4).default('Hello world!'),
-  email: z.string().email(),
-  items: z.optional(
-    z.array(z.object({ title: z.string(), name: z.string().min(3) }))
-  ),
-  tags: z
-    .object({
-      min: z.number().int().min(5),
-      max: z.number().int().min(5)
-    })
-    .refine(
-      (data) => {
-        if (data.min && data.max) {
-          return data.min <= data.max;
+export const refined = z
+  .object({
+    name: z.string().min(4).default('Hello world!'),
+    email: z.string().email(),
+    items: z.optional(
+      z.array(z.object({ title: z.string(), name: z.string().min(3) }))
+    ),
+    tags: z
+      .object({
+        min: z.number().int().min(5),
+        max: z.number().int().min(5)
+      })
+      .refine(
+        (data) => {
+          if (data.min && data.max) {
+            return data.min <= data.max;
+          }
+          return true;
+        },
+        {
+          path: ['max'],
+          message: 'Max must be greater or equal to min'
         }
-        return true;
-      },
-      {
-        path: ['max'],
-        message: 'Max must be greater or equal to min'
-      }
-    )
-    .array()
-    .default([{ min: 5, max: 10 }])
-});
-
-export const refined = basicSchema
-  .refine(({ name }) => name === 'bob', {
-    message: 'Oof, name is non bob',
+      )
+      .array()
+      .default([{ min: 5, max: 10 }])
+  })
+  .refine(({ name }) => name !== 'nope', {
+    message: 'Nope',
     path: ['name']
   })
-  .refine(({ name }) => name === 'john', {
-    message: 'Oof, name is not john',
+  .refine(({ name }) => name !== 'nope', {
+    message: 'Nope',
     path: ['name']
   })
   .superRefine((data, ctx) => {

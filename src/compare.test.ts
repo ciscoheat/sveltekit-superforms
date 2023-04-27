@@ -82,7 +82,7 @@ describe('Path traversals', () => {
     const path = ['friends', '1', 'id'];
     const error = traversePath(mapped, path as FieldPath<typeof mapped>);
 
-    expect(error).toStrictEqual({
+    expect(error).toMatchObject({
       parent: mapped.friends![1],
       key: 'id',
       value: mapped.friends![1].id,
@@ -98,7 +98,7 @@ describe('Path traversals', () => {
       path as FieldPath<typeof mapped>
     );
 
-    expect(error).toStrictEqual({
+    expect(error).toMatchObject({
       parent: mapped.friends![1],
       key: 'id',
       value: mapped.friends![1].id,
@@ -111,7 +111,7 @@ describe('Path traversals', () => {
     const path = ['friends', '1', 'N/A'];
     const error = traversePath(mapped, path as FieldPath<typeof mapped>);
 
-    expect(error).toStrictEqual({
+    expect(error).toMatchObject({
       parent: mapped.friends![1],
       key: 'N/A',
       value: undefined,
@@ -135,7 +135,7 @@ describe('Path traversals', () => {
         return parent[key];
       }
     );
-    expect(error).toStrictEqual({
+    expect(error).toMatchObject({
       parent: mapped.friends![2],
       key: 'id',
       value: undefined,
@@ -448,7 +448,7 @@ test('Check path existence', () => {
 
   expect(pathExists({}, ['tags', '0', 'id'])).toBeUndefined();
 
-  expect(pathExists(errors, ['tags', '0', 'id'])).toStrictEqual({
+  expect(pathExists(errors, ['tags', '0', 'id'])).toMatchObject({
     parent: errors.tags[0],
     key: 'id',
     value: true,

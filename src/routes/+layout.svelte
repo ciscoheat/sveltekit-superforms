@@ -39,7 +39,8 @@
   <a href="/files">Files</a> |
   <a href="/spa">SPA</a> |
   <a href="/nested-validation">Client-side validation</a> |
-  <a href="/tests/rex">Side-effect validation</a>
+  <a href="/tests/rex">Side-effect validation</a> |
+  <a href="/tests/superform-c">Side-effect 2</a>
 </nav>
 
 <slot />

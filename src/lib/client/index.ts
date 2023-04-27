@@ -30,14 +30,7 @@ import {
   type UnwrapEffects,
   type ZodValidation
 } from '../index.js';
-import type {
-  z,
-  AnyZodObject,
-  ZodEffects,
-  ZodArray,
-  ZodAny,
-  ZodTypeAny
-} from 'zod';
+import type { z, AnyZodObject, ZodEffects, ZodArray, ZodTypeAny } from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
 import {
@@ -852,6 +845,25 @@ function isPathTainted(
   return leaf.value === true;
 }
 
+/**
+ * To work with client-side validation, errors cannot be deleted but must
+ * be set to undefined, to know where they existed before (tainted+error check in oninput)
+ */
+function errors_clear(
+  errors: Writable<ValidationErrors<AnyZodObject>>,
+  undefinePath: string[] = []
+) {
+  errors.update(($errors) => {
+    traversePaths($errors, (pathData) => {
+      if (Array.isArray(pathData.value)) {
+        return pathData.set(undefined);
+      }
+    });
+    if (undefinePath) setPaths($errors, [undefinePath], undefined);
+    return $errors;
+  });
+}
+
 const effectMapCache = new WeakMap<object, boolean>();
 
 async function validateField<T extends AnyZodObject, M>(
@@ -905,10 +917,12 @@ async function validateField<T extends AnyZodObject, M>(
 
   let value = options.value;
   let shouldUpdate = true;
-  const currentData = get(data);
+  let currentData: z.infer<T> | undefined = undefined;
 
   if (!('value' in options)) {
     // Use value from data
+    currentData = get(data);
+
     const dataToValidate = traversePath(
       currentData,
       path as FieldPath<typeof currentData>
@@ -920,7 +934,7 @@ async function validateField<T extends AnyZodObject, M>(
     data.update(
       ($data) => {
         setPaths($data, [path], value);
-        return $data;
+        return (currentData = $data);
       },
       { taint: options.taint }
     );
@@ -970,7 +984,7 @@ async function validateField<T extends AnyZodObject, M>(
 
     const effects = effectMapCache.get(validators);
 
-    const noEffects = effects
+    const perFieldValidator = effects
       ? undefined
       : traversePath(
           validators,
@@ -983,10 +997,10 @@ async function validateField<T extends AnyZodObject, M>(
           }
         );
 
-    if (noEffects) {
+    if (perFieldValidator) {
       const validator = extractValidator(
-        unwrapZodType(noEffects.parent),
-        noEffects.key
+        unwrapZodType(perFieldValidator.parent),
+        perFieldValidator.key
       );
       if (validator) {
         //console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
@@ -1003,23 +1017,21 @@ async function validateField<T extends AnyZodObject, M>(
     //console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
 
     // Effects are found, validate entire data, unfortunately
-    let dataToValidate = currentData;
-
     if (!shouldUpdate) {
       // If value shouldn't update, clone and set the new value
-      dataToValidate = clone(currentData);
-      setPaths(dataToValidate, [path], value);
+      currentData = clone(currentData ?? get(data));
+      setPaths(currentData, [path], value);
     }
 
     const result = await (validators as ZodTypeAny).safeParseAsync(
-      dataToValidate
+      currentData
     );
 
     if (!result.success) {
       const newErrors = mapErrors(result.error.format());
 
       if (options.update === true || options.update == 'errors') {
-        console.log('🚀 ~ file: index.ts:1020 ~ newErrors:', newErrors);
+        //console.log('🚀 ~ file: index.ts:1020 ~ newErrors:', newErrors);
 
         // Set errors for other (tainted) fields, that may have been changed
         const taintedFields = get(tainted);
@@ -1039,6 +1051,8 @@ async function validateField<T extends AnyZodObject, M>(
       }
 
       // Finally, set errors for the specific field
+      // it will be set to undefined if no errors, so the tainted+error check
+      // in oninput can determine if errors should be displayed or not.
       const current = traversePath(
         newErrors,
         path as FieldPath<typeof newErrors>
@@ -1046,7 +1060,11 @@ async function validateField<T extends AnyZodObject, M>(
 
       return setError(options.errors ?? current?.value);
     } else {
-      return setError(undefined);
+      // We validated the whole data structure, so clear all errors on success
+      // but also set the current path to undefined, so it will be used in the tainted+error
+      // check in oninput.
+      errors_clear(errors, path);
+      return undefined;
     }
   } else {
     // SuperForms validator
@@ -1115,8 +1133,7 @@ function formEnhance<T extends AnyZodObject, M>(
   }
 
   // Add blur event, to check tainted
-  let lastBlur: string[][] = [];
-  function checkBlur() {
+  async function checkBlur(e: Event) {
     if (
       options.validationMethod == 'oninput' ||
       options.validationMethod == 'submit-only'
@@ -1124,31 +1141,32 @@ function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    const newChanges = get(lastChanges);
-
-    if (
-      options.validationMethod != 'onblur' &&
-      equal(newChanges, lastBlur)
-    ) {
-      return;
+    // Select bindings have some timing issue, need to wait
+    if (e.target instanceof HTMLSelectElement) {
+      await new Promise((r) => setTimeout(r, 0));
     }
 
-    lastBlur = newChanges;
-
-    for (const change of newChanges) {
+    for (const change of get(lastChanges)) {
       //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
       validateChange(change);
     }
+    // Clear last changes after blur (not after input)
+    lastChanges.set([]);
   }
   formEl.addEventListener('focusout', checkBlur);
 
   // Add input event, to check tainted
-  function checkInput() {
+  async function checkInput(e: Event) {
     if (
       options.validationMethod == 'onblur' ||
       options.validationMethod == 'submit-only'
     ) {
       return;
+    }
+
+    // Select bindings have some timing issue, need to wait
+    if (e.target instanceof HTMLSelectElement) {
+      await new Promise((r) => setTimeout(r, 0));
     }
 
     const errorContent = get(errors);
@@ -1503,12 +1521,12 @@ function formEnhance<T extends AnyZodObject, M>(
       if (!cancelled) {
         switch (options.clearOnSubmit) {
           case 'errors-and-message':
-            errors.set({});
+            errors_clear(errors);
             message.set(undefined);
             break;
 
           case 'errors':
-            errors.set({});
+            errors_clear(errors);
             break;
 
           case 'message':

@@ -72,7 +72,13 @@ type PathData = {
   value: any;
   path: string[];
   isLeaf: boolean;
+  set: (value: any) => 'skip';
 };
+
+function setPath<T extends object>(parent: T, key: keyof T, value: any) {
+  parent[key] = value;
+  return 'skip' as const;
+}
 
 export async function traversePathAsync<T extends object>(
   obj: T,
@@ -93,7 +99,8 @@ export async function traversePathAsync<T extends object>(
           key: String(key),
           value: parent[key],
           path: path.map((p) => String(p)),
-          isLeaf: false
+          isLeaf: false,
+          set: (v) => setPath(parent, key, v)
         })
       : parent[key];
 
@@ -104,12 +111,14 @@ export async function traversePathAsync<T extends object>(
   }
 
   const key = realPath.at(-1);
+
   return {
     parent,
     key: String(key),
     value: parent[key as keyof typeof parent],
     path: realPath.map((p) => String(p)),
-    isLeaf: true
+    isLeaf: true,
+    set: (v) => setPath(parent, key as keyof typeof parent, v)
   };
 }
 
@@ -144,7 +153,8 @@ export function traversePath<T extends object>(
           key: String(key),
           value: parent[key],
           path: path.map((p) => String(p)),
-          isLeaf: false
+          isLeaf: false,
+          set: (v) => setPath(parent, key, v)
         })
       : parent[key];
 
@@ -160,7 +170,8 @@ export function traversePath<T extends object>(
     key: String(key),
     value: parent[key as keyof typeof parent],
     path: realPath.map((p) => String(p)),
-    isLeaf: true
+    isLeaf: true,
+    set: (v) => setPath(parent, key as keyof typeof parent, v)
   };
 }
 
@@ -180,7 +191,8 @@ export function traversePaths<T extends object, Path extends FieldPath<T>>(
       key,
       value,
       path: path.map(String).concat([key]),
-      isLeaf
+      isLeaf,
+      set: (v) => setPath(parent, key, v)
     };
 
     const status = modifier(pathData);
@@ -211,7 +223,8 @@ export async function traversePathsAsync<
       key,
       value,
       path: path.map(String).concat([key]),
-      isLeaf
+      isLeaf,
+      set: (v) => setPath(parent, key, v)
     };
 
     const status = await modifier(pathData);
@@ -234,13 +247,6 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
   function checkPath(data: PathData, compareTo: object) {
     if (data.isLeaf) {
       const exists = traversePath(compareTo, data.path as FieldPath<object>);
-
-      /*
-      console.log('----------- Compare ------------ ');
-      console.log(data);
-      console.log('with');
-      console.log(exists);
-      */
 
       if (!exists) {
         diffPaths.set(data.path.join(' '), data.path);

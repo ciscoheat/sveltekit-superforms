@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Select fields had some timing issue, but should now work properly with client-side validation.
-- Fixed a few problems with error+tainted checking for client-side validation.
+- Fixed a few problems with error/tainted checking for client-side validation.
+- Typing should now work properly with schema fields containing [union types](https://zod.dev/?id=unions).
 
 ## [0.8.3] - 2023-04-26
 

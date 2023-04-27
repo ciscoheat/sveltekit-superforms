@@ -1,4 +1,13 @@
-import type { z, AnyZodObject, ZodArray, ZodObject, ZodEffects } from 'zod';
+import type {
+  z,
+  AnyZodObject,
+  ZodArray,
+  ZodObject,
+  ZodEffects,
+  ZodUnion,
+  ZodUnionOptions
+} from 'zod';
+
 import type { Entity, UnwrappedEntity } from './server/entity.js';
 import type { Writable } from 'svelte/store';
 import type { MaybePromise } from '$app/forms';
@@ -31,10 +40,34 @@ type UnwrappedRawShape<
   P extends keyof RawShape<T>
 > = UnwrappedEntity<RawShape<T>[P]>;
 
+type IntersectArray<T extends readonly unknown[]> = T extends [
+  infer U,
+  ...infer Rest
+]
+  ? Rest extends []
+    ? U
+    : U & IntersectArray<Rest>
+  : never;
+
+type IntersectUnion<T extends ZodUnion<ZodUnionOptions>> =
+  T extends ZodUnion<infer O> ? IntersectArray<O> : never;
+
+/*
+const schema = z
+  .object({ id: z.number() })
+  .or(z.object({ name: z.string() }));
+
+type U = typeof schema; //ZodUnion<[AnyZodObject, AnyZodObject]>
+
+type P = IntersectUnion<U>;
+*/
+
 type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Property in keyof RawShape<T>]?: T extends any
-    ? UnwrappedRawShape<T, Property> extends AnyZodObject
+    ? UnwrappedEntity<T> extends ZodUnion<ZodUnionOptions>
+      ? SuperStructArray<IntersectUnion<UnwrappedEntity<T>>, Data, ArrayData>
+      : UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStructArray<UnwrappedRawShape<T, Property>, Data, ArrayData>
       : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
       ? ArrayData &
@@ -42,6 +75,12 @@ type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
             number,
             UnwrappedEntity<A> extends AnyZodObject
               ? SuperStructArray<UnwrappedEntity<A>, Data, ArrayData>
+              : UnwrappedEntity<A> extends ZodUnion<ZodUnionOptions>
+              ? SuperStructArray<
+                  IntersectUnion<UnwrappedEntity<A>>,
+                  Data,
+                  ArrayData
+                >
               : Data
           >
       : Data
@@ -51,10 +90,14 @@ type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
 type SuperStruct<T extends AnyZodObject, Data> = Partial<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Property in keyof RawShape<T>]: T extends any
-    ? UnwrappedRawShape<T, Property> extends AnyZodObject
+    ? UnwrappedEntity<T> extends ZodUnion<ZodUnionOptions>
+      ? SuperStruct<IntersectUnion<UnwrappedEntity<T>>, Data>
+      : UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStruct<UnwrappedRawShape<T, Property>, Data>
       : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
-      ? UnwrappedEntity<A> extends AnyZodObject
+      ? UnwrappedEntity<A> extends ZodUnion<ZodUnionOptions>
+        ? SuperStruct<IntersectUnion<UnwrappedEntity<A>>, Data>
+        : UnwrappedEntity<A> extends AnyZodObject
         ? SuperStruct<UnwrappedEntity<A>, Data>
         : InputConstraint
       : InputConstraint

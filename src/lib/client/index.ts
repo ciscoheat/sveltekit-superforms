@@ -30,7 +30,14 @@ import {
   type UnwrapEffects,
   type ZodValidation
 } from '../index.js';
-import type { z, AnyZodObject, ZodEffects, ZodArray, ZodTypeAny } from 'zod';
+import type {
+  z,
+  AnyZodObject,
+  ZodEffects,
+  ZodArray,
+  ZodTypeAny,
+  ZodError
+} from 'zod';
 import { stringify } from 'devalue';
 import type { FormFields } from '../index.js';
 import {
@@ -242,7 +249,9 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     ): void;
   };
   formId: Writable<string | undefined>;
-  errors: Writable<Validation<T, M>['errors']>;
+  errors: Writable<Validation<T, M>['errors']> & {
+    clear: (undefinePath?: string[]) => void;
+  };
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
   tainted: Writable<TaintedFields<UnwrapEffects<T>> | undefined>;
@@ -350,6 +359,10 @@ export function superForm<
     taintedMessage: options.taintedMessage,
     taintedFormState: clone(initialForm.data)
   };
+
+  function Context_setTaintedFormState(data: typeof initialForm.data) {
+    Context.taintedFormState = clone(data);
+  }
 
   function Context_newEmptyForm(
     data: Partial<z.infer<T>> = {}
@@ -547,11 +560,33 @@ export function superForm<
     }
   };
 
+  const _errors = writable(form2.errors);
+
+  const Errors = {
+    subscribe: _errors.subscribe,
+    set: _errors.set,
+    update: _errors.update,
+    /**
+     * To work with client-side validation, errors cannot be deleted but must
+     * be set to undefined, to know where they existed before (tainted+error check in oninput)
+     */
+    clear: (undefinePath?: string[]) => {
+      _errors.update(($errors) => {
+        traversePaths($errors, (pathData) => {
+          if (Array.isArray(pathData.value)) {
+            return pathData.set(undefined);
+          }
+        });
+        if (undefinePath) setPaths($errors, [undefinePath], undefined);
+        return $errors;
+      });
+    }
+  };
+
   const LastChanges = writable<string[][]>([]);
   const Valid = writable(form2.valid);
   const Empty = writable(form2.empty);
   const Message = writable<M | undefined>(form2.message);
-  const Errors = writable(form2.errors);
   const Constraints = writable(form2.constraints);
   const Meta = writable<Validation<T2, M>['meta'] | undefined>(form2.meta);
 
@@ -606,7 +641,7 @@ export function superForm<
     newData: z.TypeOf<UnwrapEffects<T>>
   ) {
     Tainted.set(tainted);
-    Context.taintedFormState = clone(newData);
+    Context_setTaintedFormState(newData);
   }
 
   // Timers
@@ -885,121 +920,49 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
   return options.syncFlashMessage;
 }
 
-function isPathTainted(
-  path: string[],
-  tainted: TaintedFields<AnyZodObject> | undefined
-) {
-  if (tainted === undefined) return false;
-  const leaf = traversePath(tainted, path as FieldPath<typeof tainted>);
-  if (!leaf) return false;
-  return leaf.value === true;
-}
-
-/**
- * To work with client-side validation, errors cannot be deleted but must
- * be set to undefined, to know where they existed before (tainted+error check in oninput)
- */
-function errors_clear(
-  errors: Writable<ValidationErrors<AnyZodObject>>,
-  undefinePath: string[] = []
-) {
-  errors.update(($errors) => {
-    traversePaths($errors, (pathData) => {
-      if (Array.isArray(pathData.value)) {
-        return pathData.set(undefined);
-      }
-    });
-    if (undefinePath) setPaths($errors, [undefinePath], undefined);
-    return $errors;
-  });
-}
-
 const effectMapCache = new WeakMap<object, boolean>();
 
+// @DCI-context
 async function validateField<T extends AnyZodObject, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
   defaultValidator: FormOptions<T, M>['defaultValidator'],
   data: SuperForm<T, M>['form'],
-  errors: SuperForm<T, M>['errors'],
+  Errors: SuperForm<T, M>['errors'],
   tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown> = {}
 ): Promise<string[] | undefined> {
   if (options.update === undefined) options.update = true;
   if (options.taint === undefined) options.taint = false;
 
-  function setError(errorMsgs: null | undefined | string | string[]) {
-    if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
+  //let value = options.value;
+  //let shouldUpdate = true;
+  //let currentData: z.infer<T> | undefined = undefined;
 
-    if (options.update === true || options.update == 'errors') {
-      errors.update((errors) => {
-        const error = traversePath(
-          errors,
-          path as FieldPath<typeof errors>,
-          (node) => {
-            if (node.value === undefined) {
-              node.parent[node.key] = {};
-              return node.parent[node.key];
-            } else {
-              return node.value;
-            }
-          }
-        );
-
-        if (!error)
-          throw new SuperFormError(
-            'Error path could not be created: ' + path
-          );
-
-        error.parent[error.key] = errorMsgs ?? undefined;
-        return errors;
-      });
-    }
-    return errorMsgs ?? undefined;
-  }
+  const Context = {
+    value: options.value,
+    shouldUpdate: true,
+    currentData: undefined as z.infer<T> | undefined,
+    // Remove numeric indices, they're not used for validators.
+    validationPath: path.filter((p) => isNaN(parseInt(p)))
+  };
 
   async function defaultValidate() {
     if (defaultValidator == 'clear') {
-      setError(undefined);
+      Errors_update(undefined);
     }
     return undefined;
   }
 
-  let value = options.value;
-  let shouldUpdate = true;
-  let currentData: z.infer<T> | undefined = undefined;
-
-  if (!('value' in options)) {
-    // Use value from data
-    currentData = get(data);
-
-    const dataToValidate = traversePath(
-      currentData,
-      path as FieldPath<typeof currentData>
-    );
-
-    value = dataToValidate?.value;
-  } else if (options.update === true || options.update === 'value') {
-    // Value should be updating the data
-    data.update(
-      ($data) => {
-        setPaths($data, [path], value);
-        return (currentData = $data);
-      },
-      { taint: options.taint }
-    );
-  } else {
-    shouldUpdate = false;
+  function isPathTainted(
+    path: string[],
+    tainted: TaintedFields<AnyZodObject> | undefined
+  ) {
+    if (tainted === undefined) return false;
+    const leaf = traversePath(tainted, path as FieldPath<typeof tainted>);
+    if (!leaf) return false;
+    return leaf.value === true;
   }
-
-  //console.log('🚀 ~ file: index.ts:871 ~ validate:', path, value);
-
-  if (typeof validators !== 'object') {
-    return defaultValidate();
-  }
-
-  // Remove numeric indices, they're not used for validators.
-  const validationPath = path.filter((p) => isNaN(parseInt(p)));
 
   function extractValidator(
     data: ZodTypeInfo,
@@ -1025,6 +988,83 @@ async function validateField<T extends AnyZodObject, M>(
     }
   }
 
+  ///// Roles ///////////////////////////////////////////////////////
+
+  function Errors_get() {
+    return get(Errors);
+  }
+
+  function Errors_clear(undefinePath: string[]) {
+    Errors.clear(undefinePath);
+  }
+
+  function Errors_set(newErrors: ValidationErrors<UnwrapEffects<T>>) {
+    Errors.set(newErrors);
+  }
+
+  function Errors_fromZod(errors: ZodError<unknown>) {
+    return mapErrors(errors.format());
+  }
+
+  function Errors_update(errorMsgs: null | undefined | string | string[]) {
+    if (typeof errorMsgs === 'string') errorMsgs = [errorMsgs];
+
+    if (options.update === true || options.update == 'errors') {
+      Errors.update((errors) => {
+        const error = traversePath(
+          errors,
+          path as FieldPath<typeof errors>,
+          (node) => {
+            if (node.value === undefined) {
+              node.parent[node.key] = {};
+              return node.parent[node.key];
+            } else {
+              return node.value;
+            }
+          }
+        );
+
+        if (!error)
+          throw new SuperFormError(
+            'Error path could not be created: ' + path
+          );
+
+        error.parent[error.key] = errorMsgs ?? undefined;
+        return errors;
+      });
+    }
+    return errorMsgs ?? undefined;
+  }
+
+  if (!('value' in options)) {
+    // Use value from data
+    Context.currentData = get(data);
+
+    const dataToValidate = traversePath(
+      Context.currentData,
+      path as FieldPath<typeof Context.currentData>
+    );
+
+    Context.value = dataToValidate?.value;
+  } else if (options.update === true || options.update === 'value') {
+    // Value should be updating the data
+    data.update(
+      ($data) => {
+        setPaths($data, [path], Context.value);
+        return (Context.currentData = $data);
+      },
+      { taint: options.taint }
+    );
+  } else {
+    Context.shouldUpdate = false;
+  }
+
+  //console.log('🚀 ~ file: index.ts:871 ~ validate:', path, value);
+
+  if (typeof validators !== 'object') {
+    return defaultValidate();
+  }
+
   if ('safeParseAsync' in validators) {
     // Zod validator
     // Check if any effects exist for the path, then parse the entire schema.
@@ -1038,7 +1078,7 @@ async function validateField<T extends AnyZodObject, M>(
       ? undefined
       : traversePath(
           validators,
-          validationPath as FieldPath<typeof validators>,
+          Context.validationPath as FieldPath<typeof validators>,
           (pathData) => {
             return extractValidator(
               unwrapZodType(pathData.parent),
@@ -1054,12 +1094,12 @@ async function validateField<T extends AnyZodObject, M>(
       );
       if (validator) {
         //console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
-        const result = await validator.safeParseAsync(value);
+        const result = await validator.safeParseAsync(Context.value);
         if (!result.success) {
           const errors = result.error.format();
-          return setError(errors._errors);
+          return Errors_update(errors._errors);
         } else {
-          return setError(undefined);
+          return Errors_update(undefined);
         }
       }
     }
@@ -1067,25 +1107,25 @@ async function validateField<T extends AnyZodObject, M>(
     //console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
 
     // Effects are found, validate entire data, unfortunately
-    if (!shouldUpdate) {
+    if (!Context.shouldUpdate) {
       // If value shouldn't update, clone and set the new value
-      currentData = clone(currentData ?? get(data));
-      setPaths(currentData, [path], value);
+      Context.currentData = clone(Context.currentData ?? get(data));
+      setPaths(Context.currentData, [path], Context.value);
     }
 
     const result = await (validators as ZodTypeAny).safeParseAsync(
-      currentData
+      Context.currentData
     );
 
     if (!result.success) {
-      const newErrors = mapErrors(result.error.format());
+      const newErrors = Errors_fromZod(result.error);
 
       if (options.update === true || options.update == 'errors') {
         //console.log('🚀 ~ file: index.ts:1020 ~ newErrors:', newErrors);
 
         // Set errors for other (tainted) fields, that may have been changed
         const taintedFields = get(tainted);
-        const currentErrors = get(errors);
+        const currentErrors = Errors_get();
         let updated = false;
 
         traversePaths(newErrors, (pathData) => {
@@ -1097,7 +1137,7 @@ async function validateField<T extends AnyZodObject, M>(
           return 'skip';
         });
 
-        if (updated) errors.set(currentErrors);
+        if (updated) Errors_set(currentErrors);
       }
 
       // Finally, set errors for the specific field
@@ -1108,12 +1148,12 @@ async function validateField<T extends AnyZodObject, M>(
         path as FieldPath<typeof newErrors>
       );
 
-      return setError(options.errors ?? current?.value);
+      return Errors_update(options.errors ?? current?.value);
     } else {
       // We validated the whole data structure, so clear all errors on success
       // but also set the current path to undefined, so it will be used in the tainted+error
       // check in oninput.
-      errors_clear(errors, path);
+      Errors_clear(path);
       return undefined;
     }
   } else {
@@ -1121,7 +1161,7 @@ async function validateField<T extends AnyZodObject, M>(
 
     const validator = traversePath(
       validators as Validators<UnwrapEffects<T>>,
-      validationPath as FieldPath<typeof validators>
+      Context.validationPath as FieldPath<typeof validators>
     );
 
     if (!validator) {
@@ -1131,8 +1171,8 @@ async function validateField<T extends AnyZodObject, M>(
       // No validator, use default
       return defaultValidate();
     } else {
-      const result = validator.value(value);
-      return setError(result ? options.errors ?? result : result);
+      const result = validator.value(Context.value);
+      return Errors_update(result ? options.errors ?? result : result);
     }
   }
 }
@@ -1163,7 +1203,7 @@ function formEnhance<T extends AnyZodObject, M>(
   enableTaintedForm();
 
   // Using this type in the function argument causes a type recursion error.
-  const errors = errs as Writable<ValidationErrors<T>>;
+  const errors = errs as SuperForm<T, M>['errors'];
 
   function validateChange(change: string[]) {
     validateField(
@@ -1570,12 +1610,12 @@ function formEnhance<T extends AnyZodObject, M>(
       if (!cancelled) {
         switch (options.clearOnSubmit) {
           case 'errors-and-message':
-            errors_clear(errors);
+            errors.clear();
             message.set(undefined);
             break;
 
           case 'errors':
-            errors_clear(errors);
+            errors.clear();
             break;
 
           case 'message':

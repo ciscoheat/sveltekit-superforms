@@ -744,20 +744,22 @@ export function superForm<
 
     options,
 
-    capture: () => ({
-      valid: get(Valid),
-      errors: get(Errors),
-      data: get(Form),
-      empty: get(Empty),
-      constraints: get(Constraints),
-      message: get(Message),
-      id: formId,
-      meta: get(Meta),
-      tainted: get(Tainted)
-    }),
+    capture: function () {
+      return {
+        valid: get(Valid),
+        errors: get(Errors),
+        data: get(Form),
+        empty: get(Empty),
+        constraints: get(Constraints),
+        message: get(Message),
+        id: formId,
+        meta: get(Meta),
+        tainted: get(Tainted)
+      };
+    },
 
-    restore: (snapshot: SuperFormSnapshot<T2, M>) => {
-      rebind(snapshot, snapshot.tainted ?? true);
+    restore: function (snapshot: SuperFormSnapshot<T2, M>) {
+      return rebind(snapshot, snapshot.tainted ?? true);
     },
 
     validate: (path, opts) => {

@@ -25,6 +25,9 @@ devDependencies:
   eslint-config-prettier:
     specifier: ^8.8.0
     version: 8.8.0(eslint@8.39.0)
+  eslint-plugin-dci-lint:
+    specifier: ^0.2.0
+    version: 0.2.0(eslint@8.39.0)
   eslint-plugin-svelte3:
     specifier: ^4.0.0
     version: 4.0.0(eslint@8.39.0)(svelte@3.58.0)
@@ -956,6 +959,15 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
+    dependencies:
+      eslint: 8.39.0
+    dev: true
+
+  /eslint-plugin-dci-lint@0.2.0(eslint@8.39.0):
+    resolution: {integrity: sha512-/WgK7qf1ABRdTy8eRknv6+Ir0m5SU5vU43XnHk8wuf18wTo1r+xV4bDwz/wCzxD67NiTgawHUeuyITiRNSTX3Q==}
+    engines: {node: ^14.17.0 || ^16.0.0 || >= 18.0.0}
+    peerDependencies:
+      eslint: '>=7'
     dependencies:
       eslint: 8.39.0
     dev: true

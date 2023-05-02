@@ -331,6 +331,7 @@ export function superForm<
     }
   }
 
+  // Cannot easily put _formId in Context since the form will change type below.
   let _formId = typeof form === 'string' ? form : options.id ?? form?.id;
   const FormId = writable<string | undefined>(_formId);
 
@@ -352,6 +353,8 @@ export function superForm<
         "Check what's passed to its first parameter (null/undefined is allowed)."
     );
   }
+
+  const _errors = writable(form2.errors);
 
   ///// Roles ///////////////////////////////////////////////////////
 
@@ -560,7 +563,12 @@ export function superForm<
     }
   };
 
-  const _errors = writable(form2.errors);
+  const LastChanges = writable<string[][]>([]);
+  const Valid = writable(form2.valid);
+  const Empty = writable(form2.empty);
+  const Message = writable<M | undefined>(form2.message);
+  const Constraints = writable(form2.constraints);
+  const Meta = writable<Validation<T2, M>['meta'] | undefined>(form2.meta);
 
   const Errors = {
     subscribe: _errors.subscribe,
@@ -582,13 +590,6 @@ export function superForm<
       });
     }
   };
-
-  const LastChanges = writable<string[][]>([]);
-  const Valid = writable(form2.valid);
-  const Empty = writable(form2.empty);
-  const Message = writable<M | undefined>(form2.message);
-  const Constraints = writable(form2.constraints);
-  const Meta = writable<Validation<T2, M>['meta'] | undefined>(form2.meta);
 
   const Tainted = writable<TaintedFields<T2> | undefined>();
 
@@ -837,7 +838,7 @@ export function superForm<
         empty: get(Empty),
         constraints: get(Constraints),
         message: get(Message),
-        id: formId,
+        id: _formId,
         meta: get(Meta),
         tainted: get(Tainted)
       };

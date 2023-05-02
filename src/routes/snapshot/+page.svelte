@@ -6,6 +6,17 @@
 
   export let data: PageData;
 
+  export const snapshot: Snapshot = {
+    capture: () => {
+      console.log('Capture', $page);
+      return capture();
+    },
+    restore: (value) => {
+      console.log('Restore', value, $page);
+      restore(value);
+    }
+  };
+
   const {
     form,
     errors,
@@ -22,17 +33,6 @@
       console.log($page.status);
     }
   });
-
-  export const snapshot: Snapshot = {
-    capture: () => {
-      console.log('Capture', $page);
-      return capture();
-    },
-    restore: (value) => {
-      console.log('Restore', value, $page);
-      restore(value);
-    }
-  };
 </script>
 
 <SuperDebug data={{ $form, capture: capture() }} />

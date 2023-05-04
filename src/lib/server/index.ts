@@ -1,1 +1,1 @@
-export * from '../validate.js';
+export * from '../superValidate.js';

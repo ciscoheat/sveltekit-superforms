@@ -80,7 +80,7 @@ export {
   setMessage,
   setError,
   defaultData
-} from '../validate.js';
+} from '../superValidate.js';
 
 type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,

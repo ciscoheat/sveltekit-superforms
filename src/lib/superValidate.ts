@@ -104,10 +104,11 @@ export function setError<T extends UnwrapEffects<AnyZodObject>>(
 function formDataToValidation<T extends AnyZodObject>(
   schema: T,
   fields: string[],
-  data: FormData
+  data: FormData,
+  warnings: SuperValidateOptions['warnings']
 ) {
   const output: Record<string, unknown> = {};
-  const entityInfo = entityData(schema);
+  const entityInfo = entityData(schema, warnings);
 
   function parseSingleEntry(
     key: string,
@@ -213,6 +214,10 @@ function formDataToValidation<T extends AnyZodObject>(
 export type SuperValidateOptions = {
   errors?: boolean;
   id?: string;
+  warnings?: {
+    multipleRegexps?: boolean;
+    multipleSteps?: boolean;
+  };
 };
 
 export async function superValidate<
@@ -285,7 +290,7 @@ export async function superValidate<
 
   const realSchema = wrappedSchema as UnwrapEffects<T>;
 
-  const entityInfo = entityData(realSchema);
+  const entityInfo = entityData(realSchema, options.warnings);
   const schemaKeys = entityInfo.keys;
 
   function parseFormData(data: FormData) {
@@ -308,7 +313,12 @@ export async function superValidate<
     const superJson = tryParseSuperJson(data);
     return superJson
       ? superJson
-      : formDataToValidation(realSchema, schemaKeys, data);
+      : formDataToValidation(
+          realSchema,
+          schemaKeys,
+          data,
+          options?.warnings
+        );
   }
 
   async function tryParseFormData(request: Request) {

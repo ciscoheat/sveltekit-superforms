@@ -1,8 +1,4 @@
-import {
-  SuperFormError,
-  type InputConstraints,
-  type InputConstraint
-} from './index.js';
+import type { InputConstraints, InputConstraint } from './index.js';
 
 import type { ZodTypeInfo } from './entity.js';
 
@@ -24,6 +20,8 @@ import {
   ZodSymbol,
   ZodRecord
 } from 'zod';
+
+import type { SuperValidateOptions } from './superValidate.js';
 
 export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
   ? UnwrappedEntity<U>
@@ -108,7 +106,10 @@ export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
   };
 }
 
-export function entityData<T extends AnyZodObject>(schema: T) {
+export function entityData<T extends AnyZodObject>(
+  schema: T,
+  warnings?: SuperValidateOptions['warnings']
+) {
   const cached = getCached(schema);
   if (cached) return cached;
 
@@ -117,7 +118,7 @@ export function entityData<T extends AnyZodObject>(schema: T) {
   const entity: Entity<T> = {
     typeInfo: typeInfos,
     defaultEntity: defaultEnt,
-    constraints: constraints(schema),
+    constraints: constraints(schema, warnings),
     keys: Object.keys(schema.keyof().Values)
   };
 
@@ -209,7 +210,8 @@ export function defaultData<T extends AnyZodObject>(schema: T): z.infer<T> {
 }
 
 function constraints<T extends AnyZodObject>(
-  schema: T
+  schema: T,
+  warnings: SuperValidateOptions['warnings']
 ): InputConstraints<T> {
   function constraint(
     key: string,
@@ -221,14 +223,14 @@ function constraints<T extends AnyZodObject>(
     if (zodType instanceof ZodString) {
       const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
 
-      if (patterns.length > 1) {
-        throw new SuperFormError(
-          `Invalid field "${key}": Only one regex is allowed per field.`
+      if (patterns.length > 1 && warnings?.multipleRegexps !== false) {
+        console.warn(
+          `Field "${key}" has more than one regexp, only the first one will be used in constraints. Set the warnings.multipleRegexps option to false to disable this warning.`
         );
       }
 
       const pattern =
-        patterns.length == 1 && patterns[0].kind == 'regex'
+        patterns.length > 0 && patterns[0].kind == 'regex'
           ? patterns[0].regex.source
           : undefined;
 
@@ -240,14 +242,14 @@ function constraints<T extends AnyZodObject>(
         (f) => f.kind == 'multipleOf'
       );
 
-      if (steps.length > 1) {
-        throw new SuperFormError(
-          `Invalid field "${key}": Only one step is allowed per field.`
+      if (steps.length > 1 && warnings?.multipleSteps !== false) {
+        console.warn(
+          `Field "${key}" has more than one step, only the first one will be used in constraints. Set the warnings.multipleSteps option to false to disable this warning.`
         );
       }
 
       const step =
-        steps.length == 1 && steps[0].kind == 'multipleOf'
+        steps.length > 0 && steps[0].kind == 'multipleOf'
           ? steps[0].value
           : null;
 
@@ -278,7 +280,7 @@ function constraints<T extends AnyZodObject>(
     if (value instanceof ZodArray) {
       return mapField(key, value._def.type);
     } else if (value instanceof ZodObject) {
-      return constraints(value);
+      return constraints(value, warnings);
     } else {
       return constraint(key, value, info);
     }

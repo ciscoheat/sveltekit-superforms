@@ -836,3 +836,16 @@ test('ZodObject defaults', async () => {
     }
   });
 });
+
+test('Entity data warnings', async () => {
+  const schema = z.object({
+    name: z.string().regex(/a/).regex(/b/),
+    amount: z.number().step(2).step(10)
+  });
+
+  const form = await superValidate({ name: 'abe', amount: 20 }, schema, {
+    warnings: { multipleRegexps: false, multipleSteps: false }
+  });
+
+  expect(form.valid).toStrictEqual(true);
+});

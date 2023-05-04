@@ -1096,6 +1096,20 @@ async function validateField<T extends AnyZodObject, M>(
         perFieldValidator.key
       );
       if (validator) {
+        // Check if validator is ZodArray and the path is an array access
+        // in that case validate the whole array.
+        if (
+          Context.currentData &&
+          validator._def.typeName == 'ZodArray' &&
+          !isNaN(parseInt(path[path.length - 1]))
+        ) {
+          const validateArray = traversePath(
+            Context.currentData,
+            path.slice(0, -1) as FieldPath<typeof Context.currentData>
+          );
+          Context.value = validateArray?.value;
+        }
+
         //console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
         const result = await validator.safeParseAsync(Context.value);
         if (!result.success) {

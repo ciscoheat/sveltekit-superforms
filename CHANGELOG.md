@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `capture` and `restore` are now hoisted functions.
 - Fixed timing issues with radio buttons and validation with side-effects.
 - Using standard array access to fix problems with iOS and iPadOS <= 15.3
+- Fixed client validation problems with multi-select fields.
 
 ## [0.8.4] - 2023-04-27
 

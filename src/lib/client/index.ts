@@ -1219,6 +1219,14 @@ function formEnhance<T extends AnyZodObject, M>(
     );
   }
 
+  function timingIssue(el: EventTarget | null) {
+    return (
+      el &&
+      (el instanceof HTMLSelectElement ||
+        (el instanceof HTMLInputElement && el.type == 'radio'))
+    );
+  }
+
   // Add blur event, to check tainted
   async function checkBlur(e: Event) {
     if (
@@ -1228,8 +1236,8 @@ function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    // Select bindings have some timing issue, need to wait
-    if (e.target instanceof HTMLSelectElement) {
+    // Some form fields have some timing issue, need to wait
+    if (timingIssue(e.target)) {
       await new Promise((r) => setTimeout(r, 0));
     }
 
@@ -1251,8 +1259,8 @@ function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    // Select bindings have some timing issue, need to wait
-    if (e.target instanceof HTMLSelectElement) {
+    // Some form fields have some timing issue, need to wait
+    if (timingIssue(e.target)) {
       await new Promise((r) => setTimeout(r, 0));
     }
 

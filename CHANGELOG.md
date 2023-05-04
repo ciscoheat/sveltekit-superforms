@@ -5,7 +5,7 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.8.5] - 2023-05-04
 
 ### Fixed
 
@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed timing issues with radio buttons and validation with side-effects.
 - Using standard array access to fix problems with iOS and iPadOS <= 15.3
 - Fixed client validation problems with multi-select fields.
-- Client validation now runs properly when `$form` is modified.
+- Client validation now runs properly when `$form` is modified directly by assignment.
 
 ## [0.8.4] - 2023-04-27
 

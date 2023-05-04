@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The literal `"any"` is now an allowed value in `step` for constraints.
+- Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.
+
 ### Removed
 
 - `options.noErrors` is removed. Use `options.errors` instead.

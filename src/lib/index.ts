@@ -141,7 +141,7 @@ export type InputConstraint = Partial<{
   min: number | string; // Date
   max: number | string; // Date
   required: boolean;
-  step: number;
+  step: number | 'any';
   minlength: number;
   maxlength: number;
 }>;

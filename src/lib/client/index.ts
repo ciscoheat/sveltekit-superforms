@@ -570,6 +570,7 @@ export function superForm<
   const Constraints = writable(form2.constraints);
   const Meta = writable<Validation<T2, M>['meta'] | undefined>(form2.meta);
 
+  // eslint-disable-next-line dci-lint/grouped-rolemethods
   const Errors = {
     subscribe: _errors.subscribe,
     set: _errors.set,

@@ -14,7 +14,7 @@ module.exports = {
     'svelte3/typescript': () => require('typescript')
   },
   rules: {
-    //"dci-lint/literal-role-contracts": "off"
+    'dci-lint/literal-role-contracts': 'off'
   },
   parserOptions: {
     sourceType: 'module',

@@ -91,7 +91,7 @@ export async function traversePathAsync<T extends object>(
   let parent = obj;
 
   while (path.length < realPath.length) {
-    const key = path.at(-1) as keyof typeof parent;
+    const key = path[path.length - 1] as keyof typeof parent;
 
     const value = modifier
       ? await modifier({
@@ -110,7 +110,7 @@ export async function traversePathAsync<T extends object>(
     path.push(realPath[path.length]);
   }
 
-  const key = realPath.at(-1);
+  const key = realPath[realPath.length - 1];
 
   return {
     parent,
@@ -145,7 +145,7 @@ export function traversePath<T extends object>(
   let parent = obj;
 
   while (path.length < realPath.length) {
-    const key = path.at(-1) as keyof typeof parent;
+    const key = path[path.length - 1] as keyof typeof parent;
 
     const value = modifier
       ? modifier({
@@ -164,7 +164,7 @@ export function traversePath<T extends object>(
     path.push(realPath[path.length]);
   }
 
-  const key = realPath.at(-1);
+  const key = realPath[realPath.length - 1];
   return {
     parent,
     key: String(key),

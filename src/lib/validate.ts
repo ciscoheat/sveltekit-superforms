@@ -211,13 +211,8 @@ function formDataToValidation<T extends AnyZodObject>(
 }
 
 export type SuperValidateOptions = {
-  /**
-   * @deprecated Use errors instead.
-   */
-  noErrors?: boolean;
   errors?: boolean;
-  includeMeta?: boolean;
-  id?: true | string;
+  id?: string;
 };
 
 export async function superValidate<
@@ -268,9 +263,7 @@ export async function superValidate<
   }
 
   options = {
-    noErrors: false,
     errors: undefined,
-    includeMeta: false,
     ...options
   };
 
@@ -299,7 +292,9 @@ export async function superValidate<
     function tryParseSuperJson(data: FormData) {
       if (data.has('__superform_json')) {
         try {
-          const output = parse(data.getAll('__superform_json').join('') ?? '');
+          const output = parse(
+            data.getAll('__superform_json').join('') ?? ''
+          );
           if (typeof output === 'object') {
             return output as Record<string, unknown>;
           }
@@ -392,7 +387,7 @@ export async function superValidate<
       constraints: entityInfo.constraints
     };
   } else {
-    const addErrors = options.errors !== false && options.noErrors !== true;
+    const addErrors = options.errors !== false;
 
     const partialData = data as Partial<z.infer<T>>;
     const result = await originalSchema.spa(partialData);
@@ -429,12 +424,8 @@ export async function superValidate<
     }
   }
 
-  if (options.includeMeta) {
-    output.meta = entityInfo.meta;
-  }
-
   if (options.id !== undefined) {
-    output.id = options.id === true ? entityInfo.hash : options.id;
+    output.id = options.id;
   }
 
   return output;

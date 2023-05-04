@@ -160,12 +160,14 @@ test('FormData array data', async () => {
 });
 
 test('Nullable values', async () => {
-  const refinedSchema = z.object({
-    scopeId: z.number().int().min(1),
-    name: z.string().nullable()
-  }).refine(data => data);
+  const refinedSchema = z
+    .object({
+      scopeId: z.number().int().min(1),
+      name: z.string().nullable()
+    })
+    .refine((data) => data);
 
-  const schema = refinedSchema._def.schema
+  const schema = refinedSchema._def.schema;
 
   const output = defaultData(schema);
   expect(output.scopeId).equals(0);
@@ -313,7 +315,7 @@ const enumschema = z.object({
 });
 
 test('Zod enums and native enums', async () => {
-  const form = await superValidate(null, enumschema, { includeMeta: true });
+  const form = await superValidate(null, enumschema);
   expect(form.valid).toEqual(false);
   expect(form.empty).toEqual(true);
 
@@ -331,14 +333,6 @@ test('Zod enums and native enums', async () => {
       color: { required: true },
       fruit: { /*_constraints: { required: true },*/ required: true },
       fruitsstring: { /*_constraints: { required: true },*/ required: true }
-    },
-    meta: {
-      types: {
-        color: 'ZodNativeEnum',
-        fruit: 'ZodArray<ZodNativeEnum>',
-        fruitsstring: 'ZodArray<ZodNativeEnum>',
-        gender: 'ZodEnum'
-      }
     }
   });
 });

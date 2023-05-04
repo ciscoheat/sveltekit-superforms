@@ -47,8 +47,6 @@ export type Entity<T extends AnyZodObject> = {
   typeInfo: EntityRecord<T, ZodTypeInfo>;
   defaultEntity: z.infer<T>;
   constraints: InputConstraints<T>;
-  meta: EntityMetaData<T>;
-  hash: string;
   keys: string[];
 };
 
@@ -110,36 +108,16 @@ export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
   };
 }
 
-// https://stackoverflow.com/a/8831937/70894
-function hashCode(str: string) {
-  let hash = 0;
-  for (let i = 0, len = str.length; i < len; i++) {
-    const chr = str.charCodeAt(i);
-    hash = (hash << 5) - hash + chr;
-    hash |= 0; // Convert to 32bit integer
-  }
-  // Make it unsigned, for the hash appearance
-  if (hash < 0) hash = hash >>> 0;
-  return hash.toString(36);
-}
-
-export function entityHash<T extends AnyZodObject>(meta: EntityMetaData<T>) {
-  return hashCode(JSON.stringify(meta.types));
-}
-
 export function entityData<T extends AnyZodObject>(schema: T) {
   const cached = getCached(schema);
   if (cached) return cached;
 
   const typeInfos = schemaInfo(schema);
   const defaultEnt = defaultData(schema);
-  const metaData = meta(schema);
   const entity: Entity<T> = {
     typeInfo: typeInfos,
     defaultEntity: defaultEnt,
     constraints: constraints(schema),
-    meta: metaData,
-    hash: entityHash(metaData),
     keys: Object.keys(schema.keyof().Values)
   };
 
@@ -264,7 +242,7 @@ function constraints<T extends AnyZodObject>(
 
       if (steps.length > 1) {
         throw new SuperFormError(
-          `Invalid field "${key}": Only one multipleOf is allowed per field.`
+          `Invalid field "${key}": Only one step is allowed per field.`
         );
       }
 
@@ -315,22 +293,6 @@ function constraints<T extends AnyZodObject>(
   ) as InputConstraints<T>;
 }
 
-function meta<T extends AnyZodObject>(schema: T) {
-  return {
-    types: _mapSchema(schema, (obj) => {
-      let type = unwrapZodType(obj).zodType;
-      let name = '';
-      let depth = 0;
-      while (type instanceof ZodArray) {
-        name += 'ZodArray<';
-        depth++;
-        type = type._def.type;
-      }
-      return name + type.constructor.name + '>'.repeat(depth);
-    })
-  };
-}
-
 ///////////////////////////////////////////////////////////////////////////
 
 function _mapSchema<T extends AnyZodObject, S>(
@@ -345,5 +307,3 @@ function _mapSchema<T extends AnyZodObject, S>(
       .filter((entry) => (filter ? filter(entry[1]) : true))
   ) as EntityRecord<T, S>;
 }
-
-///////////////////////////////////////////////////////////////////////////

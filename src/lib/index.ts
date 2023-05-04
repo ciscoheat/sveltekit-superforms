@@ -163,7 +163,6 @@ export type Validation<
   constraints: Entity<UnwrapEffects<T>>['constraints'];
   message?: M;
   id?: string;
-  meta?: Entity<UnwrapEffects<T>>['meta'];
 };
 
 export type FormField<

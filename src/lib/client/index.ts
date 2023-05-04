@@ -255,7 +255,6 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
   tainted: Writable<TaintedFields<UnwrapEffects<T>> | undefined>;
-  meta: Readable<Validation<T, M>['meta']>;
 
   valid: Readable<boolean>;
   empty: Readable<boolean>;
@@ -568,7 +567,6 @@ export function superForm<
   const Empty = writable(form2.empty);
   const Message = writable<M | undefined>(form2.message);
   const Constraints = writable(form2.constraints);
-  const Meta = writable<Validation<T2, M>['meta'] | undefined>(form2.meta);
 
   // eslint-disable-next-line dci-lint/grouped-rolemethods
   const Errors = {
@@ -757,7 +755,6 @@ export function superForm<
     Empty.set(form.empty);
     Valid.set(form.valid);
     Errors.set(form.errors);
-    Meta.set(form.meta);
     FormId.set(form.id);
 
     if (options.flashMessage && shouldSyncFlash(options)) {
@@ -847,8 +844,7 @@ export function superForm<
           name: key,
           value: fieldProxy(Form, key),
           errors: fieldProxy(Errors, key),
-          constraints: fieldProxy(Constraints, key),
-          type: initialForm.meta?.types[key]
+          constraints: fieldProxy(Constraints, key)
         }
       ];
     })
@@ -860,7 +856,6 @@ export function superForm<
     errors: Errors,
     message: Message,
     constraints: Constraints,
-    meta: derived(Meta, ($m) => $m),
 
     fields: Fields,
 
@@ -883,7 +878,6 @@ export function superForm<
         constraints: get(Constraints),
         message: get(Message),
         id: _formId,
-        meta: get(Meta),
         tainted: get(Tainted)
       };
     },
@@ -937,7 +931,6 @@ export function superForm<
         Context_enableTaintedMessage,
         formEvents,
         FormId,
-        Meta,
         Constraints,
         Tainted,
         LastChanges
@@ -1255,7 +1248,6 @@ function formEnhance<T extends AnyZodObject, M>(
   enableTaintedForm: () => void,
   formEvents: SuperFormEventList<T, M>,
   id: Readable<string | undefined>,
-  meta: Readable<Entity<T>['meta'] | undefined>,
   constraints: Readable<Entity<T>['constraints']>,
   tainted: Writable<TaintedFields<T> | undefined>,
   lastChanges: Writable<string[][]>
@@ -1613,8 +1605,7 @@ function formEnhance<T extends AnyZodObject, M>(
             empty: false,
             constraints: get(constraints),
             message: undefined,
-            id: get(id),
-            meta: get(meta)
+            id: get(id)
           };
 
           const result = {
@@ -1667,8 +1658,7 @@ function formEnhance<T extends AnyZodObject, M>(
             empty: false,
             constraints: get(constraints),
             message: undefined,
-            id: get(id),
-            meta: get(meta)
+            id: get(id)
           };
 
           const result = {

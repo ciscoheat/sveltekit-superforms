@@ -609,6 +609,44 @@ export function superForm<
     return obj === true;
   }
 
+  function Tainted__validate(path: string[], taint: TaintOption) {
+    if (
+      options.validationMethod == 'onblur' ||
+      options.validationMethod == 'submit-only'
+    ) {
+      return;
+    }
+
+    let shouldValidate = options.validationMethod === 'oninput';
+
+    if (!shouldValidate) {
+      const errorContent = get(Errors);
+
+      const errorNode = errorContent
+        ? pathExists(errorContent, path)
+        : undefined;
+
+      // Need a special check here, since if the error has never existed,
+      // there won't be a key for the error. But if it existed and was cleared,
+      // the key exists with the value undefined.
+      const hasError = errorNode && errorNode.key in errorNode.parent;
+
+      shouldValidate = !!hasError;
+    }
+
+    if (shouldValidate) {
+      validateField(
+        path,
+        options.validators,
+        options.defaultValidator,
+        Form,
+        Errors,
+        Tainted,
+        { taint }
+      );
+    }
+  }
+
   function Tainted_update(
     newObj: unknown,
     compareAgainst: unknown,
@@ -634,6 +672,11 @@ export function superForm<
         setPaths(tainted, paths, options === true ? true : undefined);
         return tainted;
       });
+
+      for (const path of paths) {
+        //console.log('🚀 ~ file: index.ts:681 ~ path:', path);
+        Tainted__validate(path, options);
+      }
     }
   }
 
@@ -1264,51 +1307,6 @@ function formEnhance<T extends AnyZodObject, M>(
   }
   formEl.addEventListener('focusout', checkBlur);
 
-  // Add input event, to check tainted
-  async function checkInput(e: Event) {
-    if (
-      options.validationMethod == 'onblur' ||
-      options.validationMethod == 'submit-only'
-    ) {
-      return;
-    }
-
-    // Some form fields have some timing issue, need to wait
-    if (timingIssue(e.target)) {
-      await new Promise((r) => setTimeout(r, 0));
-    }
-
-    const errorContent = get(errors);
-    const taintedContent = get(tainted);
-
-    for (const change of get(lastChanges)) {
-      let shouldValidate = options.validationMethod === 'oninput';
-
-      if (!shouldValidate) {
-        const isTainted =
-          taintedContent &&
-          pathExists(taintedContent, change, (value) => value === true);
-
-        const errorNode = errorContent
-          ? pathExists(errorContent, change)
-          : undefined;
-
-        // Need a special check here, since if the error has never existed,
-        // there won't be a key for the error. But if it existed and was cleared,
-        // the key exists with the value undefined.
-        const hasError = errorNode && errorNode.key in errorNode.parent;
-
-        shouldValidate = !!isTainted && !!hasError;
-      }
-
-      if (shouldValidate) {
-        //console.log('🚀 ~ file: index.ts:920 ~ INPUT with error:', change);
-        validateChange(change);
-      }
-    }
-  }
-  formEl.addEventListener('input', checkInput);
-
   const ErrorTextEvents = new Set<HTMLFormElement>();
 
   function ErrorTextEvents_selectText(e: Event) {
@@ -1338,7 +1336,6 @@ function formEnhance<T extends AnyZodObject, M>(
     );
     ErrorTextEvents.clear();
     formEl.removeEventListener('focusout', checkBlur);
-    formEl.removeEventListener('input', checkInput);
   });
 
   type ValidationResponse<

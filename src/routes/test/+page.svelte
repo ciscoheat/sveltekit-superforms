@@ -107,7 +107,7 @@
     message: modalMessage,
     delayed: modalDelayed,
     enhance: modalEnhance
-  } = superForm('login-form', {
+  } = superForm(null, {
     resetForm: true,
     taintedMessage: null,
     dataType: 'json',

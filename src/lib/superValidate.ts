@@ -437,15 +437,15 @@ export function superValidateSync<
   const entityInfo = entityData(realSchema, options.warnings);
   const schemaKeys = entityInfo.keys;
 
-  function parseFormData(data: FormData) {
-    function tryParseSuperJson(data: FormData) {
-      if (data.has('__superform_json')) {
+  function parseFormData(formData: FormData) {
+    function tryParseSuperJson() {
+      if (formData.has('__superform_json')) {
         try {
           const output = parse(
-            data.getAll('__superform_json').join('') ?? ''
+            formData.getAll('__superform_json').join('') ?? ''
           );
           if (typeof output === 'object') {
-            return output as Record<string, unknown>;
+            return output as z.infer<UnwrapEffects<T>>;
           }
         } catch {
           //
@@ -454,15 +454,24 @@ export function superValidateSync<
       return null;
     }
 
-    const superJson = tryParseSuperJson(data);
-    return superJson
-      ? superJson
-      : formDataToValidation(
-          realSchema,
-          schemaKeys,
-          data,
-          options?.warnings
-        );
+    function parseFormId() {
+      return formData.get('__superform_id')?.toString() ?? undefined;
+    }
+
+    const data = tryParseSuperJson();
+    const id = parseFormId();
+
+    return data
+      ? { id, data }
+      : {
+          id,
+          data: formDataToValidation(
+            realSchema,
+            schemaKeys,
+            formData,
+            options?.warnings
+          )
+        };
   }
 
   function parseSearchParams(data: URL | URLSearchParams) {
@@ -478,11 +487,20 @@ export function superValidateSync<
   // If FormData exists, don't check for missing fields.
   // Checking only at GET requests, basically, where
   // the data is coming from the DB.
+  let formData: ReturnType<typeof parseFormData> | undefined = undefined;
+  let formId: string | undefined = undefined;
 
   if (data instanceof FormData) {
-    data = parseFormData(data);
+    formData = parseFormData(data);
   } else if (data instanceof URL || data instanceof URLSearchParams) {
-    data = parseSearchParams(data);
+    formData = parseSearchParams(data);
+  }
+
+  if (formData) {
+    data = formData.data;
+    formId = options.id ?? formData.id;
+  } else {
+    formId = options.id;
   }
 
   let output: Validation<UnwrapEffects<T>, M>;
@@ -506,9 +524,7 @@ export function superValidateSync<
     );
   }
 
-  if (options.id !== undefined) {
-    output.id = options.id;
-  }
+  if (formId !== undefined) output.id = formId;
 
   return output;
 }

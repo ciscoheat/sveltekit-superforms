@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- Added `superValidateSync`, useful on the client for SPA:s.
-- Added `defaultData`, which takes a schema and returns the default values for it.
-
 ### Changed
 
 - The literal `"any"` is now an allowed value in `step` for constraints.
@@ -21,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `options.noErrors` is removed. Use `options.errors` instead.
 - The virtually unused `meta` has been removed. Use the Zod schema directly instead for reflection.
+
+### Fixed
+
+- Explicitly setting a form `id` for multiple forms is not required anymore when using `use:enhance`! Otherwise, an id can be specified in the options or in a hidden form field called `__superform_id`.
+
+### Added
+
+- Added `superValidateSync`, useful on the client for SPA:s.
+- Added `defaultData`, which takes a schema and returns the default values for it.
 
 ## [0.8.5] - 2023-05-04
 

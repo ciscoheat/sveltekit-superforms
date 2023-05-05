@@ -1,21 +1,27 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
 
   export let data: PageData;
 
-  const { form, errors, constraints, message } = superForm(data.first);
+  const { form, errors, constraints, message, formId } = superForm(
+    data.first
+  );
 
   const {
     form: secondform,
     errors: seconderrors,
     constraints: secondconstraints,
-    message: secondmessage
+    message: secondmessage,
+    formId: secondFormId
   } = superForm(data.second);
 </script>
 
 <a href="/">&lt; Back to start</a>
+
+<SuperDebug data={{ $formId, $form, $secondFormId, $secondform }} />
 
 {#if $message}
   <h4 class:error={$page.status >= 400} class="first message">

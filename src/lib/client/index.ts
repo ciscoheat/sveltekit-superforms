@@ -308,8 +308,7 @@ export function superForm<
     | z.infer<UnwrapEffects<T>>
     | Validation<UnwrapEffects<T>, M>
     | null
-    | undefined
-    | string,
+    | undefined,
   options: FormOptions<UnwrapEffects<T>, M> = {}
 ): SuperForm<UnwrapEffects<T>, M> {
   type T2 = UnwrapEffects<T>;
@@ -318,12 +317,6 @@ export function superForm<
   {
     options = { ...(defaultFormOptions as FormOptions<T2, M>), ...options };
 
-    if (typeof form === 'string' && typeof options.id === 'string') {
-      throw new SuperFormError(
-        'You cannot specify an id both in the first superForm argument and in the options.'
-      );
-    }
-
     if (options.SPA && options.validators === undefined) {
       console.warn(
         'No validators set for Superform in SPA mode. Add them to the validators option, or set it to false to disable this warning.'
@@ -331,12 +324,8 @@ export function superForm<
     }
   }
 
-  // Cannot easily put _formId in Context since the form will change type below.
-  let _formId = typeof form === 'string' ? form : options.id ?? form?.id;
-  const FormId = writable<string | undefined>(_formId);
-
   // Normalize form argument to Validation<T, M>
-  if (!form || typeof form === 'string') {
+  if (!form) {
     form = Context_newEmptyForm(); // Takes care of null | undefined | string
   } else if (Context_isValidationObject(form) === false) {
     form = Context_newEmptyForm(form); // Takes care of Partial<z.infer<T>>
@@ -354,14 +343,26 @@ export function superForm<
     );
   }
 
+  // Cannot easily put _formId in Context since the form will change type below.
+  let _formId: string | undefined = options.id ?? form2.id;
+
+  // Underlying store for Errors
   const _errors = writable(form2.errors);
 
   ///// Roles ///////////////////////////////////////////////////////
+
+  const FormId = writable<string | undefined>(_formId);
 
   const Context = {
     taintedMessage: options.taintedMessage,
     taintedFormState: clone(initialForm.data)
   };
+
+  function Context_randomId(length = 8) {
+    return Math.random()
+      .toString(36)
+      .substring(2, length + 2);
+  }
 
   function Context_setTaintedFormState(data: typeof initialForm.data) {
     Context.taintedFormState = clone(data);
@@ -409,8 +410,9 @@ export function superForm<
       : undefined;
   }
 
-  function Context_enableTaintedMessage() {
+  function Context_useEnhanceEnabled() {
     options.taintedMessage = Context.taintedMessage;
+    if (_formId === undefined) FormId.set(Context_randomId());
   }
 
   function Context_newFormStore(data: (typeof form2)['data']) {
@@ -810,7 +812,7 @@ export function superForm<
 
             for (const newForm of forms) {
               //console.log('🚀~ ActionData ~ newForm:', newForm.id);
-              if (/*newForm === form ||*/ newForm.id !== _formId) continue;
+              if (newForm.id !== _formId) continue;
 
               await Form_updateFromValidation(
                 newForm as Validation<T2, M>,
@@ -827,7 +829,7 @@ export function superForm<
             // so don't trigger any events, just update the data.
             for (const newForm of forms) {
               //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
-              if (/*newForm === form ||*/ newForm.id !== _formId) continue;
+              if (newForm.id !== _formId) continue;
 
               rebind(newForm as Validation<T2, M>, untaint);
             }
@@ -929,7 +931,7 @@ export function superForm<
         options,
         Form,
         Message,
-        Context_enableTaintedMessage,
+        Context_useEnhanceEnabled,
         formEvents,
         FormId,
         Constraints,
@@ -1648,6 +1650,13 @@ function formEnhance<T extends AnyZodObject, M>(
         }
 
         htmlForm.submitting();
+
+        if (!submit.data.has('__superform_id')) {
+          // Add formId
+          const formId = get(id);
+          if (formId !== undefined)
+            submit.data.set('__superform_id', formId);
+        }
 
         if (options.SPA) {
           cancel();

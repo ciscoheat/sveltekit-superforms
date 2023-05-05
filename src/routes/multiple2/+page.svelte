@@ -5,21 +5,25 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, message } = superForm(data.loginForm, {
-    invalidateAll: false
-  });
+  const { form, errors, enhance, message, formId } = superForm(
+    data.loginForm,
+    {
+      invalidateAll: false
+    }
+  );
 
   const {
     form: registerForm,
     errors: registerErrors,
     enhance: registerEnhance,
-    message: registerMessage
+    message: registerMessage,
+    formId: registerFormId
   } = superForm(data.registerForm, {
     invalidateAll: false
   });
 </script>
 
-<SuperDebug data={{ $form, $registerForm }} />
+<SuperDebug data={{ $formId, $form, $registerFormId, $registerForm }} />
 
 {#if $message}<h3>{$message}</h3>{/if}
 <form method="POST" action="?/login" use:enhance>

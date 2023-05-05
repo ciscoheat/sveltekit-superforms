@@ -21,12 +21,12 @@
 
 <br/>
 
-Making SvelteKit **validation** and **display** of forms easier than ever!
+Making SvelteKit **validation** and **displaying** of forms easier than ever!
 
 # Feature list
 
-- Merging `PageData` and `ActionData` consistently - Forget about which one to use and how, just focus on your data.
-- Server-side data validation using [Zod](https://zod.dev), with output that can be used directly on the client.
+- Seamless merging of `PageData` and `ActionData` - Forget about which one to use and how, just focus on your data.
+- Server- and client-side data validation using [Zod](https://zod.dev), with output that can be used directly on the client.
 - [Auto-centering and auto-focusing](https://superforms.vercel.app/concepts/error-handling#usage-client) on invalid form fields.
 - [Tainted form detection](https://superforms.vercel.app/concepts/tainted), prevents the user from losing data if navigating away from an unsaved form.
 - No JS required as default, but full support for [progressive enhancement](https://superforms.vercel.app/concepts/enhance).
@@ -36,12 +36,12 @@ Making SvelteKit **validation** and **display** of forms easier than ever!
 - Support for [nested data structures](https://superforms.vercel.app/concepts/nested-data), [snapshots](https://superforms.vercel.app/concepts/snapshots) and [multiple forms](https://superforms.vercel.app/concepts/multiple-forms) on the same page.
 - Works both on the server and with [single-page applications](https://superforms.vercel.app/concepts/spa) (SPA)!
 - [Proxy objects](https://superforms.vercel.app/concepts/proxy-objects) for handling data conversions to string and back again.
-- [Client-side validators](https://superforms.vercel.app/concepts/client-validation) for immediate user feedback.
+- Realtime [client-side validators](https://superforms.vercel.app/concepts/client-validation) for immediate user feedback.
 - Provide submit state feedback with three [auto-updating timers](https://superforms.vercel.app/concepts/timers), based on human perception research.
 - Even more care for the user: No form data loss, by [preventing error page rendering](https://superforms.vercel.app/concepts/enhance#differences-from-sveltekits-useenhance) as default.
-- Hook into [a number of events](https://superforms.vercel.app/concepts/events) for full control over the `ActionResult` and the validation update, with a possibility to cancel the update at every step.
+- Hook into [a number of events](https://superforms.vercel.app/concepts/events) for full control over the validation data and the `ActionResult`, with a possibility to cancel the update at every step.
 - Complete customization with a [huge list of options](https://superforms.vercel.app/api#superformform-options).
-- Comes with a Super Debugging Svelte Component: `SuperDebug`.
+- Comes with a Super Debugging Svelte Component: [SuperDebug](https://superforms.vercel.app/api#superdebug).
 
 # Installation
 

@@ -269,59 +269,9 @@ export async function superValidate<
     data = null;
   }
 
-  options = {
-    errors: undefined,
-    ...options
-  };
+  if (!options) options = {};
 
   const originalSchema = schema as T;
-
-  let wrappedSchema = schema;
-  let hasEffects = false;
-
-  while (wrappedSchema instanceof ZodEffects) {
-    hasEffects = true;
-    wrappedSchema = (wrappedSchema as ZodEffects<T>)._def.schema;
-  }
-
-  if (!(wrappedSchema instanceof ZodObject)) {
-    throw new SuperFormError(
-      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
-    );
-  }
-
-  const realSchema = wrappedSchema as UnwrapEffects<T>;
-
-  const entityInfo = entityData(realSchema, options.warnings);
-  const schemaKeys = entityInfo.keys;
-
-  function parseFormData(data: FormData) {
-    function tryParseSuperJson(data: FormData) {
-      if (data.has('__superform_json')) {
-        try {
-          const output = parse(
-            data.getAll('__superform_json').join('') ?? ''
-          );
-          if (typeof output === 'object') {
-            return output as Record<string, unknown>;
-          }
-        } catch {
-          //
-        }
-      }
-      return null;
-    }
-
-    const superJson = tryParseSuperJson(data);
-    return superJson
-      ? superJson
-      : formDataToValidation(
-          realSchema,
-          schemaKeys,
-          data,
-          options?.warnings
-        );
-  }
 
   async function tryParseFormData(request: Request) {
     let formData: FormData | undefined = undefined;
@@ -338,65 +288,28 @@ export async function superValidate<
       }
       return null;
     }
-    return parseFormData(formData);
-  }
-
-  function parseSearchParams(data: URL | URLSearchParams) {
-    if (data instanceof URL) data = data.searchParams;
-
-    const convert = new FormData();
-    for (const [key, value] of data.entries()) {
-      convert.append(key, value);
-    }
-    return parseFormData(convert);
+    return formData;
   }
 
   // If FormData exists, don't check for missing fields.
   // Checking only at GET requests, basically, where
   // the data is coming from the DB.
 
-  if (data instanceof FormData) {
-    data = parseFormData(data);
-  } else if (data instanceof Request) {
-    data = await tryParseFormData(data);
-  } else if (data instanceof URL || data instanceof URLSearchParams) {
-    data = parseSearchParams(data);
+  if (data instanceof Request) {
+    const formData = await tryParseFormData(data);
+    return superValidateSync(formData, originalSchema, options);
   } else if (
     data &&
     typeof data === 'object' &&
     'request' in data &&
     data.request instanceof Request
   ) {
-    data = await tryParseFormData(data.request);
-  }
-
-  let output: Validation<UnwrapEffects<T>, M>;
-
-  if (!data) {
-    const addErrors = options.errors === true;
-    const result =
-      hasEffects || addErrors
-        ? await originalSchema.spa(entityInfo.defaultEntity)
-        : undefined;
-
-    output = emptyResultToValidation(result, entityInfo, addErrors);
+    const formData = await tryParseFormData(data.request);
+    return superValidateSync(formData, originalSchema, options);
   } else {
-    const result = await originalSchema.spa(data);
-
-    output = resultToValidation(
-      result,
-      entityInfo,
-      schemaKeys,
-      data,
-      options.errors !== false
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return superValidateSync(data as any, originalSchema, options);
   }
-
-  if (options.id !== undefined) {
-    output.id = options.id;
-  }
-
-  return output;
 }
 
 export function actionResult<
@@ -501,10 +414,7 @@ export function superValidateSync<
     data = null;
   }
 
-  options = {
-    errors: undefined,
-    ...options
-  };
+  if (!options) options = {};
 
   const originalSchema = schema as T;
 

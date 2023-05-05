@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `superValidateSync`, useful on the client for SPA:s.
+
 ### Changed
 
 - The literal `"any"` is now an allowed value in `step` for constraints.

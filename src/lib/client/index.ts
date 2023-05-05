@@ -75,6 +75,7 @@ export {
 
 export {
   superValidate,
+  superValidateSync,
   actionResult,
   message,
   setMessage,

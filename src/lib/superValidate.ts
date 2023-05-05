@@ -10,7 +10,8 @@ import {
 import {
   entityData,
   unwrapZodType,
-  valueOrDefault
+  valueOrDefault,
+  type Entity
 } from './schemaEntity.js';
 
 import { traversePath, type ZodTypeInfo } from './entity.js';
@@ -31,7 +32,8 @@ import {
   ZodEnum,
   ZodNativeEnum,
   ZodSymbol,
-  ZodEffects
+  ZodEffects,
+  type SafeParseReturnType
 } from 'zod';
 
 import { mapErrors } from './entity.js';
@@ -372,30 +374,12 @@ export async function superValidate<
 
   if (!data) {
     const addErrors = options.errors === true;
+    const result =
+      hasEffects || addErrors
+        ? await originalSchema.spa(entityInfo.defaultEntity)
+        : undefined;
 
-    let valid = false;
-    let errors = {};
-
-    if (hasEffects || addErrors) {
-      const result = await originalSchema.spa(entityInfo.defaultEntity);
-
-      valid = result.success;
-
-      if (result.success) {
-        data = result.data;
-      } else if (addErrors) {
-        errors = mapErrors<UnwrapEffects<T>>(result.error.format());
-      }
-    }
-
-    output = {
-      valid,
-      errors,
-      // Copy the default entity so it's not modified
-      data: data ?? clone(entityInfo.defaultEntity),
-      empty: true,
-      constraints: entityInfo.constraints
-    };
+    output = emptyResultToValidation(result, entityInfo, addErrors);
   } else {
     const addErrors = options.errors !== false;
 
@@ -493,5 +477,252 @@ export function actionResult<
     });
   } else {
     return result({ status: status || 200, data: stringify(data) });
+  }
+}
+
+////////////////////////////////////////////////////////////////////
+
+export function superValidateSync<
+  T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
+  schema: T,
+  options?: SuperValidateOptions
+): Validation<UnwrapEffects<T>, M>;
+
+export function superValidateSync<
+  T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
+  data:
+    | FormData
+    | URLSearchParams
+    | URL
+    | Partial<z.infer<UnwrapEffects<T>>>
+    | null
+    | undefined,
+  schema: T,
+  options?: SuperValidateOptions
+): Validation<UnwrapEffects<T>, M>;
+
+/**
+ * Validates a Zod schema for usage in a SvelteKit form.
+ * @param data Data structure for a Zod schema, or RequestEvent/FormData/URL. If falsy, the schema's defaultEntity will be used.
+ * @param schema The Zod schema to validate against.
+ */
+export function superValidateSync<
+  T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+>(
+  data: unknown,
+  schema?: T | SuperValidateOptions,
+  options?: SuperValidateOptions
+): Validation<UnwrapEffects<T>, M> {
+  if (data && typeof data === 'object' && 'safeParseAsync' in data) {
+    options = schema as SuperValidateOptions | undefined;
+    schema = data as T;
+    data = null;
+  }
+
+  options = {
+    errors: undefined,
+    ...options
+  };
+
+  const originalSchema = schema as T;
+
+  let wrappedSchema = schema;
+  let hasEffects = false;
+
+  while (wrappedSchema instanceof ZodEffects) {
+    hasEffects = true;
+    wrappedSchema = (wrappedSchema as ZodEffects<T>)._def.schema;
+  }
+
+  if (!(wrappedSchema instanceof ZodObject)) {
+    throw new SuperFormError(
+      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
+    );
+  }
+
+  const realSchema = wrappedSchema as UnwrapEffects<T>;
+
+  const entityInfo = entityData(realSchema, options.warnings);
+  const schemaKeys = entityInfo.keys;
+
+  function parseFormData(data: FormData) {
+    function tryParseSuperJson(data: FormData) {
+      if (data.has('__superform_json')) {
+        try {
+          const output = parse(
+            data.getAll('__superform_json').join('') ?? ''
+          );
+          if (typeof output === 'object') {
+            return output as Record<string, unknown>;
+          }
+        } catch {
+          //
+        }
+      }
+      return null;
+    }
+
+    const superJson = tryParseSuperJson(data);
+    return superJson
+      ? superJson
+      : formDataToValidation(
+          realSchema,
+          schemaKeys,
+          data,
+          options?.warnings
+        );
+  }
+
+  function parseSearchParams(data: URL | URLSearchParams) {
+    if (data instanceof URL) data = data.searchParams;
+
+    const convert = new FormData();
+    for (const [key, value] of data.entries()) {
+      convert.append(key, value);
+    }
+    return parseFormData(convert);
+  }
+
+  // If FormData exists, don't check for missing fields.
+  // Checking only at GET requests, basically, where
+  // the data is coming from the DB.
+
+  if (data instanceof FormData) {
+    data = parseFormData(data);
+  } else if (data instanceof URL || data instanceof URLSearchParams) {
+    data = parseSearchParams(data);
+  }
+
+  let output: Validation<UnwrapEffects<T>, M>;
+
+  if (!data) {
+    const addErrors = options.errors === true;
+    const result =
+      hasEffects || addErrors
+        ? originalSchema.safeParse(entityInfo.defaultEntity)
+        : undefined;
+
+    output = emptyResultToValidation(result, entityInfo, addErrors);
+  } else {
+    const addErrors = options.errors !== false;
+
+    const partialData = data as Partial<z.infer<T>>;
+    const result = originalSchema.safeParse(partialData);
+
+    if (!result.success) {
+      const errors = addErrors
+        ? mapErrors<UnwrapEffects<T>>(result.error.format())
+        : {};
+
+      output = {
+        valid: false,
+        errors,
+        data: Object.fromEntries(
+          schemaKeys.map((key) => [
+            key,
+            key in partialData
+              ? partialData[key]
+              : clone(entityInfo.defaultEntity[key])
+          ])
+        ),
+        empty: false,
+        constraints: entityInfo.constraints
+      };
+    } else {
+      output = {
+        valid: true,
+        errors: {},
+        data: result.data,
+        empty: false,
+        constraints: entityInfo.constraints
+      };
+    }
+  }
+
+  if (options.id !== undefined) {
+    output.id = options.id;
+  }
+
+  return output;
+}
+
+function emptyResultToValidation<
+  T extends ZodValidation<AnyZodObject>,
+  M,
+  R extends SafeParseReturnType<unknown, z.infer<UnwrapEffects<T>>>
+>(
+  result: R | undefined,
+  entityInfo: Entity<UnwrapEffects<T>>,
+  addErrors: boolean
+): Validation<UnwrapEffects<T>, M> {
+  let data: z.infer<UnwrapEffects<T>> | undefined = undefined;
+  let errors: ReturnType<typeof mapErrors> = {};
+
+  const valid = result?.success ?? false;
+
+  if (result) {
+    if (result.success) {
+      data = result.data;
+    } else if (addErrors) {
+      errors = mapErrors<UnwrapEffects<T>>(result.error.format());
+    }
+  }
+
+  return {
+    valid,
+    errors,
+    // Copy the default entity so it's not modified
+    data: data ?? clone(entityInfo.defaultEntity),
+    empty: true,
+    constraints: entityInfo.constraints
+  };
+}
+
+function resultToValidation<
+  T extends ZodValidation<AnyZodObject>,
+  M,
+  R extends SafeParseReturnType<unknown, z.infer<UnwrapEffects<T>>>
+>(
+  result: R,
+  entityInfo: Entity<UnwrapEffects<T>>,
+  schemaKeys: string[],
+  partialData: Partial<z.infer<UnwrapEffects<T>>>,
+  addErrors: boolean
+): Validation<UnwrapEffects<T>, M> {
+  if (!result.success) {
+    const errors = addErrors
+      ? mapErrors<UnwrapEffects<T>>(result.error.format())
+      : {};
+
+    return {
+      valid: false,
+      errors,
+      data: Object.fromEntries(
+        schemaKeys.map((key) => [
+          key,
+          key in partialData
+            ? partialData[key]
+            : clone(entityInfo.defaultEntity[key])
+        ])
+      ),
+      empty: false,
+      constraints: entityInfo.constraints
+    };
+  } else {
+    return {
+      valid: true,
+      errors: {},
+      data: result.data,
+      empty: false,
+      constraints: entityInfo.constraints
+    };
   }
 }

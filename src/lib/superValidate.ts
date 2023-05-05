@@ -381,41 +381,15 @@ export async function superValidate<
 
     output = emptyResultToValidation(result, entityInfo, addErrors);
   } else {
-    const addErrors = options.errors !== false;
+    const result = await originalSchema.spa(data);
 
-    const partialData = data as Partial<z.infer<T>>;
-    const result = await originalSchema.spa(partialData);
-
-    if (!result.success) {
-      const errors = addErrors
-        ? mapErrors<UnwrapEffects<T>>(result.error.format())
-        : {};
-
-      //console.log(result.error.format(), errors);
-
-      output = {
-        valid: false,
-        errors,
-        data: Object.fromEntries(
-          schemaKeys.map((key) => [
-            key,
-            key in partialData
-              ? partialData[key]
-              : clone(entityInfo.defaultEntity[key])
-          ])
-        ),
-        empty: false,
-        constraints: entityInfo.constraints
-      };
-    } else {
-      output = {
-        valid: true,
-        errors: {},
-        data: result.data,
-        empty: false,
-        constraints: entityInfo.constraints
-      };
-    }
+    output = resultToValidation(
+      result,
+      entityInfo,
+      schemaKeys,
+      data,
+      options.errors !== false
+    );
   }
 
   if (options.id !== undefined) {
@@ -612,39 +586,14 @@ export function superValidateSync<
 
     output = emptyResultToValidation(result, entityInfo, addErrors);
   } else {
-    const addErrors = options.errors !== false;
-
-    const partialData = data as Partial<z.infer<T>>;
-    const result = originalSchema.safeParse(partialData);
-
-    if (!result.success) {
-      const errors = addErrors
-        ? mapErrors<UnwrapEffects<T>>(result.error.format())
-        : {};
-
-      output = {
-        valid: false,
-        errors,
-        data: Object.fromEntries(
-          schemaKeys.map((key) => [
-            key,
-            key in partialData
-              ? partialData[key]
-              : clone(entityInfo.defaultEntity[key])
-          ])
-        ),
-        empty: false,
-        constraints: entityInfo.constraints
-      };
-    } else {
-      output = {
-        valid: true,
-        errors: {},
-        data: result.data,
-        empty: false,
-        constraints: entityInfo.constraints
-      };
-    }
+    const result = originalSchema.safeParse(data);
+    output = resultToValidation(
+      result,
+      entityInfo,
+      schemaKeys,
+      data,
+      options.errors !== false
+    );
   }
 
   if (options.id !== undefined) {

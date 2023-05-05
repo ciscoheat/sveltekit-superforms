@@ -1651,13 +1651,6 @@ function formEnhance<T extends AnyZodObject, M>(
 
         htmlForm.submitting();
 
-        if (!submit.data.has('__superform_id')) {
-          // Add formId
-          const formId = get(id);
-          if (formId !== undefined)
-            submit.data.set('__superform_id', formId);
-        }
-
         if (options.SPA) {
           cancel();
 
@@ -1697,6 +1690,13 @@ function formEnhance<T extends AnyZodObject, M>(
               submit.data.delete(key);
             }
           });
+        }
+
+        if (!options.SPA && !submit.data.has('__superform_id')) {
+          // Add formId
+          const formId = get(id);
+          if (formId !== undefined)
+            submit.data.set('__superform_id', formId);
         }
       }
     }

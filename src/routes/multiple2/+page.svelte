@@ -23,7 +23,7 @@
   });
 </script>
 
-<SuperDebug data={{ $formId, $form, $registerFormId, $registerForm }} />
+<SuperDebug data={{ $form, $registerForm }} />
 
 {#if $message}<h3>{$message}</h3>{/if}
 <form method="POST" action="?/login" use:enhance>

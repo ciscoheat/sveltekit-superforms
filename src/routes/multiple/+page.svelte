@@ -21,7 +21,7 @@
 
 <a href="/">&lt; Back to start</a>
 
-<SuperDebug data={{ $formId, $form, $secondFormId, $secondform }} />
+<SuperDebug data={{ $form, $secondform }} />
 
 {#if $message}
   <h4 class:error={$page.status >= 400} class="first message">

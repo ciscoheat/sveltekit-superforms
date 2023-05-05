@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `superValidateSync`, useful on the client for SPA:s.
+- Added `defaultData`, which takes a schema and returns the default values for it.
 
 ### Changed
 

@@ -1,4 +1,9 @@
-import { setError, superValidate, defaultData } from '$lib/server';
+import {
+  setError,
+  superValidate,
+  defaultData,
+  superValidateSync
+} from '$lib/server';
 import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
@@ -215,85 +220,121 @@ test('Optional values', async () => {
   expect(output.errors).toStrictEqual({});
 });
 
-test('Default values', async () => {
-  const d = new Date();
+describe('Default values', () => {
+  test('With a partial entity', async () => {
+    const now = new Date();
+    const entity = { createdAt: now };
+    const output = await superValidate(
+      entity,
+      AccountSchema.extend({ name: z.string() })
+    );
 
-  // Note that no default values for strings are needed,
-  // they will be set to '' automatically.
-  const e1 = await superValidate(
-    null,
-    userForm.extend({
-      id: userForm.shape.id.default(undefined as unknown as number),
-      isBool: userForm.shape.isBool.default(true),
-      createdAt: userForm.shape.createdAt.removeDefault().default(d)
-    })
-  );
-
-  expect(e1.data).toStrictEqual({
-    id: undefined,
-    name: null,
-    email: '',
-    createdAt: d,
-    slug: '',
-    isBool: true,
-    nullable: null,
-    def: 999
-  });
-});
-
-test('More default values', async () => {
-  const d = new Date();
-  const e = await superValidate(
-    null,
-    _dataTypeForm.extend({
-      date: _dataTypeForm.shape.date.removeDefault().default(d),
-      coercedDate: _dataTypeForm.shape.coercedDate.default(d)
-    })
-  );
-
-  expect(e.data).toStrictEqual({
-    agree: true,
-    string: 'Shigeru',
-    email: '',
-    nativeEnumInt: 0,
-    nativeEnumString: 'GREEN',
-    nativeEnumString2: 'Banana',
-    bool: false,
-    number: 0,
-    proxyNumber: 0,
-    nullableString: null,
-    nullishString: null,
-    optionalString: undefined,
-    numberArray: [],
-    proxyString: '',
-    trimmedString: '',
-    date: d,
-    coercedNumber: 0,
-    coercedDate: d
+    assert(output.valid == false);
+    expect(output.data).toStrictEqual({
+      id: 0,
+      createdAt: now,
+      name: '',
+      phone: null
+    });
   });
 
-  const form = await superValidate(null, _dataTypeForm);
+  test('With a partial entity, sync version', () => {
+    const now = new Date();
+    const entity = { createdAt: now };
+    const output = superValidateSync(
+      entity,
+      AccountSchema.extend({ name: z.string() })
+    );
 
-  expect(form.valid).toEqual(false);
-  expect(form.errors).toEqual({});
-  expect(form.empty).toEqual(true);
-  expect(form.message).toBeUndefined();
+    assert(output.valid == false);
+    expect(output.data).toStrictEqual({
+      id: 0,
+      createdAt: now,
+      name: '',
+      phone: null
+    });
+  });
 
-  expect(form.constraints).toStrictEqual({
-    agree: { required: true },
-    string: { required: true, minlength: 2 },
-    email: { required: true },
-    nativeEnumInt: { required: true },
-    nativeEnumString: { required: true },
-    nativeEnumString2: { required: true },
-    bool: { required: true },
-    number: { required: true },
-    proxyNumber: { required: true, min: 10 },
-    proxyString: { required: true },
-    trimmedString: { required: true },
-    numberArray: {
-      /*_constraints: { min: 3, required: true },*/ required: true
-    }
+  test('With no entity', async () => {
+    const d = new Date();
+
+    // Note that no default values for strings are needed,
+    // they will be set to '' automatically.
+    const e1 = await superValidate(
+      null,
+      userForm.extend({
+        id: userForm.shape.id.default(undefined as unknown as number),
+        isBool: userForm.shape.isBool.default(true),
+        createdAt: userForm.shape.createdAt.removeDefault().default(d)
+      })
+    );
+
+    expect(e1.data).toStrictEqual({
+      id: undefined,
+      name: null,
+      email: '',
+      createdAt: d,
+      slug: '',
+      isBool: true,
+      nullable: null,
+      def: 999
+    });
+  });
+
+  test('With no entity but different fields', async () => {
+    const d = new Date();
+    const e = await superValidate(
+      null,
+      _dataTypeForm.extend({
+        date: _dataTypeForm.shape.date.removeDefault().default(d),
+        coercedDate: _dataTypeForm.shape.coercedDate.default(d)
+      })
+    );
+
+    expect(e.data).toStrictEqual({
+      agree: true,
+      string: 'Shigeru',
+      email: '',
+      nativeEnumInt: 0,
+      nativeEnumString: 'GREEN',
+      nativeEnumString2: 'Banana',
+      bool: false,
+      number: 0,
+      proxyNumber: 0,
+      nullableString: null,
+      nullishString: null,
+      optionalString: undefined,
+      numberArray: [],
+      proxyString: '',
+      trimmedString: '',
+      date: d,
+      coercedNumber: 0,
+      coercedDate: d
+    });
+
+    const form = await superValidate(null, _dataTypeForm);
+
+    expect(form.valid).toEqual(false);
+    expect(form.errors).toEqual({});
+    expect(form.empty).toEqual(true);
+    expect(form.message).toBeUndefined();
+
+    expect(form.constraints).toStrictEqual({
+      agree: { required: true },
+      string: { required: true, minlength: 2 },
+      email: { required: true },
+      nativeEnumInt: { required: true },
+      nativeEnumString: { required: true },
+      nativeEnumString2: { required: true },
+      bool: { required: true },
+      number: { required: true },
+      proxyNumber: { required: true, min: 10 },
+      proxyString: { required: true },
+      trimmedString: { required: true },
+      numberArray: {
+        /*_constraints: { min: 3, required: true },*/ required: true
+      }
+    });
   });
 });
 

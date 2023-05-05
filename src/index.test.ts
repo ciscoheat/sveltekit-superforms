@@ -255,21 +255,19 @@ describe('Default values', () => {
     });
   });
 
-  test('With no entity', async () => {
+  test('With no entity and defaultData', async () => {
     const d = new Date();
+    const schema = userForm.extend({
+      id: userForm.shape.id.default(undefined as unknown as number),
+      isBool: userForm.shape.isBool.default(true),
+      createdAt: userForm.shape.createdAt.removeDefault().default(d)
+    });
 
     // Note that no default values for strings are needed,
     // they will be set to '' automatically.
-    const e1 = await superValidate(
-      null,
-      userForm.extend({
-        id: userForm.shape.id.default(undefined as unknown as number),
-        isBool: userForm.shape.isBool.default(true),
-        createdAt: userForm.shape.createdAt.removeDefault().default(d)
-      })
-    );
+    const e1 = await superValidate(null, schema);
 
-    expect(e1.data).toStrictEqual({
+    const expected = {
       id: undefined,
       name: null,
       email: '',
@@ -278,7 +276,10 @@ describe('Default values', () => {
       isBool: true,
       nullable: null,
       def: 999
-    });
+    };
+
+    expect(e1.data).toStrictEqual(expected);
+    expect(defaultData(schema)).toStrictEqual(expected);
   });
 
   test('With no entity but different fields', async () => {

@@ -335,6 +335,19 @@ export function superForm<
   let _formId = typeof form === 'string' ? form : options.id ?? form?.id;
   const FormId = writable<string | undefined>(_formId);
 
+  // Detect if a form is posted without JavaScript.
+  const postedForm = get(page).form;
+  if (postedForm && typeof postedForm === 'object') {
+    for (const superForm of Context_findValidationForms(
+      postedForm
+    ).reverse()) {
+      if (superForm.id === _formId) {
+        form = superForm as Validation<T2, M>;
+        break;
+      }
+    }
+  }
+
   // Normalize form argument to Validation<T, M>
   if (!form || typeof form === 'string') {
     form = Context_newEmptyForm(); // Takes care of null | undefined | string
@@ -715,21 +728,6 @@ export function superForm<
       events.length = 0;
     }
   });
-
-  // Detect if a form is posted without JavaScript.
-  {
-    const postedForm = get(page).form;
-    if (postedForm && typeof postedForm === 'object') {
-      for (const superForm of Context_findValidationForms(
-        postedForm
-      ).reverse()) {
-        if (superForm.id === _formId) {
-          form = superForm as Validation<T2, M>;
-          break;
-        }
-      }
-    }
-  }
 
   if (options.dataType !== 'json') {
     for (const [key, value] of Object.entries(form2.data)) {

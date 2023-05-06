@@ -11,7 +11,7 @@ const schema = z.object({
 
 export const load = (async ({ url }) => {
   const form = await superValidate(url, schema);
-  console.log('load', form.data.id);
+  console.log('load', form);
   return { form };
 }) satisfies PageServerLoad;
 

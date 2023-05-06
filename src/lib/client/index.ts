@@ -331,7 +331,22 @@ export function superForm<
     form = Context_newEmptyForm(form); // Takes care of Partial<z.infer<T>>
   }
 
+  // Detect if a form is posted without JavaScript.
+  const postedForm = get(page).form;
+  if (postedForm && typeof postedForm === 'object') {
+    for (const superForm of Context_findValidationForms(
+      postedForm
+    ).reverse()) {
+      if (superForm.id === options.id) {
+        form = superForm as Validation<T2, M>;
+        break;
+      }
+    }
+  }
+
   const form2 = form as Validation<T2, M>;
+
+  let _formId: string | undefined = options.id ?? form2.id;
 
   // Need to clone the validation data, in case it's used to populate multiple forms.
   const initialForm = clone(form2);
@@ -343,9 +358,6 @@ export function superForm<
     );
   }
 
-  // Cannot easily put _formId in Context since the form will change type below.
-  let _formId: string | undefined = options.id ?? form2.id;
-
   // Underlying store for Errors
   const _errors = writable(form2.errors);
 
@@ -355,7 +367,10 @@ export function superForm<
 
   const Context = {
     taintedMessage: options.taintedMessage,
-    taintedFormState: clone(initialForm.data)
+    taintedFormState: clone(initialForm.data),
+    lastResult: undefined as
+      | ActionResult<Record<string, unknown>, Record<string, unknown>>
+      | undefined
   };
 
   function Context_randomId(length = 8) {
@@ -364,8 +379,37 @@ export function superForm<
       .substring(2, length + 2);
   }
 
+  async function Context_hasRedirected() {
+    const result = Context.lastResult;
+    if (result === undefined) return;
+
+    Context_setLastResult(undefined);
+
+    if (result.type === 'error' || result.type === 'redirect') {
+      Tainted_clear();
+    } else {
+      return false;
+    }
+
+    // All we need to do if redirected is to reset the form.
+    // No events should be triggered because technically we're somewhere else.
+    if (
+      result.type === 'redirect' &&
+      options.resetForm &&
+      (options.resetForm === true || (await options.resetForm()))
+    ) {
+      Form_reset();
+    }
+
+    return true;
+  }
+
   function Context_setTaintedFormState(data: typeof initialForm.data) {
     Context.taintedFormState = clone(data);
+  }
+
+  function Context_setLastResult(result: typeof Context.lastResult) {
+    Context.lastResult = result;
   }
 
   function Context_newEmptyForm(
@@ -531,15 +575,9 @@ export function superForm<
       );
     }
 
-    // All we need to do if redirected is to reset the form.
-    // No events should be triggered because technically we're somewhere else.
+    Context_setLastResult(result);
     if (result.type == 'redirect') {
-      if (
-        options.resetForm &&
-        (options.resetForm === true || (await options.resetForm()))
-      ) {
-        Form_reset();
-      }
+      await Context_hasRedirected();
       return;
     }
 
@@ -682,6 +720,10 @@ export function superForm<
     }
   }
 
+  function Tainted_clear() {
+    Tainted.set(undefined);
+  }
+
   function Tainted_set(
     tainted: TaintedFields<UnwrapEffects<T>> | undefined,
     newData: z.TypeOf<UnwrapEffects<T>>
@@ -716,21 +758,6 @@ export function superForm<
       events.length = 0;
     }
   });
-
-  // Detect if a form is posted without JavaScript.
-  {
-    const postedForm = get(page).form;
-    if (postedForm && typeof postedForm === 'object') {
-      for (const superForm of Context_findValidationForms(
-        postedForm
-      ).reverse()) {
-        if (superForm.id === _formId) {
-          form = superForm as Validation<T2, M>;
-          break;
-        }
-      }
-    }
-  }
 
   if (options.dataType !== 'json') {
     for (const [key, value] of Object.entries(form2.data)) {
@@ -823,6 +850,8 @@ export function superForm<
             pageUpdate.data &&
             typeof pageUpdate.data === 'object'
           ) {
+            if (await Context_hasRedirected()) return;
+
             const forms = Context_findValidationForms(pageUpdate.data);
 
             // It's a page reload, redirect or error/failure,
@@ -936,7 +965,8 @@ export function superForm<
         FormId,
         Constraints,
         Tainted,
-        LastChanges
+        LastChanges,
+        Context_setLastResult
       );
     },
 
@@ -1244,7 +1274,7 @@ function formEnhance<T extends AnyZodObject, M>(
   delayed: Writable<boolean>,
   timeout: Writable<boolean>,
   errs: Writable<unknown>,
-  Data_update: FormUpdate,
+  Form_updateFromActionResult: FormUpdate,
   options: FormOptions<T, M>,
   data: Writable<z.infer<T>>,
   message: Writable<M | undefined>,
@@ -1253,7 +1283,10 @@ function formEnhance<T extends AnyZodObject, M>(
   id: Readable<string | undefined>,
   constraints: Readable<Entity<T>['constraints']>,
   tainted: Writable<TaintedFields<T> | undefined>,
-  lastChanges: Writable<string[][]>
+  lastChanges: Writable<string[][]>,
+  Context_setLastResult: (
+    result: ActionResult<Record<string, unknown>, Record<string, unknown>>
+  ) => void
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -1731,6 +1764,8 @@ function formEnhance<T extends AnyZodObject, M>(
 
       if (!cancelled) {
         if (result.type !== 'error') {
+          Context_setLastResult(result);
+
           if (result.type === 'success' && options.invalidateAll) {
             await invalidateAll();
           }
@@ -1741,19 +1776,22 @@ function formEnhance<T extends AnyZodObject, M>(
             await applyAction(result);
           } else {
             // Call Data_update directly to trigger events
-            await Data_update(result);
+            await Form_updateFromActionResult(result);
           }
         } else {
           // Error result
           if (options.applyAction) {
             if (options.onError == 'apply') {
+              Context_setLastResult(result);
               await applyAction(result);
             } else {
               // Transform to failure, to avoid data loss
-              await applyAction({
+              const failResult = {
                 type: 'failure',
                 status: Math.floor(result.status || 500)
-              });
+              } as const;
+              Context_setLastResult(failResult);
+              await applyAction(failResult);
             }
           }
 

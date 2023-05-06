@@ -60,7 +60,7 @@
   let updates: string[] = [];
 </script>
 
-<SuperDebug data={{ $form, $tainted }} />
+<SuperDebug data={{ $form, $tainted, $errors }} />
 
 {#if $message}
   <h4 class:error={$message.type == 'error'} class="message">

@@ -65,7 +65,6 @@ export const load = (async ({ url }) => {
     user,
     crudSchema,
     {
-      includeMeta: true,
       errors: false
     }
   );
@@ -83,7 +82,6 @@ export const actions = {
       typeof crudSchema,
       App.PageData['flash']
     >(data, crudSchema);
-    form.id = data.get('formid')?.toString();
 
     console.log('FORM', form);
     if (!form.valid) return fail(400, { form });

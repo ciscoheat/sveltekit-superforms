@@ -18,7 +18,6 @@ export const load = (async ({ url }) => {
     userSchema
   );
   const second = structuredClone(first);
-  second.id = 'second';
   second.data.name += ' the 2:nd';
 
   return { first, second };
@@ -35,7 +34,7 @@ export const actions = {
       data,
       userSchema
     );
-    //form.id = data.get('formid')?.toString();
+    first.id = undefined;
 
     console.log('FORM ', first);
     if (!first.valid) return fail(400, { form: first });
@@ -45,6 +44,7 @@ export const actions = {
     const second = structuredClone(first);
     second.id = 'second';
     second.data.name = '2:nd ' + second.data.name;
+
     return { first, second };
   }
 } satisfies Actions;

@@ -16,12 +16,12 @@
     constraints: secondconstraints,
     message: secondmessage,
     formId: secondFormId
-  } = superForm(data.second);
+  } = superForm(data.second, { id: 'second' });
 </script>
 
 <a href="/">&lt; Back to start</a>
 
-<SuperDebug data={{ $form, $secondform }} />
+<SuperDebug data={{ $formId, $form, $secondFormId, $secondform }} />
 
 {#if $message}
   <h4 class:error={$page.status >= 400} class="first message">
@@ -63,8 +63,8 @@
     </div>
   </form>
   <form method="POST">
+    <input type="hidden" name="__superform_id" value="second" />
     <input type="hidden" name="id" bind:value={$form.id} />
-    <input type="hidden" name="formid" value="second" />
 
     <label>
       Name<br /><input

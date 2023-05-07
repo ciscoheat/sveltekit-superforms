@@ -33,7 +33,8 @@
 <SuperDebug data={{ $tainted }} />
 
 <a href="/tainted/multiple-tainted">Multiple tainted &gt;</a> |
-<a href="/tainted/programmatically">Programmatically &gt;</a>
+<a href="/tainted/programmatically">Programmatically &gt;</a> |
+<a href="/tainted/custom-tainted-function">Custom tainted function &gt;</a>
 
 <h2>Tainted modification test</h2>
 

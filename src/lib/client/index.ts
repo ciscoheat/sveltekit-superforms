@@ -4,7 +4,7 @@ import {
   type MaybePromise,
   type SubmitFunction
 } from '$app/forms';
-import { beforeNavigate, invalidateAll } from '$app/navigation';
+import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
 import type { Page } from '@sveltejs/kit';
@@ -87,6 +87,8 @@ type FormUpdate = (
   untaint?: boolean
 ) => Promise<void>;
 
+export type TaintedMessageFunction = () => Promise<boolean | null>;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;
@@ -98,7 +100,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   errorSelector: string;
   selectErrorText: boolean;
   stickyNavbar: string;
-  taintedMessage: string | false | null;
+  taintedMessage: string | false | null | TaintedMessageFunction;
   SPA: true | { failStatus?: number };
 
   onSubmit: (
@@ -778,15 +780,29 @@ export function superForm<
   ///// When use:enhance is enabled ///////////////////////////////////////////
 
   if (browser) {
-    beforeNavigate((nav) => {
-      if (options.taintedMessage && !get(Submitting)) {
+    let forceRedirection = false;
+    beforeNavigate(async ({ cancel, to, willUnload }) => {
+      if (options.taintedMessage && !get(Submitting) && !forceRedirection && !willUnload) {
         const taintStatus = Tainted_data();
-        if (
-          taintStatus &&
-          Tainted_isTainted(taintStatus) &&
-          !window.confirm(options.taintedMessage)
-        ) {
-          nav.cancel();
+        const { taintedMessage } = options;
+        let confirmFunction = (typeof taintedMessage === 'function')
+          ? taintedMessage
+          : () => Promise.resolve(window.confirm(taintedMessage));
+        if (taintStatus && Tainted_isTainted(taintStatus)) {
+          // As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
+          cancel();
+          // confirmFunction : 
+          // - rejected => shouldRedirect = false
+          // - resolved with false => shouldRedirect = false
+          // - resolved with true => shouldRedirect = true
+          const shouldRedirect = await confirmFunction().catch(() => false);
+          if (shouldRedirect && to) {
+            forceRedirection = true;
+            await goto(to?.url ?? '', { ...to?.params });
+            // Reset forceRedirection for multiple-tainted purpose
+            forceRedirection = false;
+            return;
+          }
         }
       }
     });

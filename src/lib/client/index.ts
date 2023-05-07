@@ -781,8 +781,13 @@ export function superForm<
 
   if (browser) {
     let forceRedirection = false;
-    beforeNavigate(async ({ cancel, to, willUnload }) => {
-      if (options.taintedMessage && !get(Submitting) && !forceRedirection && !willUnload) {
+    beforeNavigate(async ({ cancel, to, type }) => {
+      if (type === 'leave') {
+        // Does not display any dialog on page refresh and let the default browser behaviour
+        cancel();
+        return;
+      }
+      if (options.taintedMessage && !get(Submitting) && !forceRedirection) {
         const taintStatus = Tainted_data();
         const { taintedMessage } = options;
         let confirmFunction = (typeof taintedMessage === 'function')

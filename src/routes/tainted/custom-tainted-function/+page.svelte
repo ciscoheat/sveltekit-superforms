@@ -4,7 +4,7 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { PageData } from './$types';
   import { page } from '$app/stores';
-  import { afterNavigate } from '$app/navigation';
+  import { afterNavigate, goto } from '$app/navigation';
 
   export let data: PageData;
 
@@ -17,12 +17,12 @@
       return new Promise((resolve, reject) => {
         dialog.addEventListener('close', () => {
           // to discard redirection you can or reject the promise or resolve(false)
-          if(dialog.returnValue) {
+          if(dialog.returnValue === 'ok') {
             resolve(true);
           } else {
             reject();  // Could also be resolve(false)
           }
-        }, true)
+        }, {once: true});
       })
     }
   });
@@ -61,12 +61,14 @@
   <p>Do you want to leave this page? Changes you made may not be saved.</p>
   <div class="action-button">
     <button on:click={() => dialog.close('ok')}>Leave</button>
-    <button on:click={() => dialog.close()}>Stay</button>
+    <button on:click={() => dialog.close('ko')}>Stay</button>
   </div>
 </dialog>
 
 <a href="?">Use tick</a> |
-<a href="?timeout">Use timeout</a>
+<a href="?timeout">Use timeout</a> |
+<a href="https://github.com/ciscoheat/sveltekit-superforms" rel="noreferrer">External link</a> |
+<a href="/" on:click|preventDefault={() => goto('/')}>Programmatic link</a>
 
 <h3>Triple Set via onMount</h3>
 

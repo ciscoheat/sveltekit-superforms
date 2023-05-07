@@ -782,20 +782,19 @@ export function superForm<
   if (browser) {
     let forceRedirection = false;
     beforeNavigate(async ({ cancel, to, type }) => {
-      if (type === 'leave') {
-        // Does not display any dialog on page refresh and let the default browser behaviour
-        cancel();
-        return;
-      }
       if (options.taintedMessage && !get(Submitting) && !forceRedirection) {
         const taintStatus = Tainted_data();
         const { taintedMessage } = options;
-        let confirmFunction = (typeof taintedMessage === 'function')
-          ? taintedMessage
-          : () => Promise.resolve(window.confirm(taintedMessage));
         if (taintStatus && Tainted_isTainted(taintStatus)) {
           // As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
           cancel();
+          if (type === 'leave') {
+            // Does not display any dialog on page refresh or closing tab and let the default browser behaviour
+            return;
+          }
+          let confirmFunction = (typeof taintedMessage === 'function')
+            ? taintedMessage
+            : () => Promise.resolve(window.confirm(taintedMessage));
           // confirmFunction : 
           // - rejected => shouldRedirect = false
           // - resolved with false => shouldRedirect = false

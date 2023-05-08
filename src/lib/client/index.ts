@@ -1300,7 +1300,7 @@ function formEnhance<T extends AnyZodObject, M>(
   message: Writable<M | undefined>,
   enableTaintedForm: () => void,
   formEvents: SuperFormEventList<T, M>,
-  id: Readable<string | undefined>,
+  formId: Readable<string | undefined>,
   constraints: Readable<Entity<T>['constraints']>,
   tainted: Writable<TaintedFields<T> | undefined>,
   lastChanges: Writable<string[][]>,
@@ -1661,7 +1661,7 @@ function formEnhance<T extends AnyZodObject, M>(
             empty: false,
             constraints: get(constraints),
             message: undefined,
-            id: get(id)
+            id: get(formId)
           };
 
           const result = {
@@ -1714,7 +1714,7 @@ function formEnhance<T extends AnyZodObject, M>(
             empty: false,
             constraints: get(constraints),
             message: undefined,
-            id: get(id)
+            id: get(formId)
           };
 
           const result = {
@@ -1747,9 +1747,8 @@ function formEnhance<T extends AnyZodObject, M>(
 
         if (!options.SPA && !submit.data.has('__superform_id')) {
           // Add formId
-          const formId = get(id);
-          if (formId !== undefined)
-            submit.data.set('__superform_id', formId);
+          const id = get(formId);
+          if (id !== undefined) submit.data.set('__superform_id', id);
         }
       }
     }
@@ -1817,8 +1816,6 @@ function formEnhance<T extends AnyZodObject, M>(
 
           // Check if the error message should be replaced
           if (options.onError !== 'apply') {
-            // TODO: Omit 'apply' and undefined from the type
-            // They are already filtered out, but type shouldn't be any.
             const data = { result, message };
 
             for (const event of formEvents.onError) {

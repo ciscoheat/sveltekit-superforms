@@ -5,25 +5,8 @@
 
   export let data: PageData;
 
-  const {
-    form,
-    errors,
-    enhance,
-    delayed,
-    message,
-    reset,
-    empty,
-    constraints
-  } = superForm(data.form, {
-    onUpdated({ form }) {
-      // Need to do this because messages can't be preserved on redirect.
-      // sveltekit-flash-message fixes this issue:
-      // https://github.com/ciscoheat/sveltekit-flash-message
-      if (form.valid && data.form.empty) {
-        reset({ keepMessage: true });
-      }
-    }
-  });
+  const { form, errors, enhance, delayed, message, empty, constraints } =
+    superForm(data.form);
 </script>
 
 <a href="/">&lt; Back to start</a>

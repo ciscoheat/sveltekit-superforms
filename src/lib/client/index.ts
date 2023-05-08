@@ -372,10 +372,7 @@ export function superForm<
 
   const Context = {
     taintedMessage: options.taintedMessage,
-    taintedFormState: clone(initialForm.data),
-    lastResult: undefined as
-      | ActionResult<Record<string, unknown>, Record<string, unknown>>
-      | undefined
+    taintedFormState: clone(initialForm.data)
   };
 
   function Context_randomId(length = 8) {
@@ -384,37 +381,8 @@ export function superForm<
       .substring(2, length + 2);
   }
 
-  async function Context_hasRedirected() {
-    const result = Context.lastResult;
-    if (result === undefined) return;
-
-    Context_setLastResult(undefined);
-
-    if (result.type === 'error' || result.type === 'redirect') {
-      Tainted_clear();
-    } else {
-      return false;
-    }
-
-    // All we need to do if redirected is to reset the form.
-    // No events should be triggered because technically we're somewhere else.
-    if (
-      result.type === 'redirect' &&
-      options.resetForm &&
-      (options.resetForm === true || (await options.resetForm()))
-    ) {
-      Form_reset();
-    }
-
-    return true;
-  }
-
   function Context_setTaintedFormState(data: typeof initialForm.data) {
     Context.taintedFormState = clone(data);
-  }
-
-  function Context_setLastResult(result: typeof Context.lastResult) {
-    Context.lastResult = result;
   }
 
   function Context_newEmptyForm(
@@ -595,9 +563,15 @@ export function superForm<
       );
     }
 
-    Context_setLastResult(result);
     if (result.type == 'redirect') {
-      await Context_hasRedirected();
+      // All we need to do if redirected is to reset the form.
+      // No events should be triggered because technically we're somewhere else.
+      if (
+        options.resetForm &&
+        (options.resetForm === true || (await options.resetForm()))
+      ) {
+        Form_reset();
+      }
       return;
     }
 
@@ -870,12 +844,9 @@ export function superForm<
             pageUpdate.data &&
             typeof pageUpdate.data === 'object'
           ) {
-            if (await Context_hasRedirected()) return;
-
-            const forms = Context_findValidationForms(pageUpdate.data);
-
             // It's a page reload, redirect or error/failure,
             // so don't trigger any events, just update the data.
+            const forms = Context_findValidationForms(pageUpdate.data);
             for (const newForm of forms) {
               //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
               if (newForm.id !== _formId) continue;
@@ -985,8 +956,7 @@ export function superForm<
         FormId,
         Constraints,
         Tainted,
-        LastChanges,
-        Context_setLastResult
+        LastChanges
       );
     },
 
@@ -1303,10 +1273,7 @@ function formEnhance<T extends AnyZodObject, M>(
   formId: Readable<string | undefined>,
   constraints: Readable<Entity<T>['constraints']>,
   tainted: Writable<TaintedFields<T> | undefined>,
-  lastChanges: Writable<string[][]>,
-  Context_setLastResult: (
-    result: ActionResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void
+  lastChanges: Writable<string[][]>
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -1783,8 +1750,6 @@ function formEnhance<T extends AnyZodObject, M>(
 
       if (!cancelled) {
         if (result.type !== 'error') {
-          Context_setLastResult(result);
-
           if (result.type === 'success' && options.invalidateAll) {
             await invalidateAll();
           }
@@ -1801,7 +1766,6 @@ function formEnhance<T extends AnyZodObject, M>(
           // Error result
           if (options.applyAction) {
             if (options.onError == 'apply') {
-              Context_setLastResult(result);
               await applyAction(result);
             } else {
               // Transform to failure, to avoid data loss
@@ -1809,7 +1773,6 @@ function formEnhance<T extends AnyZodObject, M>(
                 type: 'failure',
                 status: Math.floor(result.status || 500)
               } as const;
-              Context_setLastResult(failResult);
               await applyAction(failResult);
             }
           }

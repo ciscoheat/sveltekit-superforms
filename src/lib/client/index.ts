@@ -164,6 +164,9 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
     cookiePath?: string;
     cookieName?: string;
   };
+  warnings: {
+    duplicateId?: boolean;
+  };
 }>;
 
 const defaultFormOptions = {
@@ -430,14 +433,13 @@ export function superForm<
     const forms = Object.values(data).filter(
       (v) => Context_isValidationObject(v) !== false
     ) as Validation<AnyZodObject>[];
-    if (forms.length > 1) {
+    if (forms.length > 1 && options.warnings?.duplicateId !== false) {
       const duplicateId = new Set<string | undefined>();
       for (const form of forms) {
         if (duplicateId.has(form.id)) {
           console.warn(
-            "Duplicate id's found in forms: " +
-              form.id +
-              '. Set the warnings.duplicateId option to false to disable this message.'
+            `Duplicate form id found: "${form.id}"` +
+              '. Multiple forms will receive the same data. Use the id option to differentiate between them, or if this is intended, set warnings.duplicateId option to false to disable this message.'
           );
           break;
         } else {

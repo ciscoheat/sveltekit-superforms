@@ -12,7 +12,9 @@ const registerSchema = z.object({
 
 export const load = async () => {
   const loginForm = await superValidate(loginSchema);
-  const registerForm = await superValidate(registerSchema);
+  const registerForm = await superValidate(registerSchema, {
+    id: 'register-form'
+  });
 
   return { loginForm, registerForm };
 };

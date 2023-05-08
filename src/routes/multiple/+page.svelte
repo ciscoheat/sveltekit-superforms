@@ -38,6 +38,7 @@
 
 <div class="forms">
   <form method="POST">
+    <input type="hidden" name="__superform_id" value={$formId} />
     <input type="hidden" name="id" bind:value={$form.id} />
 
     <label>
@@ -63,7 +64,7 @@
     </div>
   </form>
   <form method="POST">
-    <input type="hidden" name="__superform_id" value="second" />
+    <input type="hidden" name="__superform_id" value={$secondFormId} />
     <input type="hidden" name="id" bind:value={$form.id} />
 
     <label>

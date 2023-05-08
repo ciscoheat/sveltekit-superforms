@@ -30,21 +30,28 @@ export const actions = {
 
     console.log('POST', data);
 
-    const first = await superValidate<typeof userSchema, Message>(
+    const posted = await superValidate<typeof userSchema, Message>(
       data,
       userSchema
     );
-    first.id = undefined;
 
-    console.log('FORM ', first);
-    if (!first.valid) return fail(400, { form: first });
+    console.log('FORM ', posted);
+    if (!posted.valid) return fail(400, { form: posted });
 
-    first.message = { message: 'Post OK' };
+    posted.message = { message: 'Post OK' };
 
-    const second = structuredClone(first);
-    second.id = 'second';
-    second.data.name = '2:nd ' + second.data.name;
+    const other = structuredClone(posted);
 
-    return { first, second };
+    // A bit complicated, but the test needs to check what
+    // happens when multiple id's are posted.
+    if (posted.id == 'second') {
+      posted.data.name = '2:nd ' + posted.data.name;
+      other.id = (await superValidate(null, userSchema)).id;
+    } else {
+      other.data.name = '2:nd ' + other.data.name;
+      other.id = 'second';
+    }
+
+    return { posted, other };
   }
 } satisfies Actions;

@@ -132,7 +132,7 @@ export function _entityHash<T extends ZodTypeAny>(type: T) {
   switch (unwrapped.zodType._def.typeName) {
     case 'ZodObject': {
       for (const [field, zodType] of Object.entries(
-        (type as unknown as AnyZodObject).shape
+        (unwrapped.zodType as AnyZodObject).shape
       )) {
         hash +=
           'ZodObject:' + field + ':' + _entityHash(zodType as ZodTypeAny);

@@ -496,11 +496,15 @@ export function superValidateSync<
     formData = parseSearchParams(data);
   }
 
+  // Determine id for form
+  // 1. options.id
+  // 2. formData.__superform_id
+  // 3. schema hash
   if (formData) {
     data = formData.data;
-    formId = options.id ?? formData.id;
+    formId = options.id ?? formData.id ?? entityInfo.hash;
   } else {
-    formId = options.id;
+    formId = options.id ?? entityInfo.hash;
   }
 
   let output: Validation<UnwrapEffects<T>, M>;

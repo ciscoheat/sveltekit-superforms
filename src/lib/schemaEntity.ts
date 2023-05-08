@@ -46,6 +46,7 @@ export type Entity<T extends AnyZodObject> = {
   defaultEntity: z.infer<T>;
   constraints: InputConstraints<T>;
   keys: string[];
+  hash: string;
 };
 
 export function hasEffects(zodType: ZodTypeAny): boolean {
@@ -106,6 +107,50 @@ export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
   };
 }
 
+// https://stackoverflow.com/a/8831937/70894
+function hashCode(str: string) {
+  let hash = 0;
+  for (let i = 0, len = str.length; i < len; i++) {
+    const chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  // Make it unsigned, for the hash appearance
+  if (hash < 0) hash = hash >>> 0;
+  return hash.toString(36);
+}
+
+export function entityHash<T extends AnyZodObject>(schema: T) {
+  //console.log(_entityHash(schema));
+  return hashCode(_entityHash(schema));
+}
+
+export function _entityHash<T extends ZodTypeAny>(type: T) {
+  let hash = '';
+  const unwrapped = unwrapZodType(type);
+
+  switch (unwrapped.zodType._def.typeName) {
+    case 'ZodObject': {
+      for (const [field, zodType] of Object.entries(
+        (type as unknown as AnyZodObject).shape
+      )) {
+        hash +=
+          'ZodObject:' + field + ':' + _entityHash(zodType as ZodTypeAny);
+      }
+      break;
+    }
+    case 'ZodArray': {
+      const inner = unwrapped.zodType as ZodArray<ZodTypeAny>;
+      hash += 'ZodArray:' + _entityHash(inner.element);
+      break;
+    }
+    default:
+      hash += unwrapped.zodType._def.typeName;
+  }
+
+  return hash;
+}
+
 export function entityData<T extends AnyZodObject>(
   schema: T,
   warnings?: SuperValidateOptions['warnings']
@@ -119,7 +164,8 @@ export function entityData<T extends AnyZodObject>(
     typeInfo: typeInfos,
     defaultEntity: defaultEnt,
     constraints: constraints(schema, warnings),
-    keys: Object.keys(schema.keyof().Values)
+    keys: Object.keys(schema.keyof().Values),
+    hash: entityHash(schema)
   };
 
   setCached(schema, entity);

@@ -324,11 +324,15 @@ export function superForm<
     }
   }
 
+  let _formId: string | undefined = options.id;
+
   // Normalize form argument to Validation<T, M>
   if (!form) {
     form = Context_newEmptyForm(); // Takes care of null | undefined | string
   } else if (Context_isValidationObject(form) === false) {
     form = Context_newEmptyForm(form); // Takes care of Partial<z.infer<T>>
+  } else {
+    if (_formId === undefined) _formId = form.id;
   }
 
   // Detect if a form is posted without JavaScript.
@@ -337,7 +341,7 @@ export function superForm<
     for (const superForm of Context_findValidationForms(
       postedForm
     ).reverse()) {
-      if (superForm.id === options.id) {
+      if (superForm.id === _formId) {
         form = superForm as Validation<T2, M>;
         break;
       }
@@ -345,8 +349,6 @@ export function superForm<
   }
 
   const form2 = form as Validation<T2, M>;
-
-  let _formId: string | undefined = options.id ?? form2.id;
 
   // Need to clone the validation data, in case it's used to populate multiple forms.
   const initialForm = clone(form2);
@@ -425,9 +427,25 @@ export function superForm<
   }
 
   function Context_findValidationForms(data: Record<string, unknown>) {
-    return Object.values(data).filter(
+    const forms = Object.values(data).filter(
       (v) => Context_isValidationObject(v) !== false
     ) as Validation<AnyZodObject>[];
+    if (forms.length > 1) {
+      const duplicateId = new Set<string | undefined>();
+      for (const form of forms) {
+        if (duplicateId.has(form.id)) {
+          console.warn(
+            "Duplicate id's found in forms: " +
+              form.id +
+              '. Set the warnings.duplicateId option to false to disable this message.'
+          );
+          break;
+        } else {
+          duplicateId.add(form.id);
+        }
+      }
+    }
+    return forms;
   }
 
   /**

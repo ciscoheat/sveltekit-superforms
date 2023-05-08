@@ -267,8 +267,8 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   timeout: Readable<boolean>;
 
   fields: FormFields<UnwrapEffects<T>>;
-  firstError: Readable<{ path: string[]; message: string } | null>;
-  allErrors: Readable<{ path: string[]; message: string }[]>;
+  firstError: Readable<{ path: string[]; messages: string[] } | null>;
+  allErrors: Readable<{ path: string[]; messages: string[] }[]>;
 
   options: FormOptions<T, M>;
 

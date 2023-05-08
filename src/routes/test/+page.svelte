@@ -142,7 +142,7 @@
 <form method="POST" action="/test/login" use:modalEnhance>
   <div data-errors>
     {#if $modalMessage}{$modalMessage}{/if}
-    {#each $modalAllErrors as error}• {error.message}<br />{/each}
+    {#each $modalAllErrors as error}• {error.messages}<br />{/each}
   </div>
   <div>Email</div>
   <input
@@ -190,14 +190,16 @@
 
 {#if $firstError}
   <p data-first-error>
-    First error: {$firstError.path} - {$firstError.message}
+    First error: {$firstError.path} - {$firstError.messages}
   </p>
 {/if}
 
 {#if $allErrors.length}
   <ul data-all-errors>
     {#each $allErrors as error}
-      <li>{error.path}: {error.message}</li>
+      {#each error.messages as message}
+        <li>{error.path}: {message}</li>
+      {/each}
     {/each}
   </ul>
 {/if}

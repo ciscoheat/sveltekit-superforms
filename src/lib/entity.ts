@@ -47,14 +47,14 @@ export function mapErrors<T extends AnyZodObject>(
 export function findErrors(
   errors: ValidationErrors<AnyZodObject>,
   path: string[] = []
-): { path: string[]; message: string }[] {
+): { path: string[]; messages: string[] }[] {
   const entries = Object.entries(errors);
   return entries
     .filter(([, value]) => value !== undefined)
-    .flatMap(([key, value]) => {
-      if (Array.isArray(value) && value.length > 0) {
+    .flatMap(([key, messages]) => {
+      if (Array.isArray(messages) && messages.length > 0) {
         const currPath = path.concat([key]);
-        return value.map((message) => ({ path: currPath, message }));
+        return { path: currPath, messages };
       } else {
         return findErrors(
           errors[key] as ValidationErrors<AnyZodObject>,

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The signature for `allErrors` and `firstError` has changed to `{ path: string[]; messages: string[] }`.
 - The literal `"any"` is now an allowed value in `step` for constraints.
 - Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.
 

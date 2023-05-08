@@ -52,7 +52,7 @@
   {#if $allErrors && $allErrors.length}
     <ul class="invalid">
       {#each $allErrors as error}<li>
-          {String(error.path)}: {error.message}
+          {String(error.path)}: {error.messages}
         </li>{/each}
     </ul>
   {/if}
@@ -64,9 +64,6 @@
   label {
     display: block;
     margin-left: 5px;
-  }
-  input {
-    margin: 5px;
   }
   .invalid {
     color: red;

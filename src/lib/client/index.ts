@@ -70,7 +70,8 @@ export {
   booleanProxy,
   dateProxy,
   fieldProxy,
-  formFieldProxy
+  formFieldProxy,
+  stringProxy
 } from './proxies.js';
 
 export {

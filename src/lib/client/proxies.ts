@@ -24,6 +24,7 @@ type DefaultOptions = {
     | 'datetime-local'
     | 'time-local'
     | 'iso';
+  empty?: 'null' | 'undefined';
 };
 
 const defaultOptions: DefaultOptions = {
@@ -38,13 +39,15 @@ type NormalizeFormPath<T, Path> = Path extends keyof T
 export function intProxy<
   T extends Record<string, unknown>,
   Path extends keyof T | FieldPath<T>
->(form: Writable<T>, path: Path) {
-  return stringProxy(form, path, 'int', defaultOptions) as NormalizeFormPath<
-    T,
-    Path
-  > extends number
-    ? Writable<string>
-    : never;
+>(
+  form: Writable<T>,
+  path: Path,
+  options: Pick<DefaultOptions, 'empty'> = {}
+) {
+  return _stringProxy(form, path, 'int', {
+    ...defaultOptions,
+    ...options
+  }) as NormalizeFormPath<T, Path> extends number ? Writable<string> : never;
 }
 
 export function booleanProxy<
@@ -57,7 +60,7 @@ export function booleanProxy<
     trueStringValue: 'true'
   }
 ): Writable<string> {
-  return stringProxy(form, path, 'boolean', {
+  return _stringProxy(form, path, 'boolean', {
     ...defaultOptions,
     ...options
   }) as NormalizeFormPath<T, Path> extends boolean
@@ -68,13 +71,15 @@ export function booleanProxy<
 export function numberProxy<
   T extends Record<string, unknown>,
   Path extends keyof T | FieldPath<T>
->(form: Writable<T>, path: Path): Writable<string> {
-  return stringProxy(
-    form,
-    path,
-    'number',
-    defaultOptions
-  ) as NormalizeFormPath<T, Path> extends number ? Writable<string> : never;
+>(
+  form: Writable<T>,
+  path: Path,
+  options: Pick<DefaultOptions, 'empty'> = {}
+): Writable<string> {
+  return _stringProxy(form, path, 'number', {
+    ...defaultOptions,
+    ...options
+  }) as NormalizeFormPath<T, Path> extends number ? Writable<string> : never;
 }
 
 export function dateProxy<
@@ -85,14 +90,32 @@ export function dateProxy<
   path: Path,
   options: {
     format: DefaultOptions['dateFormat'];
+    empty?: DefaultOptions['empty'];
   } = {
     format: 'iso'
   }
 ): Writable<string> {
-  return stringProxy(form, path, 'date', {
+  return _stringProxy(form, path, 'date', {
     ...defaultOptions,
-    dateFormat: options.format
+    dateFormat: options.format,
+    empty: options.empty
   }) as NormalizeFormPath<T, Path> extends Date ? Writable<string> : never;
+}
+
+export function stringProxy<
+  T extends Record<string, unknown>,
+  Path extends keyof T | FieldPath<T>
+>(
+  form: Writable<T>,
+  path: Path,
+  options: {
+    empty: NonNullable<DefaultOptions['empty']>;
+  }
+): Writable<string> {
+  return _stringProxy(form, path, 'string', {
+    ...defaultOptions,
+    empty: options.empty
+  }) as NormalizeFormPath<T, Path> extends string ? Writable<string> : never;
 }
 
 /**
@@ -101,9 +124,9 @@ export function dateProxy<
  * @param field Form field
  * @param type 'number' | 'int' | 'boolean'
  */
-function stringProxy<
+function _stringProxy<
   T extends Record<string, unknown>,
-  Type extends 'number' | 'int' | 'boolean' | 'date',
+  Type extends 'number' | 'int' | 'boolean' | 'date' | 'string',
   P extends FieldPath<T>,
   Path extends keyof T | P
 >(
@@ -113,16 +136,26 @@ function stringProxy<
   options: DefaultOptions
 ): Writable<string> {
   function toValue(val: unknown) {
+    console.log(val);
+
     if (typeof val !== 'string')
       throw new SuperFormError('stringProxy received a non-string value.');
 
-    if (type == 'number') return parseFloat(val);
-    if (type == 'int') return parseInt(val, 10);
-    if (type == 'boolean') return !!val;
-    else {
-      // date
-      return new Date(val);
-    }
+    if (!val && options.empty !== undefined)
+      return options.empty === 'null' ? null : undefined;
+
+    if (type == 'string') return val;
+    else if (type == 'boolean') return !!val;
+    else if (type == 'date') return new Date(val);
+
+    let num: number;
+    if (type == 'number') num = parseFloat(val);
+    else num = parseInt(val, 10);
+
+    if (options.empty !== undefined && (isNaN(num) || num == 0))
+      return options.empty == 'null' ? null : undefined;
+
+    return num;
   }
 
   const proxy2 = fieldProxy(form, path);
@@ -130,7 +163,9 @@ function stringProxy<
   const proxy = derived(proxy2, (value) => {
     if (value === undefined || value === null) return '';
 
-    if (type == 'int' || type == 'number') {
+    if (type == 'string') {
+      return value as string;
+    } else if (type == 'int' || type == 'number') {
       const num = value as number;
       return isNaN(num) ? '' : String(num);
     } else if (type == 'date') {

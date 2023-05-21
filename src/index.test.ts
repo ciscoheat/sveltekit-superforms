@@ -1,4 +1,9 @@
-import { setError, superValidate, defaultData } from '$lib/server';
+import {
+  setError,
+  superValidate,
+  defaultData,
+  setMessage
+} from '$lib/server';
 import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
@@ -160,12 +165,14 @@ test('FormData array data', async () => {
 });
 
 test('Nullable values', async () => {
-  const refinedSchema = z.object({
-    scopeId: z.number().int().min(1),
-    name: z.string().nullable()
-  }).refine(data => data);
+  const refinedSchema = z
+    .object({
+      scopeId: z.number().int().min(1),
+      name: z.string().nullable()
+    })
+    .refine((data) => data);
 
-  const schema = refinedSchema._def.schema
+  const schema = refinedSchema._def.schema;
 
   const output = defaultData(schema);
   expect(output.scopeId).equals(0);
@@ -840,5 +847,29 @@ test('ZodObject defaults', async () => {
       promptMetaData: {},
       numbers: { required: true }
     }
+  });
+});
+
+test('setMessage and setError with refined schema', async () => {
+  const schema = z
+    .object({
+      name: z.string(),
+      id: z.number()
+    })
+    .refine((data) => data)
+    .refine((data) => data);
+
+  const form = await superValidate({ name: '', id: 0 }, schema);
+  assert(form.valid);
+  expect(form.message).toBeUndefined();
+
+  setMessage(form, 'A message');
+  expect(form.message).toEqual('A message');
+
+  expect(form.errors).toEqual({});
+  setError(form, 'id', 'Id error');
+
+  expect(form.errors).toEqual({
+    id: ['Id error']
   });
 });

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `onUpdate` didn't cancel `applyAction` and `invalidateAll`.
+- Hopefully fixed excessively deep infinity type instantiation on `message` helper.
 
 ### Added
 

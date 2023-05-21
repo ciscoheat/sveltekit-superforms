@@ -39,7 +39,7 @@ import { clone } from './utils.js';
 
 export { defaultData } from './schemaEntity.js';
 
-export function message<T extends UnwrapEffects<AnyZodObject>, M>(
+export function message<T extends AnyZodObject, M>(
   form: Validation<T, M>,
   message: M,
   options?: {
@@ -58,8 +58,7 @@ export function message<T extends UnwrapEffects<AnyZodObject>, M>(
 
 export const setMessage = message;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function setError<T extends UnwrapEffects<AnyZodObject>>(
+export function setError<T extends AnyZodObject>(
   form: Validation<T, unknown>,
   path: keyof z.infer<T> | FieldPath<z.infer<T>> | [] | null,
   error: string | string[],
@@ -299,7 +298,9 @@ export async function superValidate<
     function tryParseSuperJson(data: FormData) {
       if (data.has('__superform_json')) {
         try {
-          const output = parse(data.getAll('__superform_json').join('') ?? '');
+          const output = parse(
+            data.getAll('__superform_json').join('') ?? ''
+          );
           if (typeof output === 'object') {
             return output as Record<string, unknown>;
           }

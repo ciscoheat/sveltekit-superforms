@@ -111,6 +111,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   }) => MaybePromise<unknown | void>;
   onUpdate: (event: {
     form: Validation<UnwrapEffects<T>, M>;
+    formEl: HTMLFormElement;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated: (event: {
@@ -492,21 +493,6 @@ export function superForm<
     form: Validation<T2, M>,
     untaint: boolean
   ) {
-    let cancelled = false;
-    const data = {
-      form,
-      cancel: () => (cancelled = true)
-    };
-
-    for (const event of formEvents.onUpdate) {
-      await event(data);
-    }
-
-    if (cancelled) {
-      if (options.flashMessage) cancelFlash(options);
-      return;
-    }
-
     if (
       form.valid &&
       options.resetForm &&
@@ -792,49 +778,45 @@ export function superForm<
     });
 
     // Need to subscribe to catch page invalidation.
-    if (options.applyAction) {
-      Unsubscriptions_add(
-        page.subscribe(async (pageUpdate) => {
-          function error(type: string) {
-            throw new SuperFormError(
-              `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
+    Unsubscriptions_add(
+      page.subscribe(async (pageUpdate) => {
+        if (!options.applyAction) return;
+
+        function error(type: string) {
+          throw new SuperFormError(
+            `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
+          );
+        }
+
+        const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
+
+        if (pageUpdate.form && typeof pageUpdate.form === 'object') {
+          const forms = Context_findValidationForms(pageUpdate.form);
+          if (!forms.length) error('$page.form (ActionData)');
+
+          for (const newForm of forms) {
+            //console.log('🚀~ ActionData ~ newForm:', newForm.id);
+            if (/*newForm === form ||*/ newForm.id !== _formId) continue;
+
+            await Form_updateFromValidation(
+              newForm as Validation<T2, M>,
+              untaint
             );
           }
+        } else if (pageUpdate.data && typeof pageUpdate.data === 'object') {
+          const forms = Context_findValidationForms(pageUpdate.data);
 
-          const untaint =
-            pageUpdate.status >= 200 && pageUpdate.status < 300;
+          // It's a page reload, redirect or error/failure,
+          // so don't trigger any events, just update the data.
+          for (const newForm of forms) {
+            //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
+            if (/*newForm === form ||*/ newForm.id !== _formId) continue;
 
-          if (pageUpdate.form && typeof pageUpdate.form === 'object') {
-            const forms = Context_findValidationForms(pageUpdate.form);
-            if (!forms.length) error('$page.form (ActionData)');
-
-            for (const newForm of forms) {
-              //console.log('🚀~ ActionData ~ newForm:', newForm.id);
-              if (/*newForm === form ||*/ newForm.id !== _formId) continue;
-
-              await Form_updateFromValidation(
-                newForm as Validation<T2, M>,
-                untaint
-              );
-            }
-          } else if (
-            pageUpdate.data &&
-            typeof pageUpdate.data === 'object'
-          ) {
-            const forms = Context_findValidationForms(pageUpdate.data);
-
-            // It's a page reload, redirect or error/failure,
-            // so don't trigger any events, just update the data.
-            for (const newForm of forms) {
-              //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
-              if (/*newForm === form ||*/ newForm.id !== _formId) continue;
-
-              rebind(newForm as Validation<T2, M>, untaint);
-            }
+            rebind(newForm as Validation<T2, M>, untaint);
           }
-        })
-      );
-    }
+        }
+      })
+    );
   }
 
   const Fields = Object.fromEntries(
@@ -938,7 +920,8 @@ export function superForm<
         Meta,
         Constraints,
         Tainted,
-        LastChanges
+        LastChanges,
+        Context_findValidationForms
       );
     },
 
@@ -1256,7 +1239,10 @@ function formEnhance<T extends AnyZodObject, M>(
   meta: Readable<Entity<T>['meta'] | undefined>,
   constraints: Readable<Entity<T>['constraints']>,
   tainted: Writable<TaintedFields<T> | undefined>,
-  lastChanges: Writable<string[][]>
+  lastChanges: Writable<string[][]>,
+  Context_findValidationForms: (
+    data: Record<string, unknown>
+  ) => Validation<AnyZodObject>[]
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -1728,60 +1714,89 @@ function formEnhance<T extends AnyZodObject, M>(
       }
 
       if (!cancelled) {
-        if (result.type !== 'error') {
-          if (result.type === 'success' && options.invalidateAll) {
-            await invalidateAll();
+        if (
+          (result.type === 'success' || result.type == 'failure') &&
+          result.data
+        ) {
+          const forms = Context_findValidationForms(result.data);
+          if (!forms.length) {
+            throw new SuperFormError(
+              'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
+            );
           }
 
-          if (options.applyAction) {
-            // This will trigger the page subscription in superForm,
-            // which will in turn call Data_update.
-            await applyAction(result);
-          } else {
-            // Call Data_update directly to trigger events
-            await Data_update(result);
+          for (const newForm of forms) {
+            if (newForm.id !== get(id)) continue;
+
+            const data = {
+              form: newForm as Validation<T>,
+              formEl,
+              cancel: () => (cancelled = true)
+            };
+
+            for (const event of formEvents.onUpdate) {
+              await event(data);
+            }
           }
-        } else {
-          // Error result
-          if (options.applyAction) {
-            if (options.onError == 'apply') {
+        }
+
+        if (!cancelled) {
+          if (result.type !== 'error') {
+            if (result.type === 'success' && options.invalidateAll) {
+              await invalidateAll();
+            }
+
+            if (options.applyAction) {
+              // This will trigger the page subscription in superForm,
+              // which will in turn call Data_update.
               await applyAction(result);
             } else {
-              // Transform to failure, to avoid data loss
-              await applyAction({
-                type: 'failure',
-                status: Math.floor(result.status || 500)
+              // Call Data_update directly to trigger events
+              await Data_update(result);
+            }
+          } else {
+            // Error result
+            if (options.applyAction) {
+              if (options.onError == 'apply') {
+                await applyAction(result);
+              } else {
+                // Transform to failure, to avoid data loss
+                await applyAction({
+                  type: 'failure',
+                  status: Math.floor(result.status || 500)
+                });
+              }
+            }
+
+            // Check if the error message should be replaced
+            if (options.onError !== 'apply') {
+              // TODO: Omit 'apply' and undefined from the type
+              // They are already filtered out, but type shouldn't be any.
+              const data = { result, message };
+
+              for (const event of formEvents.onError) {
+                if (event !== 'apply') await event(data);
+              }
+            }
+          }
+
+          // Set flash message, which should be set in all cases, even
+          // if we have redirected (which is the point of the flash message!)
+          if (options.flashMessage) {
+            if (result.type == 'error' && options.flashMessage.onError) {
+              await options.flashMessage.onError({
+                result,
+                message: options.flashMessage.module.getFlash(page)
               });
-            }
-          }
-
-          // Check if the error message should be replaced
-          if (options.onError !== 'apply') {
-            // TODO: Omit 'apply' and undefined from the type
-            // They are already filtered out, but type shouldn't be any.
-            const data = { result, message };
-
-            for (const event of formEvents.onError) {
-              if (event !== 'apply') await event(data);
+            } else if (result.type != 'error') {
+              await options.flashMessage.module.updateFlash(page);
             }
           }
         }
+      }
 
-        // Set flash message, which should be set in all cases, even
-        // if we have redirected (which is the point of the flash message!)
-        if (options.flashMessage) {
-          if (result.type == 'error' && options.flashMessage.onError) {
-            await options.flashMessage.onError({
-              result,
-              message: options.flashMessage.module.getFlash(page)
-            });
-          } else if (result.type != 'error') {
-            await options.flashMessage.module.updateFlash(page);
-          }
-        }
-      } else {
-        // Cancelled
-        if (options.flashMessage) cancelFlash(options);
+      if (cancelled && options.flashMessage) {
+        cancelFlash(options);
       }
 
       htmlForm.completed(cancelled);

@@ -251,7 +251,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   };
   formId: Writable<string | undefined>;
   errors: Writable<Validation<T, M>['errors']> & {
-    clear: (undefinePath?: string[]) => void;
+    clear: () => void;
   };
   constraints: Writable<Validation<T, M>['constraints']>;
   message: Writable<Validation<T, M>['message']>;
@@ -578,17 +578,11 @@ export function superForm<
      * To work with client-side validation, errors cannot be deleted but must
      * be set to undefined, to know where they existed before (tainted+error check in oninput)
      */
-    clear: (undefinePath?: string[]) => {
-      _errors.update(($errors) => {
-        traversePaths($errors, (pathData) => {
-          if (Array.isArray(pathData.value)) {
-            return pathData.set(undefined);
-          }
-        });
-        if (undefinePath) setPaths($errors, [undefinePath], undefined);
-        return $errors;
-      });
-    }
+    clear: () =>
+      clearErrors(_errors, {
+        undefinePath: null,
+        clearFormLevelErrors: true
+      })
   };
 
   const Tainted = writable<TaintedFields<T2> | undefined>();
@@ -948,6 +942,34 @@ function shouldSyncFlash<T extends AnyZodObject, M>(
   return options.syncFlashMessage;
 }
 
+function clearErrors<T extends AnyZodObject>(
+  Errors: Writable<ValidationErrors<T>>,
+  options: {
+    undefinePath: string[] | null;
+    clearFormLevelErrors: boolean;
+  }
+) {
+  Errors.update(($errors) => {
+    traversePaths($errors, (pathData) => {
+      if (
+        pathData.path.length == 1 &&
+        pathData.path[0] == '_errors' &&
+        !options.clearFormLevelErrors
+      ) {
+        return;
+      }
+      if (Array.isArray(pathData.value)) {
+        return pathData.set(undefined);
+      }
+    });
+
+    if (options.undefinePath)
+      setPaths($errors, [options.undefinePath], undefined);
+
+    return $errors;
+  });
+}
+
 const effectMapCache = new WeakMap<object, boolean>();
 
 // @DCI-context
@@ -1022,8 +1044,10 @@ async function validateField<T extends AnyZodObject, M>(
     return get(Errors);
   }
 
-  function Errors_clear(undefinePath: string[]) {
-    Errors.clear(undefinePath);
+  function Errors_clear(
+    options: NonNullable<Parameters<typeof clearErrors>[1]>
+  ) {
+    return clearErrors(Errors, options);
   }
 
   function Errors_set(newErrors: ValidationErrors<UnwrapEffects<T>>) {
@@ -1195,7 +1219,7 @@ async function validateField<T extends AnyZodObject, M>(
       // We validated the whole data structure, so clear all errors on success
       // but also set the current path to undefined, so it will be used in the tainted+error
       // check in oninput.
-      Errors_clear(path);
+      Errors_clear({ undefinePath: path, clearFormLevelErrors: false });
       return undefined;
     }
   } else {

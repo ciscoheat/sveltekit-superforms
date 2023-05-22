@@ -313,11 +313,14 @@ export function superForm<
     | string,
   options: FormOptions<UnwrapEffects<T>, M> = {}
 ): SuperForm<UnwrapEffects<T>, M> {
-  type T2 = UnwrapEffects<T>;
+  type UnwrappedT = UnwrapEffects<T>;
 
   // Option guards
   {
-    options = { ...(defaultFormOptions as FormOptions<T2, M>), ...options };
+    options = {
+      ...(defaultFormOptions as FormOptions<UnwrappedT, M>),
+      ...options
+    };
 
     if (typeof form === 'string' && typeof options.id === 'string') {
       throw new SuperFormError(
@@ -343,7 +346,7 @@ export function superForm<
       postedForm
     ).reverse()) {
       if (superForm.id === _formId) {
-        form = superForm as Validation<T2, M>;
+        form = superForm as Validation<T, M>;
         break;
       }
     }
@@ -356,7 +359,7 @@ export function superForm<
     form = Context_newEmptyForm(form); // Takes care of Partial<z.infer<T>>
   }
 
-  const form2 = form as Validation<T2, M>;
+  const form2 = form as Validation<T, M>;
 
   // Need to clone the validation data, in case it's used to populate multiple forms.
   const initialForm = clone(form2);
@@ -383,13 +386,13 @@ export function superForm<
 
   function Context_newEmptyForm(
     data: Partial<z.infer<T>> = {}
-  ): Validation<T2, M> {
+  ): Validation<T, M> {
     return {
       valid: false,
       errors: {},
       data,
       empty: true,
-      constraints: {} as Validation<T2, M>['constraints']
+      constraints: {} as Validation<T, M>['constraints']
     };
   }
 
@@ -490,7 +493,7 @@ export function superForm<
   }
 
   async function Form_updateFromValidation(
-    form: Validation<T2, M>,
+    form: Validation<T, M>,
     untaint: boolean
   ) {
     if (
@@ -556,7 +559,7 @@ export function superForm<
     for (const newForm of forms) {
       if (newForm.id !== _formId) continue;
       await Form_updateFromValidation(
-        newForm as Validation<T2, M>,
+        newForm as Validation<T, M>,
         untaint ?? (result.status >= 200 && result.status < 300)
       );
     }
@@ -567,7 +570,7 @@ export function superForm<
   const Empty = writable(form2.empty);
   const Message = writable<M | undefined>(form2.message);
   const Constraints = writable(form2.constraints);
-  const Meta = writable<Validation<T2, M>['meta'] | undefined>(form2.meta);
+  const Meta = writable<Validation<T, M>['meta'] | undefined>(form2.meta);
 
   // eslint-disable-next-line dci-lint/grouped-rolemethods
   const Errors = {
@@ -585,7 +588,7 @@ export function superForm<
       })
   };
 
-  const Tainted = writable<TaintedFields<T2> | undefined>();
+  const Tainted = writable<TaintedFields<UnwrappedT> | undefined>();
 
   function Tainted_data() {
     return get(Tainted);
@@ -716,8 +719,8 @@ export function superForm<
   }
 
   function rebind(
-    form: Validation<T2, M>,
-    untaint: TaintedFields<T2> | boolean,
+    form: Validation<T, M>,
+    untaint: TaintedFields<UnwrappedT> | boolean,
     message?: M
   ) {
     if (untaint) {
@@ -747,7 +750,7 @@ export function superForm<
     }
   }
 
-  const formEvents: SuperFormEventList<T2, M> = {
+  const formEvents: SuperFormEventList<UnwrappedT, M> = {
     onSubmit: options.onSubmit ? [options.onSubmit] : [],
     onResult: options.onResult ? [options.onResult] : [],
     onUpdate: options.onUpdate ? [options.onUpdate] : [],
@@ -793,7 +796,7 @@ export function superForm<
             if (/*newForm === form ||*/ newForm.id !== _formId) continue;
 
             await Form_updateFromValidation(
-              newForm as Validation<T2, M>,
+              newForm as Validation<T, M>,
               untaint
             );
           }
@@ -806,7 +809,7 @@ export function superForm<
             //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
             if (/*newForm === form ||*/ newForm.id !== _formId) continue;
 
-            rebind(newForm as Validation<T2, M>, untaint);
+            rebind(newForm as Validation<T, M>, untaint);
           }
         }
       })
@@ -826,7 +829,7 @@ export function superForm<
         }
       ];
     })
-  ) as unknown as FormFields<T2>;
+  ) as unknown as FormFields<UnwrappedT>;
 
   return {
     form: Form,
@@ -862,7 +865,7 @@ export function superForm<
       };
     },
 
-    restore: function (snapshot: SuperFormSnapshot<T2, M>) {
+    restore: function (snapshot: SuperFormSnapshot<UnwrappedT, M>) {
       return rebind(snapshot, snapshot.tainted ?? true);
     },
 
@@ -877,7 +880,10 @@ export function superForm<
         opts
       );
     },
-    enhance: (el: HTMLFormElement, events?: SuperFormEvents<T2, M>) => {
+    enhance: (
+      el: HTMLFormElement,
+      events?: SuperFormEvents<UnwrappedT, M>
+    ) => {
       if (events) {
         if (events.onError) {
           if (options.onError === 'apply') {

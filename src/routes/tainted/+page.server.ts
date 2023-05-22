@@ -15,7 +15,7 @@ const defaultData = {
 
 export const load = (async () => {
   const form = await superValidate(defaultData, schema, {
-    noErrors: true
+    errors: false
   });
   return { form };
 }) satisfies PageServerLoad;

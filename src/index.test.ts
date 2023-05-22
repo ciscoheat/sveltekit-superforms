@@ -363,6 +363,7 @@ test('Zod enums and native enums', async () => {
   expect(form.empty).toEqual(true);
 
   expect(form).toStrictEqual({
+    id: '1aiv7x7',
     valid: false,
     errors: {},
     data: {
@@ -393,6 +394,7 @@ test('Posting Zod enums and native enums', async () => {
   const form = await superValidate(data, enumschema);
 
   expect(form).toStrictEqual({
+    id: '1aiv7x7',
     empty: false,
     valid: true,
     errors: {},
@@ -421,6 +423,7 @@ test('Agressive type coercion to avoid schema duplication', async () => {
   );
 
   expect(form).toStrictEqual({
+    id: '1la9dse',
     valid: false,
     errors: {},
     data: { agree: false, fruit: undefined, number: NaN },
@@ -640,19 +643,18 @@ describe('Errors', async () => {
     );
 
     expect(findErrors(form.errors)).toStrictEqual([
-      { path: ['id'], message: 'Required' },
+      { path: ['id'], messages: ['Required'] },
       {
         path: ['users', '0', 'name'],
-        message: 'String must contain at least 2 character(s)'
+        messages: ['String must contain at least 2 character(s)', 'Invalid']
       },
-      { path: ['users', '0', 'name'], message: 'Invalid' },
       {
         path: ['users', '0', 'posts', '0', 'subject'],
-        message: 'String must contain at least 1 character(s)'
+        messages: ['String must contain at least 1 character(s)']
       },
       {
         path: ['users', '0', 'posts', '_errors'],
-        message: 'Array must contain at least 2 element(s)'
+        messages: ['Array must contain at least 2 element(s)']
       }
     ]);
   });
@@ -731,6 +733,7 @@ describe('Errors', async () => {
     const form = await superValidate(data, schema);
 
     expect(form).toStrictEqual({
+      id: '1exthb3',
       valid: false,
       errors: { _errors: ["Can't order more flavours than scoops!"] },
       data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
@@ -862,6 +865,7 @@ test('ZodObject defaults', async () => {
   const form = await superValidate(imageCreationFormSchema);
 
   expect(form).toStrictEqual({
+    id: '1fbjabj',
     valid: false,
     errors: {},
     data: {

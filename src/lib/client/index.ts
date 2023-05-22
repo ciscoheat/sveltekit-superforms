@@ -94,7 +94,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;
   applyAction: boolean;
   invalidateAll: boolean;
-  resetForm: boolean | (() => MaybePromise<boolean>);
+  resetForm: boolean | (() => boolean);
   scrollToError: 'auto' | 'smooth' | 'off';
   autoFocusOnError: boolean | 'detect';
   errorSelector: string;
@@ -336,7 +336,7 @@ export function superForm<
 
   // Normalize form argument to Validation<T, M>
   if (!form) {
-    form = Context_newEmptyForm(); // Takes care of null | undefined | string
+    form = Context_newEmptyForm(); // Takes care of null | undefined
   } else if (Context_isValidationObject(form) === false) {
     form = Context_newEmptyForm(form); // Takes care of Partial<z.infer<T>>
   } else {
@@ -350,7 +350,16 @@ export function superForm<
       postedForm
     ).reverse()) {
       if (superForm.id === _formId) {
+        const pageDataForm = form as Validation<T, M>;
         form = superForm as Validation<T, M>;
+        // Do the non-use:enhance stuff
+        if (
+          form.valid &&
+          options.resetForm &&
+          (options.resetForm === true || options.resetForm())
+        ) {
+          form.data = clone(pageDataForm.data);
+        }
         break;
       }
     }
@@ -521,7 +530,7 @@ export function superForm<
     if (
       form.valid &&
       options.resetForm &&
-      (options.resetForm === true || (await options.resetForm()))
+      (options.resetForm === true || options.resetForm())
     ) {
       Form_reset(form.message);
     } else {
@@ -558,7 +567,7 @@ export function superForm<
       // No events should be triggered because technically we're somewhere else.
       if (
         options.resetForm &&
-        (options.resetForm === true || (await options.resetForm()))
+        (options.resetForm === true || options.resetForm())
       ) {
         Form_reset();
       }
@@ -696,10 +705,6 @@ export function superForm<
         Tainted__validate(path, options);
       }
     }
-  }
-
-  function Tainted_clear() {
-    Tainted.set(undefined);
   }
 
   function Tainted_set(
@@ -1688,6 +1693,10 @@ function formEnhance<T extends AnyZodObject, M>(
 
         htmlForm.submitting();
 
+        // Deprecation fix
+        const submitData =
+          submit.formData ?? (submit as { data: FormData }).data;
+
         if (options.SPA) {
           cancel();
 
@@ -1716,23 +1725,23 @@ function formEnhance<T extends AnyZodObject, M>(
           );
 
           for (const chunk of chunks) {
-            submit.data.append('__superform_json', chunk);
+            submitData.append('__superform_json', chunk);
           }
 
           // Clear post data to reduce transfer size,
           // since $form should be serialized and sent as json.
           Object.keys(postData).forEach((key) => {
             // Files should be kept though, even if same key.
-            if (typeof submit.data.get(key) === 'string') {
-              submit.data.delete(key);
+            if (typeof submitData.get(key) === 'string') {
+              submitData.delete(key);
             }
           });
         }
 
-        if (!options.SPA && !submit.data.has('__superform_id')) {
+        if (!options.SPA && !submitData.has('__superform_id')) {
           // Add formId
           const id = get(formId);
-          if (id !== undefined) submit.data.set('__superform_id', id);
+          if (id !== undefined) submitData.set('__superform_id', id);
         }
       }
     }

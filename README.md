@@ -62,3 +62,7 @@ You can also watch this excellent introduction video to see what's possible: htt
 # Feedback wanted!
 
 Ideas, general feedback, bug reports, PR:s, etc, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues), [discussion](https://github.com/ciscoheat/sveltekit-superforms/discussions), or on the [Discord server](https://discord.gg/AptebvVuhB)!
+
+If you enjoy using Superforms, consider buying me a coffee at one of these sites:
+
+[!["Buy Me A Coffee"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/buymeacoffee.webp)](https://www.buymeacoffee.com/ciscoheat) [!["Support me on Ko-fi"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/ko-fi.png)](https://ko-fi.com/ciscoheat)

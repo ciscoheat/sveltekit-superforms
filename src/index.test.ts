@@ -1,5 +1,6 @@
 import {
   setError,
+  setMessage,
   superValidate,
   defaultData,
   superValidateSync
@@ -890,4 +891,27 @@ test('Entity data warnings', async () => {
   });
 
   expect(form.valid).toStrictEqual(true);
+});
+test('setMessage and setError with refined schema', async () => {
+  const schema = z
+    .object({
+      name: z.string(),
+      id: z.number()
+    })
+    .refine((data) => data)
+    .refine((data) => data);
+
+  const form = await superValidate({ name: '', id: 0 }, schema);
+  assert(form.valid);
+  expect(form.message).toBeUndefined();
+
+  setMessage(form, 'A message');
+  expect(form.message).toEqual('A message');
+
+  expect(form.errors).toEqual({});
+  setError(form, 'id', 'Id error');
+
+  expect(form.errors).toEqual({
+    id: ['Id error']
+  });
 });

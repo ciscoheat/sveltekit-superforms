@@ -27,6 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `superValidateSync`, useful on the client for SPA:s.
 - Added `defaultData`, which takes a schema and returns the default values for it.
 
+## [0.8.7] - 2023-05-22
+
+### Fixed
+
+- `onUpdate` didn't cancel `applyAction` and `invalidateAll`.
+- Hopefully fixed excessively deep infinity type instantiation on `message` helper.
+- Removed `errors.clear` optional parameter `undefinePath`, which was left there by mistake.
+
+### Added
+
+- `onUpdate` now has `formEl` in its signature.
+
+## [0.8.6] - 2023-05-06
+
+### Fixed
+
+- Posting without Javascript enabled in the browser didn't detect new validation data.
+
 ## [0.8.5] - 2023-05-04
 
 ### Fixed

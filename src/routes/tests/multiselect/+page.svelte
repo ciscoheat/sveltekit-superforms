@@ -65,9 +65,6 @@
     display: block;
     margin-left: 5px;
   }
-  input {
-    margin: 5px;
-  }
   .invalid {
     color: red;
   }

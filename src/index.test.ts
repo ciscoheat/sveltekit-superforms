@@ -2,7 +2,7 @@ import {
   setError,
   setMessage,
   superValidate,
-  defaultData,
+  defaultValues,
   superValidateSync
 } from '$lib/server';
 import { assert, expect, test, describe } from 'vitest';
@@ -175,7 +175,7 @@ test('Nullable values', async () => {
 
   const schema = refinedSchema._def.schema;
 
-  const output = defaultData(schema);
+  const output = defaultValues(schema);
   expect(output.scopeId).equals(0);
   expect(output.name).equals(null);
 
@@ -191,7 +191,7 @@ test('Nullable values', async () => {
   expect(output4.data.name).toEqual('Test7');
 
   // If null is passed in and all fields have defaults, return them
-  const output2 = defaultData(
+  const output2 = defaultValues(
     schema.extend({ scopeId: schema.shape.scopeId.default(10) })
   );
   expect(output2.scopeId).toEqual(10);
@@ -256,7 +256,7 @@ describe('Default values', () => {
     });
   });
 
-  test('With no entity and defaultData', async () => {
+  test('With no entity and defaultValues', async () => {
     const d = new Date();
     const schema = userForm.extend({
       id: userForm.shape.id.default(undefined as unknown as number),
@@ -280,7 +280,7 @@ describe('Default values', () => {
     };
 
     expect(e1.data).toStrictEqual(expected);
-    expect(defaultData(schema)).toStrictEqual(expected);
+    expect(defaultValues(schema)).toStrictEqual(expected);
   });
 
   test('With no entity but different fields', async () => {

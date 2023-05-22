@@ -159,7 +159,7 @@ export function entityData<T extends AnyZodObject>(
   if (cached) return cached;
 
   const typeInfos = schemaInfo(schema);
-  const defaultEnt = defaultData(schema);
+  const defaultEnt = defaultValues(schema);
   const entity: Entity<T> = {
     typeInfo: typeInfos,
     defaultEntity: defaultEnt,
@@ -222,7 +222,7 @@ export function valueOrDefault(
     // Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
     //if (zodType instanceof ZodDate) return new Date(NaN);
     if (zodType instanceof ZodArray) return [];
-    if (zodType instanceof ZodObject) return defaultData(zodType);
+    if (zodType instanceof ZodObject) return defaultValues(zodType);
     if (zodType instanceof ZodRecord) return {};
     if (zodType instanceof ZodBigInt) return BigInt(0);
     if (zodType instanceof ZodSymbol) return Symbol();
@@ -235,7 +235,9 @@ export function valueOrDefault(
  * Returns the default values for a zod validation schema.
  * The main gotcha is that undefined values are changed to null if the field is nullable.
  */
-export function defaultData<T extends AnyZodObject>(schema: T): z.infer<T> {
+export function defaultValues<T extends AnyZodObject>(
+  schema: T
+): z.infer<T> {
   const fields = Object.keys(schema.keyof().Values);
 
   let output: Record<string, unknown> = {};

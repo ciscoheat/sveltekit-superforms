@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The literal `"any"` is now an allowed value in `step` for constraints.
 - Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.
 - The signature for `options.resetForm` has changed to `boolean | () => boolean` (it was async before).
+- The undocumented `defaultData` is now called `defaultValues`.
 
 ### Removed
 
@@ -26,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `superValidateSync`, useful on the client for SPA:s.
-- Added `defaultData`, which takes a schema and returns the default values for it.
+- Added `defaultValues`, which takes a schema and returns the default values for it.
 - `options.resetForm` now works without `use:enhance`!
 
 ## [0.8.7] - 2023-05-22

@@ -81,7 +81,7 @@ export {
   message,
   setMessage,
   setError,
-  defaultData
+  defaultValues
 } from '../superValidate.js';
 
 type FormUpdate = (

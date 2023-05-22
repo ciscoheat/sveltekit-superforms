@@ -39,7 +39,7 @@ import {
 import { mapErrors } from './entity.js';
 import { clone } from './utils.js';
 
-export { defaultData } from './schemaEntity.js';
+export { defaultValues } from './schemaEntity.js';
 
 export function message<T extends UnwrapEffects<AnyZodObject>, M>(
   form: Validation<T, M>,

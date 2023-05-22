@@ -136,8 +136,6 @@ function _stringProxy<
   options: DefaultOptions
 ): Writable<string> {
   function toValue(val: unknown) {
-    console.log(val);
-
     if (typeof val !== 'string')
       throw new SuperFormError('stringProxy received a non-string value.');
 

@@ -180,7 +180,6 @@ export type FormFields<T extends AnyZodObject> = {
   [Property in keyof z.infer<T>]-?: FormField<T, Property>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
 
 // Thanks to https://stackoverflow.com/a/71859443/70894

@@ -50,7 +50,7 @@ import {
   pathExists,
   type ZodTypeInfo,
   traversePaths
-} from '../entity.js';
+} from '../traversal.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
 import { hasEffects, type Entity } from '../schemaEntity.js';

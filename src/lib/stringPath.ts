@@ -1,3 +1,7 @@
+export function splitPath<T extends object>(path: FieldPath<T>): string[] {
+  return path.toString().split(/[[\].]+/);
+}
+
 export type FieldPath<T extends object> = NonNullable<T> extends (infer U)[]
   ? NonNullable<U> extends object
     ?
@@ -24,30 +28,30 @@ export type FieldPath<T extends object> = NonNullable<T> extends (infer U)[]
         }[keyof T]
   : never;
 
-export type PathValue<T, P extends string> = P extends keyof T
+export type FormPath<T, P extends string> = P extends keyof T
   ? T[P]
   : P extends number
   ? T
   : P extends `.${infer Rest}`
-  ? PathValue<NonNullable<T>, Rest>
+  ? FormPath<NonNullable<T>, Rest>
   : P extends `${number}]${infer Rest}`
   ? NonNullable<T> extends (infer U)[]
-    ? PathValue<U, Rest>
+    ? FormPath<U, Rest>
     : { invalid_path: P; Type: T }
   : P extends `${infer K}[${infer Rest}`
   ? K extends keyof NonNullable<T>
-    ? PathValue<NonNullable<T>[K], Rest>
-    : PathValue<T, Rest>
+    ? FormPath<NonNullable<T>[K], Rest>
+    : FormPath<T, Rest>
   : P extends `${infer K}.${infer Rest}`
   ? K extends keyof NonNullable<T>
-    ? PathValue<NonNullable<T>[K], Rest>
+    ? FormPath<NonNullable<T>[K], Rest>
     : NonNullable<T> extends (infer U)[]
-    ? PathValue<U, Rest>
+    ? FormPath<U, Rest>
     : { invalid_path: P; Type: T }
   : P extends `[${infer K}].${infer Rest}`
   ? K extends number
     ? T extends (infer U)[]
-      ? PathValue<U, Rest>
+      ? FormPath<U, Rest>
       : { invalid_path: P; Type: T }
     : P extends `${number}`
     ? NonNullable<T> extends (infer U)[]
@@ -92,8 +96,8 @@ const n9: Test = 'tags[4].nope';
 const n0: Test = 'nope';
 
 function checkPath<T = never>() {
-  return function <U extends string = string>(path: U): PathValue<T, U> {
-    return path as PathValue<T, U>;
+  return function <U extends string = string>(path: U): FormPath<T, U> {
+    return path as FormPath<T, U>;
   };
 }
 
@@ -102,15 +106,14 @@ const checkObj = checkPath<Obj>();
 const a = checkObj(`tags[${i + 3}].name`); // string
 const b = checkObj(`scores[${i + 3}][0]`); // Date
 
-const t0: PathValue<Obj, 'name'> = 'string';
-const t1: PathValue<Obj, 'points'> = 123;
-const t2: PathValue<Obj, 'city'> = { name: 'London' };
-const t3: PathValue<Obj, 'tags'> = [{ id: 123, name: 'Test', parents: [] }];
-const t4: PathValue<Obj, 'tags[0]'> = {
+const t0: FormPath<Obj, 'name'> = 'string';
+const t1: FormPath<Obj, 'points'> = 123;
+const t2: FormPath<Obj, 'city'> = { name: 'London' };
+const t3: FormPath<Obj, 'tags'> = [{ id: 123, name: 'Test', parents: [] }];
+const t4: FormPath<Obj, 'tags[0]'> = {
   id: 123,
   name: 'Test',
   parents: [1]
 };
-const t5: PathValue<Obj, 'tags[0].name'> = 'string';
-const t6: PathValue<Obj, `tags[5].id`> = 123;
-type ShouldBeNever = PathValue<Obj, 'tags.1.nope'>;
+const t5: FormPath<Obj, 'tags[0].name'> = 'string';
+const t6: FormPath<Obj, `tags[5].id`> = 123;

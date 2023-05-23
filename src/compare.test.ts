@@ -14,9 +14,9 @@ import {
   type AnyZodObject,
   type ZodTypeAny
 } from 'zod';
-import { pathExists, traversePath, traversePathAsync } from '$lib/entity';
+import { pathExists, traversePath, traversePathAsync } from '$lib/traversal';
 import { get, writable } from 'svelte/store';
-import { mapErrors } from '$lib/entity';
+import { mapErrors } from '$lib/traversal';
 import { hasEffects, unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
 import {
@@ -27,7 +27,7 @@ import {
   numberProxy
 } from '$lib/client';
 import type { FormPath, FieldPath } from '$lib';
-import { comparePaths, setPaths } from '$lib/entity';
+import { comparePaths, setPaths } from '$lib/traversal';
 
 const user = z.object({
   id: z.number().int().positive(),

@@ -14,7 +14,7 @@ import {
   type Entity
 } from './schemaEntity.js';
 
-import { traversePath, type ZodTypeInfo } from './entity.js';
+import { mapErrors, traversePath, type ZodTypeInfo } from './traversal.js';
 
 import {
   z,
@@ -36,7 +36,6 @@ import {
   type SafeParseReturnType
 } from 'zod';
 
-import { mapErrors } from './entity.js';
 import { clone } from './utils.js';
 
 export { defaultValues } from './schemaEntity.js';

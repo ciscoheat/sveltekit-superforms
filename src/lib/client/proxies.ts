@@ -7,7 +7,7 @@ import {
   type InputConstraint,
   type UnwrapEffects
 } from '../index.js';
-import { traversePath } from '../entity.js';
+import { traversePath } from '../traversal.js';
 import type { SuperForm } from './index.js';
 import type { z, AnyZodObject } from 'zod';
 

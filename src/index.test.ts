@@ -10,7 +10,7 @@ import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
 import { SuperFormError } from '$lib';
-import { findErrors } from '$lib/entity';
+import { findErrors } from '$lib/traversal';
 
 const slugify = (
   str: string,

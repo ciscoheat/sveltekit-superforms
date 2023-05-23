@@ -1,6 +1,6 @@
 import type { InputConstraints, InputConstraint } from './index.js';
 
-import type { ZodTypeInfo } from './entity.js';
+import type { ZodTypeInfo } from './traversal.js';
 
 import {
   z,

@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
-import { superValidate } from '$lib/server';
-import type { z } from 'zod';
+import { message, superValidate } from '$lib/server';
 import { schema } from './schemas';
+import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {
   const form = await superValidate(schema);
@@ -12,8 +12,11 @@ export const actions = {
   default: async ({ request }) => {
     const formData = await request.formData();
     const form = await superValidate(formData, schema);
+
     console.log('POST', form);
 
-    return { form };
+    if (!form.valid) return fail(400, { form });
+
+    return message(form, 'Posted OK!');
   }
 } satisfies Actions;

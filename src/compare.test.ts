@@ -20,7 +20,7 @@ import { mapErrors } from '$lib/traversal';
 import { hasEffects, unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
 import { fieldProxy } from '$lib/client';
-import type { FormPath, FieldPath } from '$lib';
+import type { FieldPath } from '$lib';
 import { comparePaths, setPaths } from '$lib/traversal';
 
 const user = z.object({
@@ -213,22 +213,6 @@ describe('Path traversals', () => {
 
     expectTypeOf(form.data).toMatchTypeOf(person);
     expectTypeOf(form.errors).toMatchTypeOf({});
-
-    type U = z.infer<typeof schema>;
-
-    const s0: FormPath<U, ['email']> = 'test@example.com';
-    const s1: FormPath<U, ['id']> = 123;
-    const s2: FormPath<U, ['tags']> = [{ name: 's2' }, null];
-
-    const s3: FormPath<U, ['tags', 3]> = { name: 's3' };
-    const s4: FormPath<U, ['tags', 3, 'name']> = 's4';
-
-    expectTypeOf(s0).toMatchTypeOf('test@example.com');
-    expectTypeOf(s1).toMatchTypeOf(123);
-    expectTypeOf(s2).toMatchTypeOf([{ name: 's2' }, null]);
-    expectTypeOf(s3).toMatchTypeOf({ name: 's3' });
-    expectTypeOf(s4).toMatchTypeOf('s4');
-
     assert(form.valid);
 
     const store = writable(form.data);

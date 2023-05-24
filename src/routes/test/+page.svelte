@@ -1,11 +1,5 @@
 <script lang="ts">
-  import {
-    dateProxy,
-    intProxy,
-    booleanProxy,
-    superForm,
-    jsonProxy
-  } from '$lib/client';
+  import { dateProxy, intProxy, booleanProxy, superForm } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { tick } from 'svelte';
   import type { PageData } from './$types';
@@ -117,7 +111,6 @@
     }
   });
 
-  const proxyString = jsonProxy(form, 'proxyString');
   const proxyBool = booleanProxy(form, 'bool');
   const proxyNumber = intProxy(form, 'proxyNumber');
   const proxyDate = dateProxy(form, 'date', {
@@ -147,7 +140,7 @@
   <div>Email</div>
   <input
     on:input={() => {
-      proxyString.set(456);
+      $form.proxyString = '456';
     }}
     bind:value={$modalForm.email}
   />
@@ -208,7 +201,7 @@
   <input type="hidden" name="nativeEnumInt" value="1" />
   <input type="hidden" name="nativeEnumString2" value="Banana" />
 
-  <input type="hidden" name="proxyString" bind:value={$proxyString} />
+  <input type="hidden" name="proxyString" bind:value={$form.proxyString} />
 
   <input type="hidden" name="numberArray" value="123" />
   <input type="hidden" name="numberArray" value="456" />

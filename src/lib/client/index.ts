@@ -55,7 +55,7 @@ import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
 import { hasEffects, type Entity } from '../schemaEntity.js';
 import { unwrapZodType } from '../schemaEntity.js';
-import type { StringPath } from '../stringPath.js';
+import { splitPath, type StringPath } from '../stringPath.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -280,10 +280,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
   restore: (snapshot: SuperFormSnapshot<UnwrapEffects<T>, M>) => void;
 
-  validate: Validate<
-    UnwrapEffects<T>,
-    StringPath<z.infer<UnwrapEffects<T>>>
-  >;
+  validate: Validate<UnwrapEffects<T>, StringPath<z.infer<T>>>;
 };
 
 /**
@@ -891,7 +888,7 @@ export function superForm<
 
     validate: (path, opts) => {
       return validateField(
-        (Array.isArray(path) ? path : [path]) as string[],
+        splitPath(path) as string[],
         options.validators,
         options.defaultValidator,
         Form,

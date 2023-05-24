@@ -1,9 +1,6 @@
 import { derived, type Updater, type Writable } from 'svelte/store';
-import { stringify, parse } from 'devalue';
 import {
   SuperFormError,
-  type FormPath,
-  type FieldPath,
   type InputConstraint,
   type UnwrapEffects
 } from '../index.js';
@@ -36,10 +33,6 @@ const defaultOptions: DefaultOptions = {
   trueStringValue: 'true',
   dateFormat: 'iso'
 };
-
-type NormalizeFormPath<T, Path> = Path extends keyof T
-  ? FormPath<T, [Path]>
-  : FormPath<T, Path>;
 
 export function intProxy<
   T extends Record<string, unknown>,
@@ -229,19 +222,19 @@ export function formFieldProxy<
 >(form: SuperForm<UnwrapEffects<T>, unknown>, path: Path) {
   const path2 = splitPath<z.infer<T>>(path);
   // Filter out array indices, the constraints structure doesn't contain these.
-  const constraintsPath = (path2 as unknown[]).filter((p) =>
-    isNaN(parseInt(String(p)))
-  );
+  const constraintsPath = (path2 as unknown[])
+    .filter((p) => isNaN(parseInt(String(p))))
+    .join('.');
 
   return {
-    path: path2,
-    value: fieldProxy(form.form, path2),
-    errors: fieldProxy(form.errors, path2) as unknown as Writable<
+    path,
+    value: fieldProxy(form.form, path),
+    errors: fieldProxy(form.errors, path) as unknown as Writable<
       string[] | undefined
     >,
     constraints: fieldProxy(
       form.constraints,
-      constraintsPath as FieldPath<typeof form.constraints>
+      constraintsPath as never
     ) as Writable<InputConstraint | undefined>
   };
 }

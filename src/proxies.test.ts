@@ -1,10 +1,16 @@
 import { describe, expect, test } from 'vitest';
 import { get, writable } from 'svelte/store';
 import { superValidate } from '$lib/server';
-import { booleanProxy, dateProxy, intProxy, numberProxy } from '$lib/client';
+import {
+  booleanProxy,
+  dateProxy,
+  fieldProxy,
+  intProxy,
+  numberProxy
+} from '$lib/client';
 import { z } from 'zod';
 
-describe('Proxies', () => {
+describe('Value proxies', () => {
   test('booleanProxy', async () => {
     const schema = z.object({
       bool: z.boolean()
@@ -73,5 +79,23 @@ describe('Proxies', () => {
     proxy.set(d.toISOString());
 
     expect(get(form).date).toEqual(d);
+  });
+});
+
+describe('Field proxies', () => {
+  const schema = z.object({
+    test: z.number().array().default([0, 1, 2, 3])
+  });
+
+  test('fieldProxy with StringPath', async () => {
+    const superForm = await superValidate(schema);
+    const form = writable(superForm.data);
+
+    const proxy = fieldProxy(form, 'test[2]');
+
+    expect(get(proxy)).toEqual(2);
+    proxy.set(123);
+    expect(get(proxy)).toEqual(123);
+    expect(get(form).test[2]).toEqual(123);
   });
 });

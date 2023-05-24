@@ -23,22 +23,13 @@
   } = form;
 
   const proxy1 = formFieldProxy(form, 'name');
-  const proxy2 = formFieldProxy(form, ['name']);
-  const proxy3 = formFieldProxy(form, ['tags', 3]);
-  const proxy4 = formFieldProxy(form, ['luckyNumber']);
+  const proxy2 = formFieldProxy(form, 'name');
+  const proxy3 = formFieldProxy(form, 'tags[3]');
+  const proxy4 = formFieldProxy(form, 'luckyNumber');
 
   const bool = fieldProxy(formData, 'agree');
-  const tag1 = fieldProxy(formData, ['tags', 0, 'name']);
+  const tag1 = fieldProxy(formData, 'tags[0].name');
   let field1 = fieldProxy(formData, 'luckyNumber');
-
-  /*
-  field1 = 123;
-
-  proxy1.value = 'abc';
-  proxy2.value = 'abc';
-  proxy3.value = { name: 'Test' };
-  proxy4.value = 123;
-  */
 
   function randomLuckyNumber() {
     field1.update((num) => (num ? Math.ceil(Math.random() * 99) + 1 : 7));
@@ -87,7 +78,7 @@
           constraints={$constraints.tags?.name}
         />
       {:else}
-        <TextField name="tags" {form} field={['tags', i, 'name']} />
+        <TextField name="tags" {form} field={`tags[${i}].name`} />
       {/if}
     {/each}
   </section>

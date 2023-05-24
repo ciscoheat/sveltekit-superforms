@@ -58,7 +58,7 @@
   onMount(async () => {
     if (!testMode) return;
 
-    await validate(['tags', 0, 'name'], {
+    await validate('tags[0].name', {
       value: 'p',
       update: 'errors',
       errors: 'Custom error'
@@ -68,20 +68,20 @@
 
     output = [
       ...output,
-      await validate(['tags', 2, 'id'], {
+      await validate('tags[2].id', {
         value: 2
       })
     ];
 
     output = [
       ...output,
-      (await validate(['tags', 0, 'id'], {
+      (await validate('tags[0].id', {
         update: 'errors',
         value: 7
       })) ?? ['Update errors OK']
     ];
 
-    const errors = await validate(['tags', 1, 'id']);
+    const errors = await validate('tags[1].id');
     if (
       errors?.length == 1 &&
       errors[0] == 'Number must be greater than or equal to 3'
@@ -91,7 +91,7 @@
       output = [...output, ['FAIL']];
     }
 
-    const errors2 = await validate(['tags', 1, 'id'], {
+    const errors2 = await validate('tags[1].id', {
       value: 0,
       update: false
     });

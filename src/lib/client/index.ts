@@ -55,6 +55,7 @@ import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
 import { hasEffects, type Entity } from '../schemaEntity.js';
 import { unwrapZodType } from '../schemaEntity.js';
+import type { StringPath } from '../stringPath.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -64,7 +65,6 @@ enum FetchStatus {
 }
 
 export {
-  jsonProxy,
   intProxy,
   numberProxy,
   booleanProxy,
@@ -230,12 +230,8 @@ type ValidateOptions<V> = Partial<{
   errors: string | string[];
 }>;
 
-type Validate<
-  T extends AnyZodObject,
-  P extends FieldPath<z.infer<T>>, // = FieldPath<z.infer<T>>,
-  Path extends keyof z.infer<T> | P // = keyof z.infer<T> | P
-> = (
-  path: Path,
+type Validate<T extends AnyZodObject, P extends StringPath<z.infer<T>>> = (
+  path: P,
   opts?: ValidateOptions<unknown>
 ) => Promise<string[] | undefined>;
 
@@ -286,8 +282,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
 
   validate: Validate<
     UnwrapEffects<T>,
-    FieldPath<z.infer<UnwrapEffects<T>>>,
-    keyof z.infer<UnwrapEffects<T>> | FieldPath<z.infer<UnwrapEffects<T>>>
+    StringPath<z.infer<UnwrapEffects<T>>>
   >;
 };
 
@@ -850,9 +845,9 @@ export function superForm<
         key,
         {
           name: key,
-          value: fieldProxy(Form, key),
-          errors: fieldProxy(Errors, key),
-          constraints: fieldProxy(Constraints, key)
+          value: fieldProxy(Form, key as string & StringPath<z.infer<T>>),
+          errors: fieldProxy(Errors, key as never),
+          constraints: fieldProxy(Constraints, key as never)
         }
       ];
     })

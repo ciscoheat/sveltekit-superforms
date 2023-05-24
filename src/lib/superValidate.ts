@@ -2,7 +2,6 @@ import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import {
   SuperFormError,
-  type FieldPath,
   type Validation,
   type ZodValidation,
   type UnwrapEffects
@@ -36,6 +35,8 @@ import {
   type SafeParseReturnType
 } from 'zod';
 
+import { splitPath, type StringPath } from './stringPath.js';
+
 import { clone } from './utils.js';
 
 export { defaultValues } from './schemaEntity.js';
@@ -62,7 +63,7 @@ export const setMessage = message;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends UnwrapEffects<AnyZodObject>>(
   form: Validation<T, unknown>,
-  path: keyof z.infer<T> | FieldPath<z.infer<T>> | [] | null,
+  path: StringPath<z.infer<T>> | null,
   error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
@@ -73,13 +74,11 @@ export function setError<T extends UnwrapEffects<AnyZodObject>>(
 
   if (!form.errors) form.errors = {};
 
-  if (path === null || (Array.isArray(path) && path.length === 0)) {
+  if (path === null) {
     if (!form.errors._errors) form.errors._errors = [];
     form.errors._errors = form.errors._errors.concat(errArr);
   } else {
-    const realPath = (Array.isArray(path) ? path : [path]) as FieldPath<
-      z.infer<T>
-    >;
+    const realPath = splitPath(path);
 
     const leaf = traversePath(
       form.errors,

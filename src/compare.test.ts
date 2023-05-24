@@ -19,13 +19,7 @@ import { get, writable } from 'svelte/store';
 import { mapErrors } from '$lib/traversal';
 import { hasEffects, unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
-import {
-  booleanProxy,
-  dateProxy,
-  fieldProxy,
-  intProxy,
-  numberProxy
-} from '$lib/client';
+import { fieldProxy } from '$lib/client';
 import type { FormPath, FieldPath } from '$lib';
 import { comparePaths, setPaths } from '$lib/traversal';
 
@@ -239,9 +233,9 @@ describe('Path traversals', () => {
 
     const store = writable(form.data);
 
-    const proxy1 = fieldProxy(store, ['tags']);
-    const proxy2 = fieldProxy(store, ['tags', 0]);
-    const proxy3 = fieldProxy(store, ['tags', 1, 'name']);
+    const proxy1 = fieldProxy(store, 'tags');
+    const proxy2 = fieldProxy(store, 'tags[0]');
+    const proxy3 = fieldProxy(store, 'tags[1].name');
 
     proxy3.set('tag2-proxy3');
     expect(get(store).tags?.[1]?.name).toEqual('tag2-proxy3');
@@ -260,83 +254,11 @@ describe('Path traversals', () => {
       tags: [{ name: 'tag2-proxy3' }, { name: 'tag1-proxy2' }]
     });
 
-    const idProxy = fieldProxy(store, ['id']);
+    const idProxy = fieldProxy(store, 'id');
 
     idProxy.update((id) => id + 1);
 
     expect(get(store).id).toEqual(124);
-  });
-});
-
-describe('Proxies', () => {
-  test('booleanProxy', async () => {
-    const schema = z.object({
-      bool: z.boolean()
-    });
-
-    const superForm = await superValidate(schema);
-    const form = writable(superForm.data);
-
-    const proxy = booleanProxy(form, 'bool');
-
-    expect(get(form).bool).toStrictEqual(false);
-
-    proxy.set('true');
-
-    expect(get(form).bool).toStrictEqual(true);
-  });
-
-  test('intProxy', async () => {
-    const schema = z.object({
-      int: z.number().int()
-    });
-
-    const superForm = await superValidate(schema);
-    const form = writable(superForm.data);
-
-    const proxy = intProxy(form, 'int');
-
-    expect(get(form).int).toStrictEqual(0);
-
-    proxy.set('123');
-
-    expect(get(form).int).toStrictEqual(123);
-  });
-
-  test('numberProxy', async () => {
-    const schema = z.object({
-      number: z.number()
-    });
-
-    const superForm = await superValidate(schema);
-    const form = writable(superForm.data);
-
-    const proxy = numberProxy(form, 'number');
-
-    expect(get(form).number).toStrictEqual(0);
-
-    proxy.set('123.5');
-
-    expect(get(form).number).toStrictEqual(123.5);
-  });
-
-  test('dateProxy', async () => {
-    const schema = z.object({
-      date: z.date()
-    });
-
-    const superForm = await superValidate(schema);
-    const form = writable(superForm.data);
-
-    const proxy = dateProxy(form, 'date');
-
-    expect(get(form).date).toBeUndefined();
-
-    const d = new Date();
-
-    proxy.set(d.toISOString());
-
-    expect(get(form).date).toEqual(d);
   });
 });
 

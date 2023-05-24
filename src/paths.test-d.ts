@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { StringPath, StringPathType } from '$lib/stringPath';
 import { test } from 'vitest';
 

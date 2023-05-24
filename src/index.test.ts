@@ -603,8 +603,8 @@ describe('Errors', async () => {
 
     setError(output, 'scopeId', 'This should not be displayed.');
     setError(output, 'scopeId', 'This is an error', { overwrite: true });
-    setError(output, ['object', 'name'], 'Object error');
-    setError(output, ['arr', 3], 'Array error');
+    setError(output, 'object.name', 'Object error');
+    setError(output, 'arr[3]', 'Array error');
     setError(output, 'enumber', 'This should be ok');
     setError(output, 'enumber', 'Still ok');
 
@@ -676,7 +676,7 @@ describe('Errors', async () => {
       _errors: ['Form-level error']
     });
 
-    setError(form, [], 'Form-level problem');
+    setError(form, null, 'Form-level problem');
     setError(form, null, 'Another form-level problem');
 
     expect(form.errors._errors).toStrictEqual([
@@ -693,7 +693,7 @@ describe('Errors', async () => {
       name: ['String must contain at least 1 character(s)']
     });
 
-    setError(form2, [], 'Form-level problem');
+    setError(form2, null, 'Form-level problem');
 
     expect(form2.errors).toStrictEqual({
       _errors: ['Form-level error', 'Form-level problem'],

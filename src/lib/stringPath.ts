@@ -1,5 +1,10 @@
-export function splitPath<T extends object>(path: StringPath<T>): string[] {
-  return path.toString().split(/[[\].]+/);
+import type { FieldPath } from './index.js';
+
+export function splitPath<T extends object>(path: StringPath<T>) {
+  return path
+    .toString()
+    .split(/[[\].]+/)
+    .filter((p) => p) as FieldPath<T>;
 }
 
 export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]

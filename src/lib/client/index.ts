@@ -1209,8 +1209,6 @@ async function validateField<T extends AnyZodObject, M>(
       const newErrors = Errors_fromZod(result.error);
 
       if (options.update === true || options.update == 'errors') {
-        //console.log('🚀 ~ file: index.ts:1020 ~ newErrors:', newErrors);
-
         // Set errors for other (tainted) fields, that may have been changed
         const taintedFields = get(tainted);
         const currentErrors = Errors_get();
@@ -1522,11 +1520,14 @@ function formEnhance<T extends AnyZodObject, M>(
   let currentRequest: AbortController | null;
 
   return enhance(formEl, async (submit) => {
+    const submitCancel = submit.cancel;
+
     let cancelled = false;
     function cancel() {
       cancelled = true;
-      return submit.cancel();
+      return submitCancel();
     }
+    submit.cancel = cancel;
 
     if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
       cancel();
@@ -1536,10 +1537,8 @@ function formEnhance<T extends AnyZodObject, M>(
       }
       currentRequest = submit.controller;
 
-      const data = { ...submit, cancel };
-
       for (const event of formEvents.onSubmit) {
-        await event(data);
+        await event(submit);
       }
     }
 

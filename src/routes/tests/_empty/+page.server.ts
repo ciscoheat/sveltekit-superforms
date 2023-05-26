@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from './$types';
 import { message, superValidate } from '$lib/server';
-import { schema } from './schemas';
+import { schema } from './schema';
 import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {

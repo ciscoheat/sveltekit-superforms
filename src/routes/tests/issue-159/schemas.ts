@@ -4,7 +4,7 @@ const overallValidation = (data: {
   name: string;
   email: string;
 }): boolean => {
-  const result = data.name !== '' || data.email !== '';
+  const result = !!data.name || !!data.email;
   console.log('overallValidation result:', result);
   return result;
 };

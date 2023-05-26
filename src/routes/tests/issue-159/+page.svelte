@@ -21,8 +21,6 @@
   });
 </script>
 
-<SuperDebug data={{ $form, $errors, $tainted }} />
-
 <h3>Superforms testing ground</h3>
 
 {#if $message}

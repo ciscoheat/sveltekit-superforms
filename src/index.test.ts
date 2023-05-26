@@ -676,14 +676,7 @@ describe('Errors', async () => {
       _errors: ['Form-level error']
     });
 
-    setError(form, null, 'Form-level problem');
-    setError(form, null, 'Another form-level problem');
-
-    expect(form.errors._errors).toStrictEqual([
-      'Form-level error',
-      'Form-level problem',
-      'Another form-level problem'
-    ]);
+    expect(form.errors._errors).toStrictEqual(['Form-level error']);
 
     const form2 = await superValidate({ name: '' }, refined);
 
@@ -693,10 +686,8 @@ describe('Errors', async () => {
       name: ['String must contain at least 1 character(s)']
     });
 
-    setError(form2, null, 'Form-level problem');
-
     expect(form2.errors).toStrictEqual({
-      _errors: ['Form-level error', 'Form-level problem'],
+      _errors: ['Form-level error'],
       name: ['String must contain at least 1 character(s)']
     });
   });

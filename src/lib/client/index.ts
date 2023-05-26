@@ -49,7 +49,8 @@ import {
   setPaths,
   pathExists,
   type ZodTypeInfo,
-  traversePaths
+  traversePaths,
+  isInvalidPath
 } from '../traversal.js';
 import { fieldProxy } from './proxies.js';
 import { clone } from '../utils.js';
@@ -642,7 +643,19 @@ export function superForm<
       const errorContent = get(Errors);
 
       const errorNode = errorContent
-        ? pathExists(errorContent, path)
+        ? pathExists(errorContent, path, {
+            modifier: (pathData) => {
+              // Check if we have found a string in an error array.
+              if (isInvalidPath(path, pathData)) {
+                throw new SuperFormError(
+                  'Errors can only be added to form fields, not to arrays or objects in the schema. Path: ' +
+                    pathData.path.slice(0, -1)
+                );
+              }
+
+              return pathData.value;
+            }
+          })
         : undefined;
 
       // Need a special check here, since if the error has never existed,
@@ -1089,7 +1102,12 @@ async function validateField<T extends AnyZodObject, M>(
           errors,
           path as FieldPath<typeof errors>,
           (node) => {
-            if (node.value === undefined) {
+            if (isInvalidPath(path, node)) {
+              throw new SuperFormError(
+                'Errors can only be added to form fields, not to arrays or objects in the schema. Path: ' +
+                  node.path.slice(0, -1)
+              );
+            } else if (node.value === undefined) {
               node.parent[node.key] = {};
               return node.parent[node.key];
             } else {
@@ -1251,7 +1269,7 @@ async function validateField<T extends AnyZodObject, M>(
       // We validated the whole data structure, so clear all errors on success
       // but also set the current path to undefined, so it will be used in the tainted+error
       // check in oninput.
-      Errors_clear({ undefinePath: path, clearFormLevelErrors: false });
+      Errors_clear({ undefinePath: path, clearFormLevelErrors: true });
       return undefined;
     }
   } else {

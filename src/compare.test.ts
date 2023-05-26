@@ -363,6 +363,14 @@ test('Check path existence', () => {
   });
 });
 
+test('Check path existence with path longer than existing', () => {
+  const data = {
+    persons: ['Need at least 2 persons']
+  };
+
+  expect(pathExists(data, ['persons', '0', 'name'])).toBeUndefined();
+});
+
 const refined = z.object({
   id: z.number().int().positive(),
   name: z.string().min(2),

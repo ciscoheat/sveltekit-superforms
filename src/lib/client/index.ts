@@ -1214,6 +1214,18 @@ async function validateField<T extends AnyZodObject, M>(
         const currentErrors = Errors_get();
         let updated = false;
 
+        // Special check for form level errors
+        if (currentErrors._errors !== newErrors._errors) {
+          if (
+            !currentErrors._errors ||
+            !newErrors._errors ||
+            currentErrors._errors.join('') != newErrors._errors.join('')
+          ) {
+            currentErrors._errors = newErrors._errors;
+            updated = true;
+          }
+        }
+
         traversePaths(newErrors, (pathData) => {
           if (!Array.isArray(pathData.value)) return;
           if (isPathTainted(pathData.path, taintedFields)) {

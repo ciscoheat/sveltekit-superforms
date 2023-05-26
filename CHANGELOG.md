@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `setError` doesn't handle form-level errors anymore, use refine/superRefine on the schema, or the `message` helper.
 - The following methods are now using a string accessor like `tags[2].id` instead of an array `['tags', 2, 'id']`: `validate`, `setError` and all proxy methods (ending with `Proxy`).
 - The signature for `allErrors` and `firstError` has changed to `{ path: string[]; messages: string[] }`.
 - The literal `"any"` is now an allowed value in `step` for constraints.
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Explicitly setting a form `id` for multiple forms is not required anymore when using `use:enhance`! Otherwise, an id can be specified in the options or in a hidden form field called `__superform_id`.
+- Fixed deprecation notices for `use:enhance`.
 
 ### Added
 

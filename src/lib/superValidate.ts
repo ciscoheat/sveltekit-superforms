@@ -41,7 +41,7 @@ import { clone } from './utils.js';
 
 export { defaultValues } from './schemaEntity.js';
 
-export function message<T extends UnwrapEffects<AnyZodObject>, M>(
+export function message<T extends ZodValidation<AnyZodObject>, M>(
   form: Validation<T, M>,
   message: M,
   options?: {
@@ -61,9 +61,9 @@ export function message<T extends UnwrapEffects<AnyZodObject>, M>(
 export const setMessage = message;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function setError<T extends UnwrapEffects<AnyZodObject>>(
+export function setError<T extends ZodValidation<AnyZodObject>>(
   form: Validation<T, unknown>,
-  path: StringPath<z.infer<T>> | null,
+  path: StringPath<z.infer<UnwrapEffects<T>>>,
   error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,
@@ -74,7 +74,11 @@ export function setError<T extends UnwrapEffects<AnyZodObject>>(
 
   if (!form.errors) form.errors = {};
 
-  if (path === null) {
+  if (path === null || path === '') {
+    console.warn(
+      'Warning: Form-level errors added with "setError" will conflict with client-side validation. ' +
+        'Use refine/superRefine on the schema instead, or the "message" helper.'
+    );
     if (!form.errors._errors) form.errors._errors = [];
     form.errors._errors = form.errors._errors.concat(errArr);
   } else {

@@ -158,7 +158,7 @@ export type Validation<
 > = {
   valid: boolean;
   errors: ValidationErrors<UnwrapEffects<T>>;
-  data: z.infer<T>;
+  data: z.infer<UnwrapEffects<T>>;
   empty: boolean;
   constraints: Entity<UnwrapEffects<T>>['constraints'];
   message?: M;

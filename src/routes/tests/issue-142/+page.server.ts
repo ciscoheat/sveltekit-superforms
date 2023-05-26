@@ -28,6 +28,7 @@ export const actions = {
     if (form.data.name === 'form') {
       return setError(
         stripPassword(form),
+        // @ts-expect-error Backwards compatibility for testing
         null,
         'This is a sticky form error and it stays until the form gets submitted again'
       );

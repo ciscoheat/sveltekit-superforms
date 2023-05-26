@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Explicitly setting a form `id` for multiple forms is not required anymore when using `use:enhance`! Otherwise, an id can be specified in the options or in a hidden form field called `__superform_id`.
+- Explicitly setting a form `id` for multiple forms is not required anymore when using `use:enhance`, unless the forms are using the same schema. An id can be specified in the options or in a hidden form field called `__superform_id`.
 - Fixed deprecation notices for `use:enhance`.
 
 ### Added

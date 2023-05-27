@@ -337,21 +337,22 @@ export function superForm<
   }
 
   // Detect if a form is posted without JavaScript.
-  const postedForm = get(page).form;
-  if (postedForm && typeof postedForm === 'object') {
-    for (const superForm of Context_findValidationForms(
-      postedForm
+  const postedData = get(page).form;
+  if (postedData && typeof postedData === 'object') {
+    for (const postedForm of Context_findValidationForms(
+      postedData
     ).reverse()) {
-      if (superForm.id === _formId) {
+      if (postedForm.id === _formId) {
         const pageDataForm = form as Validation<T, M>;
-        form = superForm as Validation<T, M>;
+        form = postedForm as Validation<T, M>;
         // Do the non-use:enhance stuff
         if (
           form.valid &&
           options.resetForm &&
           (options.resetForm === true || options.resetForm())
         ) {
-          form.data = clone(pageDataForm.data);
+          form = clone(pageDataForm);
+          form.message = postedForm.message;
         }
         break;
       }

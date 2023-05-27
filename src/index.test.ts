@@ -173,12 +173,11 @@ test('Nullable values', async () => {
     })
     .refine((data) => data);
 
-  const schema = refinedSchema._def.schema;
-
-  const output = defaultValues(schema);
+  const output = defaultValues(refinedSchema);
   expect(output.scopeId).equals(0);
   expect(output.name).equals(null);
 
+  const schema = refinedSchema._def.schema;
   const extended = schema
     .extend({
       scopeId: schema.shape.scopeId.default(7)

@@ -1,12 +1,37 @@
 import type { FieldPath } from './index.js';
 
-export function splitPath<T extends object>(path: StringPath<T>) {
+/*
+type Expand<T> = T extends (...args: infer A) => infer R
+  ? (...args: Expand<A>) => Expand<R>
+  : T extends infer O
+  ? { [K in keyof O]: O[K] }
+  : never;
+
+type ExpandRecursively<T> = T extends (...args: infer A) => infer R
+  ? (...args: ExpandRecursively<A>) => ExpandRecursively<R>
+  : T extends object
+  ? T extends infer O
+    ? { [K in keyof O]: ExpandRecursively<O[K]> }
+    : never
+  : T;
+
+type FilterObjects<T extends object> = {
+  [K in keyof T]: T[K] extends object ? never : K;
+}[keyof T];
+*/
+
+export function splitPath<T extends object>(
+  path: StringPath<T> | StringPathLeaves<T>
+) {
   return path
     .toString()
     .split(/[[\].]+/)
     .filter((p) => p) as FieldPath<T>;
 }
 
+/**
+ * Lists all paths in an object as string accessors.
+ */
 export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
   ? NonNullable<U> extends object
     ?
@@ -32,6 +57,38 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
             : never;
         }[keyof T]
   : never;
+
+/**
+ * Like StringPath, but only with non-objects as accessible properties.
+ * As the leaves in a node tree, if you look at the object as a tree structure.
+ */
+export type StringPathLeaves<T extends object> =
+  NonNullable<T> extends (infer U)[]
+    ? NonNullable<U> extends object
+      ? `[${number}]${U extends unknown[]
+          ? ''
+          : '.'}${NonNullable<U> extends Date
+          ? never
+          : StringPathLeaves<NonNullable<U>> & string}`
+      : `[${number}]`
+    : NonNullable<T> extends object
+    ?
+        | {
+            // Same as FilterObjects but inlined for better intellisense
+            [K in keyof T]: T[K] extends object ? never : K;
+          }[keyof T]
+        | {
+            [K in keyof T]-?: K extends string
+              ? NonNullable<T[K]> extends object
+                ? `${K}${NonNullable<T[K]> extends unknown[]
+                    ? ''
+                    : '.'}${NonNullable<T[K]> extends Date
+                    ? never
+                    : StringPathLeaves<NonNullable<T[K]>> & string}`
+                : never
+              : never;
+          }[keyof T]
+    : never;
 
 export type StringPathType<T, P extends string> = P extends keyof T
   ? T[P]

@@ -35,7 +35,7 @@ import {
   type SafeParseReturnType
 } from 'zod';
 
-import { splitPath, type StringPath } from './stringPath.js';
+import { splitPath, type StringPathLeaves } from './stringPath.js';
 
 import { clone } from './utils.js';
 
@@ -63,7 +63,7 @@ export const setMessage = message;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends ZodValidation<AnyZodObject>>(
   form: Validation<T, unknown>,
-  path: StringPath<z.infer<UnwrapEffects<T>>>,
+  path: StringPathLeaves<z.infer<UnwrapEffects<T>>>,
   error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
     overwrite: false,

@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import type { StringPath, StringPathType } from '$lib/stringPath';
+import type {
+  StringPath,
+  StringPathType,
+  StringPathLeaves
+} from '$lib/stringPath';
 import { test } from 'vitest';
 
 type Obj = {
@@ -69,4 +73,20 @@ test('StringPathType', () => {
   const n1: StringPathType<Obj, 'city[2]'> = 'never';
   // @ts-expect-error incorrect path
   const n2: StringPathType<Obj, 'nope incorrect'> = 'never';
+});
+
+test('StringPathLeaves', () => {
+  const o = {
+    test: [1, 2, 3],
+    name: 'name',
+    other: [{ test: 'a', ok: 123 }, { test: 'b' }],
+    obj: {
+      ok: 123,
+      arr: [1, 2, 3],
+      test: '1231231',
+      next: [{ level: 1 }, { level: 2 }]
+    }
+  };
+
+  const p: StringPathLeaves<typeof o> = 'test[3]';
 });

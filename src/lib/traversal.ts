@@ -46,6 +46,7 @@ export function mapErrors<T extends AnyZodObject>(
   return output as ValidationErrors<T>;
 }
 
+// TODO: Can path be a StringPath?
 export function findErrors(
   errors: ValidationErrors<AnyZodObject>,
   path: string[] = []

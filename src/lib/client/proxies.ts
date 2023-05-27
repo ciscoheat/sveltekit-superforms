@@ -10,6 +10,7 @@ import type { z, AnyZodObject } from 'zod';
 import {
   splitPath,
   type StringPath,
+  type StringPathLeaves,
   type StringPathType
 } from '../stringPath.js';
 
@@ -218,8 +219,16 @@ export type FieldProxy<
 
 export function formFieldProxy<
   T extends AnyZodObject,
-  Path extends string & StringPath<z.infer<T>>
->(form: SuperForm<UnwrapEffects<T>, unknown>, path: Path) {
+  Path extends string & StringPathLeaves<z.infer<T>>
+>(
+  form: SuperForm<UnwrapEffects<T>, unknown>,
+  path: Path
+): {
+  path: Path;
+  value: Writable<StringPathType<z.infer<UnwrapEffects<T>>, Path>>;
+  errors: Writable<string[] | undefined>;
+  constraints: Writable<InputConstraint | undefined>;
+} {
   const path2 = splitPath<z.infer<T>>(path);
   // Filter out array indices, the constraints structure doesn't contain these.
   const constraintsPath = (path2 as unknown[])

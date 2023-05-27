@@ -1,4 +1,10 @@
-import type { InputConstraints, InputConstraint } from './index.js';
+import {
+  type InputConstraints,
+  type InputConstraint,
+  type ZodValidation,
+  type UnwrapEffects,
+  SuperFormError
+} from './index.js';
 
 import type { ZodTypeInfo } from './traversal.js';
 
@@ -9,7 +15,7 @@ import {
   type ZodDefault,
   type ZodNullable,
   type ZodOptional,
-  type ZodEffects,
+  ZodEffects,
   ZodString,
   ZodNumber,
   ZodBoolean,
@@ -235,17 +241,25 @@ export function valueOrDefault(
  * Returns the default values for a zod validation schema.
  * The main gotcha is that undefined values are changed to null if the field is nullable.
  */
-export function defaultValues<T extends AnyZodObject>(
+export function defaultValues<T extends ZodValidation<AnyZodObject>>(
   schema: T
-): z.infer<T> {
-  const fields = Object.keys(schema.keyof().Values);
+): z.infer<UnwrapEffects<T>> {
+  while (schema instanceof ZodEffects) {
+    schema = (schema as ZodEffects<T>)._def.schema;
+  }
 
-  let output: Record<string, unknown> = {};
+  if (!(schema instanceof ZodObject)) {
+    throw new SuperFormError(
+      'Only Zod schema objects can be used with defaultValues. ' +
+        'Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
+    );
+  }
 
-  const schemaTypeInfo = schemaInfo(schema);
+  const realSchema = schema as UnwrapEffects<T>;
+  const fields = Object.keys(realSchema.keyof().Values);
+  const schemaTypeInfo = schemaInfo(realSchema);
 
-  // Need to set empty properties after defaults are set.
-  output = Object.fromEntries(
+  return Object.fromEntries(
     fields.map((field) => {
       const typeInfo = schemaTypeInfo[field];
       const newValue = valueOrDefault(undefined, true, true, typeInfo);
@@ -253,8 +267,6 @@ export function defaultValues<T extends AnyZodObject>(
       return [field, newValue];
     })
   );
-
-  return output;
 }
 
 function constraints<T extends AnyZodObject>(

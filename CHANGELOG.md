@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.
 - The signature for `options.resetForm` has changed to `boolean | () => boolean` (it was async before).
 - The undocumented `defaultData` is now called `defaultValues`.
+- Added `[aria-invalid="true"]` to `errorSelector` option.
 
 ### Removed
 

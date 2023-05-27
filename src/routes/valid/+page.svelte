@@ -6,9 +6,8 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, delayed, message, valid } = superForm(
-    data.form,
-    {
+  const { form, errors, enhance, delayed, message, valid, constraints } =
+    superForm(data.form, {
       validators: $page.url.searchParams.has('zod')
         ? userSchema.extend({
             id: userSchema.shape.id.optional()
@@ -19,8 +18,7 @@
             email: (email: string) =>
               !email.includes('@') ? 'Enter a valid email address' : null
           }
-    }
-  );
+    });
 </script>
 
 <a href="/">&lt; Back to start</a>
@@ -51,18 +49,17 @@
 
   <label>
     Name<br />
-    <input name="name" data-invalid={$errors.name} bind:value={$form.name} />
+    <input
+      name="name"
+      aria-invalid={$errors.name ? 'true' : undefined}
+      bind:value={$form.name}
+    />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
   </label>
 
   <label>
     E-mail<br />
-    <input
-      name="email"
-      type="email"
-      data-invalid={$errors.email}
-      bind:value={$form.email}
-    />
+    <input name="email" type="email" bind:value={$form.email} />
     {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
   </label>
 

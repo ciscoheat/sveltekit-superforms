@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `setError` doesn't handle form-level errors anymore, use refine/superRefine on the schema, or the `message` helper.
 - The following methods are now using a string accessor like `tags[2].id` instead of an array `['tags', 2, 'id']`: `validate`, `setError` and all proxy methods (ending with `Proxy`).
-- The signature for `allErrors` and `firstError` has changed to `{ path: string[]; messages: string[] }`.
+- The signature for `allErrors` and `firstError` have changed to `{ path: string[]; messages: string[] }`.
 - The literal `"any"` is now an allowed value in `step` for constraints.
 - Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.
 - The signature for `options.resetForm` has changed to `boolean | () => boolean` (it was async before).

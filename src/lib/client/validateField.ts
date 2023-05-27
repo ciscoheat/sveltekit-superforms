@@ -124,10 +124,6 @@ export async function validateField<T extends AnyZodObject, M>(
     return get(Errors);
   }
 
-  function Errors_exist() {
-    return errorsExist(get(Errors));
-  }
-
   function Errors_clear(
     options: NonNullable<Parameters<typeof clearErrors>[1]>
   ) {

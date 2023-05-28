@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `setError` doesn't handle form-level errors anymore, use refine/superRefine on the schema, or the `message` helper.
-- The following methods are now using a string accessor like `tags[2].id` instead of an array `['tags', 2, 'id']`: `validate`, `setError` and all proxy methods (ending with `Proxy`).
+- `FieldPath` is gone - the following methods are now using a string accessor like `tags[2].id` instead of an array like `['tags', 2, 'id']`: `validate`, `setError` and all proxy methods (ending with `Proxy`). This also applies to generic components.
 - The signature for `allErrors` and `firstError` have changed to `{ path: string[]; messages: string[] }`.
 - The literal `"any"` is now an allowed value in `step` for constraints.
 - Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.

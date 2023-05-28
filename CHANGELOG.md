@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `superValidateSync`, useful on the client for SPA:s.
 - Added `defaultValues`, which takes a schema and returns the default values for it.
 - `options.resetForm` now works without `use:enhance`!
+- Support for `ZodPipeline`.
 
 ## [0.8.7] - 2023-05-22
 

@@ -9,6 +9,7 @@ import type { MaybePromise } from '$app/forms';
 
 export type ZodTypeInfo = {
   zodType: ZodTypeAny;
+  originalType: ZodTypeAny;
   isNullable: boolean;
   isOptional: boolean;
   hasDefault: boolean;

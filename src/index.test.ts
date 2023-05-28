@@ -909,3 +909,29 @@ test('setMessage and setError with refined schema', async () => {
     id: ['Id error']
   });
 });
+
+test.only('Schema with pipe()', async () => {
+  const schema = z.object({
+    len: z
+      .string()
+      .transform((val) => val.length)
+      .pipe(z.number().min(5)),
+    date: z.union([z.number(), z.string(), z.date()]).pipe(z.coerce.date()),
+    num: z.number().or(z.string()).pipe(z.coerce.number())
+  });
+
+  const form = await superValidate(schema);
+  assert(form.valid === false);
+  expect(form.data.len).toEqual(0);
+  expect(form.data.num).toEqual(0);
+
+  const formData4 = new FormData();
+  formData4.set('len', 'four');
+  formData4.set('date', '2023-05-28');
+  formData4.set('num', '123');
+  const form4 = await superValidate(formData4, schema);
+  assert(form4.valid === false);
+  expect(form4.data.len).toBeNaN();
+  expect(form4.data.date.getDate()).toEqual(28);
+  expect(form4.data.num).toEqual(123);
+});

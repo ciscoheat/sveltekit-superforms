@@ -24,7 +24,8 @@ import {
   ZodBigInt,
   ZodObject,
   ZodSymbol,
-  ZodRecord
+  ZodRecord,
+  ZodPipeline
 } from 'zod';
 
 import type { SuperValidateOptions } from './superValidate.js';
@@ -75,6 +76,8 @@ export function hasEffects(zodType: ZodTypeAny): boolean {
 }
 
 export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
+  const originalType = zodType;
+
   let _wrapped = true;
   let isNullable = false;
   let isOptional = false;
@@ -98,6 +101,8 @@ export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
     } else if (zodType._def.typeName == 'ZodEffects') {
       if (!effects) effects = zodType as ZodEffects<ZodTypeAny>;
       zodType = zodType._def.schema;
+    } else if (zodType._def.typeName == 'ZodPipeline') {
+      zodType = (zodType as ZodPipeline<ZodTypeAny, ZodTypeAny>)._def.out;
     } else {
       _wrapped = false;
     }
@@ -105,6 +110,7 @@ export function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
 
   return {
     zodType,
+    originalType,
     isNullable,
     isOptional,
     hasDefault,

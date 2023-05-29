@@ -106,13 +106,11 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
 }
 
 function formDataToValidation<T extends AnyZodObject>(
-  schema: T,
-  fields: string[],
   data: FormData,
-  warnings: SuperValidateOptions['warnings']
+  schemaData: SchemaData<T>
 ) {
   const output: Record<string, unknown> = {};
-  const entityInfo = entityData(schema, warnings);
+  const { schemaKeys, entityInfo } = schemaData;
 
   function parseSingleEntry(
     key: string,
@@ -127,7 +125,7 @@ function formDataToValidation<T extends AnyZodObject>(
     }
   }
 
-  for (const key of fields) {
+  for (const key of schemaKeys) {
     const typeInfo = entityInfo.typeInfo[key];
     const entries = data.getAll(key);
 
@@ -189,7 +187,6 @@ function formDataToValidation<T extends AnyZodObject>(
     ) {
       return value;
     } else if (zodType instanceof ZodNativeEnum) {
-      //console.log(field, typeof value, value, zodType.enum);
       if (value in zodType.enum) {
         const enumValue = zodType.enum[value];
         if (typeof enumValue === 'number') return enumValue;
@@ -207,6 +204,200 @@ function formDataToValidation<T extends AnyZodObject>(
 
   return output as z.infer<T>;
 }
+
+///// superValidate helpers /////////////////////////////////////////
+
+type SchemaData<T extends AnyZodObject> = {
+  originalSchema: ZodValidation<T>;
+  unwrappedSchema: T;
+  hasEffects: boolean;
+  entityInfo: Entity<T>;
+  schemaKeys: string[];
+  opts: SuperValidateOptions;
+};
+
+type ParsedData = {
+  id: string | undefined;
+  data: Record<string, unknown> | null | undefined;
+};
+
+/**
+ * Check what data to validate. If no parsed data, the default entity
+ * may still have to be validated if there are side-effects or errors
+ * should be displayed.
+ */
+function dataToValidate<T extends AnyZodObject>(
+  parsed: ParsedData,
+  schemaData: SchemaData<T>
+): Record<string, unknown> | undefined {
+  if (!parsed.data) {
+    return schemaData.hasEffects || schemaData.opts.errors === true
+      ? schemaData.entityInfo.defaultEntity
+      : undefined;
+  } else {
+    return parsed.data;
+  }
+}
+
+function parseFormData<T extends AnyZodObject>(
+  formData: FormData,
+  schemaData: SchemaData<T>
+): ParsedData {
+  function tryParseSuperJson() {
+    if (formData.has('__superform_json')) {
+      try {
+        const output = parse(
+          formData.getAll('__superform_json').join('') ?? ''
+        );
+        if (typeof output === 'object') {
+          return output as z.infer<UnwrapEffects<T>>;
+        }
+      } catch {
+        //
+      }
+    }
+    return null;
+  }
+
+  const data = tryParseSuperJson();
+  const id = formData.get('__superform_id')?.toString() ?? undefined;
+
+  return data
+    ? { id, data }
+    : {
+        id,
+        data: formDataToValidation(formData, schemaData)
+      };
+}
+
+function parseSearchParams<T extends AnyZodObject>(
+  data: URL | URLSearchParams,
+  schemaData: SchemaData<T>
+): ParsedData {
+  if (data instanceof URL) data = data.searchParams;
+
+  const convert = new FormData();
+  for (const [key, value] of data.entries()) {
+    convert.append(key, value);
+  }
+  return parseFormData(convert, schemaData);
+}
+
+function validateResult<T extends AnyZodObject, M>(
+  parsed: ParsedData,
+  schemaData: SchemaData<T>,
+  result: SafeParseReturnType<unknown, z.infer<T>> | undefined
+): Validation<T, M> {
+  const { opts: options, entityInfo } = schemaData;
+
+  // Determine id for form
+  // 1. options.id
+  // 2. formData.__superform_id
+  // 3. schema hash
+  const id = parsed.data
+    ? options.id ?? parsed.id ?? entityInfo.hash
+    : options.id ?? entityInfo.hash;
+
+  if (!parsed.data) {
+    let data: z.infer<T> | undefined = undefined;
+    let errors: ReturnType<typeof mapErrors> = {};
+
+    const valid = result?.success ?? false;
+    const { opts: options, entityInfo } = schemaData;
+
+    if (result) {
+      if (result.success) {
+        data = result.data;
+      } else if (options.errors === true) {
+        errors = mapErrors<T>(result.error.format());
+      }
+    }
+
+    return {
+      id,
+      valid,
+      errors,
+      // Copy the default entity so it's not modified
+      data: data ?? clone(entityInfo.defaultEntity),
+      empty: true,
+      constraints: entityInfo.constraints
+    };
+  } else {
+    const { opts: options, schemaKeys, entityInfo } = schemaData;
+
+    if (!result) {
+      throw new SuperFormError(
+        'Validation data exists without validation result.'
+      );
+    }
+
+    if (!result.success) {
+      const partialData = parsed.data as Partial<z.infer<T>>;
+      const errors =
+        options.errors !== false ? mapErrors<T>(result.error.format()) : {};
+
+      return {
+        id,
+        valid: false,
+        errors,
+        data: Object.fromEntries(
+          schemaKeys.map((key) => [
+            key,
+            key in partialData
+              ? partialData[key]
+              : clone(entityInfo.defaultEntity[key])
+          ])
+        ),
+        empty: false,
+        constraints: entityInfo.constraints
+      };
+    } else {
+      return {
+        id,
+        valid: true,
+        errors: {},
+        data: result.data,
+        empty: false,
+        constraints: entityInfo.constraints
+      };
+    }
+  }
+}
+
+function getSchemaData<T extends AnyZodObject>(
+  schema: ZodValidation<T>,
+  options: SuperValidateOptions | undefined
+): SchemaData<T> {
+  const originalSchema = schema as T;
+
+  let unwrappedSchema = schema;
+  let hasEffects = false;
+
+  while (unwrappedSchema instanceof ZodEffects) {
+    hasEffects = true;
+    unwrappedSchema = (unwrappedSchema as ZodEffects<T>)._def.schema;
+  }
+
+  if (!(unwrappedSchema instanceof ZodObject)) {
+    throw new SuperFormError(
+      'Only Zod schema objects can be used with superValidate. ' +
+        'Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
+    );
+  }
+
+  const entityInfo = entityData(unwrappedSchema, options?.warnings);
+
+  return {
+    originalSchema,
+    unwrappedSchema: unwrappedSchema as UnwrapEffects<T>,
+    hasEffects,
+    entityInfo,
+    schemaKeys: entityInfo.keys,
+    opts: options ?? {}
+  };
+}
+
+/////////////////////////////////////////////////////////////////////
 
 export type SuperValidateOptions = {
   errors?: boolean;
@@ -264,9 +455,7 @@ export async function superValidate<
     data = null;
   }
 
-  if (!options) options = {};
-
-  const originalSchema = schema as T;
+  const schemaData = getSchemaData(schema as T, options);
 
   async function tryParseFormData(request: Request) {
     let formData: FormData | undefined = undefined;
@@ -281,30 +470,45 @@ export async function superValidate<
         // POST requests when event/request is used after formData has been fetched.
         throw e;
       }
-      return null;
+      // No data found, return an empty form
+      return { id: undefined, data: undefined };
     }
-    return formData;
+    return parseFormData(formData, schemaData);
   }
 
-  // If FormData exists, don't check for missing fields.
-  // Checking only at GET requests, basically, where
-  // the data is coming from the DB.
+  async function parseRequest() {
+    let parsed: ParsedData;
 
-  if (data instanceof Request) {
-    const formData = await tryParseFormData(data);
-    return superValidateSync(formData, originalSchema, options);
-  } else if (
-    data &&
-    typeof data === 'object' &&
-    'request' in data &&
-    data.request instanceof Request
-  ) {
-    const formData = await tryParseFormData(data.request);
-    return superValidateSync(formData, originalSchema, options);
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return superValidateSync(data as any, originalSchema, options);
+    if (data instanceof FormData) {
+      parsed = parseFormData(data, schemaData);
+    } else if (data instanceof URL || data instanceof URLSearchParams) {
+      parsed = parseSearchParams(data, schemaData);
+    } else if (data instanceof Request) {
+      parsed = await tryParseFormData(data);
+    } else if (
+      data &&
+      typeof data === 'object' &&
+      'request' in data &&
+      data.request instanceof Request
+    ) {
+      parsed = await tryParseFormData(data.request);
+    } else {
+      parsed = { id: undefined, data: data as Record<string, unknown> };
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    // This logic is shared between superValidate and superValidateSync //
+    const toValidate = dataToValidate(parsed, schemaData);
+    const result = toValidate
+      ? schemaData.originalSchema.safeParse(toValidate)
+      : undefined;
+    //////////////////////////////////////////////////////////////////////
+
+    return { parsed, result };
   }
+
+  const { parsed, result } = await parseRequest();
+  return validateResult(parsed, schemaData, result);
 }
 
 export function actionResult<
@@ -403,201 +607,28 @@ export function superValidateSync<
   schema?: T | SuperValidateOptions,
   options?: SuperValidateOptions
 ): Validation<UnwrapEffects<T>, M> {
-  if (data && typeof data === 'object' && 'safeParseAsync' in data) {
+  if (data && typeof data === 'object' && 'safeParse' in data) {
     options = schema as SuperValidateOptions | undefined;
     schema = data as T;
     data = null;
   }
 
-  if (!options) options = {};
+  const schemaData = getSchemaData(schema as T, options);
 
-  const originalSchema = schema as T;
+  const parsed =
+    data instanceof FormData
+      ? parseFormData(data, schemaData)
+      : data instanceof URL || data instanceof URLSearchParams
+      ? parseSearchParams(data, schemaData)
+      : { id: undefined, data: data as Record<string, unknown> }; // Only schema, null or undefined left
 
-  let wrappedSchema = schema;
-  let hasEffects = false;
+  //////////////////////////////////////////////////////////////////////
+  // This logic is shared between superValidate and superValidateSync //
+  const toValidate = dataToValidate(parsed, schemaData);
+  const result = toValidate
+    ? schemaData.originalSchema.safeParse(toValidate)
+    : undefined;
+  //////////////////////////////////////////////////////////////////////
 
-  while (wrappedSchema instanceof ZodEffects) {
-    hasEffects = true;
-    wrappedSchema = (wrappedSchema as ZodEffects<T>)._def.schema;
-  }
-
-  if (!(wrappedSchema instanceof ZodObject)) {
-    throw new SuperFormError(
-      'Only Zod schema objects can be used with superValidate. Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
-    );
-  }
-
-  const realSchema = wrappedSchema as UnwrapEffects<T>;
-
-  const entityInfo = entityData(realSchema, options.warnings);
-  const schemaKeys = entityInfo.keys;
-
-  function parseFormData(formData: FormData) {
-    function tryParseSuperJson() {
-      if (formData.has('__superform_json')) {
-        try {
-          const output = parse(
-            formData.getAll('__superform_json').join('') ?? ''
-          );
-          if (typeof output === 'object') {
-            return output as z.infer<UnwrapEffects<T>>;
-          }
-        } catch {
-          //
-        }
-      }
-      return null;
-    }
-
-    function parseFormId() {
-      return formData.get('__superform_id')?.toString() ?? undefined;
-    }
-
-    const data = tryParseSuperJson();
-    const id = parseFormId();
-
-    return data
-      ? { id, data }
-      : {
-          id,
-          data: formDataToValidation(
-            realSchema,
-            schemaKeys,
-            formData,
-            options?.warnings
-          )
-        };
-  }
-
-  function parseSearchParams(data: URL | URLSearchParams) {
-    if (data instanceof URL) data = data.searchParams;
-
-    const convert = new FormData();
-    for (const [key, value] of data.entries()) {
-      convert.append(key, value);
-    }
-    return parseFormData(convert);
-  }
-
-  // If FormData exists, don't check for missing fields.
-  // Checking only at GET requests, basically, where
-  // the data is coming from the DB.
-  let formData: ReturnType<typeof parseFormData> | undefined = undefined;
-  let formId: string | undefined = undefined;
-
-  if (data instanceof FormData) {
-    formData = parseFormData(data);
-  } else if (data instanceof URL || data instanceof URLSearchParams) {
-    formData = parseSearchParams(data);
-  }
-
-  // Determine id for form
-  // 1. options.id
-  // 2. formData.__superform_id
-  // 3. schema hash
-  if (formData) {
-    data = formData.data;
-    formId = options.id ?? formData.id ?? entityInfo.hash;
-  } else {
-    formId = options.id ?? entityInfo.hash;
-  }
-
-  let output: Validation<UnwrapEffects<T>, M>;
-
-  if (!data) {
-    const addErrors = options.errors === true;
-    const result =
-      hasEffects || addErrors
-        ? originalSchema.safeParse(entityInfo.defaultEntity)
-        : undefined;
-
-    output = emptyResultToValidation(result, entityInfo, addErrors);
-  } else {
-    const result = originalSchema.safeParse(data);
-
-    output = resultToValidation(
-      result,
-      entityInfo,
-      schemaKeys,
-      data,
-      options.errors !== false
-    );
-  }
-
-  if (formId !== undefined) output.id = formId;
-
-  return output;
-}
-
-function emptyResultToValidation<
-  T extends ZodValidation<AnyZodObject>,
-  M,
-  R extends SafeParseReturnType<unknown, z.infer<UnwrapEffects<T>>>
->(
-  result: R | undefined,
-  entityInfo: Entity<UnwrapEffects<T>>,
-  addErrors: boolean
-): Validation<UnwrapEffects<T>, M> {
-  let data: z.infer<UnwrapEffects<T>> | undefined = undefined;
-  let errors: ReturnType<typeof mapErrors> = {};
-
-  const valid = result?.success ?? false;
-
-  if (result) {
-    if (result.success) {
-      data = result.data;
-    } else if (addErrors) {
-      errors = mapErrors<UnwrapEffects<T>>(result.error.format());
-    }
-  }
-
-  return {
-    valid,
-    errors,
-    // Copy the default entity so it's not modified
-    data: data ?? clone(entityInfo.defaultEntity),
-    empty: true,
-    constraints: entityInfo.constraints
-  };
-}
-
-function resultToValidation<
-  T extends ZodValidation<AnyZodObject>,
-  M,
-  R extends SafeParseReturnType<unknown, z.infer<UnwrapEffects<T>>>
->(
-  result: R,
-  entityInfo: Entity<UnwrapEffects<T>>,
-  schemaKeys: string[],
-  partialData: Partial<z.infer<UnwrapEffects<T>>>,
-  addErrors: boolean
-): Validation<UnwrapEffects<T>, M> {
-  if (!result.success) {
-    const errors = addErrors
-      ? mapErrors<UnwrapEffects<T>>(result.error.format())
-      : {};
-
-    return {
-      valid: false,
-      errors,
-      data: Object.fromEntries(
-        schemaKeys.map((key) => [
-          key,
-          key in partialData
-            ? partialData[key]
-            : clone(entityInfo.defaultEntity[key])
-        ])
-      ),
-      empty: false,
-      constraints: entityInfo.constraints
-    };
-  } else {
-    return {
-      valid: true,
-      errors: {},
-      data: result.data,
-      empty: false,
-      constraints: entityInfo.constraints
-    };
-  }
+  return validateResult(parsed, schemaData, result);
 }

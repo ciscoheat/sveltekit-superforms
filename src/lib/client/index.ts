@@ -1,7 +1,6 @@
-import type { MaybePromise, SubmitFunction } from '$app/forms';
 import { beforeNavigate } from '$app/navigation';
 import { page } from '$app/stores';
-import type { ActionResult } from '@sveltejs/kit';
+import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
 import type { Page } from '@sveltejs/kit';
 import {
   derived,
@@ -22,7 +21,7 @@ import {
   type ZodValidation
 } from '../index.js';
 import type { z, AnyZodObject, ZodEffects } from 'zod';
-import type { FormFields } from '../index.js';
+import type { FormFields, MaybePromise } from '../index.js';
 import {
   findErrors,
   comparePaths,

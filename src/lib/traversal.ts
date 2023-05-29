@@ -1,11 +1,10 @@
-import type { ValidationErrors, FieldPath } from './index.js';
+import type { MaybePromise, ValidationErrors, FieldPath } from './index.js';
 import type {
   ZodTypeAny,
   AnyZodObject,
   ZodFormattedError,
   ZodEffects
 } from 'zod';
-import type { MaybePromise } from '$app/forms';
 
 export type ZodTypeInfo = {
   zodType: ZodTypeAny;

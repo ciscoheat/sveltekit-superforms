@@ -10,7 +10,8 @@ import type {
 
 import type { Entity, UnwrappedEntity } from './server/entity.js';
 import type { Writable } from 'svelte/store';
-import type { MaybePromise } from '$app/forms';
+
+export type MaybePromise<T> = T | Promise<T>;
 
 export class SuperFormError extends Error {
   constructor(message?: string) {

@@ -910,7 +910,7 @@ test('setMessage and setError with refined schema', async () => {
   });
 });
 
-test.only('Schema with pipe()', async () => {
+test('Schema with pipe()', async () => {
   const schema = z.object({
     len: z
       .string()

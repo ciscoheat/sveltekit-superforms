@@ -78,15 +78,20 @@ test('StringPathType', () => {
 test('StringPathLeaves', () => {
   const o = {
     test: [1, 2, 3],
+    test2: [
+      [{ date: new Date() }],
+      [{ date: new Date() }, { date: new Date() }]
+    ],
     name: 'name',
     other: [{ test: 'a', ok: 123 }, { test: 'b' }],
     obj: {
-      ok: 123,
+      ok: new Date('2023-05-29'),
       arr: [1, 2, 3],
       test: '1231231',
       next: [{ level: 1 }, { level: 2 }]
     }
   };
 
+  // obj.ok should exist even though it's an object (Date)
   const p: StringPathLeaves<typeof o> = 'test[3]';
 });

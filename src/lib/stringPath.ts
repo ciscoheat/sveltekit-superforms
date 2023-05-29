@@ -60,31 +60,31 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
 
 /**
  * Like StringPath, but only with non-objects as accessible properties.
- * As the leaves in a node tree, if you look at the object as a tree structure.
+ * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
 export type StringPathLeaves<T extends object> =
   NonNullable<T> extends (infer U)[]
     ? NonNullable<U> extends object
-      ? `[${number}]${U extends unknown[]
+      ? `[${number}]${NonNullable<U> extends unknown[]
           ? ''
-          : '.'}${NonNullable<U> extends Date
-          ? never
-          : StringPathLeaves<NonNullable<U>> & string}`
+          : '.'}${StringPathLeaves<NonNullable<U>> & string}`
       : `[${number}]`
     : NonNullable<T> extends object
     ?
         | {
             // Same as FilterObjects but inlined for better intellisense
-            [K in keyof T]: T[K] extends object ? never : K;
+            [K in keyof T]: NonNullable<T[K]> extends object
+              ? NonNullable<T[K]> extends Date
+                ? K
+                : never
+              : K;
           }[keyof T]
         | {
             [K in keyof T]-?: K extends string
               ? NonNullable<T[K]> extends object
                 ? `${K}${NonNullable<T[K]> extends unknown[]
                     ? ''
-                    : '.'}${NonNullable<T[K]> extends Date
-                    ? never
-                    : StringPathLeaves<NonNullable<T[K]>> & string}`
+                    : '.'}${StringPathLeaves<NonNullable<T[K]>> & string}`
                 : never
               : never;
           }[keyof T]

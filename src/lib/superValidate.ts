@@ -36,6 +36,11 @@ import {
 } from 'zod';
 
 import { splitPath, type StringPathLeaves } from './stringPath.js';
+export {
+  splitPath,
+  type StringPath,
+  type StringPathLeaves
+} from './stringPath.js';
 
 import { clone } from './utils.js';
 
@@ -455,7 +460,7 @@ export async function superValidate<
     data = null;
   }
 
-  const schemaData = getSchemaData(schema as T, options);
+  const schemaData = getSchemaData(schema as UnwrapEffects<T>, options);
 
   async function tryParseFormData(request: Request) {
     let formData: FormData | undefined = undefined;
@@ -508,7 +513,7 @@ export async function superValidate<
   }
 
   const { parsed, result } = await parseRequest();
-  return validateResult(parsed, schemaData, result);
+  return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);
 }
 
 export function actionResult<
@@ -613,7 +618,7 @@ export function superValidateSync<
     data = null;
   }
 
-  const schemaData = getSchemaData(schema as T, options);
+  const schemaData = getSchemaData(schema as UnwrapEffects<T>, options);
 
   const parsed =
     data instanceof FormData
@@ -630,5 +635,5 @@ export function superValidateSync<
     : undefined;
   //////////////////////////////////////////////////////////////////////
 
-  return validateResult(parsed, schemaData, result);
+  return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);
 }

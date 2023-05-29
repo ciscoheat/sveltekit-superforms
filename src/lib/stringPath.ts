@@ -1,25 +1,5 @@
 import type { FieldPath } from './index.js';
 
-/*
-type Expand<T> = T extends (...args: infer A) => infer R
-  ? (...args: Expand<A>) => Expand<R>
-  : T extends infer O
-  ? { [K in keyof O]: O[K] }
-  : never;
-
-type ExpandRecursively<T> = T extends (...args: infer A) => infer R
-  ? (...args: ExpandRecursively<A>) => ExpandRecursively<R>
-  : T extends object
-  ? T extends infer O
-    ? { [K in keyof O]: ExpandRecursively<O[K]> }
-    : never
-  : T;
-
-type FilterObjects<T extends object> = {
-  [K in keyof T]: T[K] extends object ? never : K;
-}[keyof T];
-*/
-
 export function splitPath<T extends object>(
   path: StringPath<T> | StringPathLeaves<T>
 ) {

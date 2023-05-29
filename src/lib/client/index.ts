@@ -65,6 +65,12 @@ export {
   defaultValues
 } from '../superValidate.js';
 
+export {
+  splitPath,
+  type StringPath,
+  type StringPathLeaves
+} from '../stringPath.js';
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;
@@ -346,13 +352,13 @@ export function superForm<
   }
 
   function Context_newEmptyForm(
-    data: Partial<z.infer<T>> = {}
+    data?: Partial<z.infer<T>>
   ): Validation<T, M> {
     return {
       valid: false,
       errors: {},
-      data,
-      empty: true,
+      data: data ?? {},
+      empty: !!data,
       constraints: {} as Validation<T, M>['constraints']
     };
   }

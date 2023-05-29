@@ -1,9 +1,7 @@
 <script lang="ts">
-  import type { StringPath } from '$lib/stringPath';
-
-  import type { FieldPath, UnwrapEffects } from '$lib';
-  import type { SuperForm } from '$lib/client';
   import type { z, AnyZodObject } from 'zod';
+  import type { UnwrapEffects } from '$lib';
+  import type { SuperForm, StringPath } from '$lib/client';
 
   import { formFieldProxy } from '$lib/client';
 

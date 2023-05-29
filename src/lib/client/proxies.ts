@@ -10,9 +10,9 @@ import type { z, AnyZodObject } from 'zod';
 import {
   splitPath,
   type StringPath,
-  type StringPathLeaves,
   type StringPathType
 } from '../stringPath.js';
+import type { ZodValidation } from '../index.js';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -218,10 +218,10 @@ export type FieldProxy<
 };
 
 export function formFieldProxy<
-  T extends AnyZodObject,
-  Path extends string & StringPathLeaves<z.infer<T>>
+  T extends ZodValidation<AnyZodObject>,
+  Path extends string & StringPath<z.infer<UnwrapEffects<T>>>
 >(
-  form: SuperForm<UnwrapEffects<T>, unknown>,
+  form: SuperForm<T, unknown>,
   path: Path
 ): {
   path: Path;
@@ -229,7 +229,7 @@ export function formFieldProxy<
   errors: Writable<string[] | undefined>;
   constraints: Writable<InputConstraint | undefined>;
 } {
-  const path2 = splitPath<z.infer<T>>(path);
+  const path2 = splitPath<z.infer<UnwrapEffects<T>>>(path);
   // Filter out array indices, the constraints structure doesn't contain these.
   const constraintsPath = (path2 as unknown[])
     .filter((p) => isNaN(parseInt(String(p))))

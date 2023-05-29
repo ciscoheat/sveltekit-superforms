@@ -1,12 +1,17 @@
 <script lang="ts">
   import type { Writable } from 'svelte/store';
-  import type { UnwrapEffects, FieldPath } from '$lib';
-  import { dateProxy, formFieldProxy, type SuperForm } from '$lib/client';
+  import type { UnwrapEffects } from '$lib';
+  import {
+    dateProxy,
+    formFieldProxy,
+    type SuperForm,
+    type StringPath
+  } from '$lib/client';
   import type { z, AnyZodObject } from 'zod';
 
   type T = $$Generic<AnyZodObject>;
   export let form: SuperForm<UnwrapEffects<T>, unknown>;
-  export let field: keyof z.infer<T> | FieldPath<z.infer<T>>;
+  export let field: string & StringPath<z.infer<T>>;
   export let type:
     | 'text'
     | 'password'
@@ -19,15 +24,19 @@
 
   export let label: string;
 
-  //let value: Writable<any>;
   const fieldProxy = formFieldProxy(form, field);
   const { errors, constraints, value } = fieldProxy;
-  //value = fieldProxy.value;
+
   let proxy: Writable<string> | undefined;
+
   if (type === 'date') {
-    proxy = dateProxy(form.form, field, { format: 'date' });
+    proxy = dateProxy(form.form, field as string & StringPath<T>, {
+      format: 'date'
+    });
   } else if (type === 'datetime') {
-    proxy = dateProxy(form.form, field, { format: 'datetime' });
+    proxy = dateProxy(form.form, field as string & StringPath<T>, {
+      format: 'datetime'
+    });
   }
   $: boolValue = value as Writable<boolean>;
 </script>

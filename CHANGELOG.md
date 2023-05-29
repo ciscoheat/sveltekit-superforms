@@ -9,14 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Explicitly setting a form `id` for multiple forms is not required anymore when using `use:enhance`, unless the forms are using the same schema. An id can be specified in the options or in a hidden form field called `__superform_id`.
 - `setError` doesn't handle form-level errors anymore, use refine/superRefine on the schema, or the `message` helper.
 - `FieldPath` is gone - the following methods are now using a string accessor like `tags[2].id` instead of an array like `['tags', 2, 'id']`: `validate`, `setError` and all proxy methods (ending with `Proxy`). This also applies to generic components.
-- The signature for `allErrors` and `firstError` have changed to `{ path: string[]; messages: string[] }`.
+- The signature for `allErrors` and `firstError` has changed to `{ path: string[]; messages: string[] }`.
 - The literal `"any"` is now an allowed value in `step` for constraints.
 - Multiple `regex` and `step` is now allowed in a schema. A warning will be emitted by default, that can be turned off.
 - The signature for `options.resetForm` has changed to `boolean | () => boolean` (it was async before).
 - The undocumented `defaultData` is now called `defaultValues`.
 - Added `[aria-invalid="true"]` to `errorSelector` option.
+- `options.resetForm` now works without `use:enhance`!
 
 ### Removed
 
@@ -25,14 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Explicitly setting a form `id` for multiple forms is not required anymore when using `use:enhance`, unless the forms are using the same schema. An id can be specified in the options or in a hidden form field called `__superform_id`.
 - Fixed deprecation notices for `use:enhance`.
 
 ### Added
 
-- Added `superValidateSync`, useful on the client for SPA:s.
+- Added `superValidateSync`, useful in components for SPA:s.
 - Added `defaultValues`, which takes a schema and returns the default values for it.
-- `options.resetForm` now works without `use:enhance`!
 - Support for `ZodPipeline`.
 
 ## [0.8.7] - 2023-05-22

@@ -65,12 +65,6 @@ export {
   defaultValues
 } from '../superValidate.js';
 
-export {
-  splitPath,
-  type StringPath,
-  type StringPathLeaves
-} from '../stringPath.js';
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;
@@ -224,8 +218,8 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   timeout: Readable<boolean>;
 
   fields: FormFields<UnwrapEffects<T>>;
-  firstError: Readable<{ path: string[]; messages: string[] } | null>;
-  allErrors: Readable<{ path: string[]; messages: string[] }[]>;
+  firstError: Readable<{ path: string; messages: string[] } | null>;
+  allErrors: Readable<{ path: string; messages: string[] }[]>;
 
   options: FormOptions<T, M>;
 

@@ -34,6 +34,8 @@ export type ZodValidation<T extends AnyZodObject> =
   | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
   | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
+export { type StringPath, type StringPathLeaves } from './stringPath.js';
+
 export type RawShape<T> = T extends ZodObject<infer U> ? U : never;
 
 type UnwrappedRawShape<

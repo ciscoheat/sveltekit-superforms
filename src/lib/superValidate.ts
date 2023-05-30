@@ -36,11 +36,6 @@ import {
 } from 'zod';
 
 import { splitPath, type StringPathLeaves } from './stringPath.js';
-export {
-  splitPath,
-  type StringPath,
-  type StringPathLeaves
-} from './stringPath.js';
 
 import { clone } from './utils.js';
 

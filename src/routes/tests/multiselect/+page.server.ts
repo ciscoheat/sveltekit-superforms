@@ -5,19 +5,24 @@ import type { Actions, PageServerLoad } from './$types';
 import { formSchema } from './schemas';
 
 export const load: PageServerLoad = async () => {
-  const form = await superValidate(formSchema);
+  const form = await superValidate<typeof formSchema, { message: string }>(
+    formSchema
+  );
 
   return { form };
 };
 
 export const actions: Actions = {
   default: async (request) => {
-    const form = await superValidate(request, formSchema);
+    const form = await superValidate<typeof formSchema, { message: string }>(
+      request,
+      formSchema
+    );
     console.log(form.valid);
     if (!form.valid) {
       return fail(400, { form });
     }
 
-    return message(form, 'Posted!');
+    return message(form, { message: 'Posted!' });
   }
 };

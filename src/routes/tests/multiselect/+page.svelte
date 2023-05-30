@@ -21,7 +21,7 @@
 
 <SuperDebug data={{ $form, $errors, $tainted }} />
 
-{#if $message}<p>{$message}</p>{/if}
+{#if $message}<p>{$message.message}</p>{/if}
 
 <form method="POST" use:enhance>
   <div>

@@ -1,14 +1,12 @@
 <script lang="ts">
   import type { z, AnyZodObject } from 'zod';
-  import type { UnwrapEffects } from '$lib';
-  import type { SuperForm, StringPath } from '$lib/client';
-
-  import { formFieldProxy } from '$lib/client';
+  import type { ZodValidation, StringPathLeaves } from '$lib';
+  import { formFieldProxy, type SuperForm } from '$lib/client';
 
   type T = $$Generic<AnyZodObject>;
 
-  export let form: SuperForm<UnwrapEffects<T>, unknown>;
-  export let field: string & StringPath<z.infer<UnwrapEffects<T>>>;
+  export let form: SuperForm<ZodValidation<T>, unknown>;
+  export let field: string & StringPathLeaves<z.infer<T>>;
 
   const { path, value, errors, constraints } = formFieldProxy(form, field);
 </script>

@@ -5,6 +5,7 @@ import type {
   ZodFormattedError,
   ZodEffects
 } from 'zod';
+import { mergePath } from './stringPath.js';
 
 export type ZodTypeInfo = {
   zodType: ZodTypeAny;
@@ -46,20 +47,23 @@ export function mapErrors<T extends AnyZodObject>(
   return output as ValidationErrors<T>;
 }
 
-// TODO: Can path be a StringPath?
-export function findErrors(
+export function findErrors(errors: ValidationErrors<AnyZodObject>) {
+  return _findErrors(errors, []);
+}
+
+function _findErrors(
   errors: ValidationErrors<AnyZodObject>,
-  path: string[] = []
-): { path: string[]; messages: string[] }[] {
+  path: string[]
+): { path: string; messages: string[] }[] {
   const entries = Object.entries(errors);
   return entries
     .filter(([, value]) => value !== undefined)
     .flatMap(([key, messages]) => {
       if (Array.isArray(messages) && messages.length > 0) {
         const currPath = path.concat([key]);
-        return { path: currPath, messages };
+        return { path: mergePath(currPath), messages };
       } else {
-        return findErrors(
+        return _findErrors(
           errors[key] as ValidationErrors<AnyZodObject>,
           path.concat([key])
         );

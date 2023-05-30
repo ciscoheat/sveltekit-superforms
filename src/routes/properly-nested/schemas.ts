@@ -5,6 +5,7 @@ export const schema = z.object({
   address: z.string().min(2),
   city: z.string().min(2),
   agree: z.boolean(),
+  roles: z.string().min(1).array().optional(),
   luckyNumber: z.number(),
   tags: z
     .object({

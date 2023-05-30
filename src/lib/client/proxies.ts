@@ -10,6 +10,7 @@ import type { z, AnyZodObject } from 'zod';
 import {
   splitPath,
   type StringPath,
+  type StringPathLeaves,
   type StringPathType
 } from '../stringPath.js';
 import type { ZodValidation } from '../index.js';
@@ -37,7 +38,7 @@ const defaultOptions: DefaultOptions = {
 
 export function intProxy<
   T extends Record<string, unknown>,
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(
   form: Writable<T>,
   path: Path,
@@ -51,7 +52,7 @@ export function intProxy<
 
 export function booleanProxy<
   T extends Record<string, unknown>,
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(
   form: Writable<T>,
   path: Path,
@@ -67,7 +68,7 @@ export function booleanProxy<
 
 export function numberProxy<
   T extends Record<string, unknown>,
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(
   form: Writable<T>,
   path: Path,
@@ -81,7 +82,7 @@ export function numberProxy<
 
 export function dateProxy<
   T extends Record<string, unknown>,
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(
   form: Writable<T>,
   path: Path,
@@ -101,7 +102,7 @@ export function dateProxy<
 
 export function stringProxy<
   T extends Record<string, unknown>,
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(
   form: Writable<T>,
   path: Path,
@@ -124,7 +125,7 @@ export function stringProxy<
 function _stringProxy<
   T extends Record<string, unknown>,
   Type extends 'number' | 'int' | 'boolean' | 'date' | 'string',
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(
   form: Writable<T>,
   path: Path,
@@ -207,7 +208,8 @@ function _stringProxy<
   };
 }
 
-export type FieldProxy<
+/*
+type FieldProxy<
   T extends AnyZodObject,
   Path extends string & StringPath<z.infer<T>>
 > = {
@@ -216,10 +218,11 @@ export type FieldProxy<
   errors?: Writable<string[] | undefined>;
   constraints?: Writable<InputConstraint | undefined>;
 };
+*/
 
 export function formFieldProxy<
   T extends ZodValidation<AnyZodObject>,
-  Path extends string & StringPath<z.infer<UnwrapEffects<T>>>
+  Path extends string & StringPathLeaves<z.infer<UnwrapEffects<T>>>
 >(
   form: SuperForm<T, unknown>,
   path: Path
@@ -250,7 +253,7 @@ export function formFieldProxy<
 
 export function fieldProxy<
   T extends object,
-  Path extends string & StringPath<T>
+  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
 >(form: Writable<T>, path: Path): Writable<StringPathType<T, Path>> {
   const path2 = splitPath<T>(path);
 

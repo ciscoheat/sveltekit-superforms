@@ -11,9 +11,8 @@
 
   const superF: SuperForm<typeof schema> = superForm(data.form, {
     resetForm: $page.url.searchParams.has('function')
-      ? async () => {
+      ? () => {
           console.log('Reset...');
-          await new Promise((resolve) => setTimeout(resolve, 300));
           return true;
         }
       : true,

@@ -5,7 +5,7 @@
   import TextInput from './TextInput.svelte';
   import TextField from './TextField.svelte';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import { fieldProxy, formFieldProxy, dateProxy } from '$lib/client';
+  import { fieldProxy, formFieldProxy } from '$lib/client';
 
   export let data: Validation<Schema>;
 
@@ -24,8 +24,9 @@
 
   const proxy1 = formFieldProxy(form, 'name');
   const proxy2 = formFieldProxy(form, 'name');
-  const proxy3 = formFieldProxy(form, 'tags[3]');
+  const proxy3 = formFieldProxy(form, 'tags[3].name');
   const proxy4 = formFieldProxy(form, 'luckyNumber');
+  const proxy5 = formFieldProxy(form, 'roles[0]');
 
   const bool = fieldProxy(formData, 'agree');
   const tag1 = fieldProxy(formData, 'tags[0].name');

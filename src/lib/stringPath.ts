@@ -9,6 +9,17 @@ export function splitPath<T extends object>(
     .filter((p) => p) as FieldPath<T>;
 }
 
+export function mergePath(path: (string | number | symbol)[]) {
+  return path.reduce((acc: string, next) => {
+    if (typeof next === 'number' || !isNaN(parseInt(String(next), 10)))
+      acc += `[${String(next)}]`;
+    else if (!acc) acc += String(next);
+    else acc += `.${String(next)}`;
+
+    return acc;
+  }, '');
+}
+
 /**
  * Lists all paths in an object as string accessors.
  */

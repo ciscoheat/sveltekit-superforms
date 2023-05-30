@@ -642,17 +642,17 @@ describe('Errors', async () => {
     );
 
     expect(findErrors(form.errors)).toStrictEqual([
-      { path: ['id'], messages: ['Required'] },
+      { path: 'id', messages: ['Required'] },
       {
-        path: ['users', '0', 'name'],
+        path: 'users[0].name',
         messages: ['String must contain at least 2 character(s)', 'Invalid']
       },
       {
-        path: ['users', '0', 'posts', '0', 'subject'],
+        path: 'users[0].posts[0].subject',
         messages: ['String must contain at least 1 character(s)']
       },
       {
-        path: ['users', '0', 'posts', '_errors'],
+        path: 'users[0].posts._errors',
         messages: ['Array must contain at least 2 element(s)']
       }
     ]);

@@ -1,17 +1,12 @@
 <script lang="ts">
   import type { Writable } from 'svelte/store';
-  import type { UnwrapEffects } from '$lib';
-  import {
-    dateProxy,
-    formFieldProxy,
-    type SuperForm,
-    type StringPath
-  } from '$lib/client';
+  import type { ZodValidation, StringPathLeaves } from '$lib';
+  import { dateProxy, formFieldProxy, type SuperForm } from '$lib/client';
   import type { z, AnyZodObject } from 'zod';
 
   type T = $$Generic<AnyZodObject>;
-  export let form: SuperForm<UnwrapEffects<T>, unknown>;
-  export let field: string & StringPath<z.infer<T>>;
+  export let form: SuperForm<ZodValidation<T>, unknown>;
+  export let field: string & StringPathLeaves<z.infer<T>>;
   export let type:
     | 'text'
     | 'password'
@@ -30,11 +25,11 @@
   let proxy: Writable<string> | undefined;
 
   if (type === 'date') {
-    proxy = dateProxy(form.form, field as string & StringPath<T>, {
+    proxy = dateProxy(form.form, field, {
       format: 'date'
     });
   } else if (type === 'datetime') {
-    proxy = dateProxy(form.form, field as string & StringPath<T>, {
+    proxy = dateProxy(form.form, field, {
       format: 'datetime'
     });
   }

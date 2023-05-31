@@ -20,7 +20,7 @@ import {
   type UnwrapEffects,
   type ZodValidation
 } from '../index.js';
-import type { z, AnyZodObject, ZodEffects } from 'zod';
+import type { z, AnyZodObject } from 'zod';
 import type { FormFields, MaybePromise } from '../index.js';
 import {
   findErrors,
@@ -107,15 +107,8 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   jsonChunkSize: number;
-  validators:
-    | false
-    | Validators<UnwrapEffects<T>>
-    | T
-    | ZodEffects<T>
-    | ZodEffects<ZodEffects<T>>
-    | ZodEffects<ZodEffects<ZodEffects<T>>>
-    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
-    | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
+  validators: false | Validators<UnwrapEffects<T>> | T;
+  delayedValidators: Validators<UnwrapEffects<T>> | T;
   validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
   defaultValidator: 'keep' | 'clear';
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -191,15 +184,15 @@ export type TaintOption = boolean | 'untaint' | 'untaint-all';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   form: {
-    subscribe: Readable<z.infer<T>>['subscribe'];
+    subscribe: Readable<z.infer<UnwrapEffects<T>>>['subscribe'];
     set(
       this: void,
-      value: z.infer<T>,
+      value: z.infer<UnwrapEffects<T>>,
       options?: { taint?: TaintOption }
     ): void;
     update(
       this: void,
-      updater: Updater<z.infer<T>>,
+      updater: Updater<z.infer<UnwrapEffects<T>>>,
       options?: { taint?: TaintOption }
     ): void;
   };
@@ -228,12 +221,18 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     events?: SuperFormEvents<UnwrapEffects<T>, M>
   ) => ReturnType<typeof formEnhance>;
 
-  reset: (options?: { keepMessage: boolean }) => void;
+  reset: (options?: {
+    keepMessage?: boolean;
+    data?: Partial<z.infer<UnwrapEffects<T>>>;
+  }) => void;
 
   capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
   restore: (snapshot: SuperFormSnapshot<UnwrapEffects<T>, M>) => void;
 
-  validate: Validate<UnwrapEffects<T>, StringPathLeaves<z.infer<T>>>;
+  validate: Validate<
+    UnwrapEffects<T>,
+    StringPathLeaves<z.infer<UnwrapEffects<T>>>
+  >;
 };
 
 /**
@@ -494,8 +493,14 @@ export function superForm<
     }
   }
 
-  function Form_reset(message?: M) {
-    rebind(clone(initialForm), true, message);
+  function Form_reset(
+    message?: M,
+    data?: Partial<z.infer<UnwrapEffects<T>>>
+  ) {
+    const resetData = clone(initialForm);
+    resetData.data = { ...resetData.data, ...data };
+
+    rebind(resetData, true, message);
   }
 
   const Form_updateFromActionResult: FormUpdate = async (
@@ -910,6 +915,9 @@ export function superForm<
     firstError: FirstError,
     allErrors: AllErrors,
     reset: (options?) =>
-      Form_reset(options?.keepMessage ? get(Message) : undefined)
+      Form_reset(
+        options?.keepMessage ? get(Message) : undefined,
+        options?.data
+      )
   };
 }

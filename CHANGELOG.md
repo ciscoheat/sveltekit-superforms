@@ -5,6 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc.2]
+
+### Added
+
+- `reset` now have an additional `data` option that can be used to re-populate the form with data.
+- `intProxy`, `numberProxy`, `dateProxy` and `stringProxy` now have an `empty` option, so empty values can be set to `null` or `undefined`.
+
 ## [1.0.0-rc.1]
 
 ### Changed

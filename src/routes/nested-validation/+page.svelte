@@ -25,7 +25,7 @@ Zod validate:
 
 <pre style="margin-top:3rem;">
 Superforms validate:
-{#if output}{output.join('\n')}{/if}
+{#if output2}{output2.join('\n')}{/if}
 </pre>
 
 <style>

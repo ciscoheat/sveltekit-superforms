@@ -23,7 +23,8 @@
       return !name.length ? 'Name is too short' : null;
     },
     tags: {
-      id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
+      id: (id) =>
+        id < 3 ? 'Number must be greater than or equal to 3' : null,
       name: (name) => {
         return name.length < 2
           ? 'Tags must be at least two characters'

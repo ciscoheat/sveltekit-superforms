@@ -500,7 +500,7 @@ export async function superValidate<
     // This logic is shared between superValidate and superValidateSync //
     const toValidate = dataToValidate(parsed, schemaData);
     const result = toValidate
-      ? schemaData.originalSchema.safeParse(toValidate)
+      ? await schemaData.originalSchema.safeParseAsync(toValidate)
       : undefined;
     //////////////////////////////////////////////////////////////////////
 

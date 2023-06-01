@@ -98,15 +98,8 @@ export function formEnhance<T extends AnyZodObject, M>(
   // Using this type in the function argument causes a type recursion error.
   const errors = errs as SuperForm<T, M>['errors'];
 
-  function validateChange(change: string[]) {
-    validateField(
-      change,
-      options.validators,
-      options.defaultValidator,
-      data,
-      errors,
-      tainted
-    );
+  async function validateChange(change: string[]) {
+    await validateField(change, options, data, errors, tainted);
   }
 
   function timingIssue(el: EventTarget | null) {
@@ -351,30 +344,14 @@ export function formEnhance<T extends AnyZodObject, M>(
       if (options.flashMessage) cancelFlash(options);
     } else {
       // Client validation
-      let validationResult;
+      const validation = await clientValidation(
+        options,
+        get(data),
+        get(formId),
+        get(constraints)
+      );
 
-      if (options.validators) {
-        validationResult = await clientValidation(
-          get(data),
-          options.validators,
-          get(formId),
-          get(constraints)
-        );
-      }
-
-      if (
-        options.delayedValidators &&
-        (!validationResult || validationResult.valid)
-      ) {
-        validationResult = await clientValidation(
-          get(data),
-          options.delayedValidators,
-          get(formId),
-          get(constraints)
-        );
-      }
-
-      if (validationResult && !validationResult.valid) {
+      if (!validation.valid) {
         cancel();
 
         const result = {
@@ -383,7 +360,7 @@ export function formEnhance<T extends AnyZodObject, M>(
             (typeof options.SPA === 'boolean'
               ? undefined
               : options.SPA?.failStatus) ?? 400,
-          data: { form: validationResult.validationResult }
+          data: { form: validation.result }
         };
 
         setTimeout(() => validationResponse({ result }), 0);
@@ -590,8 +567,41 @@ export function formEnhance<T extends AnyZodObject, M>(
 }
 
 async function clientValidation<T extends AnyZodObject>(
+  options: FormOptions<T, never>,
   checkData: z.infer<T>,
-  validators: FormOptions<T, unknown>['validators'],
+  formId: string | undefined,
+  constraints: Validation<ZodValidation<T>>['constraints']
+) {
+  let validationResult: Awaited<ReturnType<typeof _clientValidation<T>>>;
+
+  if (options.validators) {
+    validationResult = await _clientValidation(
+      options.validators,
+      checkData,
+      formId,
+      constraints
+    );
+  } else {
+    validationResult = { valid: true as const };
+  }
+
+  if (options.delayedValidators && validationResult.valid) {
+    validationResult = await _clientValidation(
+      options.delayedValidators,
+      checkData,
+      formId,
+      constraints
+    );
+  }
+
+  return validationResult;
+}
+
+async function _clientValidation<T extends AnyZodObject>(
+  validators:
+    | FormOptions<T, unknown>['validators']
+    | FormOptions<T, unknown>['delayedValidators'],
+  checkData: z.infer<T>,
   formId: string | undefined,
   constraints: Validation<ZodValidation<T>>['constraints']
 ) {
@@ -678,7 +688,7 @@ async function clientValidation<T extends AnyZodObject>(
 
   if (valid) return { valid: true as const };
 
-  const validationResult: Validation<T> = {
+  const result: Validation<T> = {
     valid,
     errors: clientErrors,
     data: checkData,
@@ -688,5 +698,5 @@ async function clientValidation<T extends AnyZodObject>(
     id: formId
   };
 
-  return { valid: false as const, validationResult };
+  return { valid: false as const, result };
 }

@@ -39,35 +39,62 @@ export type Validate<
 
 const effectMapCache = new WeakMap<object, boolean>();
 
-function errorsExist<T extends ValidationErrors<AnyZodObject>>(errors: T) {
-  return _errorsExist(errors);
-}
-
-function _errorsExist(errors: unknown) {
-  if (errors && typeof errors === 'object') {
-    for (const obj2 of Object.values(errors)) {
-      if (_errorsExist(obj2)) return true;
-    }
-  }
-  return errors !== undefined;
-}
-
-// @DCI-context
 export async function validateField<T extends AnyZodObject, M>(
   path: string[],
-  validators: FormOptions<T, M>['validators'],
-  defaultValidator: FormOptions<T, M>['defaultValidator'],
+  formOptions: FormOptions<T, M>,
   data: SuperForm<T, M>['form'],
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown> = {}
 ): Promise<string[] | undefined> {
+  const errors = await _validateField(
+    path,
+    formOptions.validators,
+    formOptions.defaultValidator,
+    data,
+    Errors,
+    Tainted,
+    options
+  );
+
+  if (!errors.errors && formOptions.delayedValidators) {
+    const delayedErrors = await _validateField(
+      path,
+      formOptions.delayedValidators,
+      formOptions.defaultValidator,
+      data,
+      Errors,
+      Tainted,
+      options
+    );
+
+    return delayedErrors.errors;
+  }
+
+  // We validated the whole data structure, so clear all errors on success after delayed validators.
+  // but also set the current path to undefined, so it will be used in the tainted+error
+  // check in oninput.
+  if (errors.validatedAll && !errors.errors) {
+    clearErrors(Errors, { undefinePath: path, clearFormLevelErrors: true });
+  }
+
+  return errors.errors;
+}
+
+// @DCI-context
+async function _validateField<T extends AnyZodObject, M>(
+  path: string[],
+  validators:
+    | FormOptions<T, M>['validators']
+    | FormOptions<T, M>['delayedValidators'],
+  defaultValidator: FormOptions<T, M>['defaultValidator'],
+  data: SuperForm<T, M>['form'],
+  Errors: SuperForm<T, M>['errors'],
+  Tainted: SuperForm<T, M>['tainted'],
+  options: ValidateOptions<unknown> = {}
+): Promise<{ validatedAll: boolean; errors: string[] | undefined }> {
   if (options.update === undefined) options.update = true;
   if (options.taint === undefined) options.taint = false;
-
-  //let value = options.value;
-  //let shouldUpdate = true;
-  //let currentData: z.infer<T> | undefined = undefined;
 
   const Context = {
     value: options.value,
@@ -122,12 +149,6 @@ export async function validateField<T extends AnyZodObject, M>(
 
   function Errors_get() {
     return get(Errors);
-  }
-
-  function Errors_clear(
-    options: NonNullable<Parameters<typeof clearErrors>[1]>
-  ) {
-    return clearErrors(Errors, options);
   }
 
   function Errors_set(newErrors: ValidationErrors<UnwrapEffects<T>>) {
@@ -199,7 +220,7 @@ export async function validateField<T extends AnyZodObject, M>(
   //console.log('🚀 ~ file: index.ts:871 ~ validate:', path, value);
 
   if (typeof validators !== 'object') {
-    return defaultValidate();
+    return { validatedAll: false, errors: await defaultValidate() };
   }
 
   if ('safeParseAsync' in validators) {
@@ -248,9 +269,12 @@ export async function validateField<T extends AnyZodObject, M>(
         const result = await validator.safeParseAsync(Context.value);
         if (!result.success) {
           const errors = result.error.format();
-          return Errors_update(errors._errors);
+          return {
+            validatedAll: false,
+            errors: Errors_update(errors._errors)
+          };
         } else {
-          return Errors_update(undefined);
+          return { validatedAll: false, errors: Errors_update(undefined) };
         }
       }
     }
@@ -309,13 +333,12 @@ export async function validateField<T extends AnyZodObject, M>(
         path as FieldPath<typeof newErrors>
       );
 
-      return Errors_update(options.errors ?? current?.value);
+      return {
+        validatedAll: true,
+        errors: Errors_update(options.errors ?? current?.value)
+      };
     } else {
-      // We validated the whole data structure, so clear all errors on success
-      // but also set the current path to undefined, so it will be used in the tainted+error
-      // check in oninput.
-      Errors_clear({ undefinePath: path, clearFormLevelErrors: true });
-      return undefined;
+      return { validatedAll: true, errors: undefined };
     }
   } else {
     // SuperForms validator
@@ -330,10 +353,13 @@ export async function validateField<T extends AnyZodObject, M>(
       throw new SuperFormError('No Superforms validator found: ' + path);
     } else if (validator.value === undefined) {
       // No validator, use default
-      return defaultValidate();
+      return { validatedAll: false, errors: await defaultValidate() };
     } else {
-      const result = validator.value(Context.value);
-      return Errors_update(result ? options.errors ?? result : result);
+      const result = await validator.value(Context.value);
+      return {
+        validatedAll: false,
+        errors: Errors_update(result ? options.errors ?? result : result)
+      };
     }
   }
 }

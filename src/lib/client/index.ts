@@ -107,8 +107,11 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   jsonChunkSize: number;
-  validators: false | Validators<UnwrapEffects<T>> | T;
-  delayedValidators: Validators<UnwrapEffects<T>> | T;
+  validators:
+    | false
+    | Validators<UnwrapEffects<T>>
+    | ZodValidation<UnwrapEffects<T>>;
+  delayedValidators: Validators<UnwrapEffects<T>>;
   validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
   defaultValidator: 'keep' | 'clear';
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -587,7 +590,7 @@ export function superForm<
     return obj === true;
   }
 
-  function Tainted__validate(path: string[], taint: TaintOption) {
+  async function Tainted__validate(path: string[], taint: TaintOption) {
     if (
       options.validationMethod == 'onblur' ||
       options.validationMethod == 'submit-only'
@@ -625,15 +628,7 @@ export function superForm<
     }
 
     if (shouldValidate) {
-      validateField(
-        path,
-        options.validators,
-        options.defaultValidator,
-        Form,
-        Errors,
-        Tainted,
-        { taint }
-      );
+      await validateField(path, options, Form, Errors, Tainted, { taint });
     }
   }
 
@@ -860,8 +855,7 @@ export function superForm<
     validate: (path, opts) => {
       return validateField(
         splitPath(path) as string[],
-        options.validators,
-        options.defaultValidator,
+        options,
         Form,
         Errors,
         Tainted,

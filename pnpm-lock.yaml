@@ -14,6 +14,9 @@ devDependencies:
   '@sveltejs/package':
     specifier: ^2.0.2
     version: 2.0.2(svelte@3.59.1)(typescript@5.0.4)
+  '@types/throttle-debounce':
+    specifier: ^5.0.0
+    version: 5.0.0
   '@typescript-eslint/eslint-plugin':
     specifier: ^5.59.8
     version: 5.59.8(@typescript-eslint/parser@5.59.8)(eslint@8.41.0)(typescript@5.0.4)
@@ -62,6 +65,9 @@ devDependencies:
   sveltekit-rate-limiter:
     specifier: ^0.1.8
     version: 0.1.8(@sveltejs/kit@1.20.0)
+  throttle-debounce:
+    specifier: ^5.0.0
+    version: 5.0.0
   tslib:
     specifier: ^2.5.2
     version: 2.5.2
@@ -502,6 +508,10 @@ packages:
 
   /@types/semver@7.5.0:
     resolution: {integrity: sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==}
+    dev: true
+
+  /@types/throttle-debounce@5.0.0:
+    resolution: {integrity: sha512-Pb7k35iCGFcGPECoNE4DYp3Oyf2xcTd3FbFQxXUI9hEYKUl6YX+KLf7HrBmgVcD05nl50LIH6i+80js4iYmWbw==}
     dev: true
 
   /@typescript-eslint/eslint-plugin@5.59.8(@typescript-eslint/parser@5.59.8)(eslint@8.41.0)(typescript@5.0.4):
@@ -2033,6 +2043,11 @@ packages:
 
   /text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
+    dev: true
+
+  /throttle-debounce@5.0.0:
+    resolution: {integrity: sha512-2iQTSgkkc1Zyk0MeVrt/3BvuOXYPl/R8Z0U2xxo9rjwNciaHDG3R+Lm6dh4EeUci49DanvBnuqI6jshoQQRGEg==}
+    engines: {node: '>=12.22'}
     dev: true
 
   /time-zone@1.0.0:

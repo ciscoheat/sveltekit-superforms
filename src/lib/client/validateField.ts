@@ -96,19 +96,6 @@ export async function validateField<T extends AnyZodObject, M>(
     options
   );
 
-  if (!errors.errors && formOptions.delayedValidators) {
-    const delayedErrors = await _validateField(
-      path,
-      formOptions.delayedValidators,
-      data,
-      Errors,
-      Tainted,
-      options
-    );
-
-    return delayedErrors.errors;
-  }
-
   if (errors.validated) {
     if (errors.validated === 'all' && !errors.errors) {
       // We validated the whole data structure, so clear all errors on success after delayed validators.
@@ -131,9 +118,7 @@ export async function validateField<T extends AnyZodObject, M>(
 // @DCI-context
 async function _validateField<T extends AnyZodObject, M>(
   path: string[],
-  validators:
-    | FormOptions<T, M>['validators']
-    | FormOptions<T, M>['delayedValidators'],
+  validators: FormOptions<T, M>['validators'],
   data: SuperForm<T, M>['form'],
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],

@@ -585,22 +585,11 @@ async function clientValidation<T extends AnyZodObject>(
     validationResult = { valid: true as const };
   }
 
-  if (options.delayedValidators && validationResult.valid) {
-    validationResult = await _clientValidation(
-      options.delayedValidators,
-      checkData,
-      formId,
-      constraints
-    );
-  }
-
   return validationResult;
 }
 
 async function _clientValidation<T extends AnyZodObject>(
-  validators:
-    | FormOptions<T, unknown>['validators']
-    | FormOptions<T, unknown>['delayedValidators'],
+  validators: FormOptions<T, unknown>['validators'],
   checkData: z.infer<T>,
   formId: string | undefined,
   constraints: Validation<ZodValidation<T>>['constraints']

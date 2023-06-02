@@ -35,13 +35,7 @@
 
   const { form, errors, message, enhance, tainted } = superForm(data.form, {
     dataType: 'json',
-    validators: basicSchema,
-    delayedValidators: {
-      username: (username) =>
-        new Promise<string | null>((resolve) =>
-          throttledUsername(username, resolve)
-        )
-    }
+    validators: basicSchema
   });
 </script>
 

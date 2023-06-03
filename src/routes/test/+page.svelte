@@ -41,11 +41,6 @@
     /////////////////////////////////////////////////////////////////
 
     assertInnerText(
-      '[data-first-error]',
-      'First error: email - [Email error]'
-    );
-
-    assertInnerText(
       '[data-all-errors]',
       'email: [Email error]\nproxyNumber: Number must be greater than or equal to 10\ncoercedDate: Invalid date'
     );
@@ -79,7 +74,6 @@
     delayed,
     timeout,
     enhance,
-    firstError,
     allErrors,
     tainted,
     constraints
@@ -179,12 +173,6 @@
 
 {#if $message}
   <h3 data-message>{$message}</h3>
-{/if}
-
-{#if $firstError}
-  <p data-first-error>
-    First error: {$firstError.path} - {$firstError.messages}
-  </p>
 {/if}
 
 {#if $allErrors.length}

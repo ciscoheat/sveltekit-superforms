@@ -209,6 +209,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   submitting: Readable<boolean>;
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
+  posted: Readable<boolean>;
 
   fields: FormFields<UnwrapEffects<T>>;
   allErrors: Readable<{ path: string; messages: string[] }[]>;
@@ -351,6 +352,7 @@ export function superForm<
   ): SuperValidated<T, M> {
     return {
       valid: false,
+      posted: false,
       errors: {},
       data: data ?? {},
       constraints: {} as SuperValidated<T, M>['constraints']
@@ -553,6 +555,7 @@ export function superForm<
   const LastChanges = writable<string[][]>([]);
   const Message = writable<M | undefined>(form2.message);
   const Constraints = writable(form2.constraints);
+  const Posted = writable(false);
 
   // eslint-disable-next-line dci-lint/grouped-rolemethods
   const Errors = {
@@ -721,6 +724,7 @@ export function superForm<
     Message.set(message);
     Errors.set(form.errors);
     FormId.set(form.id);
+    Posted.set(form.posted);
 
     if (options.flashMessage && shouldSyncFlash(options)) {
       const flash = options.flashMessage.module.getFlash(page);
@@ -829,6 +833,7 @@ export function superForm<
     capture: function () {
       return {
         valid: initialForm.valid,
+        posted: get(Posted),
         errors: get(Errors),
         data: get(Form),
         constraints: get(Constraints),
@@ -892,11 +897,13 @@ export function superForm<
         Constraints,
         Tainted,
         LastChanges,
-        Context_findValidationForms
+        Context_findValidationForms,
+        Posted
       );
     },
 
     allErrors: AllErrors,
+    posted: Posted,
 
     reset: (options?) =>
       Form_reset(

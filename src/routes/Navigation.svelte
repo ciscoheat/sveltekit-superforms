@@ -22,7 +22,8 @@
   <br />
   <a href="/tests/superform-c">Side-effect 2</a> |
   <a href="/tests/multiselect">Multi-select</a> |
-  <a href="/tests/spa-values-disappearing">SPA onUpdate</a>
+  <a href="/tests/spa-values-disappearing">SPA onUpdate</a> |
+  <a href="/posted">Posted store</a>
 </nav>
 
 <style>

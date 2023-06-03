@@ -160,6 +160,7 @@ export type SuperValidated<
   M = any
 > = {
   valid: boolean;
+  posted: boolean;
   errors: ValidationErrors<UnwrapEffects<T>>;
   data: z.infer<UnwrapEffects<T>>;
   constraints: Entity<UnwrapEffects<T>>['constraints'];

@@ -317,7 +317,7 @@ describe('Default values', () => {
 
     expect(form.valid).toEqual(false);
     expect(form.errors).toEqual({});
-    expect(form.empty).toEqual(true);
+    expect(form.posted).toEqual(false);
     expect(form.message).toBeUndefined();
 
     expect(form.constraints).toStrictEqual({
@@ -359,7 +359,7 @@ const enumschema = z.object({
 test('Zod enums and native enums', async () => {
   const form = await superValidate(null, enumschema);
   expect(form.valid).toEqual(false);
-  expect(form.empty).toEqual(true);
+  expect(form.posted).toEqual(false);
 
   expect(form).toStrictEqual({
     id: '1aiv7x7',
@@ -371,7 +371,7 @@ test('Zod enums and native enums', async () => {
       fruitsstring: [],
       gender: null
     },
-    empty: true,
+    posted: false,
     constraints: {
       color: { required: true },
       fruit: { /*_constraints: { required: true },*/ required: true },
@@ -394,7 +394,7 @@ test('Posting Zod enums and native enums', async () => {
 
   expect(form).toStrictEqual({
     id: '1aiv7x7',
-    empty: false,
+    posted: true,
     valid: true,
     errors: {},
     data: {
@@ -426,7 +426,7 @@ test('Agressive type coercion to avoid schema duplication', async () => {
     valid: false,
     errors: {},
     data: { agree: false, fruit: undefined, number: NaN },
-    empty: true,
+    posted: false,
     constraints: {
       agree: { required: true },
       fruit: { required: true },
@@ -465,8 +465,8 @@ test('Deeply nested objects', async () => {
 
   const form = await superValidate(data, schema);
 
-  expect(form.valid).toBeFalsy();
-  expect(form.empty).toBeFalsy();
+  expect(form.valid).toEqual(false);
+  expect(form.posted).toEqual(true);
 
   expect(form.errors).toStrictEqual({
     user: { name: ['String must contain at least 2 character(s)'] }
@@ -561,7 +561,7 @@ test('Deeply nested objects', async () => {
   const form = await superValidate(data, schema);
 
   expect(form.valid).toStrictEqual(false);
-  expect(form.empty).toStrictEqual(false);
+  expect(form.posted).toStrictEqual(true);
 
   expect(form.errors).toStrictEqual({
     user: { name: ['String must contain at least 2 character(s)'] }
@@ -628,7 +628,7 @@ describe('Errors', async () => {
     const output = await superValidate({ scopeId: 0, name: 'abc' }, schema);
 
     assert(!output.valid);
-    expect(output.empty).toEqual(false);
+    expect(output.posted).toEqual(false);
     expect(output.errors.scopeId?.length).toEqual(1);
     expect(Object.keys(output.errors).length).toEqual(1);
     expect(output.data.scopeId).toEqual(0);
@@ -727,7 +727,7 @@ describe('Errors', async () => {
       valid: false,
       errors: { _errors: ["Can't order more flavours than scoops!"] },
       data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
-      empty: false,
+      posted: true,
       constraints: {
         scoops: { min: 1, required: true },
         flavours: { minlength: 1, required: true }
@@ -784,7 +784,7 @@ test('URL and URLSearchParams validation', async () => {
       name: 'A test',
       tags: ['A', 'B', 'C']
     },
-    empty: false,
+    posted: false,
     constraints: {
       id: { min: 0, required: true },
       createdAt: { required: true },
@@ -821,7 +821,7 @@ test('Call without data', async () => {
     valid: false,
     errors: {},
     data: { name: '', id: 0 },
-    empty: true,
+    posted: false,
     constraints: { name: { required: true }, id: { required: true } }
   });
 
@@ -835,7 +835,7 @@ test('Call without data', async () => {
     valid: false,
     errors: {},
     data: { name: '', id: 0 },
-    empty: true,
+    posted: false,
     constraints: { name: { required: true }, id: { required: true } }
   });
 });
@@ -865,7 +865,7 @@ test('ZodObject defaults', async () => {
       provider: undefined,
       numbers: {}
     },
-    empty: true,
+    posted: false,
     constraints: {
       textresource: { required: true },
       promptMetaData: {},

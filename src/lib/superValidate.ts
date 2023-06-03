@@ -218,6 +218,7 @@ type SchemaData<T extends AnyZodObject> = {
 
 type ParsedData = {
   id: string | undefined;
+  posted: boolean;
   data: Record<string, unknown> | null | undefined;
 };
 
@@ -263,10 +264,11 @@ function parseFormData<T extends AnyZodObject>(
   const id = formData.get('__superform_id')?.toString() ?? undefined;
 
   return data
-    ? { id, data }
+    ? { id, data, posted: true }
     : {
         id,
-        data: formDataToValidation(formData, schemaData)
+        data: formDataToValidation(formData, schemaData),
+        posted: true
       };
 }
 
@@ -280,7 +282,11 @@ function parseSearchParams<T extends AnyZodObject>(
   for (const [key, value] of data.entries()) {
     convert.append(key, value);
   }
-  return parseFormData(convert, schemaData);
+
+  // Only FormData can be posted.
+  const output = parseFormData(convert, schemaData);
+  output.posted = false;
+  return output;
 }
 
 function validateResult<T extends AnyZodObject, M>(
@@ -289,6 +295,7 @@ function validateResult<T extends AnyZodObject, M>(
   result: SafeParseReturnType<unknown, z.infer<T>> | undefined
 ): SuperValidated<T, M> {
   const { opts: options, entityInfo } = schemaData;
+  const posted = parsed.posted;
 
   // Determine id for form
   // 1. options.id
@@ -316,6 +323,7 @@ function validateResult<T extends AnyZodObject, M>(
     return {
       id,
       valid,
+      posted,
       errors,
       // Copy the default entity so it's not modified
       data: data ?? clone(entityInfo.defaultEntity),
@@ -338,6 +346,7 @@ function validateResult<T extends AnyZodObject, M>(
       return {
         id,
         valid: false,
+        posted,
         errors,
         data: Object.fromEntries(
           schemaKeys.map((key) => [
@@ -353,6 +362,7 @@ function validateResult<T extends AnyZodObject, M>(
       return {
         id,
         valid: true,
+        posted,
         errors: {},
         data: result.data,
         constraints: entityInfo.constraints
@@ -468,7 +478,7 @@ export async function superValidate<
         throw e;
       }
       // No data found, return an empty form
-      return { id: undefined, data: undefined };
+      return { id: undefined, data: undefined, posted: false };
     }
     return parseFormData(formData, schemaData);
   }
@@ -490,7 +500,11 @@ export async function superValidate<
     ) {
       parsed = await tryParseFormData(data.request);
     } else {
-      parsed = { id: undefined, data: data as Record<string, unknown> };
+      parsed = {
+        id: undefined,
+        data: data as Record<string, unknown>,
+        posted: false
+      };
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -617,7 +631,11 @@ export function superValidateSync<
       ? parseFormData(data, schemaData)
       : data instanceof URL || data instanceof URLSearchParams
       ? parseSearchParams(data, schemaData)
-      : { id: undefined, data: data as Record<string, unknown> }; // Only schema, null or undefined left
+      : {
+          id: undefined,
+          data: data as Record<string, unknown>,
+          posted: false
+        }; // Only schema, null or undefined left
 
   //////////////////////////////////////////////////////////////////////
   // This logic is shared between superValidate and superValidateSync //

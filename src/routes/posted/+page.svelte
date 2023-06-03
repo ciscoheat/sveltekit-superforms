@@ -6,7 +6,7 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, delayed, message, valid, constraints } =
+  const { form, errors, enhance, delayed, message, constraints, posted } =
     superForm(data.form, {
       validators: $page.url.searchParams.has('zod')
         ? userSchema.extend({
@@ -23,7 +23,7 @@
 
 <a href="/">&lt; Back to start</a>
 
-<h1>sveltekit-superforms</h1>
+<h1>Posted check</h1>
 
 <div class="users">
   {#each data.users as user}
@@ -42,7 +42,7 @@
 
 <h2>{!$form.id ? 'Create' : 'Update'} user</h2>
 
-<b>Valid: {$valid}</b>
+<b>Posted: {$posted}</b>
 
 <form method="POST" use:enhance>
   <input type="hidden" name="id" bind:value={$form.id} />

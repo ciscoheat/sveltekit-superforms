@@ -7,13 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-rc.2]
 
+### Changed
+
+- The `Validation` type is now called `SuperValidate`.
+
+### Removed
+
+- The `$valid`, `$empty` and `$firstError` stores are removed from the client, they weren't that useful. `allErrors` can be used instead, together with the `$posted` store.
+- `empty` is removed from `SuperForm`
+
 ### Fixed
 
 - Async validation works again for custom validators and `superValidate`.
 
 ### Added
 
-- `reset` now has an additional `data` option that can be used to re-populate the form with data.
+- Added a `posted` store, a boolean which is false if the form hasn't been posted during its current lifetime.
+- `reset` now has an additional `data` option that can be used to re-populate the form with data, and `id` to set a different form id.
 - `intProxy`, `numberProxy`, `dateProxy` and `stringProxy` now have an `empty` option, so empty values can be set to `null` or `undefined`.
 
 ## [1.0.0-rc.1]

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Validation } from '$lib';
+  import type { SuperValidated } from '$lib';
   import type { Schema } from './schemas';
   import { superForm } from '$lib/client';
   import TextInput from './TextInput.svelte';
@@ -7,7 +7,7 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { fieldProxy, formFieldProxy } from '$lib/client';
 
-  export let data: Validation<Schema>;
+  export let data: SuperValidated<Schema>;
 
   const form = superForm(data, {
     dataType: 'json',

@@ -15,7 +15,7 @@ import { browser } from '$app/environment';
 import {
   SuperFormError,
   type TaintedFields,
-  type Validation,
+  type SuperValidated,
   type Validators,
   type UnwrapEffects,
   type ZodValidation
@@ -88,12 +88,12 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdate: (event: {
-    form: Validation<UnwrapEffects<T>, M>;
+    form: SuperValidated<UnwrapEffects<T>, M>;
     formEl: HTMLFormElement;
     cancel: () => void;
   }) => MaybePromise<unknown | void>;
   onUpdated: (event: {
-    form: Readonly<Validation<UnwrapEffects<T>, M>>;
+    form: Readonly<SuperValidated<UnwrapEffects<T>, M>>;
   }) => MaybePromise<unknown | void>;
   onError:
     | 'apply'
@@ -103,7 +103,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
           status?: number;
           error: App.Error;
         };
-        message: Writable<Validation<UnwrapEffects<T>, M>['message']>;
+        message: Writable<SuperValidated<UnwrapEffects<T>, M>['message']>;
       }) => MaybePromise<unknown | void>);
   dataType: 'form' | 'json';
   jsonChunkSize: number;
@@ -176,7 +176,7 @@ const defaultFormOptions = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SuperFormSnapshot<T extends AnyZodObject, M = any> = Validation<
+type SuperFormSnapshot<T extends AnyZodObject, M = any> = SuperValidated<
   T,
   M
 > & { tainted: TaintedFields<T> | undefined };
@@ -199,21 +199,18 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     ): void;
   };
   formId: Writable<string | undefined>;
-  errors: Writable<Validation<T, M>['errors']> & {
+  errors: Writable<SuperValidated<T, M>['errors']> & {
     clear: () => void;
   };
-  constraints: Writable<Validation<T, M>['constraints']>;
-  message: Writable<Validation<T, M>['message']>;
+  constraints: Writable<SuperValidated<T, M>['constraints']>;
+  message: Writable<SuperValidated<T, M>['message']>;
   tainted: Writable<TaintedFields<UnwrapEffects<T>> | undefined>;
 
-  valid: Readable<boolean>;
-  empty: Readable<boolean>;
   submitting: Readable<boolean>;
   delayed: Readable<boolean>;
   timeout: Readable<boolean>;
 
   fields: FormFields<UnwrapEffects<T>>;
-  firstError: Readable<{ path: string; messages: string[] } | null>;
   allErrors: Readable<{ path: string; messages: string[] }[]>;
 
   options: FormOptions<T, M>;
@@ -223,10 +220,13 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     events?: SuperFormEvents<UnwrapEffects<T>, M>
   ) => ReturnType<typeof formEnhance>;
 
-  reset: (options?: {
-    keepMessage?: boolean;
-    data?: Partial<z.infer<UnwrapEffects<T>>>;
-  }) => void;
+  reset: (
+    options?: Partial<{
+      keepMessage: boolean;
+      data: Partial<z.infer<UnwrapEffects<T>>>;
+      id: string;
+    }>
+  ) => void;
 
   capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
   restore: (snapshot: SuperFormSnapshot<UnwrapEffects<T>, M>) => void;
@@ -245,7 +245,7 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
- * @param {Validation} form Usually data.form from PageData.
+ * @param {SuperValidated} form Usually data.form from PageData.
  * @param {FormOptions} options Configuration for the form.
  * @returns {SuperForm} An object with properties for the form.
  * @DCI-context
@@ -257,7 +257,7 @@ export function superForm<
 >(
   form:
     | z.infer<UnwrapEffects<T>>
-    | Validation<UnwrapEffects<T>, M>
+    | SuperValidated<UnwrapEffects<T>, M>
     | null
     | undefined,
   options: FormOptions<UnwrapEffects<T>, M> = {}
@@ -280,7 +280,7 @@ export function superForm<
 
   let _formId: string | undefined = options.id;
 
-  // Normalize form argument to Validation<T, M>
+  // Normalize form argument to SuperValidated<T, M>
   if (!form) {
     form = Context_newEmptyForm(); // Takes care of null | undefined
   } else if (Context_isValidationObject(form) === false) {
@@ -296,8 +296,8 @@ export function superForm<
       postedData
     ).reverse()) {
       if (postedForm.id === _formId) {
-        const pageDataForm = form as Validation<T, M>;
-        form = postedForm as Validation<T, M>;
+        const pageDataForm = form as SuperValidated<T, M>;
+        form = postedForm as SuperValidated<T, M>;
         // Do the non-use:enhance stuff
         if (
           form.valid &&
@@ -312,7 +312,7 @@ export function superForm<
     }
   }
 
-  const form2 = form as Validation<T, M>;
+  const form2 = form as SuperValidated<T, M>;
 
   // Need to clone the validation data, in case it's used to populate multiple forms.
   const initialForm = clone(form2);
@@ -348,20 +348,19 @@ export function superForm<
 
   function Context_newEmptyForm(
     data?: Partial<z.infer<T>>
-  ): Validation<T, M> {
+  ): SuperValidated<T, M> {
     return {
       valid: false,
       errors: {},
       data: data ?? {},
-      empty: !!data,
-      constraints: {} as Validation<T, M>['constraints']
+      constraints: {} as SuperValidated<T, M>['constraints']
     };
   }
 
   function Context_findValidationForms(data: Record<string, unknown>) {
     const forms = Object.values(data).filter(
       (v) => Context_isValidationObject(v) !== false
-    ) as Validation<AnyZodObject>[];
+    ) as SuperValidated<AnyZodObject>[];
     if (forms.length > 1 && options.warnings?.duplicateId !== false) {
       const duplicateId = new Set<string | undefined>();
       for (const form of forms) {
@@ -454,7 +453,7 @@ export function superForm<
     Unsubscriptions.forEach((unsub) => unsub());
   }
 
-  // Stores for the properties of Validation<T, M>
+  // Stores for the properties of SuperValidated<T, M>
   const Form = Context_newFormStore(form2.data);
 
   // Check for nested objects, throw if datatype isn't json
@@ -471,7 +470,7 @@ export function superForm<
   }
 
   async function Form_updateFromValidation(
-    form: Validation<T, M>,
+    form: SuperValidated<T, M>,
     untaint: boolean
   ) {
     if (
@@ -497,10 +496,12 @@ export function superForm<
 
   function Form_reset(
     message?: M,
-    data?: Partial<z.infer<UnwrapEffects<T>>>
+    data?: Partial<z.infer<UnwrapEffects<T>>>,
+    id?: string
   ) {
     const resetData = clone(initialForm);
     resetData.data = { ...resetData.data, ...data };
+    if (id !== undefined) resetData.id = id;
 
     rebind(resetData, true, message);
   }
@@ -543,15 +544,13 @@ export function superForm<
     for (const newForm of forms) {
       if (newForm.id !== _formId) continue;
       await Form_updateFromValidation(
-        newForm as Validation<T, M>,
+        newForm as SuperValidated<T, M>,
         untaint ?? (result.status >= 200 && result.status < 300)
       );
     }
   };
 
   const LastChanges = writable<string[][]>([]);
-  const Valid = writable(form2.valid);
-  const Empty = writable(form2.empty);
   const Message = writable<M | undefined>(form2.message);
   const Constraints = writable(form2.constraints);
 
@@ -683,8 +682,6 @@ export function superForm<
     return findErrors($errors);
   });
 
-  const FirstError = derived(AllErrors, ($all) => $all[0] ?? null);
-
   //////////////////////////////////////////////////////////////////////
 
   // Need to clear this and set it after use:enhance has run, to avoid showing the
@@ -706,7 +703,7 @@ export function superForm<
   }
 
   function rebind(
-    form: Validation<T, M>,
+    form: SuperValidated<T, M>,
     untaint: TaintedFields<UnwrappedT> | boolean,
     message?: M
   ) {
@@ -722,8 +719,6 @@ export function superForm<
     // eslint-disable-next-line dci-lint/private-role-access
     Form.set(form.data);
     Message.set(message);
-    Empty.set(form.empty);
-    Valid.set(form.valid);
     Errors.set(form.errors);
     FormId.set(form.id);
 
@@ -782,7 +777,7 @@ export function superForm<
             if (newForm.id !== _formId) continue;
 
             await Form_updateFromValidation(
-              newForm as Validation<T, M>,
+              newForm as SuperValidated<T, M>,
               untaint
             );
           }
@@ -794,7 +789,7 @@ export function superForm<
             //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
             if (newForm.id !== _formId) continue;
 
-            rebind(newForm as Validation<T, M>, untaint);
+            rebind(newForm as SuperValidated<T, M>, untaint);
           }
         }
       })
@@ -823,10 +818,7 @@ export function superForm<
     constraints: Constraints,
 
     fields: Fields,
-
     tainted: Tainted,
-    valid: derived(Valid, ($s) => $s),
-    empty: derived(Empty, ($e) => $e),
 
     submitting: derived(Submitting, ($s) => $s),
     delayed: derived(Delayed, ($d) => $d),
@@ -836,10 +828,9 @@ export function superForm<
 
     capture: function () {
       return {
-        valid: get(Valid),
+        valid: initialForm.valid,
         errors: get(Errors),
         data: get(Form),
-        empty: get(Empty),
         constraints: get(Constraints),
         message: get(Message),
         id: _formId,
@@ -905,12 +896,13 @@ export function superForm<
       );
     },
 
-    firstError: FirstError,
     allErrors: AllErrors,
+
     reset: (options?) =>
       Form_reset(
         options?.keepMessage ? get(Message) : undefined,
-        options?.data
+        options?.data,
+        options?.id
       )
   };
 }

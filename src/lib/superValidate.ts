@@ -2,7 +2,7 @@ import { fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import {
   SuperFormError,
-  type Validation,
+  type SuperValidated,
   type ZodValidation,
   type UnwrapEffects
 } from './index.js';
@@ -42,7 +42,7 @@ import { clone } from './utils.js';
 export { defaultValues } from './schemaEntity.js';
 
 export function message<T extends ZodValidation<AnyZodObject>, M>(
-  form: Validation<T, M>,
+  form: SuperValidated<T, M>,
   message: M,
   options?: {
     status?: number;
@@ -62,7 +62,7 @@ export const setMessage = message;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setError<T extends ZodValidation<AnyZodObject>>(
-  form: Validation<T, unknown>,
+  form: SuperValidated<T, unknown>,
   path: StringPathLeaves<z.infer<UnwrapEffects<T>>>,
   error: string | string[],
   options: { overwrite?: boolean; status?: number } = {
@@ -287,7 +287,7 @@ function validateResult<T extends AnyZodObject, M>(
   parsed: ParsedData,
   schemaData: SchemaData<T>,
   result: SafeParseReturnType<unknown, z.infer<T>> | undefined
-): Validation<T, M> {
+): SuperValidated<T, M> {
   const { opts: options, entityInfo } = schemaData;
 
   // Determine id for form
@@ -319,7 +319,6 @@ function validateResult<T extends AnyZodObject, M>(
       errors,
       // Copy the default entity so it's not modified
       data: data ?? clone(entityInfo.defaultEntity),
-      empty: true,
       constraints: entityInfo.constraints
     };
   } else {
@@ -348,7 +347,6 @@ function validateResult<T extends AnyZodObject, M>(
               : clone(entityInfo.defaultEntity[key])
           ])
         ),
-        empty: false,
         constraints: entityInfo.constraints
       };
     } else {
@@ -357,7 +355,6 @@ function validateResult<T extends AnyZodObject, M>(
         valid: true,
         errors: {},
         data: result.data,
-        empty: false,
         constraints: entityInfo.constraints
       };
     }
@@ -415,7 +412,7 @@ export async function superValidate<
 >(
   schema: T,
   options?: SuperValidateOptions
-): Promise<Validation<UnwrapEffects<T>, M>>;
+): Promise<SuperValidated<UnwrapEffects<T>, M>>;
 
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
@@ -433,7 +430,7 @@ export async function superValidate<
     | undefined,
   schema: T,
   options?: SuperValidateOptions
-): Promise<Validation<UnwrapEffects<T>, M>>;
+): Promise<SuperValidated<UnwrapEffects<T>, M>>;
 
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
@@ -448,7 +445,7 @@ export async function superValidate<
   data: unknown,
   schema?: T | SuperValidateOptions,
   options?: SuperValidateOptions
-): Promise<Validation<UnwrapEffects<T>, M>> {
+): Promise<SuperValidated<UnwrapEffects<T>, M>> {
   if (data && typeof data === 'object' && 'safeParseAsync' in data) {
     options = schema as SuperValidateOptions | undefined;
     schema = data as T;
@@ -575,7 +572,7 @@ export function superValidateSync<
 >(
   schema: T,
   options?: SuperValidateOptions
-): Validation<UnwrapEffects<T>, M>;
+): SuperValidated<UnwrapEffects<T>, M>;
 
 export function superValidateSync<
   T extends ZodValidation<AnyZodObject>,
@@ -591,7 +588,7 @@ export function superValidateSync<
     | undefined,
   schema: T,
   options?: SuperValidateOptions
-): Validation<UnwrapEffects<T>, M>;
+): SuperValidated<UnwrapEffects<T>, M>;
 
 /**
  * Validates a Zod schema for usage in a SvelteKit form.
@@ -606,7 +603,7 @@ export function superValidateSync<
   data: unknown,
   schema?: T | SuperValidateOptions,
   options?: SuperValidateOptions
-): Validation<UnwrapEffects<T>, M> {
+): SuperValidated<UnwrapEffects<T>, M> {
   if (data && typeof data === 'object' && 'safeParse' in data) {
     options = schema as SuperValidateOptions | undefined;
     schema = data as T;

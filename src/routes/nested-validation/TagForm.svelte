@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Validation, UnwrapEffects } from '$lib';
+  import type { SuperValidated, UnwrapEffects } from '$lib';
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
   import type { FormOptions } from '$lib/client';
@@ -8,7 +8,7 @@
   import * as flashModule from 'sveltekit-flash-message/client';
   import { onMount } from 'svelte';
 
-  export let data: Validation<typeof schema>;
+  export let data: SuperValidated<typeof schema>;
   export let validator: 'zod' | 'superforms';
 
   export let output: (string[] | undefined)[] = [];

@@ -5,8 +5,9 @@
 
   export let data: PageData;
 
-  const { form, errors, enhance, delayed, message, empty, constraints } =
-    superForm(data.form);
+  const { form, errors, enhance, delayed, message, constraints } = superForm(
+    data.form
+  );
 </script>
 
 <a href="/">&lt; Back to start</a>
@@ -17,7 +18,7 @@
   {#each data.users as user}
     <a href="?id={user.id}">{user.name}</a>
   {/each}
-  {#if !$empty}
+  {#if $form.id}
     <form action="/crud">
       <button>Create new</button>
     </form>
@@ -28,7 +29,7 @@
   <h3 class:invalid={$page.status >= 400}>{$message}</h3>
 {/if}
 
-<h2>{$empty ? 'Create' : 'Update'} user</h2>
+<h2>{!$form.id ? 'Create' : 'Update'} user</h2>
 
 <form method="POST" use:enhance>
   <input type="hidden" name="id" bind:value={$form.id} />
@@ -54,7 +55,7 @@
   <button>Submit</button>
   {#if $delayed}Working...{/if}
 
-  {#if !$empty}
+  {#if $form.id}
     <button
       name="delete"
       value="delete"

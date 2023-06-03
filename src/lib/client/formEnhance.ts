@@ -9,7 +9,7 @@ import { browser } from '$app/environment';
 import {
   SuperFormError,
   type TaintedFields,
-  type Validation,
+  type SuperValidated,
   type ValidationErrors,
   type Validator,
   type Validators,
@@ -90,7 +90,7 @@ export function formEnhance<T extends AnyZodObject, M>(
   lastChanges: Writable<string[][]>,
   Context_findValidationForms: (
     data: Record<string, unknown>
-  ) => Validation<AnyZodObject>[]
+  ) => SuperValidated<AnyZodObject>[]
 ) {
   // Now we know that we are upgraded, so we can enable the tainted form option.
   enableTaintedForm();
@@ -400,11 +400,10 @@ export function formEnhance<T extends AnyZodObject, M>(
         if (options.SPA) {
           cancel();
 
-          const validationResult: Validation<T> = {
+          const validationResult: SuperValidated<T> = {
             valid: true,
             errors: {},
             data: get(data),
-            empty: false,
             constraints: get(constraints),
             message: undefined,
             id: get(formId)
@@ -490,7 +489,7 @@ export function formEnhance<T extends AnyZodObject, M>(
             if (newForm.id !== get(formId)) continue;
 
             const data = {
-              form: newForm as Validation<T>,
+              form: newForm as SuperValidated<T>,
               formEl,
               cancel: () => (cancelled = true)
             };
@@ -570,7 +569,7 @@ async function clientValidation<T extends AnyZodObject>(
   options: FormOptions<T, never>,
   checkData: z.infer<T>,
   formId: string | undefined,
-  constraints: Validation<ZodValidation<T>>['constraints']
+  constraints: SuperValidated<ZodValidation<T>>['constraints']
 ) {
   let validationResult: Awaited<ReturnType<typeof _clientValidation<T>>>;
 
@@ -592,7 +591,7 @@ async function _clientValidation<T extends AnyZodObject>(
   validators: FormOptions<T, unknown>['validators'],
   checkData: z.infer<T>,
   formId: string | undefined,
-  constraints: Validation<ZodValidation<T>>['constraints']
+  constraints: SuperValidated<ZodValidation<T>>['constraints']
 ) {
   if (!validators) return { valid: true as const };
 
@@ -677,11 +676,10 @@ async function _clientValidation<T extends AnyZodObject>(
 
   if (valid) return { valid: true as const };
 
-  const result: Validation<T> = {
+  const result: SuperValidated<T> = {
     valid,
     errors: clientErrors,
     data: checkData,
-    empty: false,
     constraints,
     message: undefined,
     id: formId

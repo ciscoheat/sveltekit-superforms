@@ -77,12 +77,12 @@
   {#each data.users as user}
     | <a href="?id={user.id}">{user.name}</a> |
   {/each}
-  {#if !data.form.empty}
+  {#if $form.id}
     <button on:click={() => goto('?')}>Create new</button>
   {/if}
 </div>
 
-<h2>{data.form.empty ? 'Create' : 'Update'} user</h2>
+<h2>{!$form.id ? 'Create' : 'Update'} user</h2>
 
 <div class="forms">
   <form

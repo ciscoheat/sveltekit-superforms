@@ -154,7 +154,7 @@ export type InputConstraints<T extends AnyZodObject> = SuperStruct<
   InputConstraint
 >;
 
-export type Validation<
+export type SuperValidated<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
@@ -162,11 +162,16 @@ export type Validation<
   valid: boolean;
   errors: ValidationErrors<UnwrapEffects<T>>;
   data: z.infer<UnwrapEffects<T>>;
-  empty: boolean;
   constraints: Entity<UnwrapEffects<T>>['constraints'];
   message?: M;
   id?: string;
 };
+
+export type Validation<
+  T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  M = any
+> = SuperValidated<T, M>;
 
 export type FormField<
   T extends AnyZodObject,

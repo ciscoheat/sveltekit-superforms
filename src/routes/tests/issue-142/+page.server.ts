@@ -1,5 +1,5 @@
 import { setError, superValidate } from '$lib/server';
-import type { Validation } from '$lib/index';
+import type { SuperValidated } from '$lib/index';
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema';
 
@@ -10,7 +10,7 @@ export const load = async () => {
 
 ///// Form actions //////////////////////////////////////////////////
 
-function stripPassword(form: Validation<typeof schema>) {
+function stripPassword(form: SuperValidated<typeof schema>) {
   // comment out password clearing and form error works again
   form.data.password = '';
   form.data.confirmedPassword = '';

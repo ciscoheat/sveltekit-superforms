@@ -33,8 +33,8 @@ import { fieldProxy } from './proxies.js';
 import { clearErrors, clone } from '../utils.js';
 import {
   splitPath,
-  type StringPath,
-  type StringPathLeaves
+  type FormPath,
+  type FormPathLeaves
 } from '../stringPath.js';
 import { validateField, type Validate } from './validateField.js';
 import {
@@ -234,7 +234,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
 
   validate: Validate<
     UnwrapEffects<T>,
-    StringPathLeaves<z.infer<UnwrapEffects<T>>>
+    FormPathLeaves<z.infer<UnwrapEffects<T>>>
   >;
 };
 
@@ -806,7 +806,7 @@ export function superForm<
         key,
         {
           name: key,
-          value: fieldProxy(Form, key as string & StringPath<z.infer<T>>),
+          value: fieldProxy(Form, key as FormPath<z.infer<T>>),
           errors: fieldProxy(Errors, key as never),
           constraints: fieldProxy(Constraints, key as never)
         }

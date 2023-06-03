@@ -9,9 +9,9 @@ import type { SuperForm } from './index.js';
 import type { z, AnyZodObject } from 'zod';
 import {
   splitPath,
-  type StringPath,
-  type StringPathLeaves,
-  type StringPathType
+  type FormPath,
+  type FormPathLeaves,
+  type FormPathType
 } from '../stringPath.js';
 import type { ZodValidation } from '../index.js';
 
@@ -38,7 +38,7 @@ const defaultOptions: DefaultOptions = {
 
 export function intProxy<
   T extends Record<string, unknown>,
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
+  Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
@@ -47,12 +47,12 @@ export function intProxy<
   return _stringProxy(form, path, 'int', {
     ...defaultOptions,
     ...options
-  }) as StringPathType<T, Path> extends number ? Writable<string> : never;
+  }) as FormPathType<T, Path> extends number ? Writable<string> : never;
 }
 
 export function booleanProxy<
   T extends Record<string, unknown>,
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
+  Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
@@ -63,12 +63,12 @@ export function booleanProxy<
   return _stringProxy(form, path, 'boolean', {
     ...defaultOptions,
     ...options
-  }) as StringPathType<T, Path> extends boolean ? Writable<string> : never;
+  }) as FormPathType<T, Path> extends boolean ? Writable<string> : never;
 }
 
 export function numberProxy<
   T extends Record<string, unknown>,
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
+  Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
@@ -77,12 +77,12 @@ export function numberProxy<
   return _stringProxy(form, path, 'number', {
     ...defaultOptions,
     ...options
-  }) as StringPathType<T, Path> extends number ? Writable<string> : never;
+  }) as FormPathType<T, Path> extends number ? Writable<string> : never;
 }
 
 export function dateProxy<
   T extends Record<string, unknown>,
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
+  Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
@@ -97,12 +97,12 @@ export function dateProxy<
     ...defaultOptions,
     dateFormat: options.format,
     empty: options.empty
-  }) as StringPathType<T, Path> extends Date ? Writable<string> : never;
+  }) as FormPathType<T, Path> extends Date ? Writable<string> : never;
 }
 
 export function stringProxy<
   T extends Record<string, unknown>,
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
+  Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
@@ -113,7 +113,7 @@ export function stringProxy<
   return _stringProxy(form, path, 'string', {
     ...defaultOptions,
     empty: options.empty
-  }) as StringPathType<T, Path> extends string ? Writable<string> : never;
+  }) as FormPathType<T, Path> extends string ? Writable<string> : never;
 }
 
 /**
@@ -125,7 +125,7 @@ export function stringProxy<
 function _stringProxy<
   T extends Record<string, unknown>,
   Type extends 'number' | 'int' | 'boolean' | 'date' | 'string',
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
+  Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
@@ -198,37 +198,25 @@ function _stringProxy<
   return {
     subscribe: proxy.subscribe,
     set(val: string) {
-      proxy2.set(toValue(val) as StringPathType<T, Path>);
+      proxy2.set(toValue(val) as FormPathType<T, Path>);
     },
     update(updater) {
       proxy2.update(
-        (f) => toValue(updater(String(f))) as StringPathType<T, Path>
+        (f) => toValue(updater(String(f))) as FormPathType<T, Path>
       );
     }
   };
 }
 
-/*
-type FieldProxy<
-  T extends AnyZodObject,
-  Path extends string & StringPath<z.infer<T>>
-> = {
-  readonly path: Path;
-  value: Writable<StringPathType<z.infer<T>, Path>>;
-  errors?: Writable<string[] | undefined>;
-  constraints?: Writable<InputConstraint | undefined>;
-};
-*/
-
 export function formFieldProxy<
   T extends ZodValidation<AnyZodObject>,
-  Path extends string & StringPathLeaves<z.infer<UnwrapEffects<T>>>
+  Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>
 >(
   form: SuperForm<T, unknown>,
   path: Path
 ): {
   path: Path;
-  value: Writable<StringPathType<z.infer<UnwrapEffects<T>>, Path>>;
+  value: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
   errors: Writable<string[] | undefined>;
   constraints: Writable<InputConstraint | undefined>;
 } {
@@ -251,10 +239,10 @@ export function formFieldProxy<
   };
 }
 
-export function fieldProxy<
-  T extends object,
-  Path extends (string & StringPath<T>) | (string & StringPathLeaves<T>)
->(form: Writable<T>, path: Path): Writable<StringPathType<T, Path>> {
+export function fieldProxy<T extends object, Path extends FormPath<T>>(
+  form: Writable<T>,
+  path: Path
+): Writable<FormPathType<T, Path>> {
   const path2 = splitPath<T>(path);
 
   const proxy = derived(form, ($form) => {
@@ -273,7 +261,7 @@ export function fieldProxy<
       };
     },
     //subscribe: proxy.subscribe,
-    update(upd: Updater<StringPathType<T, Path>>) {
+    update(upd: Updater<FormPathType<T, Path>>) {
       //console.log('~ fieldStore ~ update value for', path);
       form.update((f) => {
         const output = traversePath(f, path2);
@@ -282,7 +270,7 @@ export function fieldProxy<
         return f;
       });
     },
-    set(value: StringPathType<T, Path>) {
+    set(value: FormPathType<T, Path>) {
       //console.log('~ fieldStore ~ set value for', path, value);
       form.update((f) => {
         const output = traversePath(f, path2);

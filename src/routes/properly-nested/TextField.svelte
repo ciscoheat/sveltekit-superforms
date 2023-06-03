@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { z, AnyZodObject } from 'zod';
-  import type { ZodValidation, StringPathLeaves } from '$lib';
+  import type { ZodValidation, FormPathLeaves } from '$lib';
   import { formFieldProxy, type SuperForm } from '$lib/client';
 
   type T = $$Generic<AnyZodObject>;
 
   export let form: SuperForm<ZodValidation<T>, unknown>;
-  export let field: string & StringPathLeaves<z.infer<T>>;
+  export let field: FormPathLeaves<z.infer<T>>;
 
   const { path, value, errors, constraints } = formFieldProxy(form, field);
 </script>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type {
   StringPath,
-  StringPathType,
+  FormPathType,
   StringPathLeaves
 } from '$lib/stringPath';
 import { test } from 'vitest';
@@ -42,10 +42,8 @@ test('StringPath', () => {
 });
 
 function checkPath<T = never>() {
-  return function <U extends string = string>(
-    path: U
-  ): StringPathType<T, U> {
-    return path as StringPathType<T, U>;
+  return function <U extends string = string>(path: U): FormPathType<T, U> {
+    return path as FormPathType<T, U>;
   };
 }
 
@@ -55,24 +53,24 @@ test('StringPathType', () => {
   const a = checkObj(`tags[${i + 3}].name`); // string
   const b = checkObj(`scores[${i + 3}][0]`); // Date
 
-  const t0: StringPathType<Obj, 'name'> = 'string';
-  const t1: StringPathType<Obj, 'points'> = 123;
-  const t2: StringPathType<Obj, 'city'> = { name: 'London' };
-  const t3: StringPathType<Obj, 'tags'> = [
+  const t0: FormPathType<Obj, 'name'> = 'string';
+  const t1: FormPathType<Obj, 'points'> = 123;
+  const t2: FormPathType<Obj, 'city'> = { name: 'London' };
+  const t3: FormPathType<Obj, 'tags'> = [
     { id: 123, name: 'Test', parents: [] }
   ];
-  const t4: StringPathType<Obj, 'tags[0]'> = {
+  const t4: FormPathType<Obj, 'tags[0]'> = {
     id: 123,
     name: 'Test',
     parents: [1]
   };
-  const t5: StringPathType<Obj, 'tags[0].name'> = 'string';
-  const t6: StringPathType<Obj, `tags[5].id`> = 123;
+  const t5: FormPathType<Obj, 'tags[0].name'> = 'string';
+  const t6: FormPathType<Obj, `tags[5].id`> = 123;
 
   // @ts-expect-error incorrect path
-  const n1: StringPathType<Obj, 'city[2]'> = 'never';
+  const n1: FormPathType<Obj, 'city[2]'> = 'never';
   // @ts-expect-error incorrect path
-  const n2: StringPathType<Obj, 'nope incorrect'> = 'never';
+  const n2: FormPathType<Obj, 'nope incorrect'> = 'never';
 });
 
 test('StringPathLeaves', () => {

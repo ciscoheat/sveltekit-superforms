@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The `Validation` type is now called `SuperValidate`.
+- `StringPath` and `StringPathLeaves` are renamed to `FormPath` and `FormPathLeaves`.
 
 ### Removed
 

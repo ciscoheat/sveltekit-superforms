@@ -23,6 +23,16 @@ export function mergePath(path: (string | number | symbol)[]) {
 /**
  * Lists all paths in an object as string accessors.
  */
+export type FormPath<T extends object> =
+  | (string & StringPath<T>)
+  | FormPathLeaves<T>;
+
+/**
+ * Like FormPath, but only with non-objects as accessible properties.
+ * Similar to the leaves in a node tree, if you look at the object as a tree structure.
+ */
+export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
+
 export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
   ? NonNullable<U> extends object
     ?
@@ -49,10 +59,6 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
         }[keyof T]
   : never;
 
-/**
- * Like StringPath, but only with non-objects as accessible properties.
- * Similar to the leaves in a node tree, if you look at the object as a tree structure.
- */
 export type StringPathLeaves<T extends object> =
   NonNullable<T> extends (infer U)[]
     ? NonNullable<U> extends object
@@ -81,30 +87,30 @@ export type StringPathLeaves<T extends object> =
           }[keyof T]
     : never;
 
-export type StringPathType<T, P extends string> = P extends keyof T
+export type FormPathType<T, P extends string> = P extends keyof T
   ? T[P]
   : P extends number
   ? T
   : P extends `.${infer Rest}`
-  ? StringPathType<NonNullable<T>, Rest>
+  ? FormPathType<NonNullable<T>, Rest>
   : P extends `${number}]${infer Rest}`
   ? NonNullable<T> extends (infer U)[]
-    ? StringPathType<U, Rest>
+    ? FormPathType<U, Rest>
     : { invalid_path: P; Type: T }
   : P extends `${infer K}[${infer Rest}`
   ? K extends keyof NonNullable<T>
-    ? StringPathType<NonNullable<T>[K], Rest>
-    : StringPathType<T, Rest>
+    ? FormPathType<NonNullable<T>[K], Rest>
+    : FormPathType<T, Rest>
   : P extends `${infer K}.${infer Rest}`
   ? K extends keyof NonNullable<T>
-    ? StringPathType<NonNullable<T>[K], Rest>
+    ? FormPathType<NonNullable<T>[K], Rest>
     : NonNullable<T> extends (infer U)[]
-    ? StringPathType<U, Rest>
+    ? FormPathType<U, Rest>
     : { invalid_path: P; Type: T }
   : P extends `[${infer K}].${infer Rest}`
   ? K extends number
     ? T extends (infer U)[]
-      ? StringPathType<U, Rest>
+      ? FormPathType<U, Rest>
       : { invalid_path: P; Type: T }
     : P extends `${number}`
     ? NonNullable<T> extends (infer U)[]

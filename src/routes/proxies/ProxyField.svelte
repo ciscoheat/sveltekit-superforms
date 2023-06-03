@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { Writable } from 'svelte/store';
-  import type { ZodValidation, StringPathLeaves } from '$lib';
+  import type { ZodValidation, FormPathLeaves } from '$lib';
   import { dateProxy, formFieldProxy, type SuperForm } from '$lib/client';
   import type { z, AnyZodObject } from 'zod';
 
   type T = $$Generic<AnyZodObject>;
   export let form: SuperForm<ZodValidation<T>, unknown>;
-  export let field: string & StringPathLeaves<z.infer<T>>;
+  export let field: FormPathLeaves<z.infer<T>>;
   export let type:
     | 'text'
     | 'password'

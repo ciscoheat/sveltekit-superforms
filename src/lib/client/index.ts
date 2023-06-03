@@ -390,7 +390,7 @@ export function superForm<
     if (
       !(
         'valid' in object &&
-        'empty' in object &&
+        'errors' in object &&
         typeof object.valid === 'boolean'
       )
     ) {

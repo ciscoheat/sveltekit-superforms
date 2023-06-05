@@ -10,10 +10,11 @@ import {
   entityData,
   unwrapZodType,
   valueOrDefault,
-  type Entity
+  type Entity,
+  type ZodTypeInfo
 } from './schemaEntity.js';
 
-import { mapErrors, traversePath, type ZodTypeInfo } from './traversal.js';
+import { traversePath } from './traversal.js';
 
 import {
   z,
@@ -38,6 +39,7 @@ import {
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 
 import { clone } from './utils.js';
+import { mapErrors } from './errors.js';
 
 export { defaultValues } from './schemaEntity.js';
 

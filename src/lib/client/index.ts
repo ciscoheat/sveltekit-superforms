@@ -23,7 +23,6 @@ import {
 import type { z, AnyZodObject } from 'zod';
 import type { FormFields, MaybePromise } from '../index.js';
 import {
-  findErrors,
   comparePaths,
   setPaths,
   pathExists,
@@ -44,6 +43,7 @@ import {
   type SuperFormEvents,
   type SuperFormEventList
 } from './formEnhance.js';
+import { flattenErrors } from '../errors.js';
 
 export {
   intProxy,
@@ -682,7 +682,7 @@ export function superForm<
   // Utilities
   const AllErrors = derived(Errors, ($errors) => {
     if (!$errors) return [];
-    return findErrors($errors);
+    return flattenErrors($errors);
   });
 
   //////////////////////////////////////////////////////////////////////

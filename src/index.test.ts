@@ -10,8 +10,8 @@ import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
 import { SuperFormError } from '$lib';
-import { findErrors } from '$lib/traversal';
 import { entityData } from '$lib/schemaEntity';
+import { flattenErrors } from '$lib/errors';
 
 const slugify = (
   str: string,
@@ -642,7 +642,7 @@ describe('Errors', async () => {
       nestedSchema
     );
 
-    expect(findErrors(form.errors)).toStrictEqual([
+    expect(flattenErrors(form.errors)).toStrictEqual([
       { path: 'id', messages: ['Required'] },
       {
         path: 'users[0].name',

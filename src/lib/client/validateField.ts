@@ -10,18 +10,16 @@ import {
   type Validators
 } from '../index.js';
 import {
-  errorShape,
   isInvalidPath,
-  mapErrors,
   setPaths,
   traversePath,
-  traversePaths,
-  type ZodTypeInfo
+  traversePaths
 } from '../traversal.js';
-import { hasEffects } from '../schemaEntity.js';
+import { hasEffects, type ZodTypeInfo } from '../schemaEntity.js';
 import { unwrapZodType } from '../schemaEntity.js';
 import type { FormPathLeaves } from '../stringPath.js';
 import { clearErrors, clone } from '../utils.js';
+import { errorShape, mapErrors } from '../errors.js';
 
 type ValidateOptions<V> = Partial<{
   value: V;

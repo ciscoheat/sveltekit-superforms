@@ -16,7 +16,7 @@ import {
 } from 'zod';
 import { pathExists, traversePath, traversePathAsync } from '$lib/traversal';
 import { get, writable } from 'svelte/store';
-import { mapErrors } from '$lib/traversal';
+import { errorShape, mapErrors } from '$lib/errors';
 import { hasEffects, unwrapZodType } from '$lib/server/entity';
 import { superValidate } from '$lib/server';
 import { fieldProxy } from '$lib/client';
@@ -48,10 +48,16 @@ const errors = social.safeParse({
 
 assert(!errors.success);
 
-let mapped = mapErrors<typeof social>(errors.error.format());
+let mapped = mapErrors<typeof social>(
+  errors.error.format(),
+  errorShape(social)
+);
 
 beforeEach(() => {
-  mapped = mapErrors<typeof social>(errors.error.format());
+  mapped = mapErrors<typeof social>(
+    errors.error.format(),
+    errorShape(social)
+  );
 });
 
 test('Mapping errors', () => {

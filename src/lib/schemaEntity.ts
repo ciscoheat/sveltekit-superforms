@@ -6,11 +6,7 @@ import {
   SuperFormError
 } from './index.js';
 
-import {
-  errorShape,
-  type ErrorShape,
-  type ZodTypeInfo
-} from './traversal.js';
+import { errorShape } from './errors.js';
 
 import {
   z,
@@ -33,6 +29,17 @@ import {
 } from 'zod';
 
 import type { SuperValidateOptions } from './superValidate.js';
+import type { ErrorShape } from './errors.js';
+
+export type ZodTypeInfo = {
+  zodType: ZodTypeAny;
+  originalType: ZodTypeAny;
+  isNullable: boolean;
+  isOptional: boolean;
+  hasDefault: boolean;
+  effects: ZodEffects<ZodTypeAny> | undefined;
+  defaultValue: unknown;
+};
 
 export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
   ? UnwrappedEntity<U>

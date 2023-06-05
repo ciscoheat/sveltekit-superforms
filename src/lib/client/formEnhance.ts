@@ -18,15 +18,11 @@ import {
 } from '../index.js';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import {
-  errorShape,
-  mapErrors,
-  traversePath,
-  traversePathsAsync
-} from '../traversal.js';
+import { traversePath, traversePathsAsync } from '../traversal.js';
 import type { Entity } from '../schemaEntity.js';
 import { validateField } from './validateField.js';
 import type { FormOptions, SuperForm } from './index.js';
+import { errorShape, mapErrors } from '../errors.js';
 
 enum FetchStatus {
   Idle = 0,

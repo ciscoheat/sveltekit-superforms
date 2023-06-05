@@ -137,7 +137,7 @@ export type TaintedFields<T extends AnyZodObject> = SuperStructArray<
 
 export type ValidationErrors<T extends AnyZodObject> = {
   _errors?: string[];
-} & SuperStructArray<T, string[]>;
+} & SuperStructArray<T, string[], {_errors?: string[]}>;
 
 export type InputConstraint = Partial<{
   pattern: string; // RegExp
@@ -168,6 +168,9 @@ export type SuperValidated<
   id?: string;
 };
 
+/**
+ * @deprecated Use SuperValidated instead.
+ */
 export type Validation<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,7 +185,6 @@ export type FormField<
   value: Writable<z.infer<T>[Property]>;
   errors?: Writable<ValidationErrors<T>[Property]>;
   constraints?: Writable<InputConstraints<T>[Property]>;
-  readonly type?: string;
 };
 
 export type FormFields<T extends AnyZodObject> = {

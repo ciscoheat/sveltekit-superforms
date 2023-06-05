@@ -1,11 +1,10 @@
-import type { z, AnyZodObject, ZodTypeAny, ZodArray, ZodError } from 'zod';
+import type { z, AnyZodObject, ZodTypeAny, ZodError } from 'zod';
 import { get } from 'svelte/store';
 import type { FormOptions, SuperForm, TaintOption } from './index.js';
 import {
   SuperFormError,
   type FieldPath,
   type TaintedFields,
-  type ValidationErrors,
   type UnwrapEffects,
   type Validators
 } from '../index.js';
@@ -15,8 +14,6 @@ import {
   traversePath,
   traversePaths
 } from '../traversal.js';
-import { hasEffects, type ZodTypeInfo } from '../schemaEntity.js';
-import { unwrapZodType } from '../schemaEntity.js';
 import type { FormPathLeaves } from '../stringPath.js';
 import { clearErrors, clone } from '../utils.js';
 import { errorShape, mapErrors } from '../errors.js';
@@ -36,7 +33,63 @@ export type Validate<
   opts?: ValidateOptions<unknown>
 ) => Promise<string[] | undefined>;
 
-const effectMapCache = new WeakMap<object, boolean>();
+export async function validateObjectErrors<T extends AnyZodObject, M>(
+  formOptions: FormOptions<T, M>,
+  data: z.infer<T>,
+  Errors: SuperForm<T, M>['errors']
+) {
+  if (
+    typeof formOptions.validators !== 'object' ||
+    !('safeParseAsync' in formOptions.validators)
+  ) {
+    return;
+  }
+
+  const validators = formOptions.validators as AnyZodObject;
+  const result = await validators.safeParseAsync(data);
+
+  if (!result.success) {
+    const newErrors = mapErrors(
+      result.error.format(),
+      errorShape(validators as AnyZodObject)
+    );
+
+    Errors.update((currentErrors) => {
+      // Clear current object-level errors
+      traversePaths(currentErrors, (pathData) => {
+        if (pathData.key == '_errors') {
+          return pathData.set(undefined);
+        }
+      });
+
+      // Add new object-level errors and tainted field errors
+      traversePaths(newErrors, (pathData) => {
+        if (pathData.key == '_errors') {
+          return setPaths(currentErrors, [pathData.path], pathData.value);
+        }
+        /*
+            if (!Array.isArray(pathData.value)) return;
+            if (Tainted_isPathTainted(pathData.path, taintedFields)) {
+              setPaths(currentErrors, [pathData.path], pathData.value);
+            }
+            return 'skip';
+            */
+      });
+
+      return currentErrors;
+    });
+  } else {
+    Errors.update((currentErrors) => {
+      // Clear current object-level errors
+      traversePaths(currentErrors, (pathData) => {
+        if (pathData.key == '_errors') {
+          return pathData.set(undefined);
+        }
+      });
+      return currentErrors;
+    });
+  }
+}
 
 // @DCI-context
 export async function validateField<T extends AnyZodObject, M>(
@@ -139,30 +192,6 @@ async function _validateField<T extends AnyZodObject, M>(
     return { validated: false, errors: undefined } as const;
   }
 
-  function extractValidator(
-    data: ZodTypeInfo,
-    key: string
-  ): ZodTypeAny | undefined {
-    if (data.effects) return undefined;
-
-    // No effects, check if ZodObject or ZodArray, which are the
-    // "allowed" objects in the path above the leaf.
-    const type = data.zodType;
-
-    if (type._def.typeName == 'ZodObject') {
-      const nextType = (type as AnyZodObject)._def.shape()[key];
-      const unwrapped = unwrapZodType(nextType);
-      return unwrapped.effects ? undefined : unwrapped.zodType;
-    } else if (type._def.typeName == 'ZodArray') {
-      const array = type as ZodArray<ZodTypeAny>;
-      const unwrapped = unwrapZodType(array.element);
-      if (unwrapped.effects) return undefined;
-      return extractValidator(unwrapped, key);
-    } else {
-      throw new SuperFormError('Invalid validator');
-    }
-  }
-
   ///// Roles ///////////////////////////////////////////////////////
 
   function Tainted_isPathTainted(
@@ -175,12 +204,8 @@ async function _validateField<T extends AnyZodObject, M>(
     return leaf.value === true;
   }
 
-  function Errors_get() {
-    return get(Errors);
-  }
-
-  function Errors_set(newErrors: ValidationErrors<UnwrapEffects<T>>) {
-    Errors.set(newErrors);
+  function Errors_update(updater: Parameters<typeof Errors.update>[0]) {
+    Errors.update(updater);
   }
 
   function Errors_clearFormLevelErrors() {
@@ -230,63 +255,6 @@ async function _validateField<T extends AnyZodObject, M>(
 
   if ('safeParseAsync' in validators) {
     // Zod validator
-    // Check if any effects exist for the path, then parse the entire schema.
-    if (!effectMapCache.has(validators)) {
-      effectMapCache.set(validators, hasEffects(validators as ZodTypeAny));
-    }
-
-    const effects = effectMapCache.get(validators);
-
-    const perFieldValidator = effects
-      ? undefined
-      : traversePath(
-          validators,
-          Context.validationPath as FieldPath<typeof validators>,
-          (pathData) => {
-            return extractValidator(
-              unwrapZodType(pathData.parent),
-              pathData.key
-            );
-          }
-        );
-
-    if (perFieldValidator) {
-      const validator = extractValidator(
-        unwrapZodType(perFieldValidator.parent),
-        perFieldValidator.key
-      );
-      if (validator) {
-        // Check if validator is ZodArray and the path is an array access
-        // in that case validate the whole array.
-        if (
-          Context.currentData &&
-          validator._def.typeName == 'ZodArray' &&
-          !isNaN(parseInt(path[path.length - 1]))
-        ) {
-          const validateArray = traversePath(
-            Context.currentData,
-            path.slice(0, -1) as FieldPath<typeof Context.currentData>
-          );
-          Context.value = validateArray?.value;
-        }
-
-        //console.log('🚀 ~ file: index.ts:972 ~ no effects:', validator);
-        const result = await validator.safeParseAsync(Context.value);
-        if (!result.success) {
-          const errors = result.error.format();
-          return {
-            validated: true,
-            errors: errors._errors
-          };
-        } else {
-          return { validated: true, errors: undefined };
-        }
-      }
-    }
-
-    //console.log('🚀 ~ file: index.ts:983 ~ Effects found, validating all');
-
-    // Effects are found, validate entire data, unfortunately
     if (!Context.shouldUpdate) {
       // If value shouldn't update, clone and set the new value
       Context.currentData = clone(Context.currentData ?? get(data));
@@ -298,7 +266,6 @@ async function _validateField<T extends AnyZodObject, M>(
     );
 
     if (!result.success) {
-      let currentErrors: ValidationErrors<UnwrapEffects<T>> = {};
       const newErrors = Errors_fromZod(
         result.error,
         validators as AnyZodObject
@@ -307,28 +274,33 @@ async function _validateField<T extends AnyZodObject, M>(
       if (options.update === true || options.update == 'errors') {
         // Set errors for other (tainted) fields, that may have been changed
         const taintedFields = get(Tainted);
-        currentErrors = Errors_get();
 
-        // Special check for form level errors
-        if (currentErrors._errors !== newErrors._errors) {
-          if (
-            !currentErrors._errors ||
-            !newErrors._errors ||
-            currentErrors._errors.join('') != newErrors._errors.join('')
-          ) {
-            currentErrors._errors = newErrors._errors;
-          }
-        }
+        Errors_update((currentErrors) => {
+          // Clear current object-level errors
+          traversePaths(currentErrors, (pathData) => {
+            if (pathData.key == '_errors') {
+              return pathData.set(undefined);
+            }
+          });
 
-        traversePaths(newErrors, (pathData) => {
-          if (!Array.isArray(pathData.value)) return;
-          if (Tainted_isPathTainted(pathData.path, taintedFields)) {
-            setPaths(currentErrors, [pathData.path], pathData.value);
-          }
-          return 'skip';
+          // Add new object-level errors and tainted field errors
+          traversePaths(newErrors, (pathData) => {
+            if (pathData.key == '_errors') {
+              return setPaths(
+                currentErrors,
+                [pathData.path],
+                pathData.value
+              );
+            }
+            if (!Array.isArray(pathData.value)) return;
+            if (Tainted_isPathTainted(pathData.path, taintedFields)) {
+              setPaths(currentErrors, [pathData.path], pathData.value);
+            }
+            return 'skip';
+          });
+
+          return currentErrors;
         });
-
-        Errors_set(currentErrors);
       }
 
       // Finally, set errors for the specific field

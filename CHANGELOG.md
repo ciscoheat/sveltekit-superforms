@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- As with effects, array and object errors now forces the whole Zod schema to be validated client-side.
 - The `Validation` type is now called `SuperValidated`.
 - `StringPath` and `StringPathLeaves` are renamed to `FormPath` and `FormPathLeaves`.
 
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Errors can now be added to arrays and objects in the schema.
 - Added a `posted` store, a boolean which is false if the form hasn't been posted during its current lifetime.
 - `reset` now has an additional `data` option that can be used to re-populate the form with data, and `id` to set a different form id.
 - `intProxy`, `numberProxy`, `dateProxy` and `stringProxy` now have an `empty` option, so empty values can be set to `null` or `undefined`.

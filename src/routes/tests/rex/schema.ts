@@ -12,6 +12,7 @@ export const basicSchema = z.object({
       max: z.number().int().min(5)
     })
     .array()
+    .max(3)
     .default([{ min: 5, max: 10 }])
 });
 
@@ -40,6 +41,7 @@ export const refined = z
         }
       )
       .array()
+      .max(3)
       .default([{ min: 5, max: 10 }])
   })
   .refine(({ name }) => name !== 'nope', {

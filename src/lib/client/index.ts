@@ -35,7 +35,11 @@ import {
   type FormPath,
   type FormPathLeaves
 } from '../stringPath.js';
-import { validateField, type Validate } from './validateField.js';
+import {
+  validateField,
+  type Validate,
+  validateObjectErrors
+} from './validateField.js';
 import {
   formEnhance,
   shouldSyncFlash,
@@ -596,7 +600,7 @@ export function superForm<
       options.validationMethod == 'onblur' ||
       options.validationMethod == 'submit-only'
     ) {
-      return;
+      return false;
     }
 
     let shouldValidate = options.validationMethod === 'oninput';
@@ -630,24 +634,27 @@ export function superForm<
 
     if (shouldValidate) {
       await validateField(path, options, Form, Errors, Tainted, { taint });
+      return true;
+    } else {
+      return false;
     }
   }
 
-  function Tainted_update(
+  async function Tainted_update(
     newObj: unknown,
     compareAgainst: unknown,
-    options: TaintOption
+    taintOptions: TaintOption
   ) {
-    if (options === false) {
+    if (taintOptions === false) {
       return;
-    } else if (options === 'untaint-all') {
+    } else if (taintOptions === 'untaint-all') {
       Tainted.set(undefined);
       return;
     }
 
     const paths = comparePaths(newObj, compareAgainst);
 
-    if (options === true) {
+    if (taintOptions === true) {
       LastChanges.set(paths);
     }
 
@@ -655,14 +662,15 @@ export function superForm<
       Tainted.update((tainted) => {
         //console.log('Update tainted:', paths, newObj, compareAgainst);
         if (!tainted) tainted = {};
-        setPaths(tainted, paths, options === true ? true : undefined);
+        setPaths(tainted, paths, taintOptions === true ? true : undefined);
         return tainted;
       });
 
+      let updated = false;
       for (const path of paths) {
-        //console.log('🚀 ~ file: index.ts:681 ~ path:', path);
-        Tainted__validate(path, options);
+        updated = updated || (await Tainted__validate(path, taintOptions));
       }
+      if (!updated) await validateObjectErrors(options, get(Form), Errors);
     }
   }
 

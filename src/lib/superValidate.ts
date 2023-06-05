@@ -53,7 +53,7 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
   form.message = message;
   if (options?.status && options.status >= 400) form.valid = false;
 
-  return form.valid ? fail(options?.status ?? 400, { form }) : { form };
+  return !form.valid ? fail(options?.status ?? 400, { form }) : { form };
 }
 
 export const setMessage = message;

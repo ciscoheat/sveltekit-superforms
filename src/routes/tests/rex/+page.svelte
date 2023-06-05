@@ -3,6 +3,7 @@
   import { superForm } from '$lib/client';
   import { basicSchema, refined } from './schema';
   import { page } from '$app/stores';
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
 
   export let data: PageData;
 
@@ -11,16 +12,15 @@
     : basicSchema;
 
   // Client API:
-  const { form, errors, constraints, message, enhance } = superForm(
-    data.form,
-    {
-      dataType: 'json',
-      validators: validators,
-      validationMethod: ($page.url.searchParams.get('method') ??
-        undefined) as any
-    }
-  );
+  const { form, errors, message, enhance, tainted } = superForm(data.form, {
+    dataType: 'json',
+    validators: validators,
+    validationMethod: ($page.url.searchParams.get('method') ??
+      undefined) as any
+  });
 </script>
+
+<SuperDebug data={{ $errors, $tainted }} />
 
 <h4>Validation method: {$page.url.searchParams.get('method') ?? 'auto'}</h4>
 <h4>
@@ -51,6 +51,12 @@
   />
   <!-- {...$constraints.email} -->
   {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
+
+  <div class="tag-errors">
+    {#if $errors.tags?._errors}
+      <b class="invalid">{$errors.tags?._errors}</b>
+    {/if}
+  </div>
 
   <div class="tags">
     {#each $form.tags as _, i}
@@ -86,12 +92,24 @@
     type="button">Add tag</button
   >
 
+  <button
+    on:click={() => {
+      if ($form.tags.length > 0) $form.tags = $form.tags.slice(0, -1);
+    }}
+    type="button"
+    class="remove">Remove last tag</button
+  >
+
   <div><button>Submit</button></div>
 </form>
 
 <style>
   .invalid {
     color: red;
+  }
+
+  .remove {
+    background-color: brown;
   }
 
   button {

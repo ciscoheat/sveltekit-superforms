@@ -1,18 +1,18 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
   import type { AnyZodObject } from 'zod';
   import type { PageData } from './$types';
   import { schema } from './schema';
   import * as flashModule from 'sveltekit-flash-message/client';
+  import type { ZodValidation } from '$lib';
 
   export let data: PageData;
 
   type Message = { status: 'success' | 'error'; text: string };
 
-  function yourSuperForm<T extends AnyZodObject>(
-    ...params: Parameters<typeof superForm<T>>
+  function yourSuperForm<T extends ZodValidation<AnyZodObject>>(
+    ...params: Parameters<typeof superForm<T, Message>>
   ) {
     return superForm<T, Message>(params[0], {
       delayMs: 300,

@@ -148,7 +148,7 @@ const defaultFormOptions = {
   resetForm: false,
   autoFocusOnError: 'detect',
   scrollToError: 'smooth',
-  errorSelector: '[data-invalid],[aria-invalid="true"]',
+  errorSelector: '[aria-invalid="true"],[data-invalid]',
   selectErrorText: false,
   stickyNavbar: undefined,
   taintedMessage:

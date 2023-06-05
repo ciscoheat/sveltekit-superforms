@@ -19,7 +19,7 @@ import {
 } from '../traversal.js';
 import { hasEffects } from '../schemaEntity.js';
 import { unwrapZodType } from '../schemaEntity.js';
-import type { StringPathLeaves } from '../stringPath.js';
+import type { FormPathLeaves } from '../stringPath.js';
 import { clearErrors, clone } from '../utils.js';
 
 type ValidateOptions<V> = Partial<{
@@ -31,7 +31,7 @@ type ValidateOptions<V> = Partial<{
 
 export type Validate<
   T extends AnyZodObject,
-  P extends StringPathLeaves<z.infer<T>>
+  P extends FormPathLeaves<z.infer<T>>
 > = (
   path: P,
   opts?: ValidateOptions<unknown>

@@ -46,16 +46,12 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
   message: M,
   options?: {
     status?: number;
-    valid?: boolean;
   }
 ) {
   form.message = message;
-  if (options?.valid !== undefined) form.valid = options.valid;
+  if (options?.status && options.status >= 400) form.valid = false;
 
-  const failure =
-    (options?.status !== undefined && options.status >= 400) || !form.valid;
-
-  return failure ? fail(options?.status ?? 400, { form }) : { form };
+  return form.valid ? fail(options?.status ?? 400, { form }) : { form };
 }
 
 export const setMessage = message;

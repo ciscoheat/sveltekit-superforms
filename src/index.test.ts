@@ -6,12 +6,12 @@ import {
   superValidateSync
 } from '$lib/server';
 import { assert, expect, test, describe } from 'vitest';
-import { z, type AnyZodObject, type ZodTypeAny } from 'zod';
+import { z, type AnyZodObject } from 'zod';
 import _slugify from 'slugify';
 import { _dataTypeForm } from './routes/test/+page.server';
 import { SuperFormError } from '$lib';
 import { findErrors } from '$lib/traversal';
-import { entityData, shapeToTree } from '$lib/schemaEntity';
+import { entityData } from '$lib/schemaEntity';
 
 const slugify = (
   str: string,
@@ -758,7 +758,7 @@ describe('Errors', async () => {
     assert(!form2.valid);
     expect(form2.errors).toStrictEqual({
       name: ['Required'],
-      tags: ['Array must contain at least 2 element(s)']
+      tags: { _errors: ['Array must contain at least 2 element(s)'] }
     });
   });
 });
@@ -937,7 +937,7 @@ test('Schema with pipe()', async () => {
   expect(form4.data.num).toEqual(123);
 });
 
-describe.only('Schema errors with arrays and objects', () => {
+describe('Schema errors with arrays and objects', () => {
   const schema = z.object({
     tags: z
       .object({
@@ -949,7 +949,7 @@ describe.only('Schema errors with arrays and objects', () => {
       .min(2)
   });
 
-  test.only('Schema shape traversal', () => {
+  test('Schema shape traversal', () => {
     expect(entityData(schema).errorShape).toStrictEqual({
       tags: { names: {}, test: {} }
     });

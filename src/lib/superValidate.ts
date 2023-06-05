@@ -312,7 +312,7 @@ function validateResult<T extends AnyZodObject, M>(
       if (result.success) {
         data = result.data;
       } else if (options.errors === true) {
-        errors = mapErrors<T>(result.error.format());
+        errors = mapErrors<T>(result.error.format(), entityInfo.errorShape);
       }
     }
 
@@ -337,7 +337,9 @@ function validateResult<T extends AnyZodObject, M>(
     if (!result.success) {
       const partialData = parsed.data as Partial<z.infer<T>>;
       const errors =
-        options.errors !== false ? mapErrors<T>(result.error.format()) : {};
+        options.errors !== false
+          ? mapErrors<T>(result.error.format(), entityInfo.errorShape)
+          : {};
 
       return {
         id,

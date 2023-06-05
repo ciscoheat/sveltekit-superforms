@@ -19,6 +19,7 @@ import {
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import {
+  errorShape,
   mapErrors,
   traversePath,
   traversePathsAsync
@@ -612,8 +613,11 @@ async function _clientValidation<T extends AnyZodObject>(
     valid = result.success;
 
     if (!result.success) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      clientErrors = mapErrors<T>(result.error.format()) as any;
+      clientErrors = mapErrors<T>(
+        result.error.format(),
+        errorShape(validator)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ) as any;
     }
   } else {
     // SuperForms validator

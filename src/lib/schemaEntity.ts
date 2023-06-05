@@ -6,7 +6,11 @@ import {
   SuperFormError
 } from './index.js';
 
-import type { ZodTypeInfo } from './traversal.js';
+import {
+  errorShape,
+  type ErrorShape,
+  type ZodTypeInfo
+} from './traversal.js';
 
 import {
   z,
@@ -25,8 +29,7 @@ import {
   ZodObject,
   ZodSymbol,
   ZodRecord,
-  ZodPipeline,
-  ZodUnion
+  ZodPipeline
 } from 'zod';
 
 import type { SuperValidateOptions } from './superValidate.js';
@@ -178,7 +181,7 @@ export function entityData<T extends AnyZodObject>(
     constraints: constraints(schema, warnings),
     keys: Object.keys(schema.keyof().Values),
     hash: entityHash(schema),
-    errorShape: shapeToTree(schema)
+    errorShape: errorShape(schema)
   };
 
   setCached(schema, entity);
@@ -360,44 +363,6 @@ function constraints<T extends AnyZodObject>(
     },
     (data) => !!data
   ) as InputConstraints<T>;
-}
-
-/**
- * A tree structure where the existence of a node means that its not a leaf.
- * Used in error mapping to determine whether to add errors to an _error field
- * (as in arrays and objects), or directly on the field itself.
- */
-type ErrorShape = { [K in string]: ErrorShape };
-
-function shapeToTree(schema: AnyZodObject): ErrorShape {
-  // Can be casted since it guaranteed to be an object
-  return _shapeToTree(schema) as ErrorShape;
-}
-
-function _shapeToTree(type: ZodTypeAny): ErrorShape | undefined {
-  const unwrapped = unwrapZodType(type).zodType;
-  if (unwrapped instanceof ZodObject) {
-    return Object.fromEntries(
-      Object.entries(unwrapped.shape)
-        .map(([key, value]) => {
-          return [key, _shapeToTree(value as ZodTypeAny)];
-        })
-        .filter((entry) => entry[1] !== undefined)
-    );
-  } else if (unwrapped instanceof ZodArray) {
-    return _shapeToTree(unwrapped._def.type) ?? {};
-  } else if (unwrapped instanceof ZodRecord) {
-    return _shapeToTree(unwrapped._def.valueType) ?? {};
-  } else if (unwrapped instanceof ZodUnion) {
-    const options = unwrapped._def.options as ZodTypeAny[];
-    return options.reduce((shape, next) => {
-      const nextShape = _shapeToTree(next);
-      if (nextShape) shape = { ...(shape ?? {}), ...nextShape };
-      return shape;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }, undefined as any);
-  }
-  return undefined;
 }
 
 ///////////////////////////////////////////////////////////////////////////

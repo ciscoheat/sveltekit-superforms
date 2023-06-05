@@ -10,6 +10,7 @@ import {
   type Validators
 } from '../index.js';
 import {
+  errorShape,
   isInvalidPath,
   mapErrors,
   setPaths,
@@ -191,8 +192,11 @@ async function _validateField<T extends AnyZodObject, M>(
     });
   }
 
-  function Errors_fromZod(errors: ZodError<unknown>) {
-    return mapErrors(errors.format());
+  function Errors_fromZod(
+    errors: ZodError<unknown>,
+    validator: AnyZodObject
+  ) {
+    return mapErrors(errors.format(), errorShape(validator));
   }
 
   ///////////////////////////////////////////////////////////////////
@@ -297,7 +301,10 @@ async function _validateField<T extends AnyZodObject, M>(
 
     if (!result.success) {
       let currentErrors: ValidationErrors<UnwrapEffects<T>> = {};
-      const newErrors = Errors_fromZod(result.error);
+      const newErrors = Errors_fromZod(
+        result.error,
+        validators as AnyZodObject
+      );
 
       if (options.update === true || options.update == 'errors') {
         // Set errors for other (tainted) fields, that may have been changed

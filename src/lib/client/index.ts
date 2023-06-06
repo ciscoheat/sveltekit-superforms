@@ -727,8 +727,10 @@ export function superForm<
 
     message = message ?? form.message;
 
+    // Form data is not tainted when rebinding.
+    // Prevents object errors from being revalidated after rebind.
     // eslint-disable-next-line dci-lint/private-role-access
-    Form.set(form.data);
+    Form.set(form.data, { taint: false });
     Message.set(message);
     Errors.set(form.errors);
     FormId.set(form.id);

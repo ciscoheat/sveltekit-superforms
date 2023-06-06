@@ -30,7 +30,7 @@ export const actions = {
         stripPassword(form),
         // @ts-expect-error Backwards compatibility for testing
         null,
-        'This is a sticky form error and it stays until the form gets submitted again'
+        'This is not a sticky form error'
       );
     }
 

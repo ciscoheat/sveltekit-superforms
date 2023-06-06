@@ -9,20 +9,14 @@ import { browser } from '$app/environment';
 import {
   SuperFormError,
   type TaintedFields,
-  type SuperValidated,
-  type ValidationErrors,
-  type Validator,
-  type Validators,
-  type FieldPath,
-  type ZodValidation
+  type SuperValidated
 } from '../index.js';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import { traversePath, traversePathsAsync } from '../traversal.js';
 import type { Entity } from '../schemaEntity.js';
 import { validateField } from './validateField.js';
 import type { FormOptions, SuperForm } from './index.js';
-import { errorShape, mapErrors } from '../errors.js';
+import { clientValidation } from './clientValidation.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -359,7 +353,7 @@ export function formEnhance<T extends AnyZodObject, M>(
             (typeof options.SPA === 'boolean'
               ? undefined
               : options.SPA?.failStatus) ?? 400,
-          data: { form: validation.result }
+          data: { form: validation }
         };
 
         setTimeout(() => validationResponse({ result }), 0);
@@ -563,134 +557,4 @@ export function formEnhance<T extends AnyZodObject, M>(
 
     return validationResponse;
   });
-}
-
-async function clientValidation<T extends AnyZodObject>(
-  options: FormOptions<T, never>,
-  checkData: z.infer<T>,
-  formId: string | undefined,
-  constraints: SuperValidated<ZodValidation<T>>['constraints'],
-  posted: boolean
-) {
-  let validationResult: Awaited<ReturnType<typeof _clientValidation<T>>>;
-
-  if (options.validators) {
-    validationResult = await _clientValidation(
-      options.validators,
-      checkData,
-      formId,
-      constraints,
-      posted
-    );
-  } else {
-    validationResult = { valid: true as const };
-  }
-
-  return validationResult;
-}
-
-async function _clientValidation<T extends AnyZodObject>(
-  validators: FormOptions<T, unknown>['validators'],
-  checkData: z.infer<T>,
-  formId: string | undefined,
-  constraints: SuperValidated<ZodValidation<T>>['constraints'],
-  posted: boolean
-) {
-  if (!validators) return { valid: true as const };
-
-  let valid: boolean;
-  let clientErrors: ValidationErrors<T> = {};
-
-  if ('safeParseAsync' in validators) {
-    // Zod validator
-    const validator = validators as AnyZodObject;
-    const result = await validator.safeParseAsync(checkData);
-
-    valid = result.success;
-
-    if (!result.success) {
-      clientErrors = mapErrors<T>(
-        result.error.format(),
-        errorShape(validator)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ) as any;
-    }
-  } else {
-    // SuperForms validator
-
-    valid = true;
-
-    const validator = validators as Validators<T>;
-    const newErrors: {
-      path: string[];
-      errors: string[] | undefined;
-    }[] = [];
-
-    await traversePathsAsync(checkData, async ({ value, path }) => {
-      // Filter out array indices, the validator structure doesn't contain these.
-      const validationPath = path.filter((p) => isNaN(parseInt(p)));
-      const maybeValidator = traversePath(
-        validator,
-        validationPath as FieldPath<typeof validator>
-      );
-
-      if (typeof maybeValidator?.value === 'function') {
-        const check = maybeValidator.value as Validator<unknown>;
-
-        if (Array.isArray(value)) {
-          for (const key in value) {
-            const errors = await check(value[key]);
-            if (errors) {
-              valid = false;
-              newErrors.push({
-                path: path.concat([key]),
-                errors:
-                  typeof errors === 'string' ? [errors] : errors ?? undefined
-              });
-            }
-          }
-        } else {
-          const errors = await check(value);
-          if (errors) {
-            valid = false;
-            newErrors.push({
-              path,
-              errors:
-                typeof errors === 'string' ? [errors] : errors ?? undefined
-            });
-          }
-        }
-      }
-    });
-
-    for (const { path, errors } of newErrors) {
-      const errorPath = traversePath(
-        clientErrors,
-        path as FieldPath<typeof clientErrors>,
-        ({ parent, key, value }) => {
-          if (value === undefined) parent[key] = {};
-          return parent[key];
-        }
-      );
-
-      if (errorPath) {
-        const { parent, key } = errorPath;
-        parent[key] = errors;
-      }
-    }
-  }
-
-  if (valid) return { valid: true as const };
-
-  const result: SuperValidated<T> = {
-    valid,
-    posted,
-    errors: clientErrors,
-    data: checkData,
-    constraints,
-    message: undefined,
-    id: formId
-  };
-
-  return { valid: false as const, result };
 }

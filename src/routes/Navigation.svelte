@@ -14,10 +14,10 @@
   <a href="/tainted">Tainted</a> |
   <a href="/proxies">Proxies</a>
   <br />
-  <a href="/properly-nested">Properly nested</a>
+  <a href="/properly-nested">Properly nested</a> |
   <a href="/files">Files</a> |
   <a href="/spa">SPA</a> |
-  <a href="/nested-validation">Client-side validation</a> |
+  <a href="/nested-validation">Nested client validation</a> |
   <a href="/tests/rex">Side-effect validation</a>
   <br />
   <a href="/tests/superform-c">Side-effect 2</a> |

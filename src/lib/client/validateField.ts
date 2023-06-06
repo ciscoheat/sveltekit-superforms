@@ -14,24 +14,15 @@ import {
   traversePath,
   traversePaths
 } from '../traversal.js';
-import type { FormPathLeaves } from '../stringPath.js';
 import { clearErrors, clone } from '../utils.js';
 import { errorShape, mapErrors } from '../errors.js';
 
-type ValidateOptions<V> = Partial<{
+export type ValidateOptions<V> = Partial<{
   value: V;
   update: boolean | 'errors' | 'value';
   taint: TaintOption;
   errors: string | string[];
 }>;
-
-export type Validate<
-  T extends AnyZodObject,
-  P extends FormPathLeaves<z.infer<T>>
-> = (
-  path: P,
-  opts?: ValidateOptions<unknown>
-) => Promise<string[] | undefined>;
 
 export async function validateObjectErrors<T extends AnyZodObject, M>(
   formOptions: FormOptions<T, M>,

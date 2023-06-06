@@ -12,6 +12,8 @@
   export let validator: 'zod' | 'superforms';
 
   export let output: (string[] | undefined)[] = [];
+  export let validated: SuperValidated<typeof schema> | undefined =
+    undefined;
 
   $: testMode = $page.url.searchParams.has('test');
 
@@ -58,6 +60,8 @@
   // validate tests
   onMount(async () => {
     if (!testMode) return;
+
+    validated = await validate();
 
     await validate('tags[0].name', {
       value: 'p',

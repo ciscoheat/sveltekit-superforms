@@ -33,12 +33,13 @@ import { clearErrors, clone } from '../utils.js';
 import {
   splitPath,
   type FormPath,
-  type FormPathLeaves
+  type FormPathLeaves,
+  type FormPathType
 } from '../stringPath.js';
 import {
   validateField,
-  type Validate,
-  validateObjectErrors
+  validateObjectErrors,
+  type ValidateOptions
 } from './validateField.js';
 import {
   formEnhance,
@@ -48,6 +49,7 @@ import {
   type SuperFormEventList
 } from './formEnhance.js';
 import { flattenErrors } from '../errors.js';
+import { clientValidation, validateForm } from './clientValidation.js';
 
 export {
   intProxy,
@@ -237,10 +239,7 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
   capture: () => SuperFormSnapshot<UnwrapEffects<T>, M>;
   restore: (snapshot: SuperFormSnapshot<UnwrapEffects<T>, M>) => void;
 
-  validate: Validate<
-    UnwrapEffects<T>,
-    FormPathLeaves<z.infer<UnwrapEffects<T>>>
-  >;
+  validate: typeof validateForm<UnwrapEffects<T>>;
 };
 
 /**
@@ -823,6 +822,29 @@ export function superForm<
     })
   ) as unknown as FormFields<UnwrappedT>;
 
+  function validate<Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>>(
+    path?: Path,
+    opts?: ValidateOptions<FormPathType<z.infer<UnwrapEffects<T>>, Path>>
+  ) {
+    if (path === undefined) {
+      return clientValidation<UnwrapEffects<T>, M>(
+        options,
+        get(Form),
+        _formId,
+        get(Constraints),
+        false
+      );
+    }
+    return validateField<UnwrapEffects<T>, M>(
+      splitPath(path) as string[],
+      options,
+      Form,
+      Errors,
+      Tainted,
+      opts
+    );
+  }
+
   return {
     form: Form,
     formId: FormId,
@@ -856,16 +878,8 @@ export function superForm<
       return rebind(snapshot, snapshot.tainted ?? true);
     },
 
-    validate: (path, opts) => {
-      return validateField(
-        splitPath(path) as string[],
-        options,
-        Form,
-        Errors,
-        Tainted,
-        opts
-      );
-    },
+    validate: validate as typeof validateForm<UnwrapEffects<T>>,
+
     enhance: (
       el: HTMLFormElement,
       events?: SuperFormEvents<UnwrappedT, M>

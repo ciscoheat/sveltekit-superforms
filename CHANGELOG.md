@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- For type safety, you cannot send `null` or `undefined` to `superForm` anymore. Use `superValidate`, or pass a complete data object to `superForm`. Default values can be added with the `defaultValues` function.
 - The `valid` option is removed from `message`, any status >= 400 will return a fail.
 
 ## [1.0.0-rc.2]

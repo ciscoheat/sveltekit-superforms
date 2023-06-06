@@ -143,6 +143,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   };
   warnings: {
     duplicateId?: boolean;
+    noValidationAndConstraints?: boolean;
   };
 }>;
 
@@ -260,11 +261,7 @@ export function superForm<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
 >(
-  form:
-    | z.infer<UnwrapEffects<T>>
-    | SuperValidated<UnwrapEffects<T>, M>
-    | null
-    | undefined,
+  form: z.infer<UnwrapEffects<T>> | SuperValidated<T, M>,
   options: FormOptions<UnwrapEffects<T>, M> = {}
 ): SuperForm<UnwrapEffects<T>, M> {
   type UnwrappedT = UnwrapEffects<T>;
@@ -278,7 +275,8 @@ export function superForm<
 
     if (options.SPA && options.validators === undefined) {
       console.warn(
-        'No validators set for Superform in SPA mode. Add them to the validators option, or set it to false to disable this warning.'
+        'No validators set for Superform in SPA mode. ' +
+          'Add them to the validators option, or set it to false to disable this warning.'
       );
     }
   }
@@ -286,10 +284,23 @@ export function superForm<
   let _formId: string | undefined = options.id;
 
   // Normalize form argument to SuperValidated<T, M>
-  if (!form) {
-    form = Context_newEmptyForm(); // Takes care of null | undefined
-  } else if (Context_isValidationObject(form) === false) {
-    form = Context_newEmptyForm(form); // Takes care of Partial<z.infer<T>>
+  if (!form || Context_isValidationObject(form) === false) {
+    if (options.warnings?.noValidationAndConstraints !== false) {
+      console.warn(
+        (form
+          ? 'Form data sent directly to superForm instead of through superValidate. '
+          : 'No form data sent to superForm. Schema type safety cannot be guaranteed. ') +
+          'No initial validation is made and no constraints will exist for the form. ' +
+          'Set the warnings.noValidationAndConstraints option to false to disable this warning.'
+      );
+    }
+    form = {
+      valid: false,
+      posted: false,
+      errors: {},
+      data: form ?? {},
+      constraints: {} as SuperValidated<T, M>['constraints']
+    };
   } else {
     if (_formId === undefined) _formId = form.id;
   }
@@ -303,7 +314,7 @@ export function superForm<
       if (postedForm.id === _formId) {
         const pageDataForm = form as SuperValidated<T, M>;
         form = postedForm as SuperValidated<T, M>;
-        // Do the non-use:enhance stuff
+        // Reset the form if option set and form is valid.
         if (
           form.valid &&
           options.resetForm &&
@@ -349,18 +360,6 @@ export function superForm<
 
   function Context_setTaintedFormState(data: typeof initialForm.data) {
     Context.taintedFormState = clone(data);
-  }
-
-  function Context_newEmptyForm(
-    data?: Partial<z.infer<T>>
-  ): SuperValidated<T, M> {
-    return {
-      valid: false,
-      posted: false,
-      errors: {},
-      data: data ?? {},
-      constraints: {} as SuperValidated<T, M>['constraints']
-    };
   }
 
   function Context_findValidationForms(data: Record<string, unknown>) {

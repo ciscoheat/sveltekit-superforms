@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Arrays and objects in the schema can now have errors! They can be found at `field._errors` in the `$errors` store.
 - `validate` will now validate the whole form when it's called with no arguments.
 
 ## [1.0.0-rc.2]

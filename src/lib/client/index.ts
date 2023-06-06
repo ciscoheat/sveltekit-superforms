@@ -40,7 +40,7 @@ import {
   validateField,
   validateObjectErrors,
   type ValidateOptions
-} from './validateField.js';
+} from './clientValidation.js';
 import {
   formEnhance,
   shouldSyncFlash,

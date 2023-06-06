@@ -14,9 +14,8 @@ import {
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import type { Entity } from '../schemaEntity.js';
-import { validateField } from './validateField.js';
 import type { FormOptions, SuperForm } from './index.js';
-import { clientValidation } from './clientValidation.js';
+import { clientValidation, validateField } from './clientValidation.js';
 
 enum FetchStatus {
   Idle = 0,

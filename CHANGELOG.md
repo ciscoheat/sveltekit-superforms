@@ -12,10 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For type safety, you cannot send `null` or `undefined` to `superForm` anymore. Use `superValidate`, or pass a complete data object to `superForm`. Default values can be added with the `defaultValues` function.
 - The `valid` option is removed from `message`, any status >= 400 will return a fail.
 
+### Changed
+
+- `message/setMessage` and `setError` will now throw an error if the status option is below 400.
+
 ### Added
 
 - Arrays and objects in the schema can now have errors! They can be found at `field._errors` in the `$errors` store.
 - `validate` will now validate the whole form when it's called with no arguments.
+- Support for `passthrough()` on a schema, `superValidate` will allow extra keys in that case.
 
 ## [1.0.0-rc.2]
 
@@ -36,7 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Errors can now be added to arrays and objects in the schema.
 - Added a `posted` store, a boolean which is false if the form hasn't been posted during its current lifetime.
 - `reset` now has an additional `data` option that can be used to re-populate the form with data, and `id` to set a different form id.
 - `intProxy`, `numberProxy`, `dateProxy` and `stringProxy` now have an `empty` option, so empty values can be set to `null` or `undefined`.

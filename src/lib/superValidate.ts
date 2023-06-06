@@ -43,6 +43,10 @@ import { mapErrors } from './errors.js';
 
 export { defaultValues } from './schemaEntity.js';
 
+/**
+ * Sends a message with a form, with an optional HTTP status code that will set
+ * form.valid to false if status >= 400. A status lower than 400 cannot be sent.
+ */
 export function message<T extends ZodValidation<AnyZodObject>, M>(
   form: SuperValidated<T, M>,
   message: M,
@@ -50,9 +54,15 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
     status?: number;
   }
 ) {
-  form.message = message;
-  if (options?.status && options.status >= 400) form.valid = false;
+  if (options?.status) {
+    if (options.status >= 400) form.valid = false;
+    else
+      throw new SuperFormError(
+        'Cannot set a form message status lower than 400.'
+      );
+  }
 
+  form.message = message;
   return !form.valid ? fail(options?.status ?? 400, { form }) : { form };
 }
 
@@ -68,6 +78,10 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
     status: 400
   }
 ) {
+  if (options.status && options.status < 400) {
+    throw new SuperFormError('Cannot set an error status lower than 400.');
+  }
+
   const errArr = Array.isArray(error) ? error : [error];
 
   if (!form.errors) form.errors = {};
@@ -328,7 +342,12 @@ function validateResult<T extends AnyZodObject, M>(
       constraints: entityInfo.constraints
     };
   } else {
-    const { opts: options, schemaKeys, entityInfo } = schemaData;
+    const {
+      opts: options,
+      schemaKeys,
+      entityInfo,
+      unwrappedSchema
+    } = schemaData;
 
     if (!result) {
       throw new SuperFormError(
@@ -343,19 +362,27 @@ function validateResult<T extends AnyZodObject, M>(
           ? mapErrors<T>(result.error.format(), entityInfo.errorShape)
           : {};
 
+      // passthrough, strip, strict
+      const zodKeyStatus = unwrappedSchema._def.unknownKeys;
+
+      const data =
+        zodKeyStatus == 'passthrough'
+          ? { ...clone(entityInfo.defaultEntity), ...partialData }
+          : Object.fromEntries(
+              schemaKeys.map((key) => [
+                key,
+                key in partialData
+                  ? partialData[key]
+                  : clone(entityInfo.defaultEntity[key])
+              ])
+            );
+
       return {
         id,
         valid: false,
         posted,
         errors,
-        data: Object.fromEntries(
-          schemaKeys.map((key) => [
-            key,
-            key in partialData
-              ? partialData[key]
-              : clone(entityInfo.defaultEntity[key])
-          ])
-        ),
+        data,
         constraints: entityInfo.constraints
       };
     } else {
@@ -522,61 +549,6 @@ export async function superValidate<
   return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);
 }
 
-export function actionResult<
-  T extends Record<string, unknown> | App.Error | string,
-  Type extends T extends string
-    ? 'redirect' | 'error'
-    : 'success' | 'failure' | 'error'
->(
-  type: Type,
-  data?: T,
-  options?:
-    | number
-    | {
-        status?: number;
-        message?: Type extends 'redirect' ? App.PageData['flash'] : never;
-      }
-) {
-  const status =
-    options && typeof options !== 'number' ? options.status : options;
-
-  const result = <T extends { status: number }>(struct: T) => {
-    return json(
-      { type, ...struct },
-      {
-        status: struct.status,
-        headers:
-          typeof options === 'object' && options.message
-            ? {
-                'Set-Cookie': `flash=${encodeURIComponent(
-                  JSON.stringify(options.message)
-                )}; Path=/; Max-Age=120`
-              }
-            : undefined
-      }
-    );
-  };
-
-  if (type == 'error') {
-    return result({
-      status: status || 500,
-      error: typeof data === 'string' ? { message: data } : data
-    });
-  } else if (type == 'redirect') {
-    return result({
-      status: status || 303,
-      location: data
-    });
-  } else if (type == 'failure') {
-    return result({
-      status: status || 400,
-      data: stringify(data)
-    });
-  } else {
-    return result({ status: status || 200, data: stringify(data) });
-  }
-}
-
 ////////////////////////////////////////////////////////////////////
 
 export function superValidateSync<
@@ -646,4 +618,61 @@ export function superValidateSync<
   //////////////////////////////////////////////////////////////////////
 
   return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+export function actionResult<
+  T extends Record<string, unknown> | App.Error | string,
+  Type extends T extends string
+    ? 'redirect' | 'error'
+    : 'success' | 'failure' | 'error'
+>(
+  type: Type,
+  data?: T,
+  options?:
+    | number
+    | {
+        status?: number;
+        message?: Type extends 'redirect' ? App.PageData['flash'] : never;
+      }
+) {
+  const status =
+    options && typeof options !== 'number' ? options.status : options;
+
+  const result = <T extends { status: number }>(struct: T) => {
+    return json(
+      { type, ...struct },
+      {
+        status: struct.status,
+        headers:
+          typeof options === 'object' && options.message
+            ? {
+                'Set-Cookie': `flash=${encodeURIComponent(
+                  JSON.stringify(options.message)
+                )}; Path=/; Max-Age=120`
+              }
+            : undefined
+      }
+    );
+  };
+
+  if (type == 'error') {
+    return result({
+      status: status || 500,
+      error: typeof data === 'string' ? { message: data } : data
+    });
+  } else if (type == 'redirect') {
+    return result({
+      status: status || 303,
+      location: data
+    });
+  } else if (type == 'failure') {
+    return result({
+      status: status || 400,
+      data: stringify(data)
+    });
+  } else {
+    return result({ status: status || 200, data: stringify(data) });
+  }
 }

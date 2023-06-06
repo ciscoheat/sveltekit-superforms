@@ -979,3 +979,55 @@ describe('Schema errors with arrays and objects', () => {
     expect(form.errors.tags?.[0]).toBeUndefined();
   });
 });
+
+test('Passthrough validation', async () => {
+  const schema = z.object({
+    name: z.string().min(2)
+  });
+
+  const data = {
+    name: 'test',
+    extra: 'field'
+  };
+
+  const form = await superValidate(data, schema.passthrough());
+  assert(form.valid === true);
+  expect(form.data).toStrictEqual({
+    name: 'test',
+    extra: 'field'
+  });
+
+  const failedData = {
+    name: '',
+    extra2: 'field2'
+  };
+
+  const form2 = await superValidate(failedData, schema.passthrough());
+  assert(form2.valid === false);
+  expect(form2.data).toStrictEqual({
+    name: '',
+    extra2: 'field2'
+  });
+
+  const data3 = {
+    name: 'test',
+    extra: 'field'
+  };
+
+  const form3 = await superValidate(data3, schema);
+  assert(form3.valid === true);
+  expect(form3.data).toStrictEqual({
+    name: 'test'
+  });
+
+  const failedData2 = {
+    name: '',
+    extra2: 'field2'
+  };
+
+  const form4 = await superValidate(failedData2, schema);
+  assert(form4.valid === false);
+  expect(form4.data).toStrictEqual({
+    name: ''
+  });
+});

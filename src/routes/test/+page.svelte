@@ -95,6 +95,7 @@
     message: modalMessage,
     delayed: modalDelayed,
     enhance: modalEnhance
+    // @ts-expect-error Set to null to test backwards compatibility, and the warning
   } = superForm(null, {
     resetForm: true,
     taintedMessage: null,
@@ -102,6 +103,9 @@
     invalidateAll: false,
     flashMessage: {
       module: flashModule
+    },
+    warnings: {
+      noValidationAndConstraints: false
     }
   });
 

@@ -287,9 +287,9 @@ export function superForm<
     if (options.warnings?.noValidationAndConstraints !== false) {
       console.warn(
         (form
-          ? 'Form data sent directly to superForm instead of through superValidate. '
-          : 'No form data sent to superForm. Schema type safety cannot be guaranteed. ') +
-          'No initial validation is made and no constraints will exist for the form. ' +
+          ? 'Form data sent directly to superForm instead of through superValidate. No initial data validation is made. '
+          : 'No form data sent to superForm, schema type safety cannot be guaranteed. ') +
+          'Also, no constraints will exist for the form. ' +
           'Set the warnings.noValidationAndConstraints option to false to disable this warning.'
       );
     }

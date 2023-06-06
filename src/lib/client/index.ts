@@ -29,7 +29,7 @@ import {
   isInvalidPath
 } from '../traversal.js';
 import { fieldProxy } from './proxies.js';
-import { clearErrors, clone } from '../utils.js';
+import { clone } from '../utils.js';
 import {
   splitPath,
   type FormPath,
@@ -48,7 +48,7 @@ import {
   type SuperFormEvents,
   type SuperFormEventList
 } from './formEnhance.js';
-import { flattenErrors } from '../errors.js';
+import { clearErrors, flattenErrors } from '../errors.js';
 import { clientValidation, validateForm } from './clientValidation.js';
 
 export {

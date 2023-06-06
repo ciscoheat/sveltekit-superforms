@@ -9,6 +9,8 @@ import type {
 } from 'zod';
 import { mergePath } from './stringPath.js';
 import { unwrapZodType } from './schemaEntity.js';
+import type { Writable } from 'svelte/store';
+import { setPaths, traversePaths } from './traversal.js';
 
 /**
  * A tree structure where the existence of a node means that its not a leaf.
@@ -121,4 +123,32 @@ function _flattenErrors(
         );
       }
     });
+}
+
+export function clearErrors<T extends AnyZodObject>(
+  Errors: Writable<ValidationErrors<T>>,
+  options: {
+    undefinePath: string[] | null;
+    clearFormLevelErrors: boolean;
+  }
+) {
+  Errors.update(($errors) => {
+    traversePaths($errors, (pathData) => {
+      if (
+        pathData.path.length == 1 &&
+        pathData.path[0] == '_errors' &&
+        !options.clearFormLevelErrors
+      ) {
+        return;
+      }
+      if (Array.isArray(pathData.value)) {
+        return pathData.set(undefined);
+      }
+    });
+
+    if (options.undefinePath)
+      setPaths($errors, [options.undefinePath], undefined);
+
+    return $errors;
+  });
 }

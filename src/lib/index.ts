@@ -55,16 +55,6 @@ type IntersectArray<T extends readonly unknown[]> = T extends [
 type IntersectUnion<T extends ZodUnion<ZodUnionOptions>> =
   T extends ZodUnion<infer O> ? IntersectArray<O> : never;
 
-/*
-const schema = z
-  .object({ id: z.number() })
-  .or(z.object({ name: z.string() }));
-
-type U = typeof schema; //ZodUnion<[AnyZodObject, AnyZodObject]>
-
-type P = IntersectUnion<U>;
-*/
-
 type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [Property in keyof RawShape<T>]?: T extends any
@@ -137,7 +127,7 @@ export type TaintedFields<T extends AnyZodObject> = SuperStructArray<
 
 export type ValidationErrors<T extends AnyZodObject> = {
   _errors?: string[];
-} & SuperStructArray<T, string[], {_errors?: string[]}>;
+} & SuperStructArray<T, string[], { _errors?: string[] }>;
 
 export type InputConstraint = Partial<{
   pattern: string; // RegExp

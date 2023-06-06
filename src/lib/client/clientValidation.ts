@@ -18,9 +18,9 @@ import {
   traversePathsAsync
 } from '../traversal.js';
 import type { FormOptions, SuperForm, TaintOption } from './index.js';
-import { errorShape, mapErrors } from '../errors.js';
+import { errorShape, mapErrors, clearErrors } from '../errors.js';
 import type { FormPathType } from '../stringPath.js';
-import { clearErrors, clone } from '../utils.js';
+import { clone } from '../utils.js';
 import { get } from 'svelte/store';
 
 export type ValidateOptions<V> = Partial<{

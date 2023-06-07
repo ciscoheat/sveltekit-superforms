@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reverted that `message/setMessage` and `setError` will throw an error if status is lower than 400. Using a range error type check instead.
 
+### Fixed
+
+- Form data was reset to its previous state when `error` was thrown.
+
 ## [1.0.0-rc.3]
 
 ### Removed

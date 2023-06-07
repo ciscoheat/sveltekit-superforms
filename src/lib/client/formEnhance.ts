@@ -514,9 +514,12 @@ export function formEnhance<T extends AnyZodObject, M>(
                 await applyAction(result);
               } else {
                 // Transform to failure, to avoid data loss
+                // Set the data to the error result, so it will be
+                // picked up in page.subscribe in superForm.
                 const failResult = {
                   type: 'failure',
-                  status: Math.floor(result.status || 500)
+                  status: Math.floor(result.status || 500),
+                  data: result
                 } as const;
                 await applyAction(failResult);
               }

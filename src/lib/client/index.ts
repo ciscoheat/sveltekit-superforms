@@ -781,6 +781,9 @@ export function superForm<
         const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
         if (pageUpdate.form && typeof pageUpdate.form === 'object') {
+          // Check if it is an error result, sent here from formEnhance
+          if(pageUpdate.form.type == 'error') return
+
           const forms = Context_findValidationForms(pageUpdate.form);
           if (!forms.length) error('$page.form (ActionData)');
 

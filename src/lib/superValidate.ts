@@ -38,7 +38,7 @@ import {
 
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 
-import { clone } from './utils.js';
+import { clone, type NumericRange } from './utils.js';
 import { mapErrors } from './errors.js';
 
 export { defaultValues } from './schemaEntity.js';
@@ -51,15 +51,11 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
   form: SuperValidated<T, M>,
   message: M,
   options?: {
-    status?: number;
+    status?: NumericRange<400, 599>;
   }
 ) {
-  if (options?.status) {
-    if (options.status >= 400) form.valid = false;
-    else
-      throw new SuperFormError(
-        'Cannot set a form message status lower than 400.'
-      );
+  if (options?.status && options.status >= 400) {
+    form.valid = false;
   }
 
   form.message = message;
@@ -68,20 +64,19 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
 
 export const setMessage = message;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/**
+ * Sets an error for a form field, with an optional HTTP status code.
+ * form.valid is automatically set to false. A status lower than 400 cannot be sent.
+ */
 export function setError<T extends ZodValidation<AnyZodObject>>(
   form: SuperValidated<T, unknown>,
   path: StringPathLeaves<z.infer<UnwrapEffects<T>>>,
   error: string | string[],
-  options: { overwrite?: boolean; status?: number } = {
+  options: { overwrite?: boolean; status?: NumericRange<400, 599> } = {
     overwrite: false,
     status: 400
   }
 ) {
-  if (options.status && options.status < 400) {
-    throw new SuperFormError('Cannot set an error status lower than 400.');
-  }
-
   const errArr = Array.isArray(error) ? error : [error];
 
   if (!form.errors) form.errors = {};

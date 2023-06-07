@@ -34,7 +34,6 @@ export const actions = {
 			throw error(500, 'something went wrong');
 		}
 
-
 		return { form };
 	},
 	barAction: async ({request}) => {

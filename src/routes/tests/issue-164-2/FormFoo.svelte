@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
 
   const { form, enhance, message, formId } = superForm($page.data.fooForm, {
+    taintedMessage: null,
     resetForm: true,
     // invalidateAll appears to be the issue
     // when set to false the form resets to the previous successful value,

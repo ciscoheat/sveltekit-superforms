@@ -4,7 +4,8 @@
 
   const { form, enhance, message, formId } = superForm($page.data.barForm, {
     resetForm: true,
-    invalidateAll: false
+    invalidateAll: false,
+    taintedMessage: null
   });
 </script>
 

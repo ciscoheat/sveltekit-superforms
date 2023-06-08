@@ -70,7 +70,7 @@ export const setMessage = message;
  */
 export function setError<T extends ZodValidation<AnyZodObject>>(
   form: SuperValidated<T, unknown>,
-  path: StringPathLeaves<z.infer<UnwrapEffects<T>>>,
+  path: '' | StringPathLeaves<z.infer<UnwrapEffects<T>>>,
   error: string | string[],
   options: { overwrite?: boolean; status?: NumericRange<400, 599> } = {
     overwrite: false,
@@ -82,10 +82,6 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
   if (!form.errors) form.errors = {};
 
   if (path === null || path === '') {
-    console.warn(
-      'Warning: Form-level errors added with "setError" will conflict with client-side validation. ' +
-        'Use refine/superRefine on the schema instead, or the "message" helper.'
-    );
     if (!form.errors._errors) form.errors._errors = [];
     form.errors._errors = form.errors._errors.concat(errArr);
   } else {

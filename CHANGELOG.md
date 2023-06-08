@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Form data was reset to its previous state when `error` was thrown.
+- Form-level errors can be added with `setError`, using an empty string as path.
 
 ## [1.0.0-rc.3]
 

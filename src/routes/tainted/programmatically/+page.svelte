@@ -46,7 +46,7 @@
     </label>
   {/each}
 
-  {#if $errors.flavours}<p>{$errors.flavours}</p>{/if}
+  {#if $errors.flavours?._errors}<p>{$errors.flavours._errors}</p>{/if}
 
   {#if $message}<p>{$message}</p>{/if}
   <button>Submit</button>

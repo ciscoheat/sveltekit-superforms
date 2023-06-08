@@ -68,6 +68,6 @@ test('Refined errors on leaf node', async () => {
 
   assert(form.valid == false);
   expect(form.errors).toStrictEqual({
-    flavours: ["Can't order more flavours than scoops!"]
+    flavours: { _errors: ["Can't order more flavours than scoops!"] }
   });
 });

@@ -15,6 +15,11 @@
   onMount(() => {
     console.log('onMount', data.data);
   });
+
+  $: {
+    console.log('Form initial data:', data.data);
+    console.log('Form $form:', $form);
+  }
 </script>
 
 <SuperDebug data={$form} />
@@ -23,8 +28,9 @@
   type="button"
   on:click={() => {
     //debugger;
+    console.log('Resetting, before:', $form, 'initial:', data.data);
     reset();
-    console.log('Resetting', $form, data.data);
+    console.log('Resetting, after:', $form, 'initial:', data.data);
     cancel?.();
   }}>Close Edit</button
 >

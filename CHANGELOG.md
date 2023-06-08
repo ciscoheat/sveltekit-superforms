@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- It's not possible to send arbitrary data to `superForm` anymore, a `SuperValidated` structure is required, which is retured from `superValidate`, so in most cases this is not a problem.
 - Reverted that `message/setMessage` and `setError` will throw an error if status is lower than 400. Using a range error type check instead.
 
 ### Fixed

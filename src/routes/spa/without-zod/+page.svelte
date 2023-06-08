@@ -17,6 +17,7 @@
 
   console.log('Page loaded');
 
+  // @ts-expect-error Testing backwards compatibility of sending arbitrary data.
   const { form, errors, enhance, message } = superForm<Schema>(defaultData, {
     SPA: { failStatus: 401 },
     dataType: 'json',

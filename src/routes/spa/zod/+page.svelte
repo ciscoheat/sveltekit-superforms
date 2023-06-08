@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { superForm } from '$lib/client';
+  import { superForm, superValidateSync } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { schema } from './schema';
 
@@ -17,21 +17,24 @@
 
   console.log('Page loaded');
 
-  const { form, errors, enhance, message } = superForm(defaultData, {
-    SPA: true,
-    dataType: 'json',
-    onUpdate({ form, cancel }) {
-      if ($page.url.searchParams.has('cancel')) cancel();
-      else if (form.valid) {
-        form.message = 'Successful!';
-        form.data.random = String(Math.random()).slice(2);
-      }
-    },
-    onUpdated({ form }) {
-      console.log('onUpdated, valid:', form.valid);
-    },
-    validators: schema
-  });
+  const { form, errors, enhance, message } = superForm(
+    superValidateSync(defaultData, schema),
+    {
+      SPA: true,
+      dataType: 'json',
+      onUpdate({ form, cancel }) {
+        if ($page.url.searchParams.has('cancel')) cancel();
+        else if (form.valid) {
+          form.message = 'Successful!';
+          form.data.random = String(Math.random()).slice(2);
+        }
+      },
+      onUpdated({ form }) {
+        console.log('onUpdated, valid:', form.valid);
+      },
+      validators: schema
+    }
+  );
 
   // <SuperDebug data={{ $form, $errors }} />
 </script>

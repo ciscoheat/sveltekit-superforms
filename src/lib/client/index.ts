@@ -260,7 +260,7 @@ export function superForm<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = any
 >(
-  form: z.infer<UnwrapEffects<T>> | SuperValidated<T, M>,
+  form: SuperValidated<T, M>,
   options: FormOptions<UnwrapEffects<T>, M> = {}
 ): SuperForm<UnwrapEffects<T>, M> {
   type UnwrappedT = UnwrapEffects<T>;
@@ -298,7 +298,7 @@ export function superForm<
       posted: false,
       errors: {},
       data: form ?? {},
-      constraints: {} as SuperValidated<T, M>['constraints']
+      constraints: {}
     };
   } else {
     if (_formId === undefined) _formId = form.id;
@@ -335,7 +335,7 @@ export function superForm<
   if (typeof initialForm.valid !== 'boolean') {
     throw new SuperFormError(
       'A non-validation object was passed to superForm. ' +
-        "Check what's passed to its first parameter (null/undefined is allowed)."
+        "Check what's passed to its first parameter."
     );
   }
 

@@ -130,7 +130,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
       updateFlash(
         page: Readable<Page>,
         update?: () => Promise<void>
-      ): Promise<void>;
+      ): Promise<boolean>;
     };
     onError?: (event: {
       result: {
@@ -782,7 +782,7 @@ export function superForm<
 
         if (pageUpdate.form && typeof pageUpdate.form === 'object') {
           // Check if it is an error result, sent here from formEnhance
-          if(pageUpdate.form.type == 'error') return
+          if (pageUpdate.form.type == 'error') return;
 
           const forms = Context_findValidationForms(pageUpdate.form);
           if (!forms.length) error('$page.form (ActionData)');

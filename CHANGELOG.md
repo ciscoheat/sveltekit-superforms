@@ -5,15 +5,16 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0-rc.4]
 
 ### Changed
 
-- It's not possible to send arbitrary data to `superForm` anymore, a `SuperValidated` structure is required, which is retured from `superValidate`, so in most cases this is not a problem.
+- It's not possible to send arbitrary data to `superForm` anymore, a `SuperValidated` structure is required, which is returned from `superValidate` on the server and `superValidateSync`, so in most cases this is not a problem.
 - Reverted that `message/setMessage` and `setError` will throw an error if status is lower than 400. Using a range error type check instead.
 
 ### Fixed
 
+- Fixed flash messages being displayed early. This update also means that at least [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message) 1.0.0-rc.3 is required to work together with Superforms.
 - Form data was reset to its previous state when `error` was thrown.
 - Form-level errors can be added with `setError`, using an empty string as path.
 

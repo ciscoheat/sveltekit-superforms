@@ -535,16 +535,13 @@ export function formEnhance<T extends AnyZodObject, M>(
             }
           }
 
-          // Set flash message, which should be set in all cases, even
-          // if we have redirected (which is the point of the flash message!)
+          // Trigger flash message event if there was an error
           if (options.flashMessage) {
             if (result.type == 'error' && options.flashMessage.onError) {
               await options.flashMessage.onError({
                 result,
                 message: options.flashMessage.module.getFlash(page)
               });
-            } else if (result.type != 'error') {
-              await options.flashMessage.module.updateFlash(page);
             }
           }
         }

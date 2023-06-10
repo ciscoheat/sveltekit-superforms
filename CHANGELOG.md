@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed prototype mismatch for Zod schemas from different modules.
 - SuperDebug color scheme updated. (Thanks to [gregorymcmillan](https://github.com/gregorymcmillan))
 
 ## [1.0.0-rc.4]

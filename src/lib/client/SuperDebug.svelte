@@ -134,7 +134,7 @@
 
   .super-debug {
     position: relative;
-    background-color: #222;
+    background-color: #1e293b;
     border-radius: 0.5rem;
     overflow: hidden;
   }
@@ -143,6 +143,8 @@
     display: flex;
     padding: 1em;
     justify-content: space-between;
+    font-family: Inconsolata, Monaco, Consolas, 'Lucida Console',
+      'Courier New', Courier, monospace;
   }
 
   .super-debug--label {
@@ -151,7 +153,7 @@
 
   .super-debug pre {
     color: #999;
-    background-color: #222;
+    background-color: #1e293b;
     margin-bottom: 0px;
     /** Sakura is doing 0.9em, turn font-size back to 1em **/
     font-size: 1em;
@@ -162,50 +164,50 @@
   }
 
   .success {
-    color: rgb(13, 160, 13);
+    color: #2cd212;
   }
 
   .redirect {
-    color: yellow;
+    color: #03cae5;
   }
 
   .error {
-    color: #f21c1c;
+    color: #ff475d;
   }
 
   :global(.super-debug--code .key) {
-    color: #ffc800;
+    color: #eab308;
   }
 
   :global(.super-debug--code .string) {
-    color: #73c8a9;
+    color: #6ec687;
   }
 
   :global(.super-debug--code .date) {
-    color: #c25bc5;
+    color: #f06962;
   }
 
   :global(.super-debug--code .boolean) {
-    color: #3189d6;
+    color: #79b8ff;
   }
 
   :global(.super-debug--code .num) {
-    color: darkorange;
+    color: #af77e9;
   }
 
   :global(.super-debug--code .bigint) {
-    color: darkorange;
+    color: #af77e9;
   }
 
   :global(.super-debug--code .null) {
-    color: blueviolet;
+    color: #238afe;
   }
 
   :global(.super-debug--code .nan) {
-    color: #704a9f;
+    color: #af77e9;
   }
 
   :global(.super-debug--code .undefined) {
-    color: #704a9f;
+    color: #238afe;
   }
 </style>

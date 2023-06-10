@@ -60,9 +60,7 @@
 
 <hr />
 <p>
-  <a target="_blank" href="https://superforms.vercel.app/api"
-    >API Reference</a
-  >
+  <a target="_blank" href="https://superforms.rocks/api">API Reference</a>
 </p>
 
 <style>

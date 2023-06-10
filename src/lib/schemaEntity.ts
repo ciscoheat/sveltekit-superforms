@@ -8,23 +8,18 @@ import {
 
 import { errorShape } from './errors.js';
 
-import {
+import type {
   z,
-  type ZodTypeAny,
-  type AnyZodObject,
-  type ZodDefault,
-  type ZodNullable,
-  type ZodOptional,
+  ZodTypeAny,
+  AnyZodObject,
+  ZodDefault,
+  ZodNullable,
+  ZodOptional,
   ZodEffects,
   ZodString,
   ZodNumber,
-  ZodBoolean,
   ZodDate,
   ZodArray,
-  ZodBigInt,
-  ZodObject,
-  ZodSymbol,
-  ZodRecord,
   ZodPipeline
 } from 'zod';
 
@@ -239,16 +234,17 @@ export function valueOrDefault(
   if (isOptional) return undefined;
 
   if (implicitDefaults) {
-    if (zodType instanceof ZodString) return '';
-    if (zodType instanceof ZodNumber) return 0;
-    if (zodType instanceof ZodBoolean) return false;
+    if (zodType._def.typeName == 'ZodString') return '';
+    if (zodType._def.typeName == 'ZodNumber') return 0;
+    if (zodType._def.typeName == 'ZodBoolean') return false;
     // Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
-    //if (zodType instanceof ZodDate) return new Date(NaN);
-    if (zodType instanceof ZodArray) return [];
-    if (zodType instanceof ZodObject) return defaultValues(zodType);
-    if (zodType instanceof ZodRecord) return {};
-    if (zodType instanceof ZodBigInt) return BigInt(0);
-    if (zodType instanceof ZodSymbol) return Symbol();
+    //if (zodType._def.typeName == "ZodDate") return new Date(NaN);
+    if (zodType._def.typeName == 'ZodArray') return [];
+    if (zodType._def.typeName == 'ZodObject')
+      return defaultValues(zodType as AnyZodObject);
+    if (zodType._def.typeName == 'ZodRecord') return {};
+    if (zodType._def.typeName == 'ZodBigInt') return BigInt(0);
+    if (zodType._def.typeName == 'ZodSymbol') return Symbol();
   }
 
   return undefined;
@@ -261,11 +257,11 @@ export function valueOrDefault(
 export function defaultValues<T extends ZodValidation<AnyZodObject>>(
   schema: T
 ): z.infer<UnwrapEffects<T>> {
-  while (schema instanceof ZodEffects) {
+  while (schema._def.typeName == 'ZodEffects') {
     schema = (schema as ZodEffects<T>)._def.schema;
   }
 
-  if (!(schema instanceof ZodObject)) {
+  if (!(schema._def.typeName == 'ZodObject')) {
     throw new SuperFormError(
       'Only Zod schema objects can be used with defaultValues. ' +
         'Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
@@ -297,8 +293,11 @@ function constraints<T extends AnyZodObject>(
   ): InputConstraint | undefined {
     const output: InputConstraint = {};
 
-    if (zodType instanceof ZodString) {
-      const patterns = zodType._def.checks.filter((f) => f.kind == 'regex');
+    if (zodType._def.typeName == 'ZodString') {
+      const zodString = zodType as ZodString;
+      const patterns = zodString._def.checks.filter(
+        (f) => f.kind == 'regex'
+      );
 
       if (patterns.length > 1 && warnings?.multipleRegexps !== false) {
         console.warn(
@@ -312,10 +311,13 @@ function constraints<T extends AnyZodObject>(
           : undefined;
 
       if (pattern) output.pattern = pattern;
-      if (zodType.minLength !== null) output.minlength = zodType.minLength;
-      if (zodType.maxLength !== null) output.maxlength = zodType.maxLength;
-    } else if (zodType instanceof ZodNumber) {
-      const steps = zodType._def.checks.filter(
+      if (zodString.minLength !== null)
+        output.minlength = zodString.minLength;
+      if (zodString.maxLength !== null)
+        output.maxlength = zodString.maxLength;
+    } else if (zodType._def.typeName == 'ZodNumber') {
+      const zodNumber = zodType as ZodNumber;
+      const steps = zodNumber._def.checks.filter(
         (f) => f.kind == 'multipleOf'
       );
 
@@ -330,13 +332,14 @@ function constraints<T extends AnyZodObject>(
           ? steps[0].value
           : null;
 
-      if (zodType.minValue !== null) output.min = zodType.minValue;
-      if (zodType.maxValue !== null) output.max = zodType.maxValue;
+      if (zodNumber.minValue !== null) output.min = zodNumber.minValue;
+      if (zodNumber.maxValue !== null) output.max = zodNumber.maxValue;
       if (step !== null) output.step = step;
-    } else if (zodType instanceof ZodDate) {
-      if (zodType.minDate) output.min = zodType.minDate.toISOString();
-      if (zodType.maxDate) output.max = zodType.maxDate.toISOString();
-    } else if (zodType instanceof ZodArray) {
+    } else if (zodType._def.typeName == 'ZodDate') {
+      const zodDate = zodType as ZodDate;
+      if (zodDate.minDate) output.min = zodDate.minDate.toISOString();
+      if (zodDate.maxDate) output.max = zodDate.maxDate.toISOString();
+    } else if (zodType._def.typeName == 'ZodArray') {
       if (zodType._def.minLength) output.min = zodType._def.minLength.value;
       if (zodType._def.maxLength) output.max = zodType._def.maxLength.value;
       if (zodType._def.exactLength)
@@ -354,10 +357,10 @@ function constraints<T extends AnyZodObject>(
   function mapField(key: string, value: ZodTypeAny): any {
     const info = unwrapZodType(value);
     value = info.zodType;
-    if (value instanceof ZodArray) {
+    if (value._def.typeName == 'ZodArray') {
       return mapField(key, value._def.type);
-    } else if (value instanceof ZodObject) {
-      return constraints(value, warnings);
+    } else if (value._def.typeName == 'ZodObject') {
+      return constraints(value as AnyZodObject, warnings);
     } else {
       return constraint(key, value, info);
     }

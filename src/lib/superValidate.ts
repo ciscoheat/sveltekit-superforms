@@ -16,24 +16,15 @@ import {
 
 import { traversePath } from './traversal.js';
 
-import {
+import type {
   z,
-  type AnyZodObject,
-  ZodObject,
-  ZodAny,
-  ZodString,
+  AnyZodObject,
   ZodNumber,
-  ZodBoolean,
-  ZodDate,
   ZodLiteral,
-  ZodUnion,
-  ZodArray,
-  ZodBigInt,
-  ZodEnum,
   ZodNativeEnum,
-  ZodSymbol,
   ZodEffects,
-  type SafeParseReturnType
+  SafeParseReturnType,
+  EnumLike
 } from 'zod';
 
 import { splitPath, type StringPathLeaves } from './stringPath.js';
@@ -132,7 +123,7 @@ function formDataToValidation<T extends AnyZodObject>(
     const typeInfo = entityInfo.typeInfo[key];
     const entries = data.getAll(key);
 
-    if (!(typeInfo.zodType instanceof ZodArray)) {
+    if (!(typeInfo.zodType._def.typeName == 'ZodArray')) {
       output[key] = parseSingleEntry(key, entries[0], typeInfo);
     } else {
       const arrayType = unwrapZodType(typeInfo.zodType._def.type);
@@ -153,27 +144,27 @@ function formDataToValidation<T extends AnyZodObject>(
 
     const zodType = typeInfo.zodType;
 
-    if (zodType instanceof ZodString) {
+    if (zodType._def.typeName == 'ZodString') {
       return value;
-    } else if (zodType instanceof ZodNumber) {
-      return zodType.isInt
+    } else if (zodType._def.typeName == 'ZodNumber') {
+      return (zodType as ZodNumber).isInt
         ? parseInt(value ?? '', 10)
         : parseFloat(value ?? '');
-    } else if (zodType instanceof ZodBoolean) {
+    } else if (zodType._def.typeName == 'ZodBoolean') {
       return Boolean(value).valueOf();
-    } else if (zodType instanceof ZodDate) {
+    } else if (zodType._def.typeName == 'ZodDate') {
       return new Date(value ?? '');
-    } else if (zodType instanceof ZodArray) {
+    } else if (zodType._def.typeName == 'ZodArray') {
       const arrayType = unwrapZodType(zodType._def.type);
       return parseFormDataEntry(field, value, arrayType);
-    } else if (zodType instanceof ZodBigInt) {
+    } else if (zodType._def.typeName == 'ZodBigInt') {
       try {
         return BigInt(value ?? '.');
       } catch {
         return NaN;
       }
-    } else if (zodType instanceof ZodLiteral) {
-      const literalType = typeof zodType.value;
+    } else if (zodType._def.typeName == 'ZodLiteral') {
+      const literalType = typeof (zodType as ZodLiteral<unknown>).value;
 
       if (literalType === 'string') return value;
       else if (literalType === 'number') return parseFloat(value ?? '');
@@ -184,19 +175,20 @@ function formDataToValidation<T extends AnyZodObject>(
         );
       }
     } else if (
-      zodType instanceof ZodUnion ||
-      zodType instanceof ZodEnum ||
-      zodType instanceof ZodAny
+      zodType._def.typeName == 'ZodUnion' ||
+      zodType._def.typeName == 'ZodEnum' ||
+      zodType._def.typeName == 'ZodAny'
     ) {
       return value;
-    } else if (zodType instanceof ZodNativeEnum) {
-      if (value in zodType.enum) {
-        const enumValue = zodType.enum[value];
+    } else if (zodType._def.typeName == 'ZodNativeEnum') {
+      const zodEnum = zodType as ZodNativeEnum<EnumLike>;
+      if (value in zodEnum.enum) {
+        const enumValue = zodEnum.enum[value];
         if (typeof enumValue === 'number') return enumValue;
-        else if (enumValue in zodType.enum) return zodType.enum[enumValue];
+        else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
       }
       return undefined;
-    } else if (zodType instanceof ZodSymbol) {
+    } else if (zodType._def.typeName == 'ZodSymbol') {
       return Symbol(value);
     }
 
@@ -398,19 +390,22 @@ function getSchemaData<T extends AnyZodObject>(
   let unwrappedSchema = schema;
   let hasEffects = false;
 
-  while (unwrappedSchema instanceof ZodEffects) {
+  while (unwrappedSchema._def.typeName == 'ZodEffects') {
     hasEffects = true;
     unwrappedSchema = (unwrappedSchema as ZodEffects<T>)._def.schema;
   }
 
-  if (!(unwrappedSchema instanceof ZodObject)) {
+  if (!(unwrappedSchema._def.typeName == 'ZodObject')) {
     throw new SuperFormError(
       'Only Zod schema objects can be used with superValidate. ' +
         'Define the schema with z.object({ ... }) and optionally refine/superRefine/transform at the end.'
     );
   }
 
-  const entityInfo = entityData(unwrappedSchema, options?.warnings);
+  const entityInfo = entityData(
+    unwrappedSchema as UnwrapEffects<T>,
+    options?.warnings
+  );
 
   return {
     originalSchema,

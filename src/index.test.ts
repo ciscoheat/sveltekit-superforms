@@ -373,8 +373,8 @@ test('Zod enums and native enums', async () => {
     posted: false,
     constraints: {
       color: { required: true },
-      fruit: { /*_constraints: { required: true },*/ required: true },
-      fruitsstring: { /*_constraints: { required: true },*/ required: true }
+      fruit: { required: true },
+      fruitsstring: { required: true }
     }
   });
 });

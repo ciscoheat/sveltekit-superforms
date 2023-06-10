@@ -109,7 +109,7 @@
     }
   });
 
-  const proxyBool = booleanProxy(form, 'bool');
+  const proxyBool = booleanProxy(form, 'bool', { trueStringValue: '1' });
   const proxyNumber = intProxy(form, 'proxyNumber');
   const proxyDate = dateProxy(form, 'date', {
     format: 'datetime-local'

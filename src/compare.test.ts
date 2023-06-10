@@ -7,13 +7,7 @@ import {
   expectTypeOf,
   test
 } from 'vitest';
-import {
-  z,
-  ZodArray,
-  ZodString,
-  type AnyZodObject,
-  type ZodTypeAny
-} from 'zod';
+import { z, ZodArray, type AnyZodObject, type ZodTypeAny } from 'zod';
 import { pathExists, traversePath, traversePathAsync } from '$lib/traversal';
 import { get, writable } from 'svelte/store';
 import { errorShape, mapErrors } from '$lib/errors';
@@ -191,7 +185,7 @@ describe('Path traversals', () => {
       }
     )!;
 
-    assert(path && path.value instanceof ZodString);
+    assert(path && path.value._def.typeName == 'ZodString');
     expect(path.value.safeParse('').success).toBeFalsy();
     expect(path.value.safeParse('ok').success).toBeTruthy();
   });

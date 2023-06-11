@@ -386,3 +386,20 @@ test('Checking side effects', () => {
   expect(hasEffects(social)).toStrictEqual(false);
   expect(hasEffects(refined)).toStrictEqual(true);
 });
+
+test('Schema with array containing objects', async () => {
+  const postSchema = z.object({
+    questions: z
+      .object({
+        text: z.string(),
+        generated: z.boolean()
+      })
+      .array()
+      .min(1, {
+        message: 'Must have at least one question'
+      })
+  });
+
+  const form = await superValidate(postSchema);
+  expect(form.data).toStrictEqual({ questions: [] });
+});

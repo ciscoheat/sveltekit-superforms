@@ -1,5 +1,5 @@
 import { enhance, applyAction } from '$app/forms';
-import { invalidateAll } from '$app/navigation';
+import { afterNavigate, invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
 import { isElementInViewport, scrollToAndCenter } from './elements.js';
@@ -147,12 +147,21 @@ export function formEnhance<T extends AnyZodObject, M>(
       );
   }
 
+  afterNavigate((nav) => {
+    if (nav.type == 'goto') {
+      htmlForm.completed(true);
+    }
+  });
+
   onDestroy(() => {
     ErrorTextEvents.forEach((formEl) =>
       ErrorTextEvents_removeErrorTextListeners(formEl)
     );
     ErrorTextEvents.clear();
+
     formEl.removeEventListener('focusout', checkBlur);
+
+    htmlForm.completed(true);
   });
 
   type ValidationResponse<
@@ -551,7 +560,10 @@ export function formEnhance<T extends AnyZodObject, M>(
         cancelFlash(options);
       }
 
-      htmlForm.completed(cancelled);
+      // Redirect messages are handled in onDestroy and afterNavigate.
+      if (result.type != 'redirect') {
+        htmlForm.completed(cancelled);
+      }
     }
 
     return validationResponse;

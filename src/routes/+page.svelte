@@ -26,8 +26,8 @@
         await goto('?id=' + form.data.id);
       }
     },
-    onSubmit({ data, cancel }) {
-      if (data.has('cancel')) {
+    onSubmit({ formData, cancel }) {
+      if (formData.has('cancel')) {
         console.log('Cancelling');
         cancel();
       }

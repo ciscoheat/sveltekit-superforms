@@ -561,7 +561,7 @@ export function formEnhance<T extends AnyZodObject, M>(
       }
 
       // Redirect messages are handled in onDestroy and afterNavigate.
-      if (result.type != 'redirect') {
+      if (cancelled || result.type != 'redirect') {
         htmlForm.completed(cancelled);
       }
     }

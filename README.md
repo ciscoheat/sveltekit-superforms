@@ -59,10 +59,16 @@ Follow the get started tutorial on the website to get a hands-on introduction to
 
 You can also watch this excellent introduction video to see what's possible: https://www.youtube.com/watch?v=MiKzH3kcVfs
 
-# Feedback wanted!
+# Contributing and sponsoring
 
-Ideas, general feedback, bug reports, PR:s, etc, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues), [discussion](https://github.com/ciscoheat/sveltekit-superforms/discussions), or on the [Discord server](https://discord.gg/AptebvVuhB)!
+Ideas, general feedback, bug reports, PR:s, etc, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues) [discussion](https://github.com/ciscoheat/sveltekit-superforms/discussions), or on the [Discord server](https://discord.gg/AptebvVuhB)!
 
-If you enjoy using Superforms, consider buying me a coffee at one of these sites:
+Now that version 1.0 is released, there will be bug fixes, more support questions on the Discord server, future features to work on, and so on.
 
-[!["Buy Me A Coffee"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/buymeacoffee.webp)](https://www.buymeacoffee.com/ciscoheat) [!["Support me on Ko-fi"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/ko-fi.png)](https://ko-fi.com/ciscoheat)
+If you're using Superforms in non-profit circumstances, the library is completely free, a star on Github is more than enough if you want to give your support. But if you are using Superforms in a commercial project, would you or the company you work for consider donating?
+
+If you have appreciated my support on <a href="https://discord.gg/AptebvVuhB">Discord</a> and <a href="https://github.com/ciscoheat/sveltekit-superforms">Github</a>, or want to ensure that things keep rolling, please support open source software in this way.
+
+[!["Sponsor me on Github"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/github.png)](https://github.com/sponsors/ciscoheat) [!["Buy Me A Coffee"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/buymeacoffee.webp)](https://www.buymeacoffee.com/ciscoheat) [!["Support me on Ko-fi"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/ko-fi.png)](https://ko-fi.com/ciscoheat)
+
+https://github.com/sponsors/ciscoheat

@@ -70,5 +70,3 @@ If you're using Superforms in non-profit circumstances, the library is completel
 If you have appreciated my support on <a href="https://discord.gg/AptebvVuhB">Discord</a> and <a href="https://github.com/ciscoheat/sveltekit-superforms">Github</a>, or want to ensure that things keep rolling, please support open source software in this way.
 
 [!["Sponsor me on Github"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/github.png)](https://github.com/sponsors/ciscoheat) [!["Buy Me A Coffee"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/buymeacoffee.webp)](https://www.buymeacoffee.com/ciscoheat) [!["Support me on Ko-fi"](https://github.com/ciscoheat/sveltekit-superforms/raw/main/ko-fi.png)](https://ko-fi.com/ciscoheat)
-
-https://github.com/sponsors/ciscoheat

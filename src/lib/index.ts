@@ -11,6 +11,8 @@ import type {
 import type { Entity, UnwrappedEntity } from './server/entity.js';
 import type { Writable } from 'svelte/store';
 
+export { default as SuperDebug } from './client/SuperDebug.svelte';
+
 export type MaybePromise<T> = T | Promise<T>;
 
 export class SuperFormError extends Error {

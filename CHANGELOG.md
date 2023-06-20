@@ -5,11 +5,17 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2023-06-20
+
+### Fixed
+
+- Set comparison added in 1.1.0 wasn't fully functional.
+
 ## [1.1.0] - 2023-06-20
 
 ### Added
 
-- Support for `Set` in schemas, using `z.set()`.
+- Support for `Set` in schemas, using `z.set()`. ([#194](https://github.com/ciscoheat/sveltekit-superforms/issues/194))
 
 ### Fixed
 

@@ -19,13 +19,10 @@
     <button
       type="button"
       on:click={() =>
-        form.update(
-          ($form) => {
-            $form.things.add(1);
-            return $form;
-          },
-          { taint: { fields: 'things' } }
-        )}>Add 1</button
+        form.update(($form) => {
+          $form.things.add(1);
+          return $form;
+        })}>Add 1</button
     >
     <button
       type="button"

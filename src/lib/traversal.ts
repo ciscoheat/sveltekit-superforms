@@ -190,6 +190,13 @@ export async function traversePathsAsync<
   }
 }
 
+// Thanks to https://stackoverflow.com/a/31129384/70894
+function eqSet(xs: Set<unknown>, ys: Set<unknown>) {
+  return (
+    xs === ys || (xs.size === ys.size && [...xs].every((x) => ys.has(x)))
+  );
+}
+
 /**
  * Compare two objects and return the differences as paths.
  */
@@ -219,7 +226,7 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
       exists &&
       data.value instanceof Set &&
       exists.value instanceof Set &&
-      data.value !== exists.value
+      !eqSet(data.value, exists.value)
     ) {
       addDiff();
     }

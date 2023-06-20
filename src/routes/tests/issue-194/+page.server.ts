@@ -5,6 +5,8 @@ import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {
   const form = await superValidate(schema);
+  console.log('🚀 ~ file: +page.server.ts:8 ~ load ~ form:', form);
+
   return { form };
 }) satisfies PageServerLoad;
 

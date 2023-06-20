@@ -197,20 +197,31 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
   const diffPaths = new Map<string, string[]>();
 
   function checkPath(data: PathData, compareTo: object) {
-    if (data.isLeaf) {
-      const exists = traversePath(compareTo, data.path as FieldPath<object>);
+    const exists = traversePath(compareTo, data.path as FieldPath<object>);
 
+    function addDiff() {
+      diffPaths.set(data.path.join(' '), data.path);
+    }
+
+    if (data.isLeaf) {
       if (!exists) {
-        diffPaths.set(data.path.join(' '), data.path);
+        addDiff();
       } else if (
         data.value instanceof Date &&
         exists.value instanceof Date &&
         data.value.getTime() != exists.value.getTime()
       ) {
-        diffPaths.set(data.path.join(' '), data.path);
+        addDiff();
       } else if (data.value !== exists.value) {
-        diffPaths.set(data.path.join(' '), data.path);
+        addDiff();
       }
+    } else if (
+      exists &&
+      data.value instanceof Set &&
+      exists.value instanceof Set &&
+      data.value !== exists.value
+    ) {
+      addDiff();
     }
   }
 

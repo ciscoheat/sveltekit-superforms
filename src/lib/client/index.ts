@@ -188,7 +188,11 @@ type SuperFormSnapshot<T extends AnyZodObject, M = any> = SuperValidated<
   M
 > & { tainted: TaintedFields<T> | undefined };
 
-export type TaintOption = boolean | 'untaint' | 'untaint-all';
+export type TaintOption<T extends AnyZodObject = AnyZodObject> =
+  | boolean
+  | 'untaint'
+  | 'untaint-all'
+  | { fields: FormPathLeaves<z.infer<T>> | FormPathLeaves<z.infer<T>>[] };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
@@ -197,12 +201,12 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     set(
       this: void,
       value: z.infer<UnwrapEffects<T>>,
-      options?: { taint?: TaintOption }
+      options?: { taint?: TaintOption<UnwrapEffects<T>> }
     ): void;
     update(
       this: void,
       updater: Updater<z.infer<UnwrapEffects<T>>>,
-      options?: { taint?: TaintOption }
+      options?: { taint?: TaintOption<UnwrapEffects<T>> }
     ): void;
   };
   formId: Writable<string | undefined>;
@@ -417,7 +421,7 @@ export function superForm<
       subscribe: _formData.subscribe,
       set: (
         value: Parameters<typeof _formData.set>[0],
-        options: { taint?: TaintOption } = {}
+        options: { taint?: TaintOption<UnwrappedT> } = {}
       ) => {
         Tainted_update(
           value,
@@ -429,7 +433,7 @@ export function superForm<
       },
       update: (
         updater: Parameters<typeof _formData.update>[0],
-        options: { taint?: TaintOption } = {}
+        options: { taint?: TaintOption<UnwrappedT> } = {}
       ) => {
         return _formData.update((value) => {
           const output = updater(value);
@@ -593,7 +597,10 @@ export function superForm<
     return obj === true;
   }
 
-  async function Tainted__validate(path: string[], taint: TaintOption) {
+  async function Tainted__validate(
+    path: string[],
+    taint: TaintOption<UnwrappedT>
+  ) {
     if (
       options.validationMethod == 'onblur' ||
       options.validationMethod == 'submit-only'
@@ -641,7 +648,7 @@ export function superForm<
   async function Tainted_update(
     newObj: unknown,
     compareAgainst: unknown,
-    taintOptions: TaintOption
+    taintOptions: TaintOption<UnwrappedT>
   ) {
     if (taintOptions === false) {
       return;
@@ -650,7 +657,18 @@ export function superForm<
       return;
     }
 
-    const paths = comparePaths(newObj, compareAgainst);
+    let paths = comparePaths(newObj, compareAgainst);
+
+    if (typeof taintOptions === 'object') {
+      if (typeof taintOptions.fields === 'string')
+        taintOptions.fields = [taintOptions.fields];
+
+      paths = taintOptions.fields.map((path) =>
+        splitPath(path)
+      ) as string[][];
+
+      taintOptions = true;
+    }
 
     if (taintOptions === true) {
       LastChanges.set(paths);
@@ -827,7 +845,10 @@ export function superForm<
 
   function validate<Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>>(
     path?: Path,
-    opts?: ValidateOptions<FormPathType<z.infer<UnwrapEffects<T>>, Path>>
+    opts?: ValidateOptions<
+      FormPathType<z.infer<UnwrapEffects<T>>, Path>,
+      UnwrapEffects<T>
+    >
   ) {
     if (path === undefined) {
       return clientValidation<UnwrapEffects<T>, M>(
@@ -881,7 +902,7 @@ export function superForm<
       return rebind(snapshot, snapshot.tainted ?? true);
     },
 
-    validate: validate as typeof validateForm<UnwrapEffects<T>>,
+    validate: validate as typeof validateForm<UnwrappedT>,
 
     enhance: (
       el: HTMLFormElement,

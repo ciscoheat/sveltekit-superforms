@@ -7,7 +7,8 @@ import {
   type ZodValidation,
   type FormPathLeaves,
   SuperFormError,
-  type TaintedFields
+  type TaintedFields,
+  type UnwrapEffects
 } from '../index.js';
 import type { z, AnyZodObject, ZodError, ZodTypeAny } from 'zod';
 import {
@@ -23,10 +24,13 @@ import type { FormPathType } from '../stringPath.js';
 import { clone } from '../utils.js';
 import { get } from 'svelte/store';
 
-export type ValidateOptions<V> = Partial<{
+export type ValidateOptions<
+  V,
+  T extends AnyZodObject = AnyZodObject
+> = Partial<{
   value: V;
   update: boolean | 'errors' | 'value';
-  taint: TaintOption;
+  taint: TaintOption<T>;
   errors: string | string[];
 }>;
 
@@ -43,14 +47,16 @@ export function validateForm<T extends AnyZodObject>(): Promise<
 export function validateForm<T extends AnyZodObject>(
   path: FormPathLeaves<z.infer<T>>,
   opts?: ValidateOptions<
-    FormPathType<z.infer<T>, FormPathLeaves<z.infer<T>>>
+    FormPathType<z.infer<T>, FormPathLeaves<z.infer<T>>>,
+    T
   >
 ): Promise<string[] | undefined>;
 
 export function validateForm<T extends AnyZodObject>(
   path?: FormPathLeaves<z.infer<T>>,
   opts?: ValidateOptions<
-    FormPathType<z.infer<T>, FormPathLeaves<z.infer<T>>>
+    FormPathType<z.infer<T>, FormPathLeaves<z.infer<T>>>,
+    T
   >
 ) {
   // See the validate function inside superForm for implementation.
@@ -254,13 +260,16 @@ export async function validateObjectErrors<T extends AnyZodObject, M>(
  * Validate a specific form field.
  * @DCI-context
  */
-export async function validateField<T extends AnyZodObject, M>(
+export async function validateField<
+  T extends ZodValidation<AnyZodObject>,
+  M
+>(
   path: string[],
   formOptions: FormOptions<T, M>,
   data: SuperForm<T, M>['form'],
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
-  options: ValidateOptions<unknown> = {}
+  options: ValidateOptions<unknown, UnwrapEffects<T>> = {}
 ): Promise<string[] | undefined> {
   function Errors_clear() {
     clearErrors(Errors, { undefinePath: path, clearFormLevelErrors: true });
@@ -330,13 +339,13 @@ export async function validateField<T extends AnyZodObject, M>(
 }
 
 // @DCI-context
-async function _validateField<T extends AnyZodObject, M>(
+async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
   path: string[],
   validators: FormOptions<T, M>['validators'],
   data: SuperForm<T, M>['form'],
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
-  options: ValidateOptions<unknown> = {}
+  options: ValidateOptions<unknown, UnwrapEffects<T>> = {}
 ): Promise<{ validated: boolean | 'all'; errors: string[] | undefined }> {
   if (options.update === undefined) options.update = true;
   if (options.taint === undefined) options.taint = false;

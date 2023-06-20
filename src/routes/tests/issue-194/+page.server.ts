@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { message, superValidate } from '$lib/server';
+import { superValidate } from '$lib/server';
 import { schema } from './schema';
 import { fail } from '@sveltejs/kit';
 
@@ -19,7 +19,5 @@ export const actions = {
     console.log('POST', form);
 
     if (!form.valid) return fail(400, { form });
-
-    return message(form, 'Posted OK!');
   }
 } satisfies Actions;

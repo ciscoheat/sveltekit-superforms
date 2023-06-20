@@ -2,13 +2,11 @@
   import { superForm } from '$lib/client';
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  //import { schema } from './schema';
 
   export let data: PageData;
 
   const { form, errors, tainted, message, enhance } = superForm(data.form, {
     dataType: 'json'
-    //validators: schema
   });
 </script>
 
@@ -42,9 +40,5 @@
 <style lang="scss">
   form {
     margin: 2rem 0;
-
-    input {
-      background-color: #dedede;
-    }
   }
 </style>

@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Fixed #143, infinite deep type instantiation on `message`. (Thanks to [thelinuxlich](https://github.com/thelinuxlich))
+### Fixed
+
+- Boolean fields with a default value of `true` always returned `true` when validating.
+- Fixed infinite deep type instantiation on `message`. (#143, thanks to [Alisson Cavalcante Agiani](https://github.com/thelinuxlich))
+- Fixed typesVersions map that caused incorrect auto-import paths (#191, thanks to [CokaKoala](https://github.com/AdrianGonz97))
 
 ## [1.0.0]
 

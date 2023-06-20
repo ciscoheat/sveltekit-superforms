@@ -137,12 +137,14 @@ function formDataToValidation<T extends AnyZodObject>(
     typeInfo: ZodTypeInfo
   ): unknown {
     const newValue = valueOrDefault(value, false, true, typeInfo);
+    const zodType = typeInfo.zodType;
 
     // If the value was empty, it now contains the default value,
-    // so it can be returned immediately
-    if (!value) return newValue;
-
-    const zodType = typeInfo.zodType;
+    // so it can be returned immediately, unless it's boolean, which
+    // means it could have been posted as a checkbox.
+    if (!value && zodType._def.typeName != 'ZodBoolean') {
+      return newValue;
+    }
 
     if (zodType._def.typeName == 'ZodString') {
       return value;
@@ -182,14 +184,14 @@ function formDataToValidation<T extends AnyZodObject>(
       return value;
     } else if (zodType._def.typeName == 'ZodNativeEnum') {
       const zodEnum = zodType as ZodNativeEnum<EnumLike>;
-      if (value in zodEnum.enum) {
+      if (value !== null && value in zodEnum.enum) {
         const enumValue = zodEnum.enum[value];
         if (typeof enumValue === 'number') return enumValue;
         else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
       }
       return undefined;
     } else if (zodType._def.typeName == 'ZodSymbol') {
-      return Symbol(value);
+      return Symbol(String(value));
     }
 
     throw new SuperFormError(

@@ -5,7 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2023-06-20
+
+### Added
+
+- Support for `Set` in schemas, using `z.set()`.
 
 ### Fixed
 
@@ -14,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed infinite deep type instantiation on `message`. ([#143](https://github.com/ciscoheat/sveltekit-superforms/issues/143), thanks to [Alisson Cavalcante Agiani](https://github.com/thelinuxlich))
 - Fixed typesVersions map that caused incorrect auto-import paths ([#191](https://github.com/ciscoheat/sveltekit-superforms/pull/191), thanks to [CokaKoala](https://github.com/AdrianGonz97))
 
-## [1.0.0]
+## [1.0.0] - 2023-06-12
 
 ### Added
 

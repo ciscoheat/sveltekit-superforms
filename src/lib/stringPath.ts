@@ -39,7 +39,7 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
         | `[${number}]`
         | `[${number}]${U extends unknown[]
             ? ''
-            : '.'}${NonNullable<U> extends Date
+            : '.'}${NonNullable<U> extends Date | Set<unknown>
             ? never
             : StringPath<NonNullable<U>> & string}`
     : `[${number}]` | `[${number}].${U & string}`
@@ -51,7 +51,7 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
             ? NonNullable<T[K]> extends object
               ? `${K}${NonNullable<T[K]> extends unknown[]
                   ? ''
-                  : '.'}${NonNullable<T[K]> extends Date
+                  : '.'}${NonNullable<T[K]> extends Date | Set<unknown>
                   ? never
                   : StringPath<NonNullable<T[K]>> & string}`
               : never
@@ -71,7 +71,7 @@ export type StringPathLeaves<T extends object> =
         | {
             // Same as FilterObjects but inlined for better intellisense
             [K in keyof T]: NonNullable<T[K]> extends object
-              ? NonNullable<T[K]> extends Date
+              ? NonNullable<T[K]> extends Date | Set<unknown>
                 ? K
                 : never
               : K;

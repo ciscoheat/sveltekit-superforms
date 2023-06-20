@@ -93,3 +93,26 @@ test('StringPathLeaves', () => {
   // obj.ok should exist even though it's an object (Date)
   const p: StringPathLeaves<typeof o> = 'test[3]';
 });
+
+test('Objects with sets', () => {
+  type SetObj = {
+    numbers: {
+      set: Set<number>;
+    };
+  };
+
+  type SetTest = StringPath<SetObj>;
+
+  const a1: SetTest = 'numbers';
+  const a2: SetTest = 'numbers.set';
+  // @ts-expect-error incorrect path
+  const a3: SetTest = 'numbers.set.size';
+
+  type SetLeaves = StringPathLeaves<SetObj>;
+
+  // @ts-expect-error incorrect path
+  const b1: SetLeaves = 'numbers';
+  const b2: SetLeaves = 'numbers.set';
+  // @ts-expect-error incorrect path
+  const b3: SetTest = 'numbers.set.size';
+});

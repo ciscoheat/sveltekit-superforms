@@ -372,7 +372,9 @@ async function _validateField<T extends AnyZodObject, M>(
 
   function Errors_clearFormLevelErrors() {
     Errors.update(($errors) => {
-      $errors._errors = undefined;
+      traversePaths($errors, (path) => {
+        if (path.key == '_errors') return path.set(undefined);
+      });
       return $errors;
     });
   }

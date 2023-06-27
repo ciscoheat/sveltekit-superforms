@@ -146,6 +146,12 @@ function formDataToValidation<T extends AnyZodObject>(
       return newValue;
     }
 
+    /*
+    console.log(
+       `FormData field "${field}" (${zodType._def.typeName}): ${value}`
+    );
+    */
+
     if (zodType._def.typeName == 'ZodString') {
       return value;
     } else if (zodType._def.typeName == 'ZodNumber') {
@@ -184,10 +190,16 @@ function formDataToValidation<T extends AnyZodObject>(
       return value;
     } else if (zodType._def.typeName == 'ZodNativeEnum') {
       const zodEnum = zodType as ZodNativeEnum<EnumLike>;
+
       if (value !== null && value in zodEnum.enum) {
         const enumValue = zodEnum.enum[value];
         if (typeof enumValue === 'number') return enumValue;
         else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
+      } else if (
+        value !== null &&
+        Object.values(zodEnum.enum).includes(value)
+      ) {
+        return value;
       }
       return undefined;
     } else if (zodType._def.typeName == 'ZodSymbol') {

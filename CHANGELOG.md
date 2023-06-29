@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Form-level errors couldn't be overwritten.
 - Array-level errors couldn't be added with `setError`.
 - Native string enums weren't working when posting the actual string value.
 

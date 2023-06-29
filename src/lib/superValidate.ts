@@ -74,7 +74,9 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
 
   if (path === null || path === '') {
     if (!form.errors._errors) form.errors._errors = [];
-    form.errors._errors = form.errors._errors.concat(errArr);
+    form.errors._errors = options.overwrite
+      ? errArr
+      : form.errors._errors.concat(errArr);
   } else {
     const realPath = splitPath(path);
 

@@ -36,7 +36,8 @@ describe('Errors', async () => {
     setError(output, 'enumber', 'This should be ok');
     setError(output, 'enumber', 'Still ok');
     setError(output, 'arr._errors', 'Array-level error');
-    setError(output, '', 'Form-level error');
+    setError(output, '', 'Form-level error that should not be displayed.');
+    setError(output, '', 'Form-level error', { overwrite: true });
 
     assert(!output.valid);
     expect(output.errors).toStrictEqual(err);

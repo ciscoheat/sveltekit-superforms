@@ -22,18 +22,21 @@ describe('Errors', async () => {
     expect(output.data.name).toBeNull();
 
     const err = {
+      _errors: ['Form-level error'],
       scopeId: ['This is an error'],
       enumber: ['This should be ok', 'Still ok'],
-      arr: { 3: ['Array error'] },
+      arr: { _errors: ['Array-level error'], 3: ['Array item error'] },
       object: { name: ['Object error'] }
     };
 
     setError(output, 'scopeId', 'This should not be displayed.');
     setError(output, 'scopeId', 'This is an error', { overwrite: true });
     setError(output, 'object.name', 'Object error');
-    setError(output, 'arr[3]', 'Array error');
+    setError(output, 'arr[3]', 'Array item error');
     setError(output, 'enumber', 'This should be ok');
     setError(output, 'enumber', 'Still ok');
+    setError(output, 'arr._errors', 'Array-level error');
+    setError(output, '', 'Form-level error');
 
     assert(!output.valid);
     expect(output.errors).toStrictEqual(err);

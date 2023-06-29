@@ -61,7 +61,7 @@ export const setMessage = message;
  */
 export function setError<T extends ZodValidation<AnyZodObject>>(
   form: SuperValidated<T, unknown>,
-  path: '' | StringPathLeaves<z.infer<UnwrapEffects<T>>>,
+  path: '' | StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>,
   error: string | string[],
   options: { overwrite?: boolean; status?: NumericRange<400, 599> } = {
     overwrite: false,

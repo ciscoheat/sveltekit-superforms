@@ -78,7 +78,7 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
       ? errArr
       : form.errors._errors.concat(errArr);
   } else {
-    const realPath = splitPath(path);
+    const realPath = splitPath(path as string);
 
     const leaf = traversePath(
       form.errors,

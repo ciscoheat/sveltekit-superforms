@@ -1,8 +1,6 @@
 import type { FieldPath } from './index.js';
 
-export function splitPath<T extends object>(
-  path: StringPath<T> | StringPathLeaves<T>
-) {
+export function splitPath<T extends object>(path: string) {
   return path
     .toString()
     .split(/[[\].]+/)

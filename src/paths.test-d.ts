@@ -92,6 +92,22 @@ test('StringPathLeaves', () => {
 
   // obj.ok should exist even though it's an object (Date)
   const p: StringPathLeaves<typeof o> = 'test[3]';
+
+  type ExtraLeaves = StringPathLeaves<typeof o, '_errors'>;
+
+  const a1: ExtraLeaves = 'test._errors';
+  const a2: ExtraLeaves = 'obj.arr._errors';
+  // @ts-expect-error incorrect path
+  const a3: ExtraLeaves = 'obj.name._errors';
+  // @ts-expect-error incorrect path
+  const a4: ExtraLeaves = 'obj._errors';
+  // @ts-expect-error incorrect path
+  const a5: ExtraLeaves = 'obj.arr[2]._errors';
+  const a6: ExtraLeaves = 'obj.arr[2]';
+  const a7: ExtraLeaves = 'obj.next._errors';
+  const a8: ExtraLeaves = 'obj.next[1].level';
+  // @ts-expect-error incorrect path
+  const a9: ExtraLeaves = 'obj.next[1]._errors';
 });
 
 test('Objects with sets', () => {

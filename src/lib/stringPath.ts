@@ -59,22 +59,17 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
         }[keyof T]
   : never;
 
-type ArrField<Arr extends string, K> = Arr extends never
-  ? never
-  : K extends string
-  ? `${K}.${Arr}`
-  : never;
-
 export type StringPathLeaves<
   T extends object,
   Arr extends string = never
 > = NonNullable<T> extends (infer U)[]
   ? NonNullable<U> extends object
     ?
+        | (Arr extends never ? never : `.${Arr}`)
         | `[${number}]${NonNullable<U> extends unknown[]
             ? ''
             : '.'}${StringPathLeaves<NonNullable<U>, Arr> & string}`
-    : `[${number}]`
+    : `[${number}]` | (Arr extends never ? never : `.${Arr}`)
   : NonNullable<T> extends object
   ?
       | {
@@ -88,14 +83,9 @@ export type StringPathLeaves<
       | {
           [K in keyof T]-?: K extends string
             ? NonNullable<T[K]> extends object
-              ?
-                  | (NonNullable<T[K]> extends unknown[]
-                      ? ArrField<Arr, K>
-                      : never)
-                  | `${K}${NonNullable<T[K]> extends unknown[]
-                      ? ''
-                      : '.'}${StringPathLeaves<NonNullable<T[K]>, Arr> &
-                      string}`
+              ? `${K}${NonNullable<T[K]> extends unknown[]
+                  ? ''
+                  : '.'}${StringPathLeaves<NonNullable<T[K]>, Arr> & string}`
               : never
             : never;
         }[keyof T]

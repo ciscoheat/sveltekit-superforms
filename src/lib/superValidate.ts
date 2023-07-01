@@ -1,4 +1,4 @@
-import { fail, json, type RequestEvent } from '@sveltejs/kit';
+import { ActionFailure, fail, json, type RequestEvent } from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import {
   SuperFormError,
@@ -55,19 +55,64 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
 
 export const setMessage = message;
 
+type SetErrorOptions = {
+  overwrite?: boolean;
+  status?: NumericRange<400, 599>;
+};
+
 /**
- * Sets an error for a form field, with an optional HTTP status code.
- * form.valid is automatically set to false. A status lower than 400 cannot be sent.
+ * Sets a form-level error.
+ * form.valid is automatically set to false.
+ *
+ * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
+ * @param {string | string[]} error Error message(s).
+ * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
+ * @returns fail(status, { form })
+ */
+export function setError<T extends ZodValidation<AnyZodObject>>(
+  form: SuperValidated<T, unknown>,
+  error: string | string[],
+  options?: SetErrorOptions
+): ActionFailure<{ form: SuperValidated<T, unknown> }>;
+
+/**
+ * Sets an error for a form field or array field.
+ * form.valid is automatically set to false.
+ *
+ * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
+ * @param {'' | StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>} path Path to the form field. Use an empty string to set a form-level error. Array-level errors can be set by appending "._errors" to the field.
+ * @param {string | string[]} error Error message(s).
+ * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
+ * @returns fail(status, { form })
  */
 export function setError<T extends ZodValidation<AnyZodObject>>(
   form: SuperValidated<T, unknown>,
   path: '' | StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>,
   error: string | string[],
-  options: { overwrite?: boolean; status?: NumericRange<400, 599> } = {
-    overwrite: false,
-    status: 400
+  options?: SetErrorOptions
+): ActionFailure<{ form: SuperValidated<T, unknown> }>;
+
+export function setError<T extends ZodValidation<AnyZodObject>>(
+  form: SuperValidated<T, unknown>,
+  path:
+    | string
+    | string[]
+    | (string & StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>),
+  error?: string | string[] | SetErrorOptions,
+  options?: SetErrorOptions
+): ActionFailure<{ form: SuperValidated<T, unknown> }> {
+  // Unify signatures
+  if (
+    error == undefined ||
+    (typeof error !== 'string' && !Array.isArray(error))
+  ) {
+    options = error;
+    error = path;
+    path = '';
   }
-) {
+
+  if (options === undefined) options = {};
+
   const errArr = Array.isArray(error) ? error : [error];
 
   if (!form.errors) form.errors = {};

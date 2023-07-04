@@ -4,9 +4,9 @@
   <a href="/crud">CRUD</a> |
   <a href="/super-debug">SuperDebug</a> |
   <a href="/nested">Nested</a> |
-  <a href="/multiple">Multiple</a> |
+  <a href="/multiple">Multiple</a>
   <br />
-  <a href="/multiple2">Multiple 2</a>
+  <a href="/multiple2">Multiple 2</a> |
   <a href="/snapshot">Snapshot</a> |
   <a href="/dates">Dates</a> |
   <a href="/reset">Reset</a> |

@@ -230,12 +230,10 @@ export function formEnhance<T extends AnyZodObject, M>(
         ? (document.querySelector(options.stickyNavbar) as HTMLElement)
         : null;
 
-      if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
-        if (typeof options.scrollToError == 'string') {
-          scrollToAndCenter(el, undefined, options.scrollToError);
-        } else {
-          el.scrollIntoView(options.scrollToError);
-        }
+      if (typeof options.scrollToError != 'string') {
+        el.scrollIntoView(options.scrollToError);
+      } else if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
+        scrollToAndCenter(el, undefined, options.scrollToError);
       }
 
       // Don't focus on the element if on mobile, it will open the keyboard

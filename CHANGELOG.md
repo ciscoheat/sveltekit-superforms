@@ -5,11 +5,16 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0]
 
 ### Added
 
+- The `scrollToError` option can now take the same parameters as [scrollIntoView](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView), which makes it work for nested scrollbars.
 - Added signature to more conveniently set a form-level error with `setError`.
+
+### Fixed
+
+- If the `resetForm` option was enabled, the form was reset even if `fail` was returned.
 
 ## [1.1.3] - 2023-06-29
 

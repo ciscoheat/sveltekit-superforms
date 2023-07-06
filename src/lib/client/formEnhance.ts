@@ -231,7 +231,11 @@ export function formEnhance<T extends AnyZodObject, M>(
         : null;
 
       if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
-        scrollToAndCenter(el, undefined, options.scrollToError);
+        if (typeof options.scrollToError == 'string') {
+          scrollToAndCenter(el, undefined, options.scrollToError);
+        } else {
+          el.scrollIntoView(options.scrollToError);
+        }
       }
 
       // Don't focus on the element if on mobile, it will open the keyboard
@@ -396,7 +400,9 @@ export function formEnhance<T extends AnyZodObject, M>(
 
         // Deprecation fix
         const submitData =
-          submit.formData ?? (submit as { data: FormData }).data;
+          'formData' in submit
+            ? submit.formData
+            : (submit as { data: FormData }).data;
 
         if (options.SPA) {
           cancel();

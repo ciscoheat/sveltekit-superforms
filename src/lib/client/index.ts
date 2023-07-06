@@ -77,7 +77,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   applyAction: boolean;
   invalidateAll: boolean;
   resetForm: boolean | (() => boolean);
-  scrollToError: 'auto' | 'smooth' | 'off';
+  scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
   autoFocusOnError: boolean | 'detect';
   errorSelector: string;
   selectErrorText: boolean;
@@ -375,9 +375,9 @@ export function superForm<
         if (duplicateId.has(form.id)) {
           console.warn(
             `Duplicate form id found: "${form.id}"` +
-              '. Multiple forms will receive the same data. Use the id option to differentiate between them, or if this is intended, set warnings.duplicateId option to false to disable this message.'
+              '. Multiple forms will receive the same data. Use the id option to differentiate between them, ' +
+              'or if this is intended, set warnings.duplicateId option to false to disable this message.'
           );
-          break;
         } else {
           duplicateId.add(form.id);
         }
@@ -483,6 +483,7 @@ export function superForm<
   ) {
     if (
       form.valid &&
+      untaint &&
       options.resetForm &&
       (options.resetForm === true || options.resetForm())
     ) {

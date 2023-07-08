@@ -374,8 +374,8 @@ export function superForm<
       for (const form of forms) {
         if (duplicateId.has(form.id)) {
           console.warn(
-            `Duplicate form id found: "${form.id}"` +
-              '. Multiple forms will receive the same data. Use the id option to differentiate between them, ' +
+            `Duplicate form id found: "${form.id}". ` +
+              'Multiple forms will receive the same data. Use the id option to differentiate between them, ' +
               'or if this is intended, set warnings.duplicateId option to false to disable this message.'
           );
         } else {
@@ -472,7 +472,9 @@ export function superForm<
       if (value.length > 0) Form_checkForNestedData(key, value[0]);
     } else if (!(value instanceof Date)) {
       throw new SuperFormError(
-        `Object found in form field "${key}". Set options.dataType = 'json' and use:enhance to use nested data structures.`
+        `Object found in form field "${key}". ` +
+          `Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
+          `More information: https://superforms.rocks/concepts/nested-data`
       );
     }
   }

@@ -277,3 +277,32 @@ test('Refined errors on leaf node', async () => {
     flavours: { _errors: ["Can't order more flavours than scoops!"] }
   });
 });
+
+test('Error on posting nested data in dataType form mode', async () => {
+  const registrationSchema = z.object({
+    username: z.string(),
+    credential: z.object({
+      id: z.string(),
+      publicKey: z.string(),
+      algorithm: z.string()
+    }),
+    authenticatorData: z.string(),
+    clientData: z.string()
+  });
+
+  const schema = z.object({
+    email: z.string().email(),
+    registration: registrationSchema.optional()
+  });
+
+  const formData = new FormData();
+  formData.set('email', 'asd@asd.commm');
+  formData.set(
+    'registration',
+    '{"username":"asd@asd.commm","credential":{"id":"6igsmeLIsd2jTAraOL1QX4qUWjdtvBX3gMeEHOR-QcU","publicKey":"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOdtZo4FdtR2AAU6pR0u9d4qJcLsfnCM18No1lwTjx-7sJds6sr4SI721yzwDMYIB1L8frZkuUs1JK4Rq5C4fYg==","algorithm":"ES256"},"authenticatorData":"SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NFAAAAAQECAwQFBgcIAQIDBAUGBwgAIOooLJniyLHdo0wK2ji9UF-KlFo3bbwV94DHhBzkfkHFpQECAyYgASFYIDnbWaOBXbUdgAFOqUdLvXeKiXC7H5wjNfDaNZcE48fuIlgg7CXbOrK-EiO9tcs8AzGCAdS_H62ZLlLNSSuEauQuH2I=","clientData":"eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiU1llTVR5aHpmaHFXaUx4ZyIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6NTE3MyIsImNyb3NzT3JpZ2luIjpmYWxzZX0="}'
+  );
+
+  await expect(superValidate(formData, schema)).rejects.toThrow(
+    /Object found in form field "registration"/
+  );
+});

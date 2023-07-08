@@ -5,12 +5,18 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0]
+## [Unreleased]
+
+### Fixed
+
+- Fixed exception message when the `dataType` option isn't set to `'json'` and the schema contains a nested object.
+
+## [1.2.0] - 2023-07-06
 
 ### Added
 
 - The `scrollToError` option can now take the same parameters as [scrollIntoView](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView), which makes it work for nested scrollbars.
-- Added signature to more conveniently set a form-level error with `setError`.
+- Added `setError` signature, to more conveniently set a form-level error: `setError(form, 'Form-level error message')`
 
 ### Fixed
 

@@ -258,6 +258,14 @@ function formDataToValidation<T extends AnyZodObject>(
       return Symbol(String(value));
     }
 
+    if (zodType._def.typeName == 'ZodObject') {
+      throw new SuperFormError(
+        `Object found in form field "${field}". ` +
+          `Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
+          `More information: https://superforms.rocks/concepts/nested-data`
+      );
+    }
+
     throw new SuperFormError(
       'Unsupported Zod default type: ' + zodType.constructor.name
     );

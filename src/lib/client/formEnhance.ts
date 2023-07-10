@@ -16,6 +16,10 @@ import { stringify } from 'devalue';
 import type { Entity } from '../schemaEntity.js';
 import type { FormOptions, SuperForm } from './index.js';
 import { clientValidation, validateField } from './clientValidation.js';
+import {
+  addSubmittingForm,
+  removeSubmittingForm
+} from './areAnyFormsSubmitting.js';
 
 enum FetchStatus {
   Idle = 0,
@@ -274,6 +278,15 @@ export function formEnhance<T extends AnyZodObject, M>(
         submitting.set(state >= FetchStatus.Submitting);
         delayed.set(state >= FetchStatus.Delayed);
         timeout.set(state >= FetchStatus.Timeout);
+
+        if (
+          state === FetchStatus.Submitting ||
+          state === FetchStatus.Delayed
+        ) {
+          addSubmittingForm(formEl);
+        } else {
+          removeSubmittingForm(formEl);
+        }
       };
 
       return {

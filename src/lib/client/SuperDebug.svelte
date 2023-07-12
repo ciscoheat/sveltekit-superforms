@@ -1,18 +1,69 @@
 <script>
   import { page } from '$app/stores';
-
-  export let display = true;
-  export let status = true;
-  /** @type {any} */
-  export let data;
-  export let stringTruncate = 120;
-  /** @type {HTMLPreElement | undefined} */
-  export let ref = undefined;
-  export let label = '';
-  export let promise = false;
+  import { onDestroy } from 'svelte';
 
   /**
-   * @param {any} json
+   * @typedef {unknown | Promise<unknown>} EncodeableData
+   * @typedef {import('svelte/store').Readable<EncodeableData>} EncodeableDataStore
+   *
+   * @typedef {EncodeableData | EncodeableDataStore} DebugData
+   */
+
+  /**
+   * Data to be displayed as pretty JSON.
+   *
+   * @type {DebugData}
+   */
+  export let data;
+  /**
+   * Controls when the component should be displayed.
+   *
+   * Default: `true`.
+   */
+  export let display = true;
+  /**
+   * Controls when to show the http status code of the current page (reflecs the status code of the last request).
+   *
+   * Default is `true`.
+   */
+  export let status = true;
+  /**
+   * Optional label to identify the component easily.
+   */
+  export let label = '';
+  /**
+   * Controls the maximum length of a string field of the data prop.
+   *
+   * Default is `120` characters.
+   */
+  export let stringTruncate = 120;
+  /**
+   * Reference to the pre element that contains the shown d
+   *
+   * @type {HTMLPreElement | undefined}
+   */
+  export let ref = undefined;
+  /**
+   * Controls if the data prop should be treated as a promise (skips promise detection when true).
+   *
+   * Default is `false`.
+   */
+  export let promise = false;
+  /**
+   * Controls if the data prop should be treated as a plain object (skips promise and store detection when true, prevails over promise prop).
+   *
+   * Default is `false`.
+   */
+  export let raw = false;
+  /**
+   * Enables the display of fields of the data prop that are functions.
+   *
+   * Default is `false`.
+   */
+  export let functions = false;
+
+  /**
+   * @param {unknown} json
    * @returns {string}
    */
   function syntaxHighlight(json) {
@@ -31,6 +82,9 @@
         if (typeof value === 'bigint') {
           return '#}BI#' + value;
         }
+        if (typeof value === 'function' && functions) {
+          return '#}F#' + `[function ${value.name}]`;
+        }
         return value;
       },
       2
@@ -38,6 +92,7 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+
     return encodedString.replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
       function (match) {
@@ -67,6 +122,9 @@
             } else if (match.startsWith('"#}BI#')) {
               cls = 'bigint';
               match = match.slice(6, -1) + 'n';
+            } else if (match.startsWith('"#}F#')) {
+              cls = 'function';
+              match = match.slice(5, -1);
             }
           }
         } else if (/true|false/.test(match)) {
@@ -80,12 +138,64 @@
   }
 
   /**
-   * @param {any} json
+   * @param {EncodeableData} json
    * @returns {Promise<string>}
    */
   async function promiseSyntaxHighlight(json) {
     json = await json;
     return syntaxHighlight(json);
+  }
+
+  /**
+   * @param {EncodeableData} data
+   * @param {boolean} raw
+   * @param {boolean} promise
+   * @returns {data is Promise<unknown>}
+   */
+  function assertPromise(data, raw, promise) {
+    if (raw) {
+      return false;
+    }
+    return (
+      promise ||
+      (typeof data === 'object' &&
+        data !== null &&
+        'then' in data &&
+        typeof data['then'] === 'function')
+    );
+  }
+
+  /**
+   * @param {DebugData} data
+   * @param {boolean} raw
+   * @returns {data is EncodeableDataStore}
+   */
+  function assertStore(data, raw) {
+    if (raw) {
+      return false;
+    }
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'subscribe' in data &&
+      typeof data['subscribe'] === 'function'
+    );
+  }
+
+  /** @type {EncodeableData} */
+  let debugData;
+
+  let dataIsStore = false;
+  if (assertStore(data, raw)) {
+    dataIsStore = true;
+    const unsubscribe = data.subscribe((value) => {
+      debugData = value;
+    });
+    onDestroy(unsubscribe);
+  }
+
+  $: if (!dataIsStore) {
+    debugData = data;
   }
 </script>
 
@@ -112,13 +222,62 @@
       class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
       bind:this={ref}><code class="super-debug--code"
         ><slot
-          >{#if promise}{#await promiseSyntaxHighlight(data)}<div>Loading data</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(
-              data
+          >{#if assertPromise(debugData, raw, promise)}{#await promiseSyntaxHighlight(debugData)}<div>Loading data...</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(
+              debugData
             )}{/if}</slot
         ></code
       ></pre>
   </div>
 {/if}
+
+<!--
+  @component
+
+  SuperDebug is a debugging component that gives you colorized and nicely formatted output for any data structure, usually $form.
+  
+  Other use cases includes debugging plain objects, promises, stores and more.
+
+  More info:
+  - [API](https://superforms.rocks/api#superdebug)
+  - [Examples](https://github.com/ciscoheat/sveltekit-superforms/tree/main/src/routes/super-debug)
+  
+  **Short example:**
+
+  ```svelte
+  <script>
+    import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
+
+    export let data;
+    
+    const { errors, form, enhance } = superForm(data.form);
+  </script>
+  
+  <form method="POST" use:enhance>
+    <label>
+      Name<br />
+      <input
+        name="name"
+        type="text"
+        aria-invalid={$errors.name ? 'true' : undefined}
+        bind:value={$form.name}
+      />
+      {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+    </label>
+    <label>
+      Email<br />
+      <input
+        name="email"
+        type="email"
+        aria-invalid={$errors.email ? 'true' : undefined}
+        bind:value={$form.email}
+      />
+      {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
+    </label>
+    <button>Submit</button>
+  </form>
+  <SuperDebug data={$form} label="My form data" />
+  ```
+-->
 
 <style>
   .absolute {

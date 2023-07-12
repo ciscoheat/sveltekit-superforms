@@ -35,7 +35,7 @@
     return json.replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
       function (match: string) {
-        let cls = 'num';
+        let cls = 'number';
         if (/^"/.test(match)) {
           if (/:$/.test(match)) {
             cls = 'key';
@@ -133,13 +133,14 @@
   }
 
   .super-debug {
+    --_sd-bg-color: var(--sd-bg-color, rgb(30, 41, 59));
     position: relative;
-    background-color: #1e293b;
+    background-color: var(--_sd-bg-color);
     border-radius: 0.5rem;
     overflow: hidden;
   }
 
-  .super-debug .super-debug--status {
+  .super-debug--status {
     display: flex;
     padding: 1em;
     justify-content: space-between;
@@ -148,66 +149,90 @@
   }
 
   .super-debug--label {
-    color: white;
+    color: var(--sd-label-color, white);
   }
 
   .super-debug pre {
-    color: #999;
-    background-color: #1e293b;
+    color: var(--sd-code-default, #999);
+    background-color: var(--_sd-bg-color);
     margin-bottom: 0px;
     /** Sakura is doing 0.9em, turn font-size back to 1em **/
     font-size: 1em;
   }
 
   .info {
-    color: rgb(85, 85, 255);
+    color: var(--sd-info, rgb(85, 85, 255));
   }
 
   .success {
-    color: #2cd212;
+    color: var(--sd-success, #2cd212);
   }
 
   .redirect {
-    color: #03cae5;
+    color: var(--sd-redirect, #03cae5);
   }
 
   .error {
-    color: #ff475d;
+    color: var(--sd-error, #ff475d);
   }
 
   :global(.super-debug--code .key) {
-    color: #eab308;
+    color: var(--sd-code-key, #eab308);
   }
 
   :global(.super-debug--code .string) {
-    color: #6ec687;
+    color: var(--sd-code-string, #6ec687);
   }
 
   :global(.super-debug--code .date) {
-    color: #f06962;
+    color: var(--sd-code-date, #f06962);
   }
 
   :global(.super-debug--code .boolean) {
-    color: #79b8ff;
+    color: var(--sd-code-boolean, #79b8ff);
   }
 
-  :global(.super-debug--code .num) {
-    color: #af77e9;
+  :global(.super-debug--code .number) {
+    color: var(--sd-code-number, #af77e9);
   }
 
   :global(.super-debug--code .bigint) {
-    color: #af77e9;
+    color: var(--sd-code-bigint, #af77e9);
   }
 
   :global(.super-debug--code .null) {
-    color: #238afe;
+    color: var(--sd-code-null, #238afe);
   }
 
   :global(.super-debug--code .nan) {
-    color: #af77e9;
+    color: var(--sd-code-nan, #af77e9);
   }
 
   :global(.super-debug--code .undefined) {
-    color: #238afe;
+    color: var(--sd-code-undefined, #238afe);
+  }
+
+  :global(.super-debug--code .function) {
+    color: var(--sd-code-function, #f06962);
+  }
+
+  .super-debug pre::-webkit-scrollbar {
+    width: var(--sd-sb-width, 1.25rem);
+    height: var(--sd-sb-height, 1.25rem);
+    opacity: 0.5;
+  }
+
+  .super-debug pre::-webkit-scrollbar-track {
+    background-color: var(--sd-sb-track-color, hsl(0, 0%, 40%, 0.2));
+  }
+  .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
+    background-color: var(--sd-sb-track-color-focus, hsl(0, 0%, 50%, 0.2));
+  }
+
+  .super-debug pre::-webkit-scrollbar-thumb {
+    background-color: var(--sd-sb-thumb-color, hsl(217, 50%, 50%, 0.5));
+  }
+  .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
+    background-color: var(--sd-sb-thumb-color-focus, hsl(217, 50%, 50%));
   }
 </style>

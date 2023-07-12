@@ -99,6 +99,36 @@
         <p>Svelte's <code>$page</code> data in all its glory.</p>
         <SuperDebug label="$page data" data={$page} />
     </section>
+    <section>
+      <h4>Super Debug custom styling 😎</h4>
+      <p>Bugs are easier to solve if they look familiar.</p>
+      <SuperDebug
+        data={$form}
+        label="VS Code like theme"
+        --sd-bg-color="#1f1f1f"
+        --sd-label-color="#cccccc"
+        --sd-code-default="#8c8a89"
+        --sd-code-key="#9cdcfe"
+        --sd-code-string="#ce9171"
+        --sd-code-number="#b5c180"
+        --sd-code-boolean="#4a9cd6"
+        --sd-code-null="#4a9cd6"
+        --sd-code-undefined="#4a9cd6"
+        --sd-sb-thumb-color="#35373a"
+        --sd-sb-thumb-color-focus="#4b4d50"
+      />
+      <p
+        style:margin-top="1em"
+        style:padding-left="4px"
+        style:background-color="#1f1f1f0f"
+      >
+        <strong>Note:</strong> styling the component produces de side effect
+        described at the
+        <a href="https://svelte.dev/docs/component-directives#style-props"
+          >Svelte docs</a
+        >.
+      </p>
+    </section>
 </main>
 
 <style>

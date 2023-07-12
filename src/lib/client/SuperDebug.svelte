@@ -1,16 +1,22 @@
-<script lang="ts">
+<script>
   import { page } from '$app/stores';
 
   export let display = true;
   export let status = true;
-  export let data: any;
+  /** @type {any} */
+  export let data;
   export let stringTruncate = 120;
-  export let ref: HTMLPreElement | undefined = undefined;
+  /** @type {HTMLPreElement | undefined} */
+  export let ref = undefined;
   export let label = '';
   export let promise = false;
 
-  function syntaxHighlight(json: any) {
-    json = JSON.stringify(
+  /**
+   * @param {any} json
+   * @returns {string}
+   */
+  function syntaxHighlight(json) {
+    const encodedString = JSON.stringify(
       json,
       function (key, value) {
         if (value === undefined) {
@@ -32,9 +38,9 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    return json.replace(
+    return encodedString.replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-      function (match: string) {
+      function (match) {
         let cls = 'number';
         if (/^"/.test(match)) {
           if (/:$/.test(match)) {
@@ -73,7 +79,11 @@
     );
   }
 
-  async function promiseSyntaxHighlight(json: any) {
+  /**
+   * @param {any} json
+   * @returns {Promise<string>}
+   */
+  async function promiseSyntaxHighlight(json) {
     json = await json;
     return syntaxHighlight(json);
   }

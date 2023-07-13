@@ -63,6 +63,37 @@
   export let functions = false;
 
   /**
+   * Theme, which can also be customized with CSS variables:
+   * --sd-bg-color
+   * --sd-label-color
+   * --sd-promise-loading-color
+   * --sd-promise-error-color
+   * --sd-code-default
+   * --sd-info
+   * --sd-success
+   * --sd-redirect
+   * --sd-error
+   * --sd-code-key
+   * --sd-code-string
+   * --sd-code-date
+   * --sd-code-boolean
+   * --sd-code-number
+   * --sd-code-bigint
+   * --sd-code-null
+   * --sd-code-nan
+   * --sd-code-undefined
+   * --sd-code-function
+   * --sd-sb-width
+   * --sd-sb-height
+   * --sd-sb-track-color
+   * --sd-sb-track-color-focus
+   * --sd-sb-thumb-color
+   * --sd-sb-thumb-color-focus
+   * @type {"default" | "vscode"}
+   */
+  export let theme = 'default';
+
+  /**
    * @param {unknown} json
    * @returns {string}
    */
@@ -191,6 +222,23 @@
     );
   }
 
+  const themeStyle =
+    theme == 'vscode'
+      ? `
+      --sd-vscode-bg-color:#1f1f1f;
+      --sd-vscode-label-color:#cccccc;
+      --sd-vscode-code-default:#8c8a89;
+      --sd-vscode-code-key:#9cdcfe;
+      --sd-vscode-code-string:#ce9171;
+      --sd-vscode-code-number:#b5c180;
+      --sd-vscode-code-boolean:#4a9cd6;
+      --sd-vscode-code-null:#4a9cd6;
+      --sd-vscode-code-undefined:#4a9cd6;
+      --sd-vscode-sb-thumb-color:#35373a;
+      --sd-vscode-sb-thumb-color-focus:#4b4d50;
+    `
+      : undefined;
+
   /** @type {EncodeableData} */
   let debugData;
 
@@ -209,7 +257,7 @@
 </script>
 
 {#if display}
-  <div class="super-debug">
+  <div class="super-debug" style={themeStyle}>
     <div
       class="super-debug--status {label === ''
         ? 'absolute inset-x-0 top-0'
@@ -231,7 +279,9 @@
       class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
       bind:this={ref}><code class="super-debug--code"
         ><slot
-          >{#if assertPromise(debugData, raw, promise)}{#await promiseSyntaxHighlight(debugData)}<div>Loading data...</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(
+          >{#if assertPromise(debugData, raw, promise)}{#await promiseSyntaxHighlight(debugData)}<div
+                class="super-debug--promise-loading">Loading data...</div>{:then result}{@html result}{:catch error}<div
+                class="super-debug--promise-error">{error}</div>{/await}{:else}{@html syntaxHighlight(
               debugData
             )}{/if}</slot
         ></code
@@ -311,7 +361,10 @@
   }
 
   .super-debug {
-    --_sd-bg-color: var(--sd-bg-color, rgb(30, 41, 59));
+    --_sd-bg-color: var(
+      --sd-bg-color,
+      var(--sd-vscode-bg-color, rgb(30, 41, 59))
+    );
     position: relative;
     background-color: var(--_sd-bg-color);
     border-radius: 0.5rem;
@@ -327,11 +380,25 @@
   }
 
   .super-debug--label {
-    color: var(--sd-label-color, white);
+    color: var(--sd-label-color, var(--sd-vscode-label-color, white));
+  }
+
+  .super-debug--promise-loading {
+    color: var(
+      --sd-promise-loading-color,
+      var(--sd-vscode-promise-loading-color, #999)
+    );
+  }
+
+  .super-debug--promise-error {
+    color: var(
+      --sd-promise-error-color,
+      var(--sd-vscode-promise-error-color, #ff475d)
+    );
   }
 
   .super-debug pre {
-    color: var(--sd-code-default, #999);
+    color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
     background-color: var(--_sd-bg-color);
     margin-bottom: 0px;
     /** Sakura is doing 0.9em, turn font-size back to 1em **/
@@ -339,59 +406,62 @@
   }
 
   .info {
-    color: var(--sd-info, rgb(85, 85, 255));
+    color: var(--sd-info, var(--sd-vscode-info, rgb(85, 85, 255)));
   }
 
   .success {
-    color: var(--sd-success, #2cd212);
+    color: var(--sd-success, var(--sd-vscode-success, #2cd212));
   }
 
   .redirect {
-    color: var(--sd-redirect, #03cae5);
+    color: var(--sd-redirect, var(--sd-vscode-redirect, #03cae5));
   }
 
   .error {
-    color: var(--sd-error, #ff475d);
+    color: var(--sd-error, var(--sd-vscode-error, #ff475d));
   }
 
   :global(.super-debug--code .key) {
-    color: var(--sd-code-key, #eab308);
+    color: var(--sd-code-key, var(--sd-vscode-code-key, #eab308));
   }
 
   :global(.super-debug--code .string) {
-    color: var(--sd-code-string, #6ec687);
+    color: var(--sd-code-string, var(--sd-vscode-code-string, #6ec687));
   }
 
   :global(.super-debug--code .date) {
-    color: var(--sd-code-date, #f06962);
+    color: var(--sd-code-date, var(--sd-vscode-code-date, #f06962));
   }
 
   :global(.super-debug--code .boolean) {
-    color: var(--sd-code-boolean, #79b8ff);
+    color: var(--sd-code-boolean, var(--sd-vscode-code-boolean, #79b8ff));
   }
 
   :global(.super-debug--code .number) {
-    color: var(--sd-code-number, #af77e9);
+    color: var(--sd-code-number, var(--sd-vscode-code-number, #af77e9));
   }
 
   :global(.super-debug--code .bigint) {
-    color: var(--sd-code-bigint, #af77e9);
+    color: var(--sd-code-bigint, var(--sd-vscode-code-bigint, #af77e9));
   }
 
   :global(.super-debug--code .null) {
-    color: var(--sd-code-null, #238afe);
+    color: var(--sd-code-null, var(--sd-vscode-code-null, #238afe));
   }
 
   :global(.super-debug--code .nan) {
-    color: var(--sd-code-nan, #af77e9);
+    color: var(--sd-code-nan, var(--sd-vscode-code-nan, #af77e9));
   }
 
   :global(.super-debug--code .undefined) {
-    color: var(--sd-code-undefined, #238afe);
+    color: var(
+      --sd-code-undefined,
+      var(--sd-vscode-code-undefined, #238afe)
+    );
   }
 
   :global(.super-debug--code .function) {
-    color: var(--sd-code-function, #f06962);
+    color: var(--sd-code-function, var(--sd-vscode-code-function, #f06962));
   }
 
   :global(.super-debug--code .symbol) {
@@ -399,22 +469,38 @@
   }
 
   .super-debug pre::-webkit-scrollbar {
-    width: var(--sd-sb-width, 1.25rem);
-    height: var(--sd-sb-height, 1.25rem);
+    width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1.25rem));
+    height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1.25rem));
     opacity: 0.5;
   }
 
   .super-debug pre::-webkit-scrollbar-track {
-    background-color: var(--sd-sb-track-color, hsl(0, 0%, 40%, 0.2));
+    background-color: var(
+      --sd-sb-track-color,
+      --sd-vscode-sb-track-color,
+      hsl(0, 0%, 40%, 0.2)
+    );
   }
   .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
-    background-color: var(--sd-sb-track-color-focus, hsl(0, 0%, 50%, 0.2));
+    background-color: var(
+      --sd-sb-track-color-focus,
+      --sd-vscode-sb-track-color-focus,
+      hsl(0, 0%, 50%, 0.2)
+    );
   }
 
   .super-debug pre::-webkit-scrollbar-thumb {
-    background-color: var(--sd-sb-thumb-color, hsl(217, 50%, 50%, 0.5));
+    background-color: var(
+      --sd-sb-thumb-color,
+      --sd-vscode-sb-thumb-color,
+      hsl(217, 50%, 50%, 0.5)
+    );
   }
   .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
-    background-color: var(--sd-sb-thumb-color-focus, hsl(217, 50%, 50%));
+    background-color: var(
+      --sd-sb-thumb-color-focus,
+      --sd-vscode-sb-thumb-color-focus,
+      hsl(217, 50%, 50%)
+    );
   }
 </style>

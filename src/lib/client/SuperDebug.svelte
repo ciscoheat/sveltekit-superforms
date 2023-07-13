@@ -313,35 +313,13 @@
   ```svelte
   <script>
     import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
+    import { superForm } from 'sveltekit-superforms/client';
 
     export let data;
     
     const { errors, form, enhance } = superForm(data.form);
   </script>
   
-  <form method="POST" use:enhance>
-    <label>
-      Name<br />
-      <input
-        name="name"
-        type="text"
-        aria-invalid={$errors.name ? 'true' : undefined}
-        bind:value={$form.name}
-      />
-      {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
-    </label>
-    <label>
-      Email<br />
-      <input
-        name="email"
-        type="email"
-        aria-invalid={$errors.email ? 'true' : undefined}
-        bind:value={$form.email}
-      />
-      {#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
-    </label>
-    <button>Submit</button>
-  </form>
   <SuperDebug data={$form} label="My form data" />
   ```
 -->
@@ -409,7 +387,6 @@
     color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
     background-color: var(--_sd-bg-color);
     margin-bottom: 0px;
-    /** Sakura is doing 0.9em, turn font-size back to 1em **/
     font-size: 1em;
   }
 
@@ -485,30 +462,26 @@
   .super-debug pre::-webkit-scrollbar-track {
     background-color: var(
       --sd-sb-track-color,
-      --sd-vscode-sb-track-color,
-      hsl(0, 0%, 40%, 0.2)
+      var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
     );
   }
   .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
     background-color: var(
       --sd-sb-track-color-focus,
-      --sd-vscode-sb-track-color-focus,
-      hsl(0, 0%, 50%, 0.2)
+      var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
     );
   }
 
   .super-debug pre::-webkit-scrollbar-thumb {
     background-color: var(
       --sd-sb-thumb-color,
-      --sd-vscode-sb-thumb-color,
-      hsl(217, 50%, 50%, 0.5)
+      var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
     );
   }
   .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
     background-color: var(
       --sd-sb-thumb-color-focus,
-      --sd-vscode-sb-thumb-color-focus,
-      hsl(217, 50%, 50%)
+      var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))
     );
   }
 </style>

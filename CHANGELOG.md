@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed exception message when the `dataType` option isn't set to `'json'` and the schema contains a nested object.
+- Superforms are now ignoring normal SvelteKit form actions when they are posted. ([#230](https://github.com/ciscoheat/sveltekit-superforms/issues/230))
 
 ## [1.2.0] - 2023-07-06
 

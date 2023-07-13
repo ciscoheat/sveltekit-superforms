@@ -806,8 +806,6 @@ export function superForm<
           if (pageUpdate.form.type == 'error') return;
 
           const forms = Context_findValidationForms(pageUpdate.form);
-          if (!forms.length) error('$page.form (ActionData)');
-
           for (const newForm of forms) {
             //console.log('🚀~ ActionData ~ newForm:', newForm.id);
             if (newForm.id !== _formId) continue;

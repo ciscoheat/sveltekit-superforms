@@ -61,9 +61,10 @@
    * Default is `false`.
    */
   export let functions = false;
-
   /**
    * Theme, which can also be customized with CSS variables:
+   *
+   * ```txt
    * --sd-bg-color
    * --sd-label-color
    * --sd-promise-loading-color
@@ -83,12 +84,15 @@
    * --sd-code-nan
    * --sd-code-undefined
    * --sd-code-function
+   * --sd-code-symbol
    * --sd-sb-width
    * --sd-sb-height
    * --sd-sb-track-color
    * --sd-sb-track-color-focus
    * --sd-sb-thumb-color
    * --sd-sb-thumb-color-focus
+   * ```
+   *
    * @type {"default" | "vscode"}
    */
   export let theme = 'default';
@@ -99,10 +103,12 @@
    */
   function syntaxHighlight(json) {
     switch (typeof json) {
-      case "function": {
-        return `<span class="function">[function ${json.name ?? 'unnamed'}]</span>`;
+      case 'function': {
+        return `<span class="function">[function ${
+          json.name ?? 'unnamed'
+        }]</span>`;
       }
-      case "symbol": {
+      case 'symbol': {
         return `<span class="symbol">${json.toString()}</span>`;
       }
     }
@@ -222,20 +228,22 @@
     );
   }
 
-  const themeStyle =
-    theme == 'vscode'
+  $: themeStyle =
+    theme === 'vscode'
       ? `
-      --sd-vscode-bg-color:#1f1f1f;
-      --sd-vscode-label-color:#cccccc;
-      --sd-vscode-code-default:#8c8a89;
-      --sd-vscode-code-key:#9cdcfe;
-      --sd-vscode-code-string:#ce9171;
-      --sd-vscode-code-number:#b5c180;
-      --sd-vscode-code-boolean:#4a9cd6;
-      --sd-vscode-code-null:#4a9cd6;
-      --sd-vscode-code-undefined:#4a9cd6;
-      --sd-vscode-sb-thumb-color:#35373a;
-      --sd-vscode-sb-thumb-color-focus:#4b4d50;
+      --sd-vscode-bg-color: #1f1f1f;
+      --sd-vscode-label-color: #cccccc;
+      --sd-vscode-code-default: #8c8a89;
+      --sd-vscode-code-key: #9cdcfe;
+      --sd-vscode-code-string: #ce9171;
+      --sd-vscode-code-number: #b5c180;
+      --sd-vscode-code-boolean: #4a9cd6;
+      --sd-vscode-code-null: #4a9cd6;
+      --sd-vscode-code-undefined: #4a9cd6;
+      --sd-vscode-code-nan: #4a9cd6;
+      --sd-vscode-code-symbol: #4de0c5;
+      --sd-vscode-sb-thumb-color: #35373a;
+      --sd-vscode-sb-thumb-color-focus: #4b4d50;
     `
       : undefined;
 
@@ -465,7 +473,7 @@
   }
 
   :global(.super-debug--code .symbol) {
-    color: var(--sd-code-symbol, #77e9c3);
+    color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
   }
 
   .super-debug pre::-webkit-scrollbar {

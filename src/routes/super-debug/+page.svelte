@@ -6,10 +6,11 @@
   import { readable } from 'svelte/store';
 
   export let data;
-  
+
   const bigSForm = superForm(data.bigForm);
   const bigForm = bigSForm.form;
-  $bigForm.full_name = 'Hubert Blaine Wolfeschlegelsteinhausenbergerdorff Sr.';
+  $bigForm.full_name =
+    'Hubert Blaine Wolfeschlegelsteinhausenbergerdorff Sr.';
 
   const { form } = superForm(data.form);
 
@@ -22,10 +23,9 @@
   const someObject = {
     full_name: 'Hubert Blaine Wolfeschlegelsteinhausenbergerdorff Sr.'
   };
-  const promiseNeverCameTrue = new Promise((resolve, reject) => {
-    setTimeout(() => resolve({}), 5000);
+  const promiseNeverCameTrue = new Promise((_, reject) => {
+    setTimeout(() => reject('Rejected'), 5000);
   });
-
 
   /** @type {() => Promise<unknown>} */
   let promiseProduct = async () => ({});
@@ -203,27 +203,13 @@
   <section>
     <h4>Super Debug custom styling 😎</h4>
     <p>Bugs are easier to solve if they look familiar.</p>
-    <SuperDebug
-      data={$form}
-      label="VS Code like theme"
-      --sd-bg-color="#1f1f1f"
-      --sd-label-color="#cccccc"
-      --sd-code-default="#8c8a89"
-      --sd-code-key="#9cdcfe"
-      --sd-code-string="#ce9171"
-      --sd-code-number="#b5c180"
-      --sd-code-boolean="#4a9cd6"
-      --sd-code-null="#4a9cd6"
-      --sd-code-undefined="#4a9cd6"
-      --sd-sb-thumb-color="#35373a"
-      --sd-sb-thumb-color-focus="#4b4d50"
-    />
+    <SuperDebug data={$form} label="VS Code like theme" theme="vscode" />
     <p
       style:margin-top="1em"
       style:padding-left="4px"
       style:background-color="#1f1f1f0f"
     >
-      <strong>Note:</strong> styling the component produces de side effect
+      <strong>Note:</strong> styling the component produces the side-effect
       described at the
       <a
         href="https://svelte.dev/docs/component-directives#style-props"

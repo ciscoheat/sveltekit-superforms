@@ -85,6 +85,7 @@
    * --sd-code-undefined
    * --sd-code-function
    * --sd-code-symbol
+   * --sd-code-error
    * --sd-sb-width
    * --sd-sb-height
    * --sd-sb-track-color
@@ -132,7 +133,7 @@
           return '#}F#' + `[function ${value.name}]`;
         }
         if (value instanceof Error) {
-          return '#}E#' + value.message;
+          return '#}E#' + `${value.name}: ${value.message || value.cause || 'uknown error message'}`;
         }
         return value;
       },
@@ -176,7 +177,7 @@
               match = match.slice(5, -1);
             } else if (match.startsWith('"#}E#')) {
               cls = 'error';
-              match = 'Error: ' + match.slice(5, -1);
+              match = match.slice(5, -1);
             }
           }
         } else if (/true|false/.test(match)) {
@@ -447,7 +448,6 @@
   .super-debug pre::-webkit-scrollbar {
     width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1.25rem));
     height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1.25rem));
-    opacity: 0.5;
   }
 
   .super-debug pre::-webkit-scrollbar-track {

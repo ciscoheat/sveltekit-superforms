@@ -1,6 +1,6 @@
 <script>
   import { page } from '$app/stores';
-  import { onDestroy } from 'svelte';
+  import { readable, get } from 'svelte/store';
 
   /**
    * @typedef {unknown | Promise<unknown>} EncodeableData
@@ -68,7 +68,7 @@
    * --sd-bg-color
    * --sd-label-color
    * --sd-promise-loading-color
-   * --sd-promise-error-color
+   * --sd-promise-rejected-color
    * --sd-code-default
    * --sd-info
    * --sd-success
@@ -131,6 +131,9 @@
         if (typeof value === 'function' && functions) {
           return '#}F#' + `[function ${value.name}]`;
         }
+        if (value instanceof Error) {
+          return '#}E#' + value.message;
+        }
         return value;
       },
       2
@@ -171,6 +174,9 @@
             } else if (match.startsWith('"#}F#')) {
               cls = 'function';
               match = match.slice(5, -1);
+            } else if (match.startsWith('"#}E#')) {
+              cls = 'error';
+              match = 'Error: ' + match.slice(5, -1);
             }
           }
         } else if (/true|false/.test(match)) {
@@ -181,15 +187,6 @@
         return '<span class="' + cls + '">' + match + '</span>';
       }
     );
-  }
-
-  /**
-   * @param {EncodeableData} json
-   * @returns {Promise<string>}
-   */
-  async function promiseSyntaxHighlight(json) {
-    json = await json;
-    return syntaxHighlight(json);
   }
 
   /**
@@ -247,21 +244,8 @@
     `
       : undefined;
 
-  /** @type {EncodeableData} */
-  let debugData;
-
-  let dataIsStore = false;
-  if (assertStore(data, raw)) {
-    dataIsStore = true;
-    const unsubscribe = data.subscribe((value) => {
-      debugData = value;
-    });
-    onDestroy(unsubscribe);
-  }
-
-  $: if (!dataIsStore) {
-    debugData = data;
-  }
+  /** @type {import('svelte/store').Readable<EncodeableData>} */
+  $: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
 {#if display}
@@ -287,11 +271,14 @@
       class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
       bind:this={ref}><code class="super-debug--code"
         ><slot
-          >{#if assertPromise(debugData, raw, promise)}{#await promiseSyntaxHighlight(debugData)}<div
-                class="super-debug--promise-loading">Loading data...</div>{:then result}{@html result}{:catch error}<div
-                class="super-debug--promise-error">{error}</div>{/await}{:else}{@html syntaxHighlight(
-              debugData
-            )}{/if}</slot
+          >{#if assertPromise($debugData, raw, promise)}{#await $debugData}<div
+                class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
+                assertStore(result, raw) ? get(result) : result
+              )}{:catch error}<span class="super-debug--promise-rejected"
+                >Rejected:</span
+              > {@html syntaxHighlight(
+                error
+              )}{/await}{:else}{@html syntaxHighlight($debugData)}{/if}</slot
         ></code
       ></pre>
   </div>
@@ -376,10 +363,10 @@
     );
   }
 
-  .super-debug--promise-error {
+  .super-debug--promise-rejected {
     color: var(
-      --sd-promise-error-color,
-      var(--sd-vscode-promise-error-color, #ff475d)
+      --sd-promise-rejected-color,
+      var(--sd-vscode-promise-rejected-color, #ff475d)
     );
   }
 
@@ -451,6 +438,10 @@
 
   :global(.super-debug--code .symbol) {
     color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
+  }
+
+  :global(.super-debug--code .error) {
+    color: var(--sd-code-error, var(--sd-vscode-code-error, #ff475d));
   }
 
   .super-debug pre::-webkit-scrollbar {

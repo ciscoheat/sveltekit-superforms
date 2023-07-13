@@ -67,6 +67,15 @@
    * @returns {string}
    */
   function syntaxHighlight(json) {
+    switch (typeof json) {
+      case "function": {
+        return `<span class="function">[function ${json.name ?? 'unnamed'}]</span>`;
+      }
+      case "symbol": {
+        return `<span class="symbol">${json.toString()}</span>`;
+      }
+    }
+
     const encodedString = JSON.stringify(
       json,
       function (key, value) {
@@ -383,6 +392,10 @@
 
   :global(.super-debug--code .function) {
     color: var(--sd-code-function, #f06962);
+  }
+
+  :global(.super-debug--code .symbol) {
+    color: var(--sd-code-symbol, #77e9c3);
   }
 
   .super-debug pre::-webkit-scrollbar {

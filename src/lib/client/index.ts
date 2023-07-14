@@ -423,13 +423,17 @@ export function superForm<
         value: Parameters<typeof _formData.set>[0],
         options: { taint?: TaintOption<UnwrappedT> } = {}
       ) => {
+        // Need to clone the value, so it won't refer
+        // to $page for example.
+        const newValue = clone(value);
+
         Tainted_update(
-          value,
+          newValue,
           Context.taintedFormState,
           options.taint ?? true
         );
-        Context.taintedFormState = clone(value);
-        return _formData.set(value);
+        Context.taintedFormState = newValue;
+        return _formData.set(newValue);
       },
       update: (
         updater: Parameters<typeof _formData.update>[0],

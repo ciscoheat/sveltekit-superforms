@@ -76,6 +76,18 @@
 <main class="space-y-4">
   <section>
     <h3>SuperDebug demonstrations</h3>
+    <p
+      style:margin-top="1em"
+      style:padding-left="4px"
+      style:background-color="#1f1f1f0f"
+      style:opacity="0.8"
+    >
+      <strong>Note:</strong> looking for the capabilities of SuperDebug?
+      Check
+      <b>
+        <a href="super-debug/extensive-usage-cases">All data cases examples</a></b
+      >.
+    </p>
     <b>Change name: <input bind:value={$form.full_name} /></b>
   </section>
   <section>

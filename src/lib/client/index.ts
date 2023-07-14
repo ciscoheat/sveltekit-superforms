@@ -423,17 +423,15 @@ export function superForm<
         value: Parameters<typeof _formData.set>[0],
         options: { taint?: TaintOption<UnwrappedT> } = {}
       ) => {
-        // Need to clone the value, so it won't refer
-        // to $page for example.
-        const newValue = clone(value);
-
         Tainted_update(
-          newValue,
+          value,
           Context.taintedFormState,
           options.taint ?? true
         );
-        Context.taintedFormState = newValue;
-        return _formData.set(newValue);
+
+        Context_setTaintedFormState(value);
+        // Need to clone the value, so it won't refer to $page for example.
+        return _formData.set(clone(value));
       },
       update: (
         updater: Parameters<typeof _formData.update>[0],
@@ -446,7 +444,9 @@ export function superForm<
             Context.taintedFormState,
             options.taint ?? true
           );
-          Context.taintedFormState = clone(value);
+
+          Context_setTaintedFormState(output);
+          // No cloning here, since it's an update
           return output;
         });
       }
@@ -796,12 +796,6 @@ export function superForm<
     Unsubscriptions_add(
       page.subscribe(async (pageUpdate) => {
         if (!options.applyAction) return;
-
-        function error(type: string) {
-          throw new SuperFormError(
-            `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
-          );
-        }
 
         const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
 

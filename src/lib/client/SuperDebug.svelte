@@ -1,16 +1,120 @@
-<script lang="ts">
+<script>
   import { page } from '$app/stores';
+  import { readable, get } from 'svelte/store';
 
+  /**
+   * @typedef {unknown | Promise<unknown>} EncodeableData
+   * @typedef {import('svelte/store').Readable<EncodeableData>} EncodeableDataStore
+   *
+   * @typedef {EncodeableData | EncodeableDataStore} DebugData
+   */
+
+  /**
+   * Data to be displayed as pretty JSON.
+   *
+   * @type {DebugData}
+   */
+  export let data;
+  /**
+   * Controls when the component should be displayed.
+   *
+   * Default: `true`.
+   */
   export let display = true;
+  /**
+   * Controls when to show the http status code of the current page (reflecs the status code of the last request).
+   *
+   * Default is `true`.
+   */
   export let status = true;
-  export let data: any;
-  export let stringTruncate = 120;
-  export let ref: HTMLPreElement | undefined = undefined;
+  /**
+   * Optional label to identify the component easily.
+   */
   export let label = '';
+  /**
+   * Controls the maximum length of a string field of the data prop.
+   *
+   * Default is `120` characters.
+   */
+  export let stringTruncate = 120;
+  /**
+   * Reference to the pre element that contains the shown d
+   *
+   * @type {HTMLPreElement | undefined}
+   */
+  export let ref = undefined;
+  /**
+   * Controls if the data prop should be treated as a promise (skips promise detection when true).
+   *
+   * Default is `false`.
+   */
   export let promise = false;
+  /**
+   * Controls if the data prop should be treated as a plain object (skips promise and store detection when true, prevails over promise prop).
+   *
+   * Default is `false`.
+   */
+  export let raw = false;
+  /**
+   * Enables the display of fields of the data prop that are functions.
+   *
+   * Default is `false`.
+   */
+  export let functions = false;
+  /**
+   * Theme, which can also be customized with CSS variables:
+   *
+   * ```txt
+   * --sd-bg-color
+   * --sd-label-color
+   * --sd-promise-loading-color
+   * --sd-promise-rejected-color
+   * --sd-code-default
+   * --sd-info
+   * --sd-success
+   * --sd-redirect
+   * --sd-error
+   * --sd-code-key
+   * --sd-code-string
+   * --sd-code-date
+   * --sd-code-boolean
+   * --sd-code-number
+   * --sd-code-bigint
+   * --sd-code-null
+   * --sd-code-nan
+   * --sd-code-undefined
+   * --sd-code-function
+   * --sd-code-symbol
+   * --sd-code-error
+   * --sd-sb-width
+   * --sd-sb-height
+   * --sd-sb-track-color
+   * --sd-sb-track-color-focus
+   * --sd-sb-thumb-color
+   * --sd-sb-thumb-color-focus
+   * ```
+   *
+   * @type {"default" | "vscode"}
+   */
+  export let theme = 'default';
 
-  function syntaxHighlight(json: any) {
-    json = JSON.stringify(
+  /**
+   * @param {unknown} json
+   * @returns {string}
+   */
+  function syntaxHighlight(json) {
+    switch (typeof json) {
+      case 'function': {
+        return `<span class="function">[function ${
+          json.name ?? 'unnamed'
+        }]</span>`;
+      }
+      case 'symbol': {
+        return `<span class="symbol">${json.toString()}</span>`;
+      }
+    }
+
+    const encodedString = JSON.stringify(
       json,
       function (key, value) {
         if (value === undefined) {
@@ -25,6 +129,12 @@
         if (typeof value === 'bigint') {
           return '#}BI#' + value;
         }
+        if (typeof value === 'function' && functions) {
+          return '#}F#' + `[function ${value.name}]`;
+        }
+        if (value instanceof Error) {
+          return '#}E#' + `${value.name}: ${value.message || value.cause || 'uknown error message'}`;
+        }
         return value;
       },
       2
@@ -32,10 +142,11 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    return json.replace(
+
+    return encodedString.replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-      function (match: string) {
-        let cls = 'num';
+      function (match) {
+        let cls = 'number';
         if (/^"/.test(match)) {
           if (/:$/.test(match)) {
             cls = 'key';
@@ -61,6 +172,12 @@
             } else if (match.startsWith('"#}BI#')) {
               cls = 'bigint';
               match = match.slice(6, -1) + 'n';
+            } else if (match.startsWith('"#}F#')) {
+              cls = 'function';
+              match = match.slice(5, -1);
+            } else if (match.startsWith('"#}E#')) {
+              cls = 'error';
+              match = match.slice(5, -1);
             }
           }
         } else if (/true|false/.test(match)) {
@@ -73,14 +190,67 @@
     );
   }
 
-  async function promiseSyntaxHighlight(json: any) {
-    json = await json;
-    return syntaxHighlight(json);
+  /**
+   * @param {EncodeableData} data
+   * @param {boolean} raw
+   * @param {boolean} promise
+   * @returns {data is Promise<unknown>}
+   */
+  function assertPromise(data, raw, promise) {
+    if (raw) {
+      return false;
+    }
+    return (
+      promise ||
+      (typeof data === 'object' &&
+        data !== null &&
+        'then' in data &&
+        typeof data['then'] === 'function')
+    );
   }
+
+  /**
+   * @param {DebugData} data
+   * @param {boolean} raw
+   * @returns {data is EncodeableDataStore}
+   */
+  function assertStore(data, raw) {
+    if (raw) {
+      return false;
+    }
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'subscribe' in data &&
+      typeof data['subscribe'] === 'function'
+    );
+  }
+
+  $: themeStyle =
+    theme === 'vscode'
+      ? `
+      --sd-vscode-bg-color: #1f1f1f;
+      --sd-vscode-label-color: #cccccc;
+      --sd-vscode-code-default: #8c8a89;
+      --sd-vscode-code-key: #9cdcfe;
+      --sd-vscode-code-string: #ce9171;
+      --sd-vscode-code-number: #b5c180;
+      --sd-vscode-code-boolean: #4a9cd6;
+      --sd-vscode-code-null: #4a9cd6;
+      --sd-vscode-code-undefined: #4a9cd6;
+      --sd-vscode-code-nan: #4a9cd6;
+      --sd-vscode-code-symbol: #4de0c5;
+      --sd-vscode-sb-thumb-color: #35373a;
+      --sd-vscode-sb-thumb-color-focus: #4b4d50;
+    `
+      : undefined;
+
+  /** @type {import('svelte/store').Readable<EncodeableData>} */
+  $: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
 {#if display}
-  <div class="super-debug">
+  <div class="super-debug" style={themeStyle}>
     <div
       class="super-debug--status {label === ''
         ? 'absolute inset-x-0 top-0'
@@ -102,13 +272,45 @@
       class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
       bind:this={ref}><code class="super-debug--code"
         ><slot
-          >{#if promise}{#await promiseSyntaxHighlight(data)}<div>Loading data</div>{:then result}{@html result}{/await}{:else}{@html syntaxHighlight(
-              data
-            )}{/if}</slot
+          >{#if assertPromise($debugData, raw, promise)}{#await $debugData}<div
+                class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
+                assertStore(result, raw) ? get(result) : result
+              )}{:catch error}<span class="super-debug--promise-rejected"
+                >Rejected:</span
+              > {@html syntaxHighlight(
+                error
+              )}{/await}{:else}{@html syntaxHighlight($debugData)}{/if}</slot
         ></code
       ></pre>
   </div>
 {/if}
+
+<!--
+  @component
+
+  SuperDebug is a debugging component that gives you colorized and nicely formatted output for any data structure, usually $form.
+  
+  Other use cases includes debugging plain objects, promises, stores and more.
+
+  More info:
+  - [API](https://superforms.rocks/api#superdebug)
+  - [Examples](https://github.com/ciscoheat/sveltekit-superforms/tree/main/src/routes/super-debug)
+  
+  **Short example:**
+
+  ```svelte
+  <script>
+    import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
+    import { superForm } from 'sveltekit-superforms/client';
+
+    export let data;
+    
+    const { errors, form, enhance } = superForm(data.form);
+  </script>
+  
+  <SuperDebug data={$form} label="My form data" />
+  ```
+-->
 
 <style>
   .absolute {
@@ -133,13 +335,17 @@
   }
 
   .super-debug {
+    --_sd-bg-color: var(
+      --sd-bg-color,
+      var(--sd-vscode-bg-color, rgb(30, 41, 59))
+    );
     position: relative;
-    background-color: #1e293b;
+    background-color: var(--_sd-bg-color);
     border-radius: 0.5rem;
     overflow: hidden;
   }
 
-  .super-debug .super-debug--status {
+  .super-debug--status {
     display: flex;
     padding: 1em;
     justify-content: space-between;
@@ -148,66 +354,125 @@
   }
 
   .super-debug--label {
-    color: white;
+    color: var(--sd-label-color, var(--sd-vscode-label-color, white));
+  }
+
+  .super-debug--promise-loading {
+    color: var(
+      --sd-promise-loading-color,
+      var(--sd-vscode-promise-loading-color, #999)
+    );
+  }
+
+  .super-debug--promise-rejected {
+    color: var(
+      --sd-promise-rejected-color,
+      var(--sd-vscode-promise-rejected-color, #ff475d)
+    );
   }
 
   .super-debug pre {
-    color: #999;
-    background-color: #1e293b;
+    color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
+    background-color: var(--_sd-bg-color);
     margin-bottom: 0px;
-    /** Sakura is doing 0.9em, turn font-size back to 1em **/
     font-size: 1em;
   }
 
   .info {
-    color: rgb(85, 85, 255);
+    color: var(--sd-info, var(--sd-vscode-info, rgb(85, 85, 255)));
   }
 
   .success {
-    color: #2cd212;
+    color: var(--sd-success, var(--sd-vscode-success, #2cd212));
   }
 
   .redirect {
-    color: #03cae5;
+    color: var(--sd-redirect, var(--sd-vscode-redirect, #03cae5));
   }
 
   .error {
-    color: #ff475d;
+    color: var(--sd-error, var(--sd-vscode-error, #ff475d));
   }
 
   :global(.super-debug--code .key) {
-    color: #eab308;
+    color: var(--sd-code-key, var(--sd-vscode-code-key, #eab308));
   }
 
   :global(.super-debug--code .string) {
-    color: #6ec687;
+    color: var(--sd-code-string, var(--sd-vscode-code-string, #6ec687));
   }
 
   :global(.super-debug--code .date) {
-    color: #f06962;
+    color: var(--sd-code-date, var(--sd-vscode-code-date, #f06962));
   }
 
   :global(.super-debug--code .boolean) {
-    color: #79b8ff;
+    color: var(--sd-code-boolean, var(--sd-vscode-code-boolean, #79b8ff));
   }
 
-  :global(.super-debug--code .num) {
-    color: #af77e9;
+  :global(.super-debug--code .number) {
+    color: var(--sd-code-number, var(--sd-vscode-code-number, #af77e9));
   }
 
   :global(.super-debug--code .bigint) {
-    color: #af77e9;
+    color: var(--sd-code-bigint, var(--sd-vscode-code-bigint, #af77e9));
   }
 
   :global(.super-debug--code .null) {
-    color: #238afe;
+    color: var(--sd-code-null, var(--sd-vscode-code-null, #238afe));
   }
 
   :global(.super-debug--code .nan) {
-    color: #af77e9;
+    color: var(--sd-code-nan, var(--sd-vscode-code-nan, #af77e9));
   }
 
   :global(.super-debug--code .undefined) {
-    color: #238afe;
+    color: var(
+      --sd-code-undefined,
+      var(--sd-vscode-code-undefined, #238afe)
+    );
+  }
+
+  :global(.super-debug--code .function) {
+    color: var(--sd-code-function, var(--sd-vscode-code-function, #f06962));
+  }
+
+  :global(.super-debug--code .symbol) {
+    color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
+  }
+
+  :global(.super-debug--code .error) {
+    color: var(--sd-code-error, var(--sd-vscode-code-error, #ff475d));
+  }
+
+  .super-debug pre::-webkit-scrollbar {
+    width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1.25rem));
+    height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1.25rem));
+  }
+
+  .super-debug pre::-webkit-scrollbar-track {
+    background-color: var(
+      --sd-sb-track-color,
+      var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
+    );
+  }
+  .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
+    background-color: var(
+      --sd-sb-track-color-focus,
+      var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
+    );
+  }
+
+  .super-debug pre::-webkit-scrollbar-thumb {
+    background-color: var(
+      --sd-sb-thumb-color,
+      var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
+    );
+  }
+  .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
+    background-color: var(
+      --sd-sb-thumb-color-focus,
+      var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))
+    );
   }
 </style>

@@ -85,7 +85,9 @@
       <strong>Note:</strong> looking for the capabilities of SuperDebug?
       Check
       <b>
-        <a href="super-debug/extensive-usage-cases">All data cases examples</a></b
+        <a href="super-debug/extensive-usage-cases"
+          >All data cases examples</a
+        ></b
       >.
     </p>
     <b>Change name: <input bind:value={$form.full_name} /></b>

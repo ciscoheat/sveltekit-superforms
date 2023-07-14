@@ -22,7 +22,7 @@
    */
   export let display = true;
   /**
-   * Controls when to show the http status code of the current page (reflecs the status code of the last request).
+   * Controls when to show the HTTP status code of the current page (reflecs the status code of the last request).
    *
    * Default is `true`.
    */
@@ -34,11 +34,11 @@
   /**
    * Controls the maximum length of a string field of the data prop.
    *
-   * Default is `120` characters.
+   * Default is `120` characters. Set to `0` to disable trimming.
    */
   export let stringTruncate = 120;
   /**
-   * Reference to the pre element that contains the shown d
+   * Reference to the pre element that contains the data.
    *
    * @type {HTMLPreElement | undefined}
    */
@@ -47,6 +47,7 @@
    * Controls if the data prop should be treated as a promise (skips promise detection when true).
    *
    * Default is `false`.
+   * @deprecated Promises are auto-detected from 1.3.0.
    */
   export let promise = false;
   /**
@@ -133,7 +134,12 @@
           return '#}F#' + `[function ${value.name}]`;
         }
         if (value instanceof Error) {
-          return '#}E#' + `${value.name}: ${value.message || value.cause || 'uknown error message'}`;
+          return (
+            '#}E#' +
+            `${value.name}: ${
+              value.message || value.cause || '(No error message)'
+            }`
+          );
         }
         return value;
       },
@@ -154,7 +160,7 @@
           } else {
             cls = 'string';
             match =
-              match.length > stringTruncate
+              stringTruncate > 0 && match.length > stringTruncate
                 ? match.slice(0, stringTruncate / 2) +
                   `[..${match.length}..]` +
                   match.slice(-stringTruncate / 2)
@@ -292,9 +298,7 @@
   
   Other use cases includes debugging plain objects, promises, stores and more.
 
-  More info:
-  - [API](https://superforms.rocks/api#superdebug)
-  - [Examples](https://github.com/ciscoheat/sveltekit-superforms/tree/main/src/routes/super-debug)
+  More info: https://superforms.rocks/super-debug
   
   **Short example:**
 

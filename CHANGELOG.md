@@ -5,13 +5,17 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2023-07-14
 
 ### Fixed
 
 - Fixed persisting form data when component used data from `$page` in combination with `onDestroy`. ([#164](https://github.com/ciscoheat/sveltekit-superforms/issues/164), thank you to everyone in that thread!)
 - Fixed exception message when the `dataType` option isn't set to `'json'` and the schema contains a nested object. ([#225](https://github.com/ciscoheat/sveltekit-superforms/issues/225))
 - Superforms are now ignoring normal SvelteKit form actions when they are posted. ([#230](https://github.com/ciscoheat/sveltekit-superforms/issues/230))
+
+### Added
+
+- More configuration options, customizable styling, automatic promise and store support for [SuperDebug](https://superforms.rocks/super-debug), thanks to [Josue](https://github.com/J-Josu)!
 
 ## [1.2.0] - 2023-07-06
 

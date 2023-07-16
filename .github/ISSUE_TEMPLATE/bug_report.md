@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+Before posting an issue, read the FAQ at https://superforms.rocks/faq and search the previous issues.
+
 **Description**
 A clear and concise description of what the bug is, and, unless obvious, what you expected instead.
 

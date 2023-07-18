@@ -7,6 +7,7 @@
     superValidateSync(schema),
     {
       SPA: true,
+      taintedMessage: null,
       validators: schema,
       dataType: 'json',
       onSubmit({ cancel }) {

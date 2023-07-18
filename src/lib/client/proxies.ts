@@ -133,11 +133,16 @@ function _stringProxy<
   options: DefaultOptions
 ): Writable<string> {
   function toValue(val: unknown) {
-    if (typeof val !== 'string')
-      throw new SuperFormError('stringProxy received a non-string value.');
-
     if (!val && options.empty !== undefined)
       return options.empty === 'null' ? null : undefined;
+
+    if (typeof val === 'number') {
+      val = val.toString();
+    }
+
+    if (typeof val !== 'string') {
+      throw new SuperFormError('stringProxy received a non-string value.');
+    }
 
     if (type == 'string') return val;
     else if (type == 'boolean') return !!val;

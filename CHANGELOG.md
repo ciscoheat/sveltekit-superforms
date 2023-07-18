@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - When multiple forms exists with the same id, the warning is now displayed on `superForm` instantiation, not just when new form data is received.
-- Fixed client-side validation for `Date` schema fields.
+- Fixed client-side validation for `Date` schema fields. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
+- `numberProxy` and `intProxy` now works with the `empty` option. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
 
 ## [1.3.0] - 2023-07-14
 

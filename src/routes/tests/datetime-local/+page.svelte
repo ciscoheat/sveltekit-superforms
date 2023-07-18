@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { dateProxy, superForm, superValidateSync } from '$lib/client';
+  import {
+    dateProxy,
+    intProxy,
+    superForm,
+    superValidateSync
+  } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { schema } from './schema';
 
@@ -24,11 +29,19 @@
     format: 'datetime-local',
     empty: 'undefined'
   });
+
+  const num = intProxy(form, 'number', {
+    empty: 'undefined'
+  });
 </script>
 
-<SuperDebug data={{ $form, $errors, $tainted }} />
+<SuperDebug data={{ $form, $tainted }} />
 
 <form method="POST" use:enhance>
+  <label>
+    Number: <input name="number" type="number" bind:value={$num} />
+    {#if $errors.number}<span class="invalid">{$errors.number}</span>{/if}
+  </label>
   <label>
     Name: <input name="date" type="datetime-local" bind:value={$date} />
     {#if $errors.date}<span class="invalid">{$errors.date}</span>{/if}

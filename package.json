@@ -96,7 +96,7 @@
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "devalue": "^4.3.2",
-    "eslint": "^8.44.0",
+    "eslint": "^8.45.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-dci-lint": "^0.2.2",
     "eslint-plugin-svelte": "^2.32.2",

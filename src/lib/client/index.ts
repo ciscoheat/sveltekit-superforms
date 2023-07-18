@@ -252,6 +252,17 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
+const formIds = new WeakMap<Page, Set<string | undefined>>();
+
+function multipleFormIdError(id: string | undefined) {
+  return (
+    `Duplicate form id's found: "${id}". ` +
+    'Multiple forms will receive the same data. Use the id option to differentiate between them, ' +
+    'or if this is intended, set the warnings.duplicateId option to false in superForm to disable this warning. ' +
+    'More information: https://superforms.rocks/concepts/multiple-forms'
+  );
+}
+
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {SuperValidated} form Usually data.form from PageData.
@@ -308,8 +319,25 @@ export function superForm<
     if (_formId === undefined) _formId = form.id;
   }
 
+  const _initialFormId = _formId;
+  const _currentPage = get(page);
+
+  // Check multiple id's
+  if (options.warnings?.duplicateId !== false) {
+    if (!formIds.has(_currentPage)) {
+      formIds.set(_currentPage, new Set([_initialFormId]));
+    } else {
+      const currentForms = formIds.get(_currentPage);
+      if (currentForms?.has(_initialFormId)) {
+        console.warn(multipleFormIdError(_initialFormId));
+      } else {
+        currentForms?.add(_initialFormId);
+      }
+    }
+  }
+
   // Detect if a form is posted without JavaScript.
-  const postedData = get(page).form;
+  const postedData = _currentPage.form;
   if (postedData && typeof postedData === 'object') {
     for (const postedForm of Context_findValidationForms(
       postedData
@@ -373,11 +401,7 @@ export function superForm<
       const duplicateId = new Set<string | undefined>();
       for (const form of forms) {
         if (duplicateId.has(form.id)) {
-          console.warn(
-            `Duplicate form id found: "${form.id}". ` +
-              'Multiple forms will receive the same data. Use the id option to differentiate between them, ' +
-              'or if this is intended, set warnings.duplicateId option to false to disable this message.'
-          );
+          console.warn(multipleFormIdError(form.id));
         } else {
           duplicateId.add(form.id);
         }
@@ -728,6 +752,8 @@ export function superForm<
     for (const events of Object.values(formEvents)) {
       events.length = 0;
     }
+
+    formIds.get(_currentPage)?.delete(_initialFormId);
   });
 
   if (options.dataType !== 'json') {

@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The warning shown when using multiple forms with the same id, is now working on `superForm` instantiation, not just when new form data is received.
+- When multiple forms exists with the same id, the warning is now displayed on `superForm` instantiation, not just when new form data is received.
+- Fixed client-side validation for `Date` schema fields.
 
 ## [1.3.0] - 2023-07-14
 

@@ -213,22 +213,23 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
     if (data.isLeaf) {
       if (!exists) {
         addDiff();
-      } else if (
+      } else if (data.value !== exists.value) {
+        addDiff();
+      }
+    } else if (exists) {
+      if (
         data.value instanceof Date &&
         exists.value instanceof Date &&
         data.value.getTime() != exists.value.getTime()
       ) {
         addDiff();
-      } else if (data.value !== exists.value) {
+      } else if (
+        data.value instanceof Set &&
+        exists.value instanceof Set &&
+        !eqSet(data.value, exists.value)
+      ) {
         addDiff();
       }
-    } else if (
-      exists &&
-      data.value instanceof Set &&
-      exists.value instanceof Set &&
-      !eqSet(data.value, exists.value)
-    ) {
-      addDiff();
     }
   }
 

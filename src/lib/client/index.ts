@@ -397,16 +397,6 @@ export function superForm<
     const forms = Object.values(data).filter(
       (v) => Context_isValidationObject(v) !== false
     ) as SuperValidated<AnyZodObject>[];
-    if (forms.length > 1 && options.warnings?.duplicateId !== false) {
-      const duplicateId = new Set<string | undefined>();
-      for (const form of forms) {
-        if (duplicateId.has(form.id)) {
-          console.warn(multipleFormIdError(form.id));
-        } else {
-          duplicateId.add(form.id);
-        }
-      }
-    }
     return forms;
   }
 

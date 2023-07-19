@@ -55,7 +55,11 @@
     form: staticform,
     errors: staticerrors,
     constraints: staticconstraints
-  } = superForm(data.form);
+  } = superForm(data.form, {
+    warnings: {
+      duplicateId: false
+    }
+  });
 
   let updates: string[] = [];
 </script>

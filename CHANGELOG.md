@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed client-side validation for `Date` schema fields. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
 - `numberProxy` and `intProxy` now works with the `empty` option. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
 
+### Added
+
+- Added `delimiter` option to `numberProxy`.
+
 ## [1.3.0] - 2023-07-14
 
 ### Fixed

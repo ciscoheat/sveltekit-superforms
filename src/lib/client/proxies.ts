@@ -28,6 +28,7 @@ type DefaultOptions = {
     | 'datetime-local'
     | 'time-local'
     | 'iso';
+  delimiter?: '.' | ',';
   empty?: 'null' | 'undefined';
 };
 
@@ -72,7 +73,7 @@ export function numberProxy<
 >(
   form: Writable<T>,
   path: Path,
-  options: Pick<DefaultOptions, 'empty'> = {}
+  options: Pick<DefaultOptions, 'empty' | 'delimiter'> = {}
 ) {
   return _stringProxy(form, path, 'number', {
     ...defaultOptions,
@@ -132,25 +133,29 @@ function _stringProxy<
   type: Type,
   options: DefaultOptions
 ): Writable<string> {
-  function toValue(val: unknown) {
-    if (!val && options.empty !== undefined)
+  function toValue(value: unknown) {
+    if (!value && options.empty !== undefined)
       return options.empty === 'null' ? null : undefined;
 
-    if (typeof val === 'number') {
-      val = val.toString();
+    if (typeof value === 'number') {
+      value = value.toString();
     }
 
-    if (typeof val !== 'string') {
+    if (typeof value !== 'string') {
       throw new SuperFormError('stringProxy received a non-string value.');
     }
 
-    if (type == 'string') return val;
-    else if (type == 'boolean') return !!val;
-    else if (type == 'date') return new Date(val);
+    if (type == 'string') return value;
+    else if (type == 'boolean') return !!value;
+    else if (type == 'date') return new Date(value);
+
+    const numberToConvert = options.delimiter
+      ? (value as string).replace(options.delimiter, '.')
+      : value;
 
     let num: number;
-    if (type == 'number') num = parseFloat(val);
-    else num = parseInt(val, 10);
+    if (type == 'number') num = parseFloat(numberToConvert);
+    else num = parseInt(numberToConvert, 10);
 
     if (options.empty !== undefined && (isNaN(num) || num == 0))
       return options.empty == 'null' ? null : undefined;

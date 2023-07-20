@@ -4,6 +4,7 @@
   <a href="/crud">CRUD</a> |
   <a href="/super-debug">SuperDebug</a> |
   <a href="/nested">Nested</a> |
+  <a href="/timers">Timers</a> |
   <a href="/multiple">Multiple</a>
   <br />
   <a href="/multiple2">Multiple 2</a> |

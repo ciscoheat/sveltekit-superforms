@@ -9,11 +9,8 @@ export const load = async () => {
 
 export const actions = {
   default: async ({ request }) => {
-    const formData = await request.formData();
-    console.log(formData);
-
-    const form = await superValidate(formData, schema);
-    console.log('POST', form);
+    await new Promise((r) => setTimeout(r, 12000));
+    const form = await superValidate(request, schema);
 
     if (!form.valid) return fail(400, { form });
 

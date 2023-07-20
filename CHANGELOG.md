@@ -5,13 +5,14 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2023-07-20
 
 ### Fixed
 
 - When multiple forms exists with the same id, the warning is now displayed on `superForm` instantiation, not just when new form data is received.
 - Fixed client-side validation for `Date` schema fields. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
 - `numberProxy` and `intProxy` now works with the `empty` option. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
+- Fixed timer state in combination with navigation events.
 
 ### Added
 

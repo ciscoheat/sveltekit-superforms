@@ -2,6 +2,7 @@
   import {
     dateProxy,
     intProxy,
+    numberProxy,
     superForm,
     superValidateSync
   } from '$lib/client';
@@ -30,7 +31,7 @@
     empty: 'undefined'
   });
 
-  const num = intProxy(form, 'number', {
+  const num = numberProxy(form, 'number', {
     empty: 'undefined'
   });
 </script>
@@ -45,6 +46,14 @@
   <label>
     Name: <input name="date" type="datetime-local" bind:value={$date} />
     {#if $errors.date}<span class="invalid">{$errors.date}</span>{/if}
+  </label>
+  <label>
+    Number2: <input
+      name="number2"
+      type="number"
+      bind:value={$form.number2}
+    />
+    {#if $errors.number2}<span class="invalid">{$errors.number2}</span>{/if}
   </label>
   <div>
     <button>Submit</button>

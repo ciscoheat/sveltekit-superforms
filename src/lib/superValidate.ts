@@ -211,7 +211,7 @@ function formDataToValidation<T extends AnyZodObject>(
         ? parseInt(value ?? '', 10)
         : parseFloat(value ?? '');
     } else if (zodType._def.typeName == 'ZodBoolean') {
-      return Boolean(value).valueOf();
+      return Boolean(value == 'false' ? '' : value).valueOf();
     } else if (zodType._def.typeName == 'ZodDate') {
       return new Date(value ?? '');
     } else if (zodType._def.typeName == 'ZodArray') {

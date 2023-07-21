@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- SuperDebug truncate length showed only the whole string length, not the truncated.
+- A boolean schema field didn't accept a boolean `false` value when posted, it was coerced as `true`.
+- A SuperDebug truncated string showed only the whole string length, not the truncated.
 
 ## [1.4.0] - 2023-07-20
 

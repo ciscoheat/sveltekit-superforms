@@ -162,7 +162,7 @@
             match =
               stringTruncate > 0 && match.length > stringTruncate
                 ? match.slice(0, stringTruncate / 2) +
-                  `[..${match.length}..]` +
+                  `[..${match.length - stringTruncate}/${match.length}..]` +
                   match.slice(-stringTruncate / 2)
                 : match;
 

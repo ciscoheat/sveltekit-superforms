@@ -216,6 +216,17 @@
       >.
     </p>
   </section>
+
+  <section>
+    <h4>SuperDebug and long strings</h4>
+    <SuperDebug
+      data={{
+        longString:
+          'The long name without any apparent end, goes on like a wind, however that is supposed to be. Very long. And winded. Long-winded so to speak.'
+      }}
+      label="Truncated string"
+    />
+  </section>
 </main>
 
 <style>

@@ -289,7 +289,7 @@ export function superForm<
 
     if (options.SPA && options.validators === undefined) {
       console.warn(
-        'No validators set for Superform in SPA mode. ' +
+        'No validators set for superForm in SPA mode. ' +
           'Add them to the validators option, or set it to false to disable this warning.'
       );
     }

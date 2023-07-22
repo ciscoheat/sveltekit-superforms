@@ -1,8 +1,9 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  number: z.number().optional(),
-  number2: z.number().optional(),
+  emptyUndef: z.number().optional(),
+  number2: z.number().nullable(),
+  emptyZero: z.number().optional(),
   date: z
     .date()
     .min(new Date('2021-01-01'))

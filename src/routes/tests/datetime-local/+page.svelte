@@ -31,8 +31,13 @@
     empty: 'undefined'
   });
 
-  const num = numberProxy(form, 'number', {
+  const emptyUndef = intProxy(form, 'emptyUndef', {
     empty: 'undefined'
+  });
+
+  const emptyZero = numberProxy(form, 'emptyZero', {
+    empty: 'undefined',
+    emptyIfZero: false
   });
 </script>
 
@@ -40,21 +45,59 @@
 
 <form method="POST" use:enhance>
   <label>
-    Number: <input name="number" type="number" bind:value={$num} />
-    {#if $errors.number}<span class="invalid">{$errors.number}</span>{/if}
+    Empty if undefined and zero: <input
+      name="emptyUndef"
+      type="number"
+      bind:value={$emptyUndef}
+    />
+    <span class="value">
+      {$emptyUndef === '' ? 'undefined' : $emptyUndef}
+    </span>
+    {#if $errors.emptyUndef}
+      <span class="invalid">{$errors.emptyUndef}</span>
+    {/if}
   </label>
+
   <label>
-    Name: <input name="date" type="datetime-local" bind:value={$date} />
-    {#if $errors.date}<span class="invalid">{$errors.date}</span>{/if}
+    Empty if undefined and not zero: <input
+      name="emptyZero"
+      type="number"
+      bind:value={$emptyZero}
+    />
+    <span class="value">
+      {$emptyZero === '' ? 'undefined' : $emptyZero}
+    </span>
+    {#if $errors.emptyZero}
+      <span class="invalid">{$errors.emptyZero}</span>
+    {/if}
   </label>
+
   <label>
-    Number2: <input
+    Normal number: <input
       name="number2"
       type="number"
       bind:value={$form.number2}
     />
+    <span class="value">
+      {$form.number2}
+    </span>
     {#if $errors.number2}<span class="invalid">{$errors.number2}</span>{/if}
   </label>
+
+  <label>
+    Date between 2021-2023: <input
+      name="date"
+      type="datetime-local"
+      bind:value={$date}
+    />
+    <span class="value">
+      {$date === ''
+        ? 'invalid-date'
+        : new Date($date).toISOString().slice(0, 10)}
+    </span>
+    {#if $errors.date}<span class="invalid">{$errors.date}</span>{/if}
+  </label>
+
   <div>
     <button>Submit</button>
   </div>
@@ -70,6 +113,11 @@
 
     .invalid {
       color: crimson;
+    }
+
+    .value {
+      font-weight: normal;
+      color: mediumseagreen;
     }
   }
 </style>

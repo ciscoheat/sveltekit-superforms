@@ -13,7 +13,8 @@
   <a href="/reset">Reset</a> |
   <a href="/url">URL</a> |
   <a href="/tainted">Tainted</a> |
-  <a href="/proxies">Proxies</a>
+  <a href="/proxies">Proxies</a> |
+  <a href="/tests/datetime-local">Proxies 2</a>
   <br />
   <a href="/properly-nested">Properly nested</a> |
   <a href="/files">Files</a> |

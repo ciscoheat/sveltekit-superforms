@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A boolean schema field didn't accept a boolean `false` value when posted, it was coerced as `true`.
 - A SuperDebug truncated string showed only the whole string length, not the truncated.
 
+### Added
+
+- Added `emptyIfZero` option to `numberProxy` and `intProxy`.
+
 ## [1.4.0] - 2023-07-20
 
 ### Fixed

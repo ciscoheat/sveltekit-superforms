@@ -30,26 +30,16 @@ type DefaultOptions = {
     | 'iso';
   delimiter?: '.' | ',';
   empty?: 'null' | 'undefined';
+  emptyIfZero?: boolean;
 };
 
 const defaultOptions: DefaultOptions = {
   trueStringValue: 'true',
-  dateFormat: 'iso'
+  dateFormat: 'iso',
+  emptyIfZero: true
 };
 
-export function intProxy<
-  T extends Record<string, unknown>,
-  Path extends FormPath<T>
->(
-  form: Writable<T>,
-  path: Path,
-  options: Pick<DefaultOptions, 'empty'> = {}
-) {
-  return _stringProxy(form, path, 'int', {
-    ...defaultOptions,
-    ...options
-  }) as FormPathType<T, Path> extends number ? Writable<string> : never;
-}
+///// Proxy functions ///////////////////////////////////////////////
 
 export function booleanProxy<
   T extends Record<string, unknown>,
@@ -67,13 +57,27 @@ export function booleanProxy<
   }) as FormPathType<T, Path> extends boolean ? Writable<string> : never;
 }
 
+export function intProxy<
+  T extends Record<string, unknown>,
+  Path extends FormPath<T>
+>(
+  form: Writable<T>,
+  path: Path,
+  options: Pick<DefaultOptions, 'empty' | 'emptyIfZero'> = {}
+) {
+  return _stringProxy(form, path, 'int', {
+    ...defaultOptions,
+    ...options
+  }) as FormPathType<T, Path> extends number ? Writable<string> : never;
+}
+
 export function numberProxy<
   T extends Record<string, unknown>,
   Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
-  options: Pick<DefaultOptions, 'empty' | 'delimiter'> = {}
+  options: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'delimiter'> = {}
 ) {
   return _stringProxy(form, path, 'number', {
     ...defaultOptions,
@@ -117,6 +121,8 @@ export function stringProxy<
   }) as FormPathType<T, Path> extends string ? Writable<string> : never;
 }
 
+///// Implementation ////////////////////////////////////////////////
+
 /**
  * Creates a string store that will pass its value to a field in the form.
  * @param form The form
@@ -134,8 +140,13 @@ function _stringProxy<
   options: DefaultOptions
 ): Writable<string> {
   function toValue(value: unknown) {
-    if (!value && options.empty !== undefined)
+    if (
+      !value &&
+      options.empty !== undefined &&
+      (value !== 0 || options.emptyIfZero)
+    ) {
       return options.empty === 'null' ? null : undefined;
+    }
 
     if (typeof value === 'number') {
       value = value.toString();
@@ -157,8 +168,12 @@ function _stringProxy<
     if (type == 'number') num = parseFloat(numberToConvert);
     else num = parseInt(numberToConvert, 10);
 
-    if (options.empty !== undefined && (isNaN(num) || num == 0))
+    if (
+      options.empty !== undefined &&
+      ((num === 0 && options.emptyIfZero) || isNaN(num))
+    ) {
       return options.empty == 'null' ? null : undefined;
+    }
 
     return num;
   }

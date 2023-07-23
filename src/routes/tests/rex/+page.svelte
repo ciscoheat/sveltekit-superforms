@@ -20,7 +20,7 @@
   });
 </script>
 
-<SuperDebug data={{ $errors, $tainted }} />
+<!--SuperDebug data={{ $errors, $tainted }} /-->
 
 <h4>Validation method: {$page.url.searchParams.get('method') ?? 'auto'}</h4>
 <h4>

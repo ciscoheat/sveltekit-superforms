@@ -52,7 +52,7 @@
   </div>
 </form>
 
-<SuperDebug data={{ $form, $errors }} />
+<!--SuperDebug data={{ $form, $errors }} /-->
 
 <style lang="scss">
   form {

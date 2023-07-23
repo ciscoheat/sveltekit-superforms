@@ -19,7 +19,7 @@
   */
 </script>
 
-<SuperDebug label="$page.data" data={$page.data.form.data} /><br />
+<!--SuperDebug label="$page.data" data={$page.data.form.data} /><br /-->
 
 {#if isOpen}
   <Form

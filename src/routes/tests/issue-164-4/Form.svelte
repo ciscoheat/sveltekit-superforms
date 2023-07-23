@@ -18,7 +18,7 @@
   });
 </script>
 
-<SuperDebug label="Form" data={$form} />
+<!-- SuperDebug label="Form" data={$form} /-->
 
 {#if $message}
   <div

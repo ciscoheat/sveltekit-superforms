@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `customValidity` option to `superForm`, which will use the browser's validation message reporting for validation errors.
+- Added `customValidity` option to `superForm`, which will use the browser's validation message reporting for validation errors. More information and an example [here](https://superforms.rocks/concepts/error-handling#customvalidity).
 - Added `emptyIfZero` option to `numberProxy` and `intProxy`.
 
 ## [1.4.0] - 2023-07-20

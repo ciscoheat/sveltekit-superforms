@@ -119,6 +119,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
     | ZodValidation<UnwrapEffects<T>>;
   validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
   defaultValidator: 'keep' | 'clear';
+  customValidity: boolean;
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs: number;
   timeoutMs: number;
@@ -173,6 +174,7 @@ const defaultFormOptions = {
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',
+  customValidity: false,
   clearOnSubmit: 'errors-and-message',
   delayMs: 500,
   timeoutMs: 8000,

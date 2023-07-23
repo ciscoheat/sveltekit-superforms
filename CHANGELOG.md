@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `customValidity` option to `superForm`, which will use the browser's validation message reporting for validation errors.
 - Added `emptyIfZero` option to `numberProxy` and `intProxy`.
 
 ## [1.4.0] - 2023-07-20

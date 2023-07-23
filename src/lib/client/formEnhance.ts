@@ -7,7 +7,8 @@ import { browser } from '$app/environment';
 import {
   SuperFormError,
   type TaintedFields,
-  type SuperValidated
+  type SuperValidated,
+  type ZodValidation
 } from '../index.js';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
@@ -16,6 +17,8 @@ import type { FormOptions, SuperForm } from './index.js';
 import { clientValidation, validateField } from './clientValidation.js';
 import { Form } from './form.js';
 import { onDestroy } from 'svelte';
+import { traversePath } from '$lib/traversal.js';
+import { mergePath, splitPath } from '$lib/stringPath.js';
 
 export type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,
@@ -61,6 +64,34 @@ export function shouldSyncFlash<T extends AnyZodObject, M>(
   return options.syncFlashMessage;
 }
 
+///// Custom validity /////
+
+const noCustomValidityDataAttribute = 'noCustomValidity';
+
+function setCustomValidity(
+  el: HTMLInputElement,
+  errors: string[] | undefined
+) {
+  const message = errors && errors.length ? errors.join('\n') : '';
+  el.setCustomValidity(message);
+  if (message) el.reportValidity();
+}
+
+function setCustomValidityForm<T extends AnyZodObject, M>(
+  formEl: HTMLFormElement,
+  errors: SuperValidated<ZodValidation<T>, M>['errors']
+) {
+  for (const el of formEl.querySelectorAll('input')) {
+    if (noCustomValidityDataAttribute in el.dataset) continue;
+
+    const error = traversePath(errors, splitPath(el.name));
+    setCustomValidity(el, error?.value);
+    if (error?.value) return;
+  }
+}
+
+//////////////////////////////////
+
 /**
  * Custom use:enhance version. Flash message support, friendly error messages, for usage with initializeForm.
  * @param formEl Form element from the use:formEnhance default parameter.
@@ -92,15 +123,47 @@ export function formEnhance<T extends AnyZodObject, M>(
   // Using this type in the function argument causes a type recursion error.
   const errors = errs as SuperForm<T, M>['errors'];
 
-  async function validateChange(change: string[]) {
-    await validateField(change, options, data, errors, tainted);
+  async function validateChange(
+    change: string[],
+    event: 'blur' | 'input',
+    validityEl: HTMLElement | null
+  ) {
+    if (options.customValidity && validityEl) {
+      // Always reset validity, in case it has been validated on the server.
+      if ('setCustomValidity' in validityEl) {
+        (validityEl as HTMLInputElement).setCustomValidity('');
+      }
+
+      // If event is input but element shouldn't use custom validity,
+      // return immediately since validateField don't have to be called
+      // in this case, validation is happening elsewhere.
+      if (noCustomValidityDataAttribute in validityEl.dataset)
+        if (event == 'input') return;
+        else validityEl = null;
+    }
+
+    const newErrors = await validateField(
+      change,
+      options,
+      data,
+      errors,
+      tainted
+    );
+
+    if (validityEl) {
+      setCustomValidity(validityEl as any, newErrors);
+    }
   }
 
+  /**
+   * Some input fields have timing issues with the stores, need to wait in that case.
+   */
   function timingIssue(el: EventTarget | null) {
     return (
       el &&
       (el instanceof HTMLSelectElement ||
-        (el instanceof HTMLInputElement && el.type == 'radio'))
+        (el instanceof HTMLInputElement &&
+          (el.type == 'radio' || el.type == 'checkbox')))
     );
   }
 
@@ -113,25 +176,55 @@ export function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    // Some form fields have some timing issue, need to wait
     if (timingIssue(e.target)) {
       await new Promise((r) => setTimeout(r, 0));
     }
 
     for (const change of get(lastChanges)) {
-      //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
-      validateChange(change);
+      let validityEl: HTMLElement | null = null;
+
+      if (options.customValidity) {
+        const name = CSS.escape(mergePath(change));
+        validityEl = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+      }
+
+      validateChange(change, 'blur', validityEl);
     }
     // Clear last changes after blur (not after input)
     lastChanges.set([]);
   }
   formEl.addEventListener('focusout', checkBlur);
 
-  const htmlForm = Form(formEl, { submitting, delayed, timeout }, options);
+  // Add input event, for custom validity
+  async function checkCustomValidity(e: Event) {
+    if (timingIssue(e.target)) {
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    for (const change of get(lastChanges)) {
+      const name = CSS.escape(mergePath(change));
+      const validityEl = formEl.querySelector<HTMLElement>(
+        `[name="${name}"]`
+      );
+      if (!validityEl) continue;
+
+      const hadErrors = traversePath(get(errors), change as any);
+      if (hadErrors && hadErrors.key in hadErrors.parent) {
+        // Problem - store hasn't updated here with new value yet.
+        setTimeout(() => validateChange(change, 'input', validityEl), 0);
+      }
+    }
+  }
+  if (options.customValidity) {
+    formEl.addEventListener('input', checkCustomValidity);
+  }
 
   onDestroy(() => {
     formEl.removeEventListener('focusout', checkBlur);
+    formEl.removeEventListener('input', checkCustomValidity);
   });
+
+  const htmlForm = Form(formEl, { submitting, delayed, timeout }, options);
 
   let currentRequest: AbortController | null;
 
@@ -318,6 +411,10 @@ export function formEnhance<T extends AnyZodObject, M>(
 
             for (const event of formEvents.onUpdate) {
               await event(data);
+            }
+
+            if (!cancelled && options.customValidity) {
+              setCustomValidityForm(formEl, data.form.errors);
             }
           }
         }

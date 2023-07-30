@@ -1,23 +1,18 @@
 <script lang="ts">
   import { superForm } from '$lib/client';
   import type { PageData, Snapshot } from './$types';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import { schema as contactSchema } from './schema';
-  import { initFlash } from 'sveltekit-flash-message/client';
+  import { getFlash } from 'sveltekit-flash-message/client';
   import { page } from '$app/stores';
 
   export let data: PageData;
 
-  const flash = initFlash(page);
-  const { form, errors, enhance, delayed, tainted, message } = superForm(
-    data.form,
-    {
-      resetForm: true,
-      taintedMessage: null,
-      stickyNavbar: '#nav',
-      clearOnSubmit: 'none'
-    }
-  );
+  const flash = getFlash(page);
+  const { form, errors, enhance } = superForm(data.form, {
+    resetForm: true,
+    taintedMessage: null,
+    stickyNavbar: '#nav',
+    clearOnSubmit: 'none'
+  });
 
   let formData = {
     name: $form.name,

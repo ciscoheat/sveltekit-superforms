@@ -93,10 +93,10 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
   constraints: SuperValidated<ZodValidation<T>>['constraints'],
   posted: boolean
 ): Promise<SuperValidated<ZodValidation<T>>> {
-  if (validators) {
-    let valid: boolean;
-    let clientErrors: ValidationErrors<T> = {};
+  let valid = true;
+  let clientErrors: ValidationErrors<T> = {};
 
+  if (validators) {
     if ('safeParseAsync' in validators) {
       // Zod validator
       const validator = validators as AnyZodObject;
@@ -113,8 +113,15 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
       }
     } else {
       // SuperForms validator
-
-      valid = true;
+      checkData = { ...checkData };
+      // Add top-level validator fields to non-existing checkData fields
+      // so they will be validated even if the field doesn't exist
+      for (const [key, value] of Object.entries(validators)) {
+        if (typeof value === 'function' && !(key in checkData)) {
+          // @ts-expect-error Setting undefined fields so they will be validated based on field existance.
+          checkData[key] = undefined;
+        }
+      }
 
       const validator = validators as Validators<T>;
       const newErrors: {
@@ -133,29 +140,49 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
         if (typeof maybeValidator?.value === 'function') {
           const check = maybeValidator.value as Validator<unknown>;
 
+          let errors: string | string[] | null | undefined;
+
           if (Array.isArray(value)) {
             for (const key in value) {
-              const errors = await check(value[key]);
+              try {
+                errors = await check(value[key]);
+                if (errors) {
+                  valid = false;
+                  newErrors.push({
+                    path: path.concat([key]),
+                    errors:
+                      typeof errors === 'string'
+                        ? [errors]
+                        : errors ?? undefined
+                  });
+                }
+              } catch (e) {
+                valid = false;
+                console.error(
+                  `Error in form validators for field "${path}":`,
+                  e
+                );
+              }
+            }
+          } else {
+            try {
+              errors = await check(value);
               if (errors) {
                 valid = false;
                 newErrors.push({
-                  path: path.concat([key]),
+                  path,
                   errors:
                     typeof errors === 'string'
                       ? [errors]
                       : errors ?? undefined
                 });
               }
-            }
-          } else {
-            const errors = await check(value);
-            if (errors) {
+            } catch (e) {
               valid = false;
-              newErrors.push({
-                path,
-                errors:
-                  typeof errors === 'string' ? [errors] : errors ?? undefined
-              });
+              console.error(
+                `Error in form validators for field "${path}":`,
+                e
+              );
             }
           }
         }
@@ -177,24 +204,12 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
         }
       }
     }
-
-    if (!valid) {
-      return {
-        valid: false,
-        posted,
-        errors: clientErrors,
-        data: checkData,
-        constraints,
-        message: undefined,
-        id: formId
-      };
-    }
   }
 
   return {
-    valid: true,
+    valid,
     posted,
-    errors: {},
+    errors: clientErrors,
     data: checkData,
     constraints,
     message: undefined,

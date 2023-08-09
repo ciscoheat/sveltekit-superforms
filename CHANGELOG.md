@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - In rare cases, timers weren't resetted when redirecting to the same route.
+- Client-side validation was ignored when a data property was missing or didn't match the schema type. It now fails with a console error. ([#243](https://github.com/ciscoheat/sveltekit-superforms/issues/243))
 
 ## [1.5.0] - 2023-07-23
 

@@ -107,7 +107,7 @@
     "slugify": "^1.6.6",
     "svelte": "^4.1.2",
     "svelte-check": "^3.4.6",
-    "sveltekit-flash-message": "^2.1.1",
+    "sveltekit-flash-message": "^2.1.3",
     "sveltekit-rate-limiter": "^0.3.2",
     "throttle-debounce": "^5.0.0",
     "tslib": "^2.6.1",

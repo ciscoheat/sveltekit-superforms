@@ -477,9 +477,20 @@ export function formEnhance<T extends AnyZodObject, M>(
         cancelFlash(options);
       }
 
-      // Redirect messages are handled in onDestroy and afterNavigate.
+      // Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
+      // Also fixing an edge case when timers weren't resetted when redirecting to the same route.
       if (cancelled || result.type != 'redirect') {
         htmlForm.completed(cancelled);
+      } else if (
+        result.type == 'redirect' &&
+        new URL(
+          result.location,
+          /^https?:\/\//.test(result.location)
+            ? undefined
+            : document.location.origin
+        ).pathname == document.location.pathname
+      ) {
+        htmlForm.completed(true);
       }
     }
 

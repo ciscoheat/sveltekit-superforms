@@ -490,7 +490,10 @@ export function formEnhance<T extends AnyZodObject, M>(
             : document.location.origin
         ).pathname == document.location.pathname
       ) {
-        htmlForm.completed(true);
+        // Checks if beforeNavigate have been called in client/form.ts.
+        setTimeout(() => {
+          htmlForm.completed(true, true);
+        }, 0);
       }
     }
 

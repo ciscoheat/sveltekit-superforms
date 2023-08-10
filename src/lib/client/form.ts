@@ -3,7 +3,7 @@ import { isElementInViewport, scrollToAndCenter } from './elements.js';
 import type { FormOptions } from './index.js';
 import { onDestroy, tick } from 'svelte';
 import type { Writable } from 'svelte/store';
-import { afterNavigate } from '$app/navigation';
+import { afterNavigate, beforeNavigate } from '$app/navigation';
 
 enum FetchStatus {
   Idle = 0,
@@ -29,6 +29,7 @@ export function Form<T extends AnyZodObject, M>(
 ) {
   let state: FetchStatus = FetchStatus.Idle;
   let delayedTimeout: number, timeoutTimeout: number;
+  let aboutToNavigate = false;
 
   //#region Timers
 
@@ -179,9 +180,16 @@ export function Form<T extends AnyZodObject, M>(
   {
     ErrorTextEvents_addErrorTextListeners();
 
-    const completed = (cancelled: boolean) => {
+    const completed = (cancelled: boolean, clearIfNotNavigating = false) => {
       Timers_clear();
       if (!cancelled) setTimeout(Form_scrollToFirstError);
+
+      // clearifNotNavigating is set when redirecting, to see if the navigation events
+      // have been triggered. In rare cases they aren't, in which case we need to clear
+      //  the timers here, instead of in afterNavigate.
+      if (clearIfNotNavigating && !aboutToNavigate) {
+        Timers_clearAll();
+      }
     };
 
     onDestroy(() => {
@@ -189,15 +197,24 @@ export function Form<T extends AnyZodObject, M>(
       completed(true);
     });
 
+    // If redirected, clear timers after navigating for better UX.
     if (!_initialized) {
+      beforeNavigate((nav) => {
+        if (nav.type == 'enter') return;
+        aboutToNavigate = true;
+      });
+
       afterNavigate((nav) => {
-        if (nav.type != 'enter') Timers_clearAll();
+        if (nav.type == 'enter') return;
+        aboutToNavigate = false;
+        Timers_clearAll();
       });
       _initialized = true;
     }
 
     return {
       submitting: () => {
+        aboutToNavigate = false;
         Timers_start();
       },
 

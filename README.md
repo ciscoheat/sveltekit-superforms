@@ -41,7 +41,7 @@ Making SvelteKit **validation** and **displaying** of forms easier than ever!
 - Even more care for the user: No form data loss, by [preventing error page rendering](https://superforms.rocks/concepts/enhance#differences-from-sveltekits-useenhance) as default.
 - Hook into [a number of events](https://superforms.rocks/concepts/events) for full control over the validation data and the `ActionResult`, with a possibility to cancel the update at every step.
 - Complete customization with a [huge list of options](https://superforms.rocks/api#superformform-options).
-- Comes with a Super Debugging Svelte Component: [SuperDebug](https://superforms.rocks/api#superdebug).
+- Comes with a Super Debugging Svelte Component: [SuperDebug](https://superforms.rocks/super-debug).
 
 # Installation
 

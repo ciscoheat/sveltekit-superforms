@@ -256,6 +256,9 @@ export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 
+// Track ActionData, so it won't be applied twice for componentized forms.
+const postedActionData = new WeakSet<object>();
+
 function multipleFormIdError(id: string | undefined) {
   return (
     `Duplicate form id's found: "${id}". ` +
@@ -338,13 +341,20 @@ export function superForm<
     }
   }
 
+  // Need to clone the validation data, in case it's used to populate multiple forms.
+  const initialForm = clone(form);
+
   // Detect if a form is posted without JavaScript.
   const postedData = _currentPage.form;
-  if (postedData && typeof postedData === 'object') {
+
+  if (!browser && postedData && typeof postedData === 'object') {
     for (const postedForm of Context_findValidationForms(
       postedData
     ).reverse()) {
-      if (postedForm.id === _formId) {
+      if (postedForm.id === _formId && !postedActionData.has(postedForm)) {
+        // Prevent multiple "posting" that can happen when components are recreated.
+        postedActionData.add(postedData);
+
         const pageDataForm = form as SuperValidated<T, M>;
         form = postedForm as SuperValidated<T, M>;
         // Reset the form if option set and form is valid.
@@ -363,13 +373,10 @@ export function superForm<
 
   const form2 = form as SuperValidated<T, M>;
 
-  // Need to clone the validation data, in case it's used to populate multiple forms.
-  const initialForm = clone(form2);
-
   if (typeof initialForm.valid !== 'boolean') {
     throw new SuperFormError(
       'A non-validation object was passed to superForm. ' +
-        "Check what's passed to its first parameter."
+        'It should be an object of type SuperValidated, usually returned from superValidate.'
     );
   }
 
@@ -818,13 +825,20 @@ export function superForm<
         const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
         if (pageUpdate.form && typeof pageUpdate.form === 'object') {
-          // Check if it is an error result, sent here from formEnhance
-          if (pageUpdate.form.type == 'error') return;
+          const actionData = pageUpdate.form;
 
-          const forms = Context_findValidationForms(pageUpdate.form);
+          // Check if it is an error result, sent here from formEnhance
+          if (actionData.type == 'error') return;
+
+          const forms = Context_findValidationForms(actionData);
           for (const newForm of forms) {
             //console.log('🚀~ ActionData ~ newForm:', newForm.id);
-            if (newForm.id !== _formId) continue;
+            if (newForm.id !== _formId || postedActionData.has(newForm)) {
+              continue;
+            }
+
+            // Prevent multiple "posting" that can happen when components are recreated.
+            postedActionData.add(newForm);
 
             await Form_updateFromValidation(
               newForm as SuperValidated<T, M>,

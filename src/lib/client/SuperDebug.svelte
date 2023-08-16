@@ -257,23 +257,25 @@
 
 {#if display}
   <div class="super-debug" style={themeStyle}>
-    <div
-      class="super-debug--status {label === ''
-        ? 'absolute inset-x-0 top-0'
-        : ''}"
-    >
-      <div class="super-debug--label">{label}</div>
-      {#if status}
-        <div
-          class:info={$page.status < 200}
-          class:success={$page.status >= 200 && $page.status < 300}
-          class:redirect={$page.status >= 300 && $page.status < 400}
-          class:error={$page.status >= 400}
-        >
-          {$page.status}
-        </div>
-      {/if}
-    </div>
+    {#if label || status}
+      <div
+        class="super-debug--status {label === ''
+          ? 'absolute inset-x-0 top-0'
+          : ''}"
+      >
+        <div class="super-debug--label">{label}</div>
+        {#if status}
+          <div
+            class:info={$page.status < 200}
+            class:success={$page.status >= 200 && $page.status < 300}
+            class:redirect={$page.status >= 300 && $page.status < 400}
+            class:error={$page.status >= 400}
+          >
+            {$page.status}
+          </div>
+        {/if}
+      </div>
+    {/if}
     <pre
       class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
       bind:this={ref}><code class="super-debug--code"
@@ -352,6 +354,7 @@
   .super-debug--status {
     display: flex;
     padding: 1em;
+    padding-bottom: 0;
     justify-content: space-between;
     font-family: Inconsolata, Monaco, Consolas, 'Lucida Console',
       'Courier New', Courier, monospace;
@@ -378,8 +381,8 @@
   .super-debug pre {
     color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
     background-color: var(--_sd-bg-color);
-    margin-bottom: 0px;
     font-size: 1em;
+    padding: 1em 0 0 1em;
   }
 
   .info {
@@ -455,12 +458,14 @@
   }
 
   .super-debug pre::-webkit-scrollbar-track {
+    border-radius: 12px;
     background-color: var(
       --sd-sb-track-color,
       var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
     );
   }
   .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
+    border-radius: 12px;
     background-color: var(
       --sd-sb-track-color-focus,
       var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
@@ -468,12 +473,14 @@
   }
 
   .super-debug pre::-webkit-scrollbar-thumb {
+    border-radius: 12px;
     background-color: var(
       --sd-sb-thumb-color,
       var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
     );
   }
   .super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
+    border-radius: 12px;
     background-color: var(
       --sd-sb-thumb-color-focus,
       var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))

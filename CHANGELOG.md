@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Array-level errors weren't typed correctly when changing the cardinality of an array field in the schema (for example with `nonempty`).
+- SuperDebug looks a bit better now when there is no css styling on the page.
 
 ## [1.5.2] - 2023-08-15
 

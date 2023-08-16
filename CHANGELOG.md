@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Array-level errors weren't typed correctly when changing the cardinality of an array field in the schema (for example with `nonempty`).
+
 ## [1.5.2] - 2023-08-15
 
 ### Fixed

@@ -5,11 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.3] - 2023-08-16
 
 ### Fixed
 
 - Array-level errors weren't typed correctly when changing the cardinality of an array field in the schema (for example with `nonempty`).
+- `customValidity` now works with `select`, `textarea` and `button`, not just `input`.
 - SuperDebug looks a bit better now when there is no css styling on the page.
 
 ## [1.5.2] - 2023-08-15

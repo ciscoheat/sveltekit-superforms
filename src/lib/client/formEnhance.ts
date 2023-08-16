@@ -81,8 +81,15 @@ function setCustomValidityForm<T extends AnyZodObject, M>(
   formEl: HTMLFormElement,
   errors: SuperValidated<ZodValidation<T>, M>['errors']
 ) {
-  for (const el of formEl.querySelectorAll('input')) {
-    if (noCustomValidityDataAttribute in el.dataset) continue;
+  for (const el of formEl.querySelectorAll<
+    HTMLInputElement &
+      HTMLSelectElement &
+      HTMLTextAreaElement &
+      HTMLButtonElement
+  >('input,select,textarea,button')) {
+    if (noCustomValidityDataAttribute in el.dataset) {
+      continue;
+    }
 
     const error = traversePath(errors, splitPath(el.name));
     setCustomValidity(el, error?.value);
@@ -181,6 +188,10 @@ export function formEnhance<T extends AnyZodObject, M>(
     }
 
     for (const change of get(lastChanges)) {
+      console.log(
+        '🚀 ~ file: formEnhance.ts:184 ~ checkBlur ~ change:',
+        change
+      );
       let validityEl: HTMLElement | null = null;
 
       if (options.customValidity) {

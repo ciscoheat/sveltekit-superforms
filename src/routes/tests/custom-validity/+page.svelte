@@ -41,15 +41,39 @@
   </label>
 
   <label>
-    Accept terms: <input
-      type="checkbox"
-      name="accept"
-      bind:checked={$form.accept}
-    />
+    <select name="menu" bind:value={$form.menu}>
+      <option value="">Select an option</option>
+      <option value="first">First</option>
+      <option value="second">Second</option>
+      <option value="third">Third</option>
+    </select>
+    {#if $errors.menu}<span class="invalid">{$errors.menu}</span>{/if}
   </label>
-  <div>
-    <button>Submit</button>
-  </div>
+
+  <label>
+    Radio:<br />
+    <input name="radio" type="radio" bind:group={$form.radio} value={0} />
+    0<br />
+    <input name="radio" type="radio" bind:group={$form.radio} value={1} />
+    1<br />
+    <input name="radio" type="radio" bind:group={$form.radio} value={2} />
+    2
+
+    <label>
+      Text: <textarea name="text" bind:value={$form.text} />
+    </label>
+
+    <label>
+      Accept terms: <input
+        type="checkbox"
+        name="accept"
+        bind:checked={$form.accept}
+      />
+    </label>
+    <div>
+      <button>Submit</button>
+    </div>
+  </label>
 </form>
 
 <!--SuperDebug data={{ $form, $errors }} /-->

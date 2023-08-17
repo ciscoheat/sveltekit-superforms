@@ -198,11 +198,7 @@ function formDataToValidation<T extends AnyZodObject>(
       return newValue;
     }
 
-    /*
-    console.log(
-       `FormData field "${field}" (${zodType._def.typeName}): ${value}`
-    );
-    */
+    //console.log(`FormData field "${field}" (${zodType._def.typeName}): ${value}`
 
     if (zodType._def.typeName == 'ZodString') {
       return value;

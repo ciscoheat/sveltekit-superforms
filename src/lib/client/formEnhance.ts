@@ -188,10 +188,6 @@ export function formEnhance<T extends AnyZodObject, M>(
     }
 
     for (const change of get(lastChanges)) {
-      console.log(
-        '🚀 ~ file: formEnhance.ts:184 ~ checkBlur ~ change:',
-        change
-      );
       let validityEl: HTMLElement | null = null;
 
       if (options.customValidity) {

@@ -255,9 +255,10 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
 export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
-
-// Track ActionData, so it won't be applied twice for componentized forms.
-const postedActionData = new WeakSet<object>();
+const initializedForms = new WeakMap<
+  object,
+  SuperValidated<ZodValidation<AnyZodObject>, unknown>
+>();
 
 function multipleFormIdError(id: string | undefined) {
   return (
@@ -341,8 +342,22 @@ export function superForm<
     }
   }
 
-  // Need to clone the validation data, in case it's used to populate multiple forms.
-  const initialForm = clone(form);
+  // Need to clone the form data, in case it's used to populate multiple forms and in components
+  // that are mounted and destroyed multiple times.
+  if (!initializedForms.has(form)) {
+    initializedForms.set(form, clone(form));
+  }
+  const initialForm = initializedForms.get(form) as SuperValidated<T, M>;
+
+  if (typeof initialForm.valid !== 'boolean') {
+    throw new SuperFormError(
+      'A non-validation object was passed to superForm. ' +
+        'It should be an object of type SuperValidated, usually returned from superValidate.'
+    );
+  }
+
+  // Restore the initial data, in case of a mounted/destroyed component.
+  let _initiallyCloned = false;
 
   // Detect if a form is posted without JavaScript.
   const postedData = _currentPage.form;
@@ -351,9 +366,9 @@ export function superForm<
     for (const postedForm of Context_findValidationForms(
       postedData
     ).reverse()) {
-      if (postedForm.id === _formId && !postedActionData.has(postedForm)) {
+      if (postedForm.id === _formId && !initializedForms.has(postedForm)) {
         // Prevent multiple "posting" that can happen when components are recreated.
-        postedActionData.add(postedData);
+        initializedForms.set(postedData, postedData);
 
         const pageDataForm = form as SuperValidated<T, M>;
         form = postedForm as SuperValidated<T, M>;
@@ -364,21 +379,17 @@ export function superForm<
           (options.resetForm === true || options.resetForm())
         ) {
           form = clone(pageDataForm);
-          form.message = postedForm.message;
+          form.message = clone(postedForm.message);
+          _initiallyCloned = true;
         }
         break;
       }
     }
   }
 
-  const form2 = form as SuperValidated<T, M>;
+  if (!_initiallyCloned) form = clone(initialForm);
 
-  if (typeof initialForm.valid !== 'boolean') {
-    throw new SuperFormError(
-      'A non-validation object was passed to superForm. ' +
-        'It should be an object of type SuperValidated, usually returned from superValidate.'
-    );
-  }
+  const form2 = form as SuperValidated<T, M>;
 
   // Underlying store for Errors
   const _errors = writable(form2.errors);
@@ -833,12 +844,12 @@ export function superForm<
           const forms = Context_findValidationForms(actionData);
           for (const newForm of forms) {
             //console.log('🚀~ ActionData ~ newForm:', newForm.id);
-            if (newForm.id !== _formId || postedActionData.has(newForm)) {
+            if (newForm.id !== _formId || initializedForms.has(newForm)) {
               continue;
             }
 
             // Prevent multiple "posting" that can happen when components are recreated.
-            postedActionData.add(newForm);
+            initializedForms.set(newForm, newForm);
 
             await Form_updateFromValidation(
               newForm as SuperValidated<T, M>,
@@ -851,7 +862,9 @@ export function superForm<
           const forms = Context_findValidationForms(pageUpdate.data);
           for (const newForm of forms) {
             //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
-            if (newForm.id !== _formId) continue;
+            if (newForm.id !== _formId || initializedForms.has(newForm)) {
+              continue;
+            }
 
             rebind(newForm as SuperValidated<T, M>, untaint);
           }

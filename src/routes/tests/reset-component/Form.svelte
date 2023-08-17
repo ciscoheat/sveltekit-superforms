@@ -1,16 +1,14 @@
 <script>
   import { superForm, superValidateSync } from '$lib/client';
   import { z } from 'zod';
-  import { onDestroy } from 'svelte';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { page } from '$app/stores';
-  import { get } from 'svelte/store';
 
   const schema = z.object({
     id: z.number().min(1).max(255).default(1),
     name: z
       .string()
-      .min(1, 'Name must contain at least 1 character')
+      .min(2, 'Name must contain at least 2 characters')
       .max(255, 'Name must not exceed 255 characters')
       .default('')
   });

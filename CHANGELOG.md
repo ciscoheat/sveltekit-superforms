@@ -5,12 +5,16 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.5.4] - 2023-08-17
+## [1.6.0] - 2023-08-18
 
 ### Fixed
 
 - Client-side validation wasn't resetted properly, when a component containing a form was destroyed and mounted again.
 - Removed debug statement left from 1.5.3
+
+### Added
+
+- [SuperDebug](https://superforms.rocks/super-debug) now has a `collapsible` prop, that will make the component collapsible on a per-route basis.
 
 ## [1.5.3] - 2023-08-16
 

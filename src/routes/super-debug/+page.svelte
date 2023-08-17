@@ -103,7 +103,7 @@
   <section>
     <h4>SuperDebug with label</h4>
     <p>Label is useful when using multiple instance of SuperDebug.</p>
-    <SuperDebug label="Sample User" data={$form} />
+    <SuperDebug label="Sample User" data={$form} collapsible />
   </section>
   <section>
     <h4>SuperDebug without status</h4>
@@ -167,7 +167,7 @@
   <section>
     <h4>SuperDebug displaying $page data</h4>
     <p>Svelte's <code>$page</code> data in all its glory.</p>
-    <SuperDebug label="$page data" data={$page} />
+    <SuperDebug label="$page data" data={$page} collapsible />
   </section>
 
   <section>

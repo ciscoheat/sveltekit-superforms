@@ -1,4 +1,5 @@
 <script>
+  import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import { readable, get } from 'svelte/store';
 
@@ -98,6 +99,46 @@
    * @type {"default" | "vscode"}
    */
   export let theme = 'default';
+
+  ///// Collapse behavior ///////////////////////////////////////////
+
+  /**
+   * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output.
+   *
+   * Default is `false`.
+   */
+  export let collapsible = false;
+
+  let collapsed = false;
+  if (browser && collapsible) setCollapse();
+
+  /**
+   * @param {boolean|undefined} status
+   */
+  function setCollapse(status = undefined) {
+    let data;
+    const route = $page.route.id ?? '';
+    try {
+      data = JSON.parse(sessionStorage.SuperDebug);
+      if (!('collapsed' in data)) data.collapsed = {};
+      data.collapsed[route] =
+        status === undefined ? data.collapsed[route] ?? false : status;
+    } catch {
+      data = {
+        collapsed: {
+          [route]: false
+        }
+      };
+    }
+
+    if (status !== undefined) {
+      sessionStorage.SuperDebug = JSON.stringify(data);
+    }
+
+    collapsed = data.collapsed[route];
+  }
+
+  ///////////////////////////////////////////////////////////////////
 
   /**
    * @param {unknown} json
@@ -278,6 +319,7 @@
     {/if}
     <pre
       class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
+      class:hidden={collapsed}
       bind:this={ref}><code class="super-debug--code"
         ><slot
           >{#if assertPromise($debugData, raw, promise)}{#await $debugData}<div
@@ -290,6 +332,24 @@
               )}{/await}{:else}{@html syntaxHighlight($debugData)}{/if}</slot
         ></code
       ></pre>
+    {#if collapsible}
+      <button
+        on:click={() => setCollapse(!collapsed)}
+        class="super-debug--collapse"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          class:rotated={collapsed}
+          ><path
+            fill="currentColor"
+            d="M4.08 11.92L12 4l7.92 7.92l-1.42 1.41l-5.5-5.5V22h-2V7.83l-5.5 5.5l-1.42-1.41M12 4h10V2H2v2h10Z"
+          /></svg
+        >
+      </button>
+    {/if}
   </div>
 {/if}
 
@@ -340,6 +400,15 @@
     padding-top: 1em;
   }
 
+  .hidden {
+    height: 0;
+    overflow: hidden;
+  }
+
+  .rotated {
+    transform: rotate(180deg);
+  }
+
   .super-debug {
     --_sd-bg-color: var(
       --sd-bg-color,
@@ -349,6 +418,24 @@
     background-color: var(--_sd-bg-color);
     border-radius: 0.5rem;
     overflow: hidden;
+  }
+
+  .super-debug--collapse {
+    display: block;
+    width: 100%;
+    color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 5px 0;
+    display: flex;
+    justify-content: center;
+    border-color: transparent;
+    margin: 0;
+    padding: 3px 0;
+  }
+
+  .super-debug--collapse:is(:hover) {
+    color: rgba(255, 255, 255, 0.35);
+    background-color: rgba(255, 255, 255, 0.25);
   }
 
   .super-debug--status {
@@ -382,7 +469,8 @@
     color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
     background-color: var(--_sd-bg-color);
     font-size: 1em;
-    padding: 1em 0 0 1em;
+    margin-bottom: 0;
+    padding: 1em 0 1em 1em;
   }
 
   .info {

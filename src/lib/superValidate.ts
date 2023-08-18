@@ -678,6 +678,17 @@ export function superValidateSync<
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Cookie configuration options. The defaults are:
+ * Path=/; Max-Age=120; SameSite=Strict;
+ */
+export interface CookieSerializeOptions {
+  path?: string | undefined;
+  maxAge?: number | undefined;
+  sameSite?: 'Lax' | 'Strict' | 'None';
+  secure?: boolean | undefined;
+}
+
 export function actionResult<
   T extends Record<string, unknown> | App.Error | string,
   Type extends T extends string
@@ -691,8 +702,28 @@ export function actionResult<
     | {
         status?: number;
         message?: Type extends 'redirect' ? App.PageData['flash'] : never;
+        cookieOptions?: CookieSerializeOptions;
       }
 ) {
+  function cookieData() {
+    if (typeof options === 'number' || !options?.message) return '';
+
+    const extra = [
+      `Path=${options?.cookieOptions?.path || '/'}`,
+      `Max-Age=${options?.cookieOptions?.maxAge || 120}`,
+      `SameSite=${options?.cookieOptions?.sameSite ?? 'Strict'}`
+    ];
+
+    if (options?.cookieOptions?.secure) {
+      extra.push(`Secure`);
+    }
+
+    return (
+      `flash=${encodeURIComponent(JSON.stringify(options.message))}; ` +
+      extra.join('; ')
+    );
+  }
+
   const status =
     options && typeof options !== 'number' ? options.status : options;
 
@@ -704,9 +735,7 @@ export function actionResult<
         headers:
           typeof options === 'object' && options.message
             ? {
-                'Set-Cookie': `flash=${encodeURIComponent(
-                  JSON.stringify(options.message)
-                )}; Path=/; Max-Age=120`
+                'Set-Cookie': cookieData()
               }
             : undefined
       }

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `cookieOptions` to `actionResult`, for customizing the cookie when setting a [flash message](https://superforms.rocks/flash-messages).
 - [SuperDebug](https://superforms.rocks/super-debug) now has a `collapsible` prop, that will make the component collapsible on a per-route basis.
 
 ## [1.5.3] - 2023-08-16

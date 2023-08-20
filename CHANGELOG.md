@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Client-side validation didn't take refine into account a successful validation, not clearing all errors.
+- Client-side validation didn't take refine into account on a successful validation, not clearing all errors.
 
 ## [1.6.0] - 2023-08-18
 

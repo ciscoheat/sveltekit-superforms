@@ -394,13 +394,8 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
     Errors.update(updater);
   }
 
-  function Errors_clearFormLevelErrors() {
-    Errors.update(($errors) => {
-      traversePaths($errors, (path) => {
-        if (path.key == '_errors') return path.set(undefined);
-      });
-      return $errors;
-    });
+  function Errors_clearAll() {
+    clearErrors(Errors, { undefinePath: null, clearFormLevelErrors: true });
   }
 
   function Errors_fromZod(
@@ -504,8 +499,7 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
         errors: options.errors ?? current?.value
       };
     } else {
-      // Clear form-level errors
-      Errors_clearFormLevelErrors();
+      Errors_clearAll();
       return { validated: true, errors: undefined };
     }
   } else {

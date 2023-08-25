@@ -800,3 +800,21 @@ test('Passthrough validation', async () => {
     name: ''
   });
 });
+
+test.only('Preprocessed fields', async () => {
+  const schema = z.object({
+    accept: z.preprocess(
+      (val) => (val === undefined ? undefined : Boolean(val)),
+      z.boolean().optional()
+    )
+  });
+
+  const formData = new FormData();
+
+  const form = await superValidate(formData, schema, {
+    preprocessed: ['accept']
+  });
+
+  assert(form.valid);
+  expect(form.data.accept).toBeUndefined();
+});

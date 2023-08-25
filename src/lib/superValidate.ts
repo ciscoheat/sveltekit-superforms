@@ -153,7 +153,8 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
 
 function formDataToValidation<T extends AnyZodObject>(
   data: FormData,
-  schemaData: SchemaData<T>
+  schemaData: SchemaData<T>,
+  preprocessed?: string[]
 ) {
   const output: Record<string, unknown> = {};
   const { schemaKeys, entityInfo } = schemaData;
@@ -166,8 +167,10 @@ function formDataToValidation<T extends AnyZodObject>(
     if (entry && typeof entry !== 'string') {
       // File object, not supported
       return undefined;
-    } else {
+    } else if (!preprocessed || !preprocessed.includes(key)) {
       return parseFormDataEntry(key, entry, typeInfo);
+    } else {
+      return entry;
     }
   }
 
@@ -307,7 +310,8 @@ function dataToValidate<T extends AnyZodObject>(
 
 function parseFormData<T extends AnyZodObject>(
   formData: FormData,
-  schemaData: SchemaData<T>
+  schemaData: SchemaData<T>,
+  options?: SuperValidateOptions
 ): ParsedData {
   function tryParseSuperJson() {
     if (formData.has('__superform_json')) {
@@ -332,14 +336,19 @@ function parseFormData<T extends AnyZodObject>(
     ? { id, data, posted: true }
     : {
         id,
-        data: formDataToValidation(formData, schemaData),
+        data: formDataToValidation(
+          formData,
+          schemaData,
+          options?.preprocessed
+        ),
         posted: true
       };
 }
 
 function parseSearchParams<T extends AnyZodObject>(
   data: URL | URLSearchParams,
-  schemaData: SchemaData<T>
+  schemaData: SchemaData<T>,
+  options?: SuperValidateOptions
 ): ParsedData {
   if (data instanceof URL) data = data.searchParams;
 
@@ -349,7 +358,7 @@ function parseSearchParams<T extends AnyZodObject>(
   }
 
   // Only FormData can be posted.
-  const output = parseFormData(convert, schemaData);
+  const output = parseFormData(convert, schemaData, options);
   output.posted = false;
   return output;
 }
@@ -489,14 +498,15 @@ function getSchemaData<T extends AnyZodObject>(
 
 /////////////////////////////////////////////////////////////////////
 
-export type SuperValidateOptions = {
-  errors?: boolean;
-  id?: string;
-  warnings?: {
+export type SuperValidateOptions = Partial<{
+  errors: boolean;
+  id: string;
+  warnings: {
     multipleRegexps?: boolean;
     multipleSteps?: boolean;
   };
-};
+  preprocessed: string[];
+}>;
 
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
@@ -563,16 +573,16 @@ export async function superValidate<
       // No data found, return an empty form
       return { id: undefined, data: undefined, posted: false };
     }
-    return parseFormData(formData, schemaData);
+    return parseFormData(formData, schemaData, options);
   }
 
   async function parseRequest() {
     let parsed: ParsedData;
 
     if (data instanceof FormData) {
-      parsed = parseFormData(data, schemaData);
+      parsed = parseFormData(data, schemaData, options);
     } else if (data instanceof URL || data instanceof URLSearchParams) {
-      parsed = parseSearchParams(data, schemaData);
+      parsed = parseSearchParams(data, schemaData, options);
     } else if (data instanceof Request) {
       parsed = await tryParseFormData(data);
     } else if (
@@ -656,7 +666,7 @@ export function superValidateSync<
 
   const parsed =
     data instanceof FormData
-      ? parseFormData(data, schemaData)
+      ? parseFormData(data, schemaData, options)
       : data instanceof URL || data instanceof URLSearchParams
       ? parseSearchParams(data, schemaData)
       : {

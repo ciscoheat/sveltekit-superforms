@@ -237,7 +237,8 @@ export function formFieldProxy<
   T extends ZodValidation<AnyZodObject>,
   Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>
 >(
-  form: SuperForm<T, unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  form: SuperForm<T, any>,
   path: Path
 ): {
   path: Path;

@@ -164,14 +164,16 @@ function formDataToValidation<T extends AnyZodObject>(
     entry: FormDataEntryValue,
     typeInfo: ZodTypeInfo
   ) {
+    if (preprocessed && preprocessed.includes(key)) {
+      return entry;
+    }
+
     if (entry && typeof entry !== 'string') {
       // File object, not supported
       return undefined;
-    } else if (!preprocessed || !preprocessed.includes(key)) {
-      return parseFormDataEntry(key, entry, typeInfo);
-    } else {
-      return entry;
     }
+
+    return parseFormDataEntry(key, entry, typeInfo);
   }
 
   for (const key of schemaKeys) {

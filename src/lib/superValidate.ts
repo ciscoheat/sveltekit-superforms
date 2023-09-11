@@ -1,4 +1,9 @@
-import { fail, json, type RequestEvent } from '@sveltejs/kit';
+import {
+  fail,
+  json,
+  type RequestEvent,
+  type ActionFailure
+} from '@sveltejs/kit';
 import { parse, stringify } from 'devalue';
 import {
   SuperFormError,
@@ -55,28 +60,75 @@ export function message<T extends ZodValidation<AnyZodObject>, M>(
 
 export const setMessage = message;
 
+type SetErrorOptions = {
+  overwrite?: boolean;
+  status?: NumericRange<400, 599>;
+};
+
 /**
- * Sets an error for a form field, with an optional HTTP status code.
- * form.valid is automatically set to false. A status lower than 400 cannot be sent.
+ * Sets a form-level error.
+ * form.valid is automatically set to false.
+ *
+ * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
+ * @param {string | string[]} error Error message(s).
+ * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
+ * @returns fail(status, { form })
  */
 export function setError<T extends ZodValidation<AnyZodObject>>(
   form: SuperValidated<T, unknown>,
-  path: '' | StringPathLeaves<z.infer<UnwrapEffects<T>>>,
   error: string | string[],
-  options: { overwrite?: boolean; status?: NumericRange<400, 599> } = {
-    overwrite: false,
-    status: 400
+  options?: SetErrorOptions
+): ActionFailure<{ form: SuperValidated<T, unknown> }>;
+
+/**
+ * Sets an error for a form field or array field.
+ * form.valid is automatically set to false.
+ *
+ * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
+ * @param {'' | StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>} path Path to the form field. Use an empty string to set a form-level error. Array-level errors can be set by appending "._errors" to the field.
+ * @param {string | string[]} error Error message(s).
+ * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
+ * @returns fail(status, { form })
+ */
+export function setError<T extends ZodValidation<AnyZodObject>>(
+  form: SuperValidated<T, unknown>,
+  path: '' | StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>,
+  error: string | string[],
+  options?: SetErrorOptions
+): ActionFailure<{ form: SuperValidated<T, unknown> }>;
+
+export function setError<T extends ZodValidation<AnyZodObject>>(
+  form: SuperValidated<T, unknown>,
+  path:
+    | string
+    | string[]
+    | (string & StringPathLeaves<z.infer<UnwrapEffects<T>>, '_errors'>),
+  error?: string | string[] | SetErrorOptions,
+  options?: SetErrorOptions
+): ActionFailure<{ form: SuperValidated<T, unknown> }> {
+  // Unify signatures
+  if (
+    error == undefined ||
+    (typeof error !== 'string' && !Array.isArray(error))
+  ) {
+    options = error;
+    error = path;
+    path = '';
   }
-) {
+
+  if (options === undefined) options = {};
+
   const errArr = Array.isArray(error) ? error : [error];
 
   if (!form.errors) form.errors = {};
 
   if (path === null || path === '') {
     if (!form.errors._errors) form.errors._errors = [];
-    form.errors._errors = form.errors._errors.concat(errArr);
+    form.errors._errors = options.overwrite
+      ? errArr
+      : form.errors._errors.concat(errArr);
   } else {
-    const realPath = splitPath(path);
+    const realPath = splitPath(path as string);
 
     const leaf = traversePath(
       form.errors,
@@ -137,12 +189,16 @@ function formDataToValidation<T extends AnyZodObject>(
     typeInfo: ZodTypeInfo
   ): unknown {
     const newValue = valueOrDefault(value, false, true, typeInfo);
+    const zodType = typeInfo.zodType;
 
     // If the value was empty, it now contains the default value,
-    // so it can be returned immediately
-    if (!value) return newValue;
+    // so it can be returned immediately, unless it's boolean, which
+    // means it could have been posted as a checkbox.
+    if (!value && zodType._def.typeName != 'ZodBoolean') {
+      return newValue;
+    }
 
-    const zodType = typeInfo.zodType;
+    //console.log(`FormData field "${field}" (${zodType._def.typeName}): ${value}`
 
     if (zodType._def.typeName == 'ZodString') {
       return value;
@@ -151,7 +207,7 @@ function formDataToValidation<T extends AnyZodObject>(
         ? parseInt(value ?? '', 10)
         : parseFloat(value ?? '');
     } else if (zodType._def.typeName == 'ZodBoolean') {
-      return Boolean(value).valueOf();
+      return Boolean(value == 'false' ? '' : value).valueOf();
     } else if (zodType._def.typeName == 'ZodDate') {
       return new Date(value ?? '');
     } else if (zodType._def.typeName == 'ZodArray') {
@@ -182,14 +238,28 @@ function formDataToValidation<T extends AnyZodObject>(
       return value;
     } else if (zodType._def.typeName == 'ZodNativeEnum') {
       const zodEnum = zodType as ZodNativeEnum<EnumLike>;
-      if (value in zodEnum.enum) {
+
+      if (value !== null && value in zodEnum.enum) {
         const enumValue = zodEnum.enum[value];
         if (typeof enumValue === 'number') return enumValue;
         else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
+      } else if (
+        value !== null &&
+        Object.values(zodEnum.enum).includes(value)
+      ) {
+        return value;
       }
       return undefined;
     } else if (zodType._def.typeName == 'ZodSymbol') {
-      return Symbol(value);
+      return Symbol(String(value));
+    }
+
+    if (zodType._def.typeName == 'ZodObject') {
+      throw new SuperFormError(
+        `Object found in form field "${field}". ` +
+          `Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
+          `More information: https://superforms.rocks/concepts/nested-data`
+      );
     }
 
     throw new SuperFormError(
@@ -608,6 +678,17 @@ export function superValidateSync<
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Cookie configuration options. The defaults are:
+ * Path=/; Max-Age=120; SameSite=Strict;
+ */
+export interface CookieSerializeOptions {
+  path?: string | undefined;
+  maxAge?: number | undefined;
+  sameSite?: 'Lax' | 'Strict' | 'None';
+  secure?: boolean | undefined;
+}
+
 export function actionResult<
   T extends Record<string, unknown> | App.Error | string,
   Type extends T extends string
@@ -621,8 +702,28 @@ export function actionResult<
     | {
         status?: number;
         message?: Type extends 'redirect' ? App.PageData['flash'] : never;
+        cookieOptions?: CookieSerializeOptions;
       }
 ) {
+  function cookieData() {
+    if (typeof options === 'number' || !options?.message) return '';
+
+    const extra = [
+      `Path=${options?.cookieOptions?.path || '/'}`,
+      `Max-Age=${options?.cookieOptions?.maxAge || 120}`,
+      `SameSite=${options?.cookieOptions?.sameSite ?? 'Strict'}`
+    ];
+
+    if (options?.cookieOptions?.secure) {
+      extra.push(`Secure`);
+    }
+
+    return (
+      `flash=${encodeURIComponent(JSON.stringify(options.message))}; ` +
+      extra.join('; ')
+    );
+  }
+
   const status =
     options && typeof options !== 'number' ? options.status : options;
 
@@ -634,9 +735,7 @@ export function actionResult<
         headers:
           typeof options === 'object' && options.message
             ? {
-                'Set-Cookie': `flash=${encodeURIComponent(
-                  JSON.stringify(options.message)
-                )}; Path=/; Max-Age=120`
+                'Set-Cookie': cookieData()
               }
             : undefined
       }

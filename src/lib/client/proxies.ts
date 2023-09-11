@@ -28,27 +28,18 @@ type DefaultOptions = {
     | 'datetime-local'
     | 'time-local'
     | 'iso';
+  delimiter?: '.' | ',';
   empty?: 'null' | 'undefined';
+  emptyIfZero?: boolean;
 };
 
 const defaultOptions: DefaultOptions = {
   trueStringValue: 'true',
-  dateFormat: 'iso'
+  dateFormat: 'iso',
+  emptyIfZero: true
 };
 
-export function intProxy<
-  T extends Record<string, unknown>,
-  Path extends FormPath<T>
->(
-  form: Writable<T>,
-  path: Path,
-  options: Pick<DefaultOptions, 'empty'> = {}
-) {
-  return _stringProxy(form, path, 'int', {
-    ...defaultOptions,
-    ...options
-  }) as FormPathType<T, Path> extends number ? Writable<string> : never;
-}
+///// Proxy functions ///////////////////////////////////////////////
 
 export function booleanProxy<
   T extends Record<string, unknown>,
@@ -66,13 +57,27 @@ export function booleanProxy<
   }) as FormPathType<T, Path> extends boolean ? Writable<string> : never;
 }
 
+export function intProxy<
+  T extends Record<string, unknown>,
+  Path extends FormPath<T>
+>(
+  form: Writable<T>,
+  path: Path,
+  options: Pick<DefaultOptions, 'empty' | 'emptyIfZero'> = {}
+) {
+  return _stringProxy(form, path, 'int', {
+    ...defaultOptions,
+    ...options
+  }) as FormPathType<T, Path> extends number ? Writable<string> : never;
+}
+
 export function numberProxy<
   T extends Record<string, unknown>,
   Path extends FormPath<T>
 >(
   form: Writable<T>,
   path: Path,
-  options: Pick<DefaultOptions, 'empty'> = {}
+  options: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'delimiter'> = {}
 ) {
   return _stringProxy(form, path, 'number', {
     ...defaultOptions,
@@ -116,6 +121,8 @@ export function stringProxy<
   }) as FormPathType<T, Path> extends string ? Writable<string> : never;
 }
 
+///// Implementation ////////////////////////////////////////////////
+
 /**
  * Creates a string store that will pass its value to a field in the form.
  * @param form The form
@@ -132,23 +139,41 @@ function _stringProxy<
   type: Type,
   options: DefaultOptions
 ): Writable<string> {
-  function toValue(val: unknown) {
-    if (typeof val !== 'string')
-      throw new SuperFormError('stringProxy received a non-string value.');
-
-    if (!val && options.empty !== undefined)
+  function toValue(value: unknown) {
+    if (
+      !value &&
+      options.empty !== undefined &&
+      (value !== 0 || options.emptyIfZero)
+    ) {
       return options.empty === 'null' ? null : undefined;
+    }
 
-    if (type == 'string') return val;
-    else if (type == 'boolean') return !!val;
-    else if (type == 'date') return new Date(val);
+    if (typeof value === 'number') {
+      value = value.toString();
+    }
+
+    if (typeof value !== 'string') {
+      throw new SuperFormError('stringProxy received a non-string value.');
+    }
+
+    if (type == 'string') return value;
+    else if (type == 'boolean') return !!value;
+    else if (type == 'date') return new Date(value);
+
+    const numberToConvert = options.delimiter
+      ? (value as string).replace(options.delimiter, '.')
+      : value;
 
     let num: number;
-    if (type == 'number') num = parseFloat(val);
-    else num = parseInt(val, 10);
+    if (type == 'number') num = parseFloat(numberToConvert);
+    else num = parseInt(numberToConvert, 10);
 
-    if (options.empty !== undefined && (isNaN(num) || num == 0))
+    if (
+      options.empty !== undefined &&
+      ((num === 0 && options.emptyIfZero) || isNaN(num))
+    ) {
       return options.empty == 'null' ? null : undefined;
+    }
 
     return num;
   }

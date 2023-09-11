@@ -1,28 +1,24 @@
 import { enhance, applyAction } from '$app/forms';
-import { afterNavigate, invalidateAll } from '$app/navigation';
+import { invalidateAll } from '$app/navigation';
 import { page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
-import { isElementInViewport, scrollToAndCenter } from './elements.js';
 import { get, type Readable, type Writable } from 'svelte/store';
-import { onDestroy, tick } from 'svelte';
 import { browser } from '$app/environment';
 import {
   SuperFormError,
   type TaintedFields,
-  type SuperValidated
+  type SuperValidated,
+  type ZodValidation
 } from '../index.js';
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import type { Entity } from '../schemaEntity.js';
 import type { FormOptions, SuperForm } from './index.js';
 import { clientValidation, validateField } from './clientValidation.js';
-
-enum FetchStatus {
-  Idle = 0,
-  Submitting = 1,
-  Delayed = 2,
-  Timeout = 3
-}
+import { Form } from './form.js';
+import { onDestroy } from 'svelte';
+import { traversePath } from '$lib/traversal.js';
+import { mergePath, splitPath } from '$lib/stringPath.js';
 
 export type FormUpdate = (
   result: Exclude<ActionResult, { type: 'error' }>,
@@ -39,6 +35,16 @@ export type SuperFormEventList<T extends AnyZodObject, M> = {
     SuperFormEvents<T, M>[Property]
   >[];
 };
+
+type ValidationResponse<
+  Success extends Record<string, unknown> | undefined = Record<
+    string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    any
+  >,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Invalid extends Record<string, unknown> | undefined = Record<string, any>
+> = { result: ActionResult<Success, Invalid> };
 
 export function cancelFlash<T extends AnyZodObject, M>(
   options: FormOptions<T, M>
@@ -57,6 +63,41 @@ export function shouldSyncFlash<T extends AnyZodObject, M>(
   if (!options.flashMessage || !browser) return false;
   return options.syncFlashMessage;
 }
+
+///// Custom validity /////
+
+const noCustomValidityDataAttribute = 'noCustomValidity';
+
+function setCustomValidity(
+  el: HTMLInputElement,
+  errors: string[] | undefined
+) {
+  const message = errors && errors.length ? errors.join('\n') : '';
+  el.setCustomValidity(message);
+  if (message) el.reportValidity();
+}
+
+function setCustomValidityForm<T extends AnyZodObject, M>(
+  formEl: HTMLFormElement,
+  errors: SuperValidated<ZodValidation<T>, M>['errors']
+) {
+  for (const el of formEl.querySelectorAll<
+    HTMLInputElement &
+      HTMLSelectElement &
+      HTMLTextAreaElement &
+      HTMLButtonElement
+  >('input,select,textarea,button')) {
+    if (noCustomValidityDataAttribute in el.dataset) {
+      continue;
+    }
+
+    const error = traversePath(errors, splitPath(el.name));
+    setCustomValidity(el, error?.value);
+    if (error?.value) return;
+  }
+}
+
+//////////////////////////////////
 
 /**
  * Custom use:enhance version. Flash message support, friendly error messages, for usage with initializeForm.
@@ -89,15 +130,47 @@ export function formEnhance<T extends AnyZodObject, M>(
   // Using this type in the function argument causes a type recursion error.
   const errors = errs as SuperForm<T, M>['errors'];
 
-  async function validateChange(change: string[]) {
-    await validateField(change, options, data, errors, tainted);
+  async function validateChange(
+    change: string[],
+    event: 'blur' | 'input',
+    validityEl: HTMLElement | null
+  ) {
+    if (options.customValidity && validityEl) {
+      // Always reset validity, in case it has been validated on the server.
+      if ('setCustomValidity' in validityEl) {
+        (validityEl as HTMLInputElement).setCustomValidity('');
+      }
+
+      // If event is input but element shouldn't use custom validity,
+      // return immediately since validateField don't have to be called
+      // in this case, validation is happening elsewhere.
+      if (noCustomValidityDataAttribute in validityEl.dataset)
+        if (event == 'input') return;
+        else validityEl = null;
+    }
+
+    const newErrors = await validateField(
+      change,
+      options,
+      data,
+      errors,
+      tainted
+    );
+
+    if (validityEl) {
+      setCustomValidity(validityEl as any, newErrors);
+    }
   }
 
+  /**
+   * Some input fields have timing issues with the stores, need to wait in that case.
+   */
   function timingIssue(el: EventTarget | null) {
     return (
       el &&
       (el instanceof HTMLSelectElement ||
-        (el instanceof HTMLInputElement && el.type == 'radio'))
+        (el instanceof HTMLInputElement &&
+          (el.type == 'radio' || el.type == 'checkbox')))
     );
   }
 
@@ -110,211 +183,56 @@ export function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    // Some form fields have some timing issue, need to wait
     if (timingIssue(e.target)) {
       await new Promise((r) => setTimeout(r, 0));
     }
 
     for (const change of get(lastChanges)) {
-      //console.log('🚀 ~ file: index.ts:905 ~ BLUR:', change);
-      validateChange(change);
+      let validityEl: HTMLElement | null = null;
+
+      if (options.customValidity) {
+        const name = CSS.escape(mergePath(change));
+        validityEl = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+      }
+
+      validateChange(change, 'blur', validityEl);
     }
     // Clear last changes after blur (not after input)
     lastChanges.set([]);
   }
   formEl.addEventListener('focusout', checkBlur);
 
-  const ErrorTextEvents = new Set<HTMLFormElement>();
-
-  function ErrorTextEvents_selectText(e: Event) {
-    const target = e.target as HTMLInputElement;
-    if (options.selectErrorText) target.select();
-  }
-
-  function ErrorTextEvents_addErrorTextListeners(formEl: HTMLFormElement) {
-    formEl.querySelectorAll('input').forEach((el) => {
-      el.addEventListener('invalid', ErrorTextEvents_selectText);
-    });
-  }
-
-  function ErrorTextEvents_removeErrorTextListeners(
-    formEl: HTMLFormElement
-  ) {
-    formEl
-      .querySelectorAll('input')
-      .forEach((el) =>
-        el.removeEventListener('invalid', ErrorTextEvents_selectText)
-      );
-  }
-
-  afterNavigate((nav) => {
-    if (nav.type == 'goto') {
-      htmlForm.completed(true);
+  // Add input event, for custom validity
+  async function checkCustomValidity(e: Event) {
+    if (timingIssue(e.target)) {
+      await new Promise((r) => setTimeout(r, 0));
     }
-  });
+
+    for (const change of get(lastChanges)) {
+      const name = CSS.escape(mergePath(change));
+      const validityEl = formEl.querySelector<HTMLElement>(
+        `[name="${name}"]`
+      );
+      if (!validityEl) continue;
+
+      const hadErrors = traversePath(get(errors), change as any);
+      if (hadErrors && hadErrors.key in hadErrors.parent) {
+        // Problem - store hasn't updated here with new value yet.
+        setTimeout(() => validateChange(change, 'input', validityEl), 0);
+      }
+    }
+  }
+  if (options.customValidity) {
+    formEl.addEventListener('input', checkCustomValidity);
+  }
 
   onDestroy(() => {
-    ErrorTextEvents.forEach((formEl) =>
-      ErrorTextEvents_removeErrorTextListeners(formEl)
-    );
-    ErrorTextEvents.clear();
-
     formEl.removeEventListener('focusout', checkBlur);
-
-    htmlForm.completed(true);
+    formEl.removeEventListener('input', checkCustomValidity);
   });
 
-  type ValidationResponse<
-    Success extends Record<string, unknown> | undefined = Record<
-      string,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      any
-    >,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Invalid extends Record<string, unknown> | undefined = Record<string, any>
-  > = { result: ActionResult<Success, Invalid> };
+  const htmlForm = Form(formEl, { submitting, delayed, timeout }, options);
 
-  /**
-   * @DCI-context
-   */
-  function Form(formEl: HTMLFormElement) {
-    function rebind() {
-      if (options.selectErrorText) {
-        const form = Form_element();
-        if (form && formEl !== form) {
-          ErrorTextEvents_removeErrorTextListeners(form);
-          ErrorTextEvents.delete(form);
-        }
-        if (!ErrorTextEvents.has(formEl)) {
-          ErrorTextEvents_addErrorTextListeners(formEl);
-          ErrorTextEvents.add(formEl);
-        }
-      }
-
-      Form = formEl;
-    }
-
-    let Form: {
-      querySelectorAll: (selector: string) => NodeListOf<HTMLElement>;
-      querySelector: (selector: string) => HTMLElement;
-      dataset: DOMStringMap;
-    };
-
-    function Form_element() {
-      return Form as HTMLFormElement;
-    }
-
-    function Form_shouldAutoFocus(userAgent: string) {
-      if (typeof options.autoFocusOnError === 'boolean')
-        return options.autoFocusOnError;
-      else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
-    }
-
-    const Form_scrollToFirstError = async () => {
-      if (options.scrollToError == 'off') return;
-
-      const selector = options.errorSelector;
-      if (!selector) return;
-
-      // Wait for form to update with errors
-      await tick();
-
-      // Scroll to first form message, if not visible
-      let el: HTMLElement | null;
-      el = Form.querySelector(selector) as HTMLElement | null;
-      if (!el) return;
-      // Find underlying element if it is a FormGroup element
-      el = el.querySelector(selector) ?? el;
-
-      const nav = options.stickyNavbar
-        ? (document.querySelector(options.stickyNavbar) as HTMLElement)
-        : null;
-
-      if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
-        scrollToAndCenter(el, undefined, options.scrollToError);
-      }
-
-      // Don't focus on the element if on mobile, it will open the keyboard
-      // and probably hide the error message.
-      if (!Form_shouldAutoFocus(navigator.userAgent)) return;
-
-      let focusEl;
-      focusEl = el;
-
-      if (
-        !['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)
-      ) {
-        focusEl = focusEl.querySelector<HTMLElement>(
-          'input:not([type="hidden"]):not(.flatpickr-input), select, textarea'
-        );
-      }
-
-      if (focusEl) {
-        try {
-          focusEl.focus({ preventScroll: true });
-          if (options.selectErrorText && focusEl.tagName == 'INPUT') {
-            (focusEl as HTMLInputElement).select();
-          }
-        } catch (err) {
-          // Some hidden inputs like from flatpickr cannot be focused.
-        }
-      }
-    };
-
-    rebind();
-
-    {
-      let state: FetchStatus = FetchStatus.Idle;
-      let delayedTimeout: number, timeoutTimeout: number;
-
-      const setState = (s: typeof state) => {
-        state = s;
-        submitting.set(state >= FetchStatus.Submitting);
-        delayed.set(state >= FetchStatus.Delayed);
-        timeout.set(state >= FetchStatus.Timeout);
-      };
-
-      return {
-        submitting: () => {
-          rebind();
-          setState(
-            state != FetchStatus.Delayed
-              ? FetchStatus.Submitting
-              : FetchStatus.Delayed
-          );
-
-          // https://www.nngroup.com/articles/response-times-3-important-limits/
-          if (delayedTimeout) clearTimeout(delayedTimeout);
-          if (timeoutTimeout) clearTimeout(timeoutTimeout);
-
-          delayedTimeout = window.setTimeout(() => {
-            if (state == FetchStatus.Submitting)
-              setState(FetchStatus.Delayed);
-          }, options.delayMs);
-
-          timeoutTimeout = window.setTimeout(() => {
-            if (state == FetchStatus.Delayed) setState(FetchStatus.Timeout);
-          }, options.timeoutMs);
-        },
-
-        completed: (cancelled: boolean) => {
-          if (delayedTimeout) clearTimeout(delayedTimeout);
-          if (timeoutTimeout) clearTimeout(timeoutTimeout);
-          delayedTimeout = timeoutTimeout = 0;
-
-          setState(FetchStatus.Idle);
-          if (!cancelled) setTimeout(Form_scrollToFirstError);
-        },
-
-        scrollToFirstError: () => setTimeout(Form_scrollToFirstError),
-
-        isSubmitting: () =>
-          state === FetchStatus.Submitting || state === FetchStatus.Delayed
-      };
-    }
-  }
-
-  const htmlForm = Form(formEl);
   let currentRequest: AbortController | null;
 
   return enhance(formEl, async (submit) => {
@@ -396,7 +314,9 @@ export function formEnhance<T extends AnyZodObject, M>(
 
         // Deprecation fix
         const submitData =
-          submit.formData ?? (submit as { data: FormData }).data;
+          'formData' in submit
+            ? submit.formData
+            : (submit as { data: FormData }).data;
 
         if (options.SPA) {
           cancel();
@@ -499,6 +419,10 @@ export function formEnhance<T extends AnyZodObject, M>(
             for (const event of formEvents.onUpdate) {
               await event(data);
             }
+
+            if (!cancelled && options.customValidity) {
+              setCustomValidityForm(formEl, data.form.errors);
+            }
           }
         }
 
@@ -560,9 +484,23 @@ export function formEnhance<T extends AnyZodObject, M>(
         cancelFlash(options);
       }
 
-      // Redirect messages are handled in onDestroy and afterNavigate.
+      // Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
+      // Also fixing an edge case when timers weren't resetted when redirecting to the same route.
       if (cancelled || result.type != 'redirect') {
         htmlForm.completed(cancelled);
+      } else if (
+        result.type == 'redirect' &&
+        new URL(
+          result.location,
+          /^https?:\/\//.test(result.location)
+            ? undefined
+            : document.location.origin
+        ).pathname == document.location.pathname
+      ) {
+        // Checks if beforeNavigate have been called in client/form.ts.
+        setTimeout(() => {
+          htmlForm.completed(true, true);
+        }, 0);
       }
     }
 

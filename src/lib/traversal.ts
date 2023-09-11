@@ -190,6 +190,13 @@ export async function traversePathsAsync<
   }
 }
 
+// Thanks to https://stackoverflow.com/a/31129384/70894
+function eqSet(xs: Set<unknown>, ys: Set<unknown>) {
+  return (
+    xs === ys || (xs.size === ys.size && [...xs].every((x) => ys.has(x)))
+  );
+}
+
 /**
  * Compare two objects and return the differences as paths.
  */
@@ -197,19 +204,31 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
   const diffPaths = new Map<string, string[]>();
 
   function checkPath(data: PathData, compareTo: object) {
-    if (data.isLeaf) {
-      const exists = traversePath(compareTo, data.path as FieldPath<object>);
+    const exists = traversePath(compareTo, data.path as FieldPath<object>);
 
+    function addDiff() {
+      diffPaths.set(data.path.join(' '), data.path);
+    }
+
+    if (data.isLeaf) {
       if (!exists) {
-        diffPaths.set(data.path.join(' '), data.path);
-      } else if (
+        addDiff();
+      } else if (data.value !== exists.value) {
+        addDiff();
+      }
+    } else if (exists) {
+      if (
         data.value instanceof Date &&
         exists.value instanceof Date &&
         data.value.getTime() != exists.value.getTime()
       ) {
-        diffPaths.set(data.path.join(' '), data.path);
-      } else if (data.value !== exists.value) {
-        diffPaths.set(data.path.join(' '), data.path);
+        addDiff();
+      } else if (
+        data.value instanceof Set &&
+        exists.value instanceof Set &&
+        !eqSet(data.value, exists.value)
+      ) {
+        addDiff();
       }
     }
   }

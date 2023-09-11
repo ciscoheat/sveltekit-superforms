@@ -5,7 +5,127 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0]
+## [1.6.1] - 2023-08-22
+
+### Fixed
+
+- Client-side validation didn't take refine into account on a successful validation, not clearing all errors.
+
+## [1.6.0] - 2023-08-18
+
+### Fixed
+
+- Client-side validation wasn't resetted properly, when a component containing a form was destroyed and mounted again.
+- Removed debug statement left from 1.5.3
+
+### Added
+
+- Added `cookieOptions` to `actionResult`, for customizing the cookie when setting a [flash message](https://superforms.rocks/flash-messages).
+- [SuperDebug](https://superforms.rocks/super-debug) now has a `collapsible` prop, that will make the component collapsible on a per-route basis.
+
+## [1.5.3] - 2023-08-16
+
+### Fixed
+
+- Array-level errors weren't typed correctly when changing the cardinality of an array field in the schema (for example with `nonempty`).
+- `customValidity` now works with `select`, `textarea` and `button`, not just `input`.
+- SuperDebug looks a bit better now when there is no css styling on the page.
+
+## [1.5.2] - 2023-08-15
+
+### Fixed
+
+- Forms in components weren't resetted properly when destroyed and mounted again.
+
+## [1.5.1] - 2023-08-09
+
+### Fixed
+
+- In rare cases, timers weren't resetted when redirecting to the same route.
+- Client-side validation was ignored when a data property was missing or didn't match the schema type. It now fails with a console error. ([#243](https://github.com/ciscoheat/sveltekit-superforms/issues/243))
+
+## [1.5.0] - 2023-07-23
+
+### Fixed
+
+- A boolean schema field didn't accept a boolean `false` value when posted, it was coerced as `true`.
+- A SuperDebug truncated string showed only the whole string length, not the truncated.
+
+### Added
+
+- Added `customValidity` option to `superForm`, which will use the browser's validation message reporting for validation errors. More information and an example [here](https://superforms.rocks/concepts/error-handling#customvalidity).
+- Added `emptyIfZero` option to `numberProxy` and `intProxy`.
+
+## [1.4.0] - 2023-07-20
+
+### Fixed
+
+- When multiple forms exists with the same id, the warning is now displayed on `superForm` instantiation, not just when new form data is received.
+- Fixed client-side validation for `Date` schema fields. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
+- `numberProxy` and `intProxy` now works with the `empty` option. ([#232](https://github.com/ciscoheat/sveltekit-superforms/issues/232))
+- Fixed timer state in combination with navigation events.
+
+### Added
+
+- Added `delimiter` option to `numberProxy`.
+
+## [1.3.0] - 2023-07-14
+
+### Fixed
+
+- Fixed persisting form data when component used data from `$page` in combination with `onDestroy`. ([#164](https://github.com/ciscoheat/sveltekit-superforms/issues/164), thank you to everyone in that thread!)
+- Fixed exception message when the `dataType` option isn't set to `'json'` and the schema contains a nested object. ([#225](https://github.com/ciscoheat/sveltekit-superforms/issues/225))
+- Superforms are now ignoring normal SvelteKit form actions when they are posted. ([#230](https://github.com/ciscoheat/sveltekit-superforms/issues/230))
+
+### Added
+
+- More configuration options, customizable styling, automatic promise and store support for [SuperDebug](https://superforms.rocks/super-debug), thanks to [Josue](https://github.com/J-Josu)!
+
+## [1.2.0] - 2023-07-06
+
+### Added
+
+- The `scrollToError` option can now take the same parameters as [scrollIntoView](https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView), which makes it work for nested scrollbars.
+- Added `setError` signature, to more conveniently set a form-level error: `setError(form, 'Form-level error message')`
+
+### Fixed
+
+- If the `resetForm` option was enabled, the form was reset even if `fail` was returned.
+
+## [1.1.3] - 2023-06-29
+
+### Fixed
+
+- Form-level errors couldn't be overwritten.
+- Array-level errors couldn't be added with `setError`.
+- Native string enums weren't working when posting the actual string value.
+
+## [1.1.2] - 2023-06-24
+
+### Added
+
+- Svelte 4 compatibility.
+
+## [1.1.1] - 2023-06-20
+
+### Fixed
+
+- Set comparison added in 1.1.0 wasn't fully functional.
+
+## [1.1.0] - 2023-06-20
+
+### Added
+
+- Support for `Set` in schemas, using `z.set()`. ([#194](https://github.com/ciscoheat/sveltekit-superforms/issues/194))
+
+### Fixed
+
+- Nested array and object-level errors are now all cleared on a successful client-side validation. ([#196](https://github.com/ciscoheat/sveltekit-superforms/issues/196))
+- Boolean fields with a default value of `true` always returned `true` when validating.
+- Fixed infinite deep type instantiation on `message`. ([#143](https://github.com/ciscoheat/sveltekit-superforms/issues/143), thanks to [Alisson Cavalcante Agiani](https://github.com/thelinuxlich))
+- Fixed typesVersions map that caused incorrect auto-import paths ([#191](https://github.com/ciscoheat/sveltekit-superforms/pull/191), thanks to [CokaKoala](https://github.com/AdrianGonz97))
+
+## [1.0.0] - 2023-06-12
 
 ### Added
 

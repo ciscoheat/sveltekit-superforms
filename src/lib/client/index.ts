@@ -77,7 +77,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   applyAction: boolean;
   invalidateAll: boolean;
   resetForm: boolean | (() => boolean);
-  scrollToError: 'auto' | 'smooth' | 'off';
+  scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
   autoFocusOnError: boolean | 'detect';
   errorSelector: string;
   selectErrorText: boolean;
@@ -119,6 +119,7 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
     | ZodValidation<UnwrapEffects<T>>;
   validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
   defaultValidator: 'keep' | 'clear';
+  customValidity: boolean;
   clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
   delayMs: number;
   timeoutMs: number;
@@ -173,6 +174,7 @@ const defaultFormOptions = {
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',
+  customValidity: false,
   clearOnSubmit: 'errors-and-message',
   delayMs: 500,
   timeoutMs: 8000,
@@ -188,7 +190,11 @@ type SuperFormSnapshot<T extends AnyZodObject, M = any> = SuperValidated<
   M
 > & { tainted: TaintedFields<T> | undefined };
 
-export type TaintOption = boolean | 'untaint' | 'untaint-all';
+export type TaintOption<T extends AnyZodObject = AnyZodObject> =
+  | boolean
+  | 'untaint'
+  | 'untaint-all'
+  | { fields: FormPathLeaves<z.infer<T>> | FormPathLeaves<z.infer<T>>[] };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
@@ -197,12 +203,12 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
     set(
       this: void,
       value: z.infer<UnwrapEffects<T>>,
-      options?: { taint?: TaintOption }
+      options?: { taint?: TaintOption<UnwrapEffects<T>> }
     ): void;
     update(
       this: void,
       updater: Updater<z.infer<UnwrapEffects<T>>>,
-      options?: { taint?: TaintOption }
+      options?: { taint?: TaintOption<UnwrapEffects<T>> }
     ): void;
   };
   formId: Writable<string | undefined>;
@@ -248,6 +254,21 @@ export type SuperForm<T extends ZodValidation<AnyZodObject>, M = any> = {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EnhancedForm<T extends AnyZodObject, M = any> = SuperForm<T, M>;
 
+const formIds = new WeakMap<Page, Set<string | undefined>>();
+const initializedForms = new WeakMap<
+  object,
+  SuperValidated<ZodValidation<AnyZodObject>, unknown>
+>();
+
+function multipleFormIdError(id: string | undefined) {
+  return (
+    `Duplicate form id's found: "${id}". ` +
+    'Multiple forms will receive the same data. Use the id option to differentiate between them, ' +
+    'or if this is intended, set the warnings.duplicateId option to false in superForm to disable this warning. ' +
+    'More information: https://superforms.rocks/concepts/multiple-forms'
+  );
+}
+
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {SuperValidated} form Usually data.form from PageData.
@@ -274,7 +295,7 @@ export function superForm<
 
     if (options.SPA && options.validators === undefined) {
       console.warn(
-        'No validators set for Superform in SPA mode. ' +
+        'No validators set for superForm in SPA mode. ' +
           'Add them to the validators option, or set it to false to disable this warning.'
       );
     }
@@ -304,13 +325,51 @@ export function superForm<
     if (_formId === undefined) _formId = form.id;
   }
 
+  const _initialFormId = _formId;
+  const _currentPage = get(page);
+
+  // Check multiple id's
+  if (options.warnings?.duplicateId !== false) {
+    if (!formIds.has(_currentPage)) {
+      formIds.set(_currentPage, new Set([_initialFormId]));
+    } else {
+      const currentForms = formIds.get(_currentPage);
+      if (currentForms?.has(_initialFormId)) {
+        console.warn(multipleFormIdError(_initialFormId));
+      } else {
+        currentForms?.add(_initialFormId);
+      }
+    }
+  }
+
+  // Need to clone the form data, in case it's used to populate multiple forms and in components
+  // that are mounted and destroyed multiple times.
+  if (!initializedForms.has(form)) {
+    initializedForms.set(form, clone(form));
+  }
+  const initialForm = initializedForms.get(form) as SuperValidated<T, M>;
+
+  if (typeof initialForm.valid !== 'boolean') {
+    throw new SuperFormError(
+      'A non-validation object was passed to superForm. ' +
+        'It should be an object of type SuperValidated, usually returned from superValidate.'
+    );
+  }
+
+  // Restore the initial data, in case of a mounted/destroyed component.
+  let _initiallyCloned = false;
+
   // Detect if a form is posted without JavaScript.
-  const postedData = get(page).form;
-  if (postedData && typeof postedData === 'object') {
+  const postedData = _currentPage.form;
+
+  if (!browser && postedData && typeof postedData === 'object') {
     for (const postedForm of Context_findValidationForms(
       postedData
     ).reverse()) {
-      if (postedForm.id === _formId) {
+      if (postedForm.id === _formId && !initializedForms.has(postedForm)) {
+        // Prevent multiple "posting" that can happen when components are recreated.
+        initializedForms.set(postedData, postedData);
+
         const pageDataForm = form as SuperValidated<T, M>;
         form = postedForm as SuperValidated<T, M>;
         // Reset the form if option set and form is valid.
@@ -320,24 +379,17 @@ export function superForm<
           (options.resetForm === true || options.resetForm())
         ) {
           form = clone(pageDataForm);
-          form.message = postedForm.message;
+          form.message = clone(postedForm.message);
+          _initiallyCloned = true;
         }
         break;
       }
     }
   }
 
+  if (!_initiallyCloned) form = clone(initialForm);
+
   const form2 = form as SuperValidated<T, M>;
-
-  // Need to clone the validation data, in case it's used to populate multiple forms.
-  const initialForm = clone(form2);
-
-  if (typeof initialForm.valid !== 'boolean') {
-    throw new SuperFormError(
-      'A non-validation object was passed to superForm. ' +
-        "Check what's passed to its first parameter."
-    );
-  }
 
   // Underlying store for Errors
   const _errors = writable(form2.errors);
@@ -365,20 +417,6 @@ export function superForm<
     const forms = Object.values(data).filter(
       (v) => Context_isValidationObject(v) !== false
     ) as SuperValidated<AnyZodObject>[];
-    if (forms.length > 1 && options.warnings?.duplicateId !== false) {
-      const duplicateId = new Set<string | undefined>();
-      for (const form of forms) {
-        if (duplicateId.has(form.id)) {
-          console.warn(
-            `Duplicate form id found: "${form.id}"` +
-              '. Multiple forms will receive the same data. Use the id option to differentiate between them, or if this is intended, set warnings.duplicateId option to false to disable this message.'
-          );
-          break;
-        } else {
-          duplicateId.add(form.id);
-        }
-      }
-    }
     return forms;
   }
 
@@ -417,19 +455,21 @@ export function superForm<
       subscribe: _formData.subscribe,
       set: (
         value: Parameters<typeof _formData.set>[0],
-        options: { taint?: TaintOption } = {}
+        options: { taint?: TaintOption<UnwrappedT> } = {}
       ) => {
         Tainted_update(
           value,
           Context.taintedFormState,
           options.taint ?? true
         );
-        Context.taintedFormState = clone(value);
-        return _formData.set(value);
+
+        Context_setTaintedFormState(value);
+        // Need to clone the value, so it won't refer to $page for example.
+        return _formData.set(clone(value));
       },
       update: (
         updater: Parameters<typeof _formData.update>[0],
-        options: { taint?: TaintOption } = {}
+        options: { taint?: TaintOption<UnwrappedT> } = {}
       ) => {
         return _formData.update((value) => {
           const output = updater(value);
@@ -438,7 +478,9 @@ export function superForm<
             Context.taintedFormState,
             options.taint ?? true
           );
-          Context.taintedFormState = clone(value);
+
+          Context_setTaintedFormState(output);
+          // No cloning here, since it's an update
           return output;
         });
       }
@@ -468,7 +510,9 @@ export function superForm<
       if (value.length > 0) Form_checkForNestedData(key, value[0]);
     } else if (!(value instanceof Date)) {
       throw new SuperFormError(
-        `Object found in form field "${key}". Set options.dataType = 'json' and use:enhance to use nested data structures.`
+        `Object found in form field "${key}". ` +
+          `Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
+          `More information: https://superforms.rocks/concepts/nested-data`
       );
     }
   }
@@ -479,6 +523,7 @@ export function superForm<
   ) {
     if (
       form.valid &&
+      untaint &&
       options.resetForm &&
       (options.resetForm === true || options.resetForm())
     ) {
@@ -593,7 +638,10 @@ export function superForm<
     return obj === true;
   }
 
-  async function Tainted__validate(path: string[], taint: TaintOption) {
+  async function Tainted__validate(
+    path: string[],
+    taint: TaintOption<UnwrappedT>
+  ) {
     if (
       options.validationMethod == 'onblur' ||
       options.validationMethod == 'submit-only'
@@ -641,7 +689,7 @@ export function superForm<
   async function Tainted_update(
     newObj: unknown,
     compareAgainst: unknown,
-    taintOptions: TaintOption
+    taintOptions: TaintOption<UnwrappedT>
   ) {
     if (taintOptions === false) {
       return;
@@ -650,7 +698,18 @@ export function superForm<
       return;
     }
 
-    const paths = comparePaths(newObj, compareAgainst);
+    let paths = comparePaths(newObj, compareAgainst);
+
+    if (typeof taintOptions === 'object') {
+      if (typeof taintOptions.fields === 'string')
+        taintOptions.fields = [taintOptions.fields];
+
+      paths = taintOptions.fields.map((path) =>
+        splitPath(path)
+      ) as string[][];
+
+      taintOptions = true;
+    }
 
     if (taintOptions === true) {
       LastChanges.set(paths);
@@ -703,6 +762,8 @@ export function superForm<
     for (const events of Object.values(formEvents)) {
       events.length = 0;
     }
+
+    formIds.get(_currentPage)?.delete(_initialFormId);
   });
 
   if (options.dataType !== 'json') {
@@ -772,24 +833,23 @@ export function superForm<
       page.subscribe(async (pageUpdate) => {
         if (!options.applyAction) return;
 
-        function error(type: string) {
-          throw new SuperFormError(
-            `No form data found in ${type}. Make sure you return { form } in form actions and load functions.`
-          );
-        }
-
         const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
         if (pageUpdate.form && typeof pageUpdate.form === 'object') {
+          const actionData = pageUpdate.form;
+
           // Check if it is an error result, sent here from formEnhance
-          if (pageUpdate.form.type == 'error') return;
+          if (actionData.type == 'error') return;
 
-          const forms = Context_findValidationForms(pageUpdate.form);
-          if (!forms.length) error('$page.form (ActionData)');
-
+          const forms = Context_findValidationForms(actionData);
           for (const newForm of forms) {
             //console.log('🚀~ ActionData ~ newForm:', newForm.id);
-            if (newForm.id !== _formId) continue;
+            if (newForm.id !== _formId || initializedForms.has(newForm)) {
+              continue;
+            }
+
+            // Prevent multiple "posting" that can happen when components are recreated.
+            initializedForms.set(newForm, newForm);
 
             await Form_updateFromValidation(
               newForm as SuperValidated<T, M>,
@@ -802,7 +862,9 @@ export function superForm<
           const forms = Context_findValidationForms(pageUpdate.data);
           for (const newForm of forms) {
             //console.log('🚀 ~ PageData ~ newForm:', newForm.id);
-            if (newForm.id !== _formId) continue;
+            if (newForm.id !== _formId || initializedForms.has(newForm)) {
+              continue;
+            }
 
             rebind(newForm as SuperValidated<T, M>, untaint);
           }
@@ -827,7 +889,10 @@ export function superForm<
 
   function validate<Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>>(
     path?: Path,
-    opts?: ValidateOptions<FormPathType<z.infer<UnwrapEffects<T>>, Path>>
+    opts?: ValidateOptions<
+      FormPathType<z.infer<UnwrapEffects<T>>, Path>,
+      UnwrapEffects<T>
+    >
   ) {
     if (path === undefined) {
       return clientValidation<UnwrapEffects<T>, M>(
@@ -881,7 +946,7 @@ export function superForm<
       return rebind(snapshot, snapshot.tainted ?? true);
     },
 
-    validate: validate as typeof validateForm<UnwrapEffects<T>>,
+    validate: validate as typeof validateForm<UnwrappedT>,
 
     enhance: (
       el: HTMLFormElement,

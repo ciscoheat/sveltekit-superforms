@@ -1,8 +1,6 @@
 import type { FieldPath } from './index.js';
 
-export function splitPath<T extends object>(
-  path: StringPath<T> | StringPathLeaves<T>
-) {
+export function splitPath<T extends object>(path: string) {
   return path
     .toString()
     .split(/[[\].]+/)
@@ -39,7 +37,7 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
         | `[${number}]`
         | `[${number}]${U extends unknown[]
             ? ''
-            : '.'}${NonNullable<U> extends Date
+            : '.'}${NonNullable<U> extends Date | Set<unknown>
             ? never
             : StringPath<NonNullable<U>> & string}`
     : `[${number}]` | `[${number}].${U & string}`
@@ -51,7 +49,7 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
             ? NonNullable<T[K]> extends object
               ? `${K}${NonNullable<T[K]> extends unknown[]
                   ? ''
-                  : '.'}${NonNullable<T[K]> extends Date
+                  : '.'}${NonNullable<T[K]> extends Date | Set<unknown>
                   ? never
                   : StringPath<NonNullable<T[K]>> & string}`
               : never
@@ -59,33 +57,37 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
         }[keyof T]
   : never;
 
-export type StringPathLeaves<T extends object> =
-  NonNullable<T> extends (infer U)[]
-    ? NonNullable<U> extends object
-      ? `[${number}]${NonNullable<U> extends unknown[]
-          ? ''
-          : '.'}${StringPathLeaves<NonNullable<U>> & string}`
-      : `[${number}]`
-    : NonNullable<T> extends object
+export type StringPathLeaves<
+  T extends object,
+  Arr extends string = never
+> = NonNullable<T> extends (infer U)[]
+  ? NonNullable<U> extends object
     ?
-        | {
-            // Same as FilterObjects but inlined for better intellisense
-            [K in keyof T]: NonNullable<T[K]> extends object
-              ? NonNullable<T[K]> extends Date
-                ? K
-                : never
-              : K;
-          }[keyof T]
-        | {
-            [K in keyof T]-?: K extends string
-              ? NonNullable<T[K]> extends object
-                ? `${K}${NonNullable<T[K]> extends unknown[]
-                    ? ''
-                    : '.'}${StringPathLeaves<NonNullable<T[K]>> & string}`
-                : never
-              : never;
-          }[keyof T]
-    : never;
+        | (Arr extends never ? never : `.${Arr}`)
+        | `[${number}]${NonNullable<U> extends unknown[]
+            ? ''
+            : '.'}${StringPathLeaves<NonNullable<U>, Arr> & string}`
+    : `[${number}]` | (Arr extends never ? never : `.${Arr}`)
+  : NonNullable<T> extends object
+  ?
+      | {
+          // Same as FilterObjects but inlined for better intellisense
+          [K in keyof T]: NonNullable<T[K]> extends object
+            ? NonNullable<T[K]> extends Date | Set<unknown>
+              ? K
+              : never
+            : K;
+        }[keyof T]
+      | {
+          [K in keyof T]-?: K extends string
+            ? NonNullable<T[K]> extends object
+              ? `${K}${NonNullable<T[K]> extends unknown[]
+                  ? ''
+                  : '.'}${StringPathLeaves<NonNullable<T[K]>, Arr> & string}`
+              : never
+            : never;
+        }[keyof T]
+  : never;
 
 export type FormPathType<T, P extends string> = P extends keyof T
   ? T[P]

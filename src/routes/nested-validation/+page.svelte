@@ -39,13 +39,13 @@ Superforms validate:
 </pre>
 
 <pre style="margin-top:3rem;">
-  Zod full validation:
-  {#if validated}{JSON.stringify(validated, null, 2)}{/if}
+Zod full validation:
+{#if validated}{JSON.stringify(validated, null, 2)}{/if}
 </pre>
 
 <pre style="margin-top:3rem;">
-  Superforms full validation:
-  {#if validated2}{JSON.stringify(validated2, null, 2)}{/if}
+Superforms full validation:
+{#if validated2}{JSON.stringify(validated2, null, 2)}{/if}
 </pre>
 
 <style>

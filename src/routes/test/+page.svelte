@@ -273,8 +273,14 @@
     type="date"
     name="coercedDate"
     data-invalid={$errors.coercedDate}
-    bind:value={$coercedDate}
+    value={$coercedDate}
+    on:blur={(e) => ($coercedDate = e.currentTarget.value)}
+    on:input={(e) => {
+      const value = e.currentTarget.value;
+      if (/^\d{4}-\d\d-\d\d$/.test(value)) $coercedDate = value;
+    }}
   />
+  <p>{$coercedDate}</p>
   {#if $errors.coercedDate}<span data-invalid>{$errors.coercedDate}</span
     >{/if}
 

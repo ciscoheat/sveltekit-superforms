@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { redirect } from 'sveltekit-flash-message/server';
-import { RateLimiter } from 'sveltekit-rate-limiter';
+import { RateLimiter } from 'sveltekit-rate-limiter/server';
 
 const limiter = new RateLimiter({
   rates: {
@@ -86,7 +86,7 @@ export const actions = {
     console.log('FORM', form);
     if (!form.valid) return fail(400, { form });
 
-    if (!(await limiter.check(event))) {
+    if (await limiter.isLimited(event)) {
       form.valid = false;
       form.message = { type: 'error', message: 'You are rate limited' };
       return fail(429, { form });

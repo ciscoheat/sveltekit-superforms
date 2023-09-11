@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { initFlash } from 'sveltekit-flash-message/client';
+  import { getFlash } from 'sveltekit-flash-message/client';
   import { page } from '$app/stores';
   import { beforeNavigate } from '$app/navigation';
   import Navigation from './Navigation.svelte';
 
-  const flash = initFlash(page);
+  const flash = getFlash(page);
 
   beforeNavigate((nav) => {
     if ($flash && nav.from?.url.toString() != nav.to?.url.toString()) {

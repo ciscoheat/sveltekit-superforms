@@ -36,15 +36,17 @@ export type ZodTypeInfo = {
   defaultValue: unknown;
 };
 
-export type UnwrappedEntity<T> = T extends ZodOptional<infer U>
-  ? UnwrappedEntity<U>
-  : T extends ZodDefault<infer U>
-  ? UnwrappedEntity<U>
-  : T extends ZodNullable<infer U>
-  ? UnwrappedEntity<U>
-  : T extends ZodEffects<infer U>
-  ? UnwrappedEntity<U>
-  : T;
+export type UnwrappedEntity<T> = T extends infer R
+  ? R extends ZodOptional<infer U>
+    ? UnwrappedEntity<U>
+    : R extends ZodDefault<infer U>
+    ? UnwrappedEntity<U>
+    : R extends ZodNullable<infer U>
+    ? UnwrappedEntity<U>
+    : R extends ZodEffects<infer U>
+    ? UnwrappedEntity<U>
+    : R
+  : never;
 
 type EntityRecord<T extends AnyZodObject, K> = Record<keyof z.infer<T>, K>;
 
@@ -240,8 +242,10 @@ export function valueOrDefault(
     // Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
     //if (zodType._def.typeName == "ZodDate") return new Date(NaN);
     if (zodType._def.typeName == 'ZodArray') return [];
-    if (zodType._def.typeName == 'ZodObject')
+    if (zodType._def.typeName == 'ZodObject') {
       return defaultValues(zodType as AnyZodObject);
+    }
+    if (zodType._def.typeName == 'ZodSet') return new Set();
     if (zodType._def.typeName == 'ZodRecord') return {};
     if (zodType._def.typeName == 'ZodBigInt') return BigInt(0);
     if (zodType._def.typeName == 'ZodSymbol') return Symbol();

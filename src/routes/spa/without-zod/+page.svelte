@@ -29,13 +29,16 @@
       }
     },
     onUpdated({ form }) {
-      console.log('onUpdated, valid:', form.valid);
+      console.log('onUpdated, valid:', form.valid, form);
     },
     validators: {
       tags: {
-        id: (id) => (id < 3 ? 'Id must be larger than 2' : null),
+        id: (id) =>
+          isNaN(id) || id < 3 ? 'Id must be larger than 2' : null,
         name: (name) =>
-          name.length < 2 ? 'Tags must be at least two characters' : null
+          !name || name.length < 2
+            ? 'Tags must be at least two characters'
+            : null
       }
     }
   });

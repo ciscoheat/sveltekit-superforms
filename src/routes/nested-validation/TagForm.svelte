@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SuperValidated, UnwrapEffects } from '$lib';
+  import type { SuperValidated } from '$lib';
   import { page } from '$app/stores';
   import { superForm } from '$lib/client';
   import type { FormOptions } from '$lib/client';

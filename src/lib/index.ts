@@ -64,7 +64,13 @@ type SuperStructArray<T extends AnyZodObject, Data, ArrayData = unknown> = {
       ? SuperStructArray<IntersectUnion<UnwrappedEntity<T>>, Data, ArrayData>
       : UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStructArray<UnwrappedRawShape<T, Property>, Data, ArrayData>
-      : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
+      : UnwrappedRawShape<T, Property> extends ZodArray<
+          infer A,
+          // Need to infer Cardinality for extend to work correctly, even though it's unused.
+          // (nonempty changes the cardinality of arrays in the schema)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          infer Cardinality
+        >
       ? ArrayData &
           Record<
             number,
@@ -89,7 +95,13 @@ type SuperStruct<T extends AnyZodObject, Data> = Partial<{
       ? SuperStruct<IntersectUnion<UnwrappedEntity<T>>, Data>
       : UnwrappedRawShape<T, Property> extends AnyZodObject
       ? SuperStruct<UnwrappedRawShape<T, Property>, Data>
-      : UnwrappedRawShape<T, Property> extends ZodArray<infer A>
+      : UnwrappedRawShape<T, Property> extends ZodArray<
+          infer A,
+          // Need to infer Cardinality for extend to work correctly, even though it's unused.
+          // (nonempty changes the cardinality of arrays in the schema)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          infer Cardinality
+        >
       ? UnwrappedEntity<A> extends ZodUnion<ZodUnionOptions>
         ? SuperStruct<IntersectUnion<UnwrappedEntity<A>>, Data>
         : UnwrappedEntity<A> extends AnyZodObject

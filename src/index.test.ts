@@ -803,8 +803,8 @@ test('Passthrough validation', async () => {
 
 test.only('Preprocessed fields', async () => {
   const schema = z.object({
-    accept: z.preprocess(
-      (val) => (val === undefined ? undefined : Boolean(val)),
+    tristate: z.preprocess(
+      (value) => (value === undefined ? undefined : Boolean(value)),
       z.boolean().optional()
     )
   });
@@ -812,9 +812,9 @@ test.only('Preprocessed fields', async () => {
   const formData = new FormData();
 
   const form = await superValidate(formData, schema, {
-    preprocessed: ['accept']
+    preprocessed: ['tristate']
   });
 
   assert(form.valid);
-  expect(form.data.accept).toBeUndefined();
+  expect(form.data.tristate).toBeUndefined();
 });

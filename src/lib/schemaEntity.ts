@@ -174,7 +174,7 @@ export function _entityHash<T extends ZodTypeAny>(type: T) {
 
 export function entityData<T extends AnyZodObject>(
   schema: T,
-  warnings?: SuperValidateOptions['warnings']
+  warnings?: SuperValidateOptions<T>['warnings']
 ) {
   const cached = getCached(schema);
   if (cached) return cached;
@@ -288,7 +288,7 @@ export function defaultValues<T extends ZodValidation<AnyZodObject>>(
 
 function constraints<T extends AnyZodObject>(
   schema: T,
-  warnings: SuperValidateOptions['warnings']
+  warnings: SuperValidateOptions<T>['warnings']
 ): InputConstraints<T> {
   function constraint(
     key: string,

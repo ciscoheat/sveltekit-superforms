@@ -154,7 +154,7 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
 function formDataToValidation<T extends AnyZodObject>(
   data: FormData,
   schemaData: SchemaData<T>,
-  preprocessed?: string[]
+  preprocessed?: (keyof z.infer<T>)[]
 ) {
   const output: Record<string, unknown> = {};
   const { schemaKeys, entityInfo } = schemaData;
@@ -283,7 +283,7 @@ type SchemaData<T extends AnyZodObject> = {
   hasEffects: boolean;
   entityInfo: Entity<T>;
   schemaKeys: string[];
-  opts: SuperValidateOptions;
+  opts: SuperValidateOptions<T>;
 };
 
 type ParsedData = {
@@ -313,7 +313,7 @@ function dataToValidate<T extends AnyZodObject>(
 function parseFormData<T extends AnyZodObject>(
   formData: FormData,
   schemaData: SchemaData<T>,
-  options?: SuperValidateOptions
+  options?: SuperValidateOptions<T>
 ): ParsedData {
   function tryParseSuperJson() {
     if (formData.has('__superform_json')) {
@@ -350,7 +350,7 @@ function parseFormData<T extends AnyZodObject>(
 function parseSearchParams<T extends AnyZodObject>(
   data: URL | URLSearchParams,
   schemaData: SchemaData<T>,
-  options?: SuperValidateOptions
+  options?: SuperValidateOptions<T>
 ): ParsedData {
   if (data instanceof URL) data = data.searchParams;
 
@@ -464,7 +464,7 @@ function validateResult<T extends AnyZodObject, M>(
 
 function getSchemaData<T extends AnyZodObject>(
   schema: ZodValidation<T>,
-  options: SuperValidateOptions | undefined
+  options: SuperValidateOptions<T> | undefined
 ): SchemaData<T> {
   const originalSchema = schema as T;
 
@@ -500,15 +500,16 @@ function getSchemaData<T extends AnyZodObject>(
 
 /////////////////////////////////////////////////////////////////////
 
-export type SuperValidateOptions = Partial<{
-  errors: boolean;
-  id: string;
-  warnings: {
-    multipleRegexps?: boolean;
-    multipleSteps?: boolean;
-  };
-  preprocessed: string[];
-}>;
+export type SuperValidateOptions<T extends AnyZodObject = AnyZodObject> =
+  Partial<{
+    errors: boolean;
+    id: string;
+    warnings: {
+      multipleRegexps?: boolean;
+      multipleSteps?: boolean;
+    };
+    preprocessed: (keyof z.infer<T>)[];
+  }>;
 
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
@@ -516,7 +517,7 @@ export async function superValidate<
   M = any
 >(
   schema: T,
-  options?: SuperValidateOptions
+  options?: SuperValidateOptions<UnwrapEffects<T>>
 ): Promise<SuperValidated<UnwrapEffects<T>, M>>;
 
 export async function superValidate<
@@ -534,7 +535,7 @@ export async function superValidate<
     | null
     | undefined,
   schema: T,
-  options?: SuperValidateOptions
+  options?: SuperValidateOptions<UnwrapEffects<T>>
 ): Promise<SuperValidated<UnwrapEffects<T>, M>>;
 
 /**
@@ -548,11 +549,11 @@ export async function superValidate<
   M = any
 >(
   data: unknown,
-  schema?: T | SuperValidateOptions,
-  options?: SuperValidateOptions
+  schema?: T | SuperValidateOptions<UnwrapEffects<T>>,
+  options?: SuperValidateOptions<UnwrapEffects<T>>
 ): Promise<SuperValidated<UnwrapEffects<T>, M>> {
   if (data && typeof data === 'object' && 'safeParseAsync' in data) {
-    options = schema as SuperValidateOptions | undefined;
+    options = schema as SuperValidateOptions<UnwrapEffects<T>> | undefined;
     schema = data as T;
     data = null;
   }
@@ -625,7 +626,7 @@ export function superValidateSync<
   M = any
 >(
   schema: T,
-  options?: SuperValidateOptions
+  options?: SuperValidateOptions<UnwrapEffects<T>>
 ): SuperValidated<UnwrapEffects<T>, M>;
 
 export function superValidateSync<
@@ -641,7 +642,7 @@ export function superValidateSync<
     | null
     | undefined,
   schema: T,
-  options?: SuperValidateOptions
+  options?: SuperValidateOptions<UnwrapEffects<T>>
 ): SuperValidated<UnwrapEffects<T>, M>;
 
 /**
@@ -655,11 +656,11 @@ export function superValidateSync<
   M = any
 >(
   data: unknown,
-  schema?: T | SuperValidateOptions,
-  options?: SuperValidateOptions
+  schema?: T | SuperValidateOptions<UnwrapEffects<T>>,
+  options?: SuperValidateOptions<UnwrapEffects<T>>
 ): SuperValidated<UnwrapEffects<T>, M> {
   if (data && typeof data === 'object' && 'safeParse' in data) {
-    options = schema as SuperValidateOptions | undefined;
+    options = schema as SuperValidateOptions<UnwrapEffects<T>> | undefined;
     schema = data as T;
     data = null;
   }

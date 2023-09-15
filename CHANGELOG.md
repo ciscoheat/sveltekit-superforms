@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `preprocessed` option to superValidate, for handling the processing/coercion of form fields manually.
+- Added `preprocessed` option to superValidate, for handling the processing/coercion of posted form fields manually.
 
 ## [1.6.1] - 2023-08-22
 

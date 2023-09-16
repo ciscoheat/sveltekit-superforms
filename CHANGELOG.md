@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Type error with `formFieldProxy` when using a strongly typed status message. ([#260](https://github.com/ciscoheat/sveltekit-superforms/issues/260))
-- Nested Superforms validators didn't work when a field was missing compared to the schema.
+- Nested Superforms validators didn't work when a field was missing compared to the schema. ([#266](https://github.com/ciscoheat/sveltekit-superforms/issues/266))
 
 ### Added
 

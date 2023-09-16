@@ -504,16 +504,12 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
     }
   } else {
     // SuperForms validator
-
     const validator = traversePath(
       validators,
       Context.validationPath as FieldPath<typeof validators>
     );
 
-    if (!validator) {
-      // Path didn't exist
-      throw new SuperFormError('No Superforms validator found: ' + path);
-    } else if (validator.value === undefined) {
+    if (!validator || validator.value === undefined) {
       // No validator, use default
       return defaultValidate();
     } else {

@@ -5,11 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2023-09-11
+## [1.7.0] - 2023-09-16
 
 ### Fixed
 
 - Type error with `formFieldProxy` when using a strongly typed status message. ([#260](https://github.com/ciscoheat/sveltekit-superforms/issues/260))
+- Nested Superforms validators didn't work when a field was missing compared to the schema.
 
 ### Added
 

@@ -109,14 +109,6 @@
     background-color: #ddd;
   }
 
-  a {
-    text-decoration: underline;
-  }
-
-  hr {
-    margin-top: 4rem;
-  }
-
   form {
     padding-top: 1rem;
     padding-bottom: 1rem;

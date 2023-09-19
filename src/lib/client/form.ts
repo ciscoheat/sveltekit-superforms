@@ -199,8 +199,7 @@ export function Form<T extends AnyZodObject, M>(
 
     // If redirected, clear timers after navigating for better UX.
     if (!_initialized) {
-      beforeNavigate((nav) => {
-        if (nav.type == 'enter') return;
+      beforeNavigate(() => {
         aboutToNavigate = true;
       });
 

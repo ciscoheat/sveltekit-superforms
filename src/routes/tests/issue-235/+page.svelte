@@ -58,10 +58,6 @@
 </form>
 
 <style>
-  .invalid {
-    color: red;
-  }
-
   .status {
     color: white;
     padding: 4px;
@@ -80,10 +76,6 @@
 
   input {
     background-color: #ddd;
-  }
-
-  a {
-    text-decoration: underline;
   }
 
   hr {

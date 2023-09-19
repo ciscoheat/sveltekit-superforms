@@ -356,9 +356,6 @@ export function superForm<
     );
   }
 
-  // Restore the initial data, in case of a mounted/destroyed component.
-  let _initiallyCloned = false;
-
   // Detect if a form is posted without JavaScript.
   const postedData = _currentPage.form;
 
@@ -372,6 +369,7 @@ export function superForm<
 
         const pageDataForm = form as SuperValidated<T, M>;
         form = postedForm as SuperValidated<T, M>;
+
         // Reset the form if option set and form is valid.
         if (
           form.valid &&
@@ -380,14 +378,13 @@ export function superForm<
         ) {
           form = clone(pageDataForm);
           form.message = clone(postedForm.message);
-          _initiallyCloned = true;
         }
         break;
       }
     }
+  } else {
+    form = clone(initialForm);
   }
-
-  if (!_initiallyCloned) form = clone(initialForm);
 
   const form2 = form as SuperValidated<T, M>;
 

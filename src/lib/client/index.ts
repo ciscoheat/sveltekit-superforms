@@ -639,13 +639,6 @@ export function superForm<
     path: string[],
     taint: TaintOption<UnwrappedT>
   ) {
-    if (
-      options.validationMethod == 'onblur' ||
-      options.validationMethod == 'submit-only'
-    ) {
-      return false;
-    }
-
     let shouldValidate = options.validationMethod === 'oninput';
 
     if (!shouldValidate) {
@@ -720,11 +713,21 @@ export function superForm<
         return tainted;
       });
 
-      let updated = false;
-      for (const path of paths) {
-        updated = updated || (await Tainted__validate(path, taintOptions));
+      if (
+        !(
+          options.validationMethod == 'onblur' ||
+          options.validationMethod == 'submit-only'
+        )
+      ) {
+        let updated = false;
+
+        for (const path of paths) {
+          updated = updated || (await Tainted__validate(path, taintOptions));
+        }
+        if (!updated) {
+          await validateObjectErrors(options, get(Form), Errors);
+        }
       }
-      if (!updated) await validateObjectErrors(options, get(Form), Errors);
     }
   }
 

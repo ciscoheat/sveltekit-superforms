@@ -135,11 +135,15 @@ export function formEnhance<T extends AnyZodObject, M>(
     event: 'blur' | 'input',
     validityEl: HTMLElement | null
   ) {
+    if (options.validationMethod == 'submit-only') return;
+
     if (options.customValidity && validityEl) {
       // Always reset validity, in case it has been validated on the server.
       if ('setCustomValidity' in validityEl) {
         (validityEl as HTMLInputElement).setCustomValidity('');
       }
+
+      if (event == 'input' && options.validationMethod == 'onblur') return;
 
       // If event is input but element shouldn't use custom validity,
       // return immediately since validateField don't have to be called
@@ -204,6 +208,13 @@ export function formEnhance<T extends AnyZodObject, M>(
 
   // Add input event, for custom validity
   async function checkCustomValidity(e: Event) {
+    if (
+      options.validationMethod == 'onblur' ||
+      options.validationMethod == 'submit-only'
+    ) {
+      return;
+    }
+
     if (timingIssue(e.target)) {
       await new Promise((r) => setTimeout(r, 0));
     }
@@ -222,6 +233,7 @@ export function formEnhance<T extends AnyZodObject, M>(
       }
     }
   }
+
   if (options.customValidity) {
     formEl.addEventListener('input', checkCustomValidity);
   }

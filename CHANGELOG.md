@@ -5,11 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.2] - 2023-09-23
 
 ### Fixed
 
-- Array and form-level errors didn't respect `submit-only` as validationMethod.
+- Array and form-level errors didn't respect `submit-only` as [validationMethod](https://superforms.rocks/concepts/client-validation#validationmethod). ([#270](https://github.com/ciscoheat/sveltekit-superforms/issues/270))
+- The [customValidity](https://superforms.rocks/concepts/error-handling#customvalidity) option didn't respect `submit-only` and `onblur` as validationMethod.
 
 ## [1.7.1] - 2023-09-19
 

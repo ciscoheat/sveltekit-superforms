@@ -1,23 +1,29 @@
 <script lang="ts">
-  import { superForm } from '$lib/client';
   import type { PageData } from './$types';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
+
+  import { page } from '$app/stores';
+  import { superForm } from '$lib/client';
   import { schema } from './schema';
 
   export let data: PageData;
 
-  const { form, errors, tainted, message, enhance, constraints } = superForm(
-    data.form,
-    {
-      customValidity: true,
-      validators: schema
-    }
-  );
+  const validationMethod =
+    ($page.url.searchParams.get('method') as any) ?? 'auto';
+
+  const { form, errors, message, enhance } = superForm(data.form, {
+    customValidity: true,
+    validators: schema,
+    validationMethod,
+    taintedMessage:
+      validationMethod == 'auto'
+        ? 'You have unsaved changes. Leave page?'
+        : null
+  });
 </script>
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<form method="POST" use:enhance>
+<form novalidate method="POST" use:enhance>
   <label>
     Name: <input name="name" bind:value={$form.name} />
   </label>
@@ -75,6 +81,10 @@
     </div>
   </label>
 </form>
+
+{#if validationMethod != 'auto'}
+  <p>Validation method: <b>{validationMethod}</b></p>
+{/if}
 
 <!--SuperDebug data={{ $form, $errors }} /-->
 

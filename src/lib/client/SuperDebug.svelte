@@ -334,7 +334,7 @@
       ></pre>
     {#if collapsible}
       <button
-        on:click={() => setCollapse(!collapsed)}
+        on:click|preventDefault={() => setCollapse(!collapsed)}
         class="super-debug--collapse"
       >
         <svg

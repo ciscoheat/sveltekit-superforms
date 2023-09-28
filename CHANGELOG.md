@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- SuperDebug: Collapsible bar was a submit button and didn't toggle the collapsed status properly.
+- [SuperDebug](https://superforms.rocks/super-debug): Collapsible bar was a submit button and didn't toggle the collapsed status properly.
 
 ## [1.7.2] - 2023-09-23
 

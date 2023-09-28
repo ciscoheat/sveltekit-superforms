@@ -118,9 +118,14 @@
   function setCollapse(status = undefined) {
     let data;
     const route = $page.route.id ?? '';
+
     try {
-      data = JSON.parse(sessionStorage.SuperDebug);
-      if (!('collapsed' in data)) data.collapsed = {};
+      if (sessionStorage.SuperDebug) {
+        data = JSON.parse(sessionStorage.SuperDebug);
+      }
+
+      data = { collapsed: data && data.collapsed ? data.collapsed : {} };
+
       data.collapsed[route] =
         status === undefined ? data.collapsed[route] ?? false : status;
     } catch {
@@ -334,6 +339,7 @@
       ></pre>
     {#if collapsible}
       <button
+        type="button"
         on:click|preventDefault={() => setCollapse(!collapsed)}
         class="super-debug--collapse"
       >

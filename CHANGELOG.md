@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2023-09-29
+
+### Fixed
+
+- Timing issue in [SPA mode](https://superforms.rocks/concepts/spa) displayed errors for valid data, when submitting a form by pressing enter.
+
 ## [1.7.3] - 2023-09-28
 
 ### Fixed

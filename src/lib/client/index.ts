@@ -833,6 +833,13 @@ export function superForm<
       page.subscribe(async (pageUpdate) => {
         if (!options.applyAction) return;
 
+        // Strange timing issue in SPA mode forces a wait here,
+        // otherwise errors will appear even if the form is valid
+        // when pressing enter to submit the form (not when clicking a submit button!)
+        if (options.SPA) {
+          await new Promise((r) => setTimeout(r, 0));
+        }
+
         const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
         if (pageUpdate.form && typeof pageUpdate.form === 'object') {

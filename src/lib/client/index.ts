@@ -725,7 +725,12 @@ export function superForm<
           updated = updated || (await Tainted__validate(path, taintOptions));
         }
         if (!updated) {
-          await validateObjectErrors(options, get(Form), Errors);
+          await validateObjectErrors(
+            options,
+            get(Form),
+            Errors,
+            get(Tainted)
+          );
         }
       }
     }

@@ -223,7 +223,8 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
 export async function validateObjectErrors<T extends AnyZodObject, M>(
   formOptions: FormOptions<T, M>,
   data: z.infer<T>,
-  Errors: SuperForm<T, M>['errors']
+  Errors: SuperForm<T, M>['errors'],
+  tainted: TaintedFields<UnwrapEffects<T>> | undefined
 ) {
   if (
     typeof formOptions.validators !== 'object' ||
@@ -252,7 +253,17 @@ export async function validateObjectErrors<T extends AnyZodObject, M>(
       // Add new object-level errors and tainted field errors
       traversePaths(newErrors, (pathData) => {
         if (pathData.key == '_errors') {
-          return setPaths(currentErrors, [pathData.path], pathData.value);
+          // Check if the parent path (the actual array) is tainted
+          // Form-level errors are always "tainted"
+          const taintedPath =
+            pathData.path.length == 1
+              ? { value: true }
+              : tainted &&
+                traversePath(tainted, pathData.path.slice(0, -1) as any);
+
+          if (taintedPath && taintedPath.value) {
+            return setPaths(currentErrors, [pathData.path], pathData.value);
+          }
         }
       });
 
@@ -387,7 +398,7 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
     if (tainted === undefined) return false;
     const leaf = traversePath(tainted, path as FieldPath<typeof tainted>);
     if (!leaf) return false;
-    return leaf.value === true;
+    return leaf.value;
   }
 
   function Errors_update(updater: Parameters<typeof Errors.update>[0]) {
@@ -468,14 +479,23 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
 
           // Add new object-level errors and tainted field errors
           traversePaths(newErrors, (pathData) => {
-            if (pathData.key == '_errors') {
+            if (
+              pathData.key == '_errors' &&
+              (pathData.path.length == 1 ||
+                Tainted_isPathTainted(
+                  pathData.path.slice(0, -1),
+                  taintedFields
+                ))
+            ) {
               return setPaths(
                 currentErrors,
                 [pathData.path],
                 pathData.value
               );
             }
+
             if (!Array.isArray(pathData.value)) return;
+
             if (Tainted_isPathTainted(pathData.path, taintedFields)) {
               setPaths(currentErrors, [pathData.path], pathData.value);
             }

@@ -27,6 +27,7 @@
   <a href="/tests/flash-onerror">Flash onError</a>
   <a href="/tests/reset-component">Reset component 1</a>
   <a href="/tests/reset-component-2">Reset component 2</a>
+  <a href="/tests/tainted-proxy">Tainted formFieldProxy</a>
 </nav>
 
 <style lang="scss">

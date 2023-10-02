@@ -5,11 +5,15 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.8.0]
 
 ### Fixed
 
-- [Array errors](https://superforms.rocks/concepts/error-handling#form-level-and-array-errors) were always added, even if the form wasn't tainted.
+- [Array errors](https://superforms.rocks/concepts/error-handling#form-level-and-array-errors) were always added, even if the array or any data in it hadn't tainted the form.
+
+### Added
+
+- [formFieldProxy](https://superforms.rocks/components#using-a-formfieldproxy) now contains a proxy for `tainted`.
 
 ## [1.7.4] - 2023-09-29
 

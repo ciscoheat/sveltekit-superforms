@@ -245,12 +245,48 @@ export function formFieldProxy<
   value: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
   errors: Writable<string[] | undefined>;
   constraints: Writable<InputConstraint | undefined>;
+  tainted: Writable<boolean | undefined>;
 } {
   const path2 = splitPath<z.infer<UnwrapEffects<T>>>(path);
   // Filter out array indices, the constraints structure doesn't contain these.
   const constraintsPath = (path2 as unknown[])
     .filter((p) => isNaN(parseInt(String(p))))
     .join('.');
+
+  const taintedProxy = derived<typeof form.tainted, boolean | undefined>(
+    form.tainted,
+    ($tainted) => {
+      if (!$tainted) return $tainted;
+      const taintedPath = traversePath($tainted, path2);
+      return taintedPath ? taintedPath.value : undefined;
+    }
+  );
+
+  const tainted = {
+    subscribe: taintedProxy.subscribe,
+    update(upd: Updater<boolean | undefined>) {
+      form.tainted.update(($tainted) => {
+        if (!$tainted) $tainted = {};
+        const output = traversePath($tainted, path2, (path) => {
+          if (!path.value) path.parent[path.key] = {};
+          return path.parent[path.key];
+        });
+        if (output) output.parent[output.key] = upd(output.value);
+        return $tainted;
+      });
+    },
+    set(value: boolean | undefined) {
+      form.tainted.update(($tainted) => {
+        if (!$tainted) $tainted = {};
+        const output = traversePath($tainted, path2, (path) => {
+          if (!path.value) path.parent[path.key] = {};
+          return path.parent[path.key];
+        });
+        if (output) output.parent[output.key] = value;
+        return $tainted;
+      });
+    }
+  };
 
   return {
     path,
@@ -261,7 +297,8 @@ export function formFieldProxy<
     constraints: fieldProxy(
       form.constraints,
       constraintsPath as never
-    ) as Writable<InputConstraint | undefined>
+    ) as Writable<InputConstraint | undefined>,
+    tainted
   };
 }
 

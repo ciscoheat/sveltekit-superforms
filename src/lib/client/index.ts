@@ -71,6 +71,13 @@ export {
   defaultValues
 } from '../superValidate.js';
 
+/**
+ * Helper type for making onResult strongly typed with ActionData.
+ * @example const result = event.result as FormResult<ActionData>;
+ */
+export type FormResult<T extends Record<string, unknown> | null> =
+  ActionResult<NonNullable<T>, NonNullable<T>>;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   id: string;

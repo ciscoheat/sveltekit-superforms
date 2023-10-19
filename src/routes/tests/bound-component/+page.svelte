@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { superForm } from '$lib/client';
-  import type { PageData } from './$types';
+  import { superForm, type FormResult } from '$lib/client';
+  import type { PageData, ActionData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { schema } from './schemas';
   import { page } from '$app/stores';
@@ -16,6 +16,10 @@
       console.log('onError', event);
     },
     onResult: (event) => {
+      const result = event.result as FormResult<ActionData>;
+      if (result.type == 'failure') {
+        result.data?.form.data.email;
+      }
       console.log('onResult', event);
     },
     onSubmit: (args) => {

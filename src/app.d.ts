@@ -9,6 +9,9 @@ declare global {
     }
     // interface Platform {}
   }
+  namespace Superforms {
+    type Message = string;
+  }
 }
 
 export {};

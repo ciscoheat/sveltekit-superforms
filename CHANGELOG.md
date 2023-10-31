@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- By declaring `namespace Superforms` with a `type Message` in `app.d.ts`, the [status messages](https://superforms.rocks/concepts/messages) will always be set to that type. ([#261](https://github.com/ciscoheat/sveltekit-superforms/issues/261))
 - Added `FormResult<T>`, which can be used in [onResult](https://superforms.rocks/concepts/events#onresult) to make the ActionResult strongly typed.
 
 ## [1.8.0]

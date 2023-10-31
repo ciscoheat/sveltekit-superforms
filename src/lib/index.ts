@@ -159,7 +159,7 @@ export type InputConstraints<T extends AnyZodObject> = SuperStruct<
 export type SuperValidated<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = any
+  M = Superforms.Message extends never ? any : Superforms.Message
 > = {
   valid: boolean;
   posted: boolean;

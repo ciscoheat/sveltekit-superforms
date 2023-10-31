@@ -194,7 +194,7 @@ const defaultFormOptions = {
 type SuperFormSnapshot<
   T extends AnyZodObject,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = SuperValidated<T, M> & { tainted: TaintedFields<T> | undefined };
 
 export type TaintOption<T extends AnyZodObject = AnyZodObject> =
@@ -206,7 +206,7 @@ export type TaintOption<T extends AnyZodObject = AnyZodObject> =
 export type SuperForm<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = {
   form: {
     subscribe: Readable<z.infer<UnwrapEffects<T>>>['subscribe'];
@@ -289,7 +289,7 @@ function multipleFormIdError(id: string | undefined) {
 export function superForm<
   T extends ZodValidation<AnyZodObject> = ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   form: SuperValidated<T, M>,
   options: FormOptions<UnwrapEffects<T>, M> = {}

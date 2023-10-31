@@ -514,7 +514,7 @@ export type SuperValidateOptions<T extends AnyZodObject = AnyZodObject> =
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   schema: T,
   options?: SuperValidateOptions<UnwrapEffects<T>>
@@ -523,7 +523,7 @@ export async function superValidate<
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   data:
     | RequestEvent
@@ -546,7 +546,7 @@ export async function superValidate<
 export async function superValidate<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   data: unknown,
   schema?: T | SuperValidateOptions<UnwrapEffects<T>>,
@@ -623,7 +623,7 @@ export async function superValidate<
 export function superValidateSync<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   schema: T,
   options?: SuperValidateOptions<UnwrapEffects<T>>
@@ -632,7 +632,7 @@ export function superValidateSync<
 export function superValidateSync<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   data:
     | FormData
@@ -653,7 +653,7 @@ export function superValidateSync<
 export function superValidateSync<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  M = Superforms.Message extends never ? any : Superforms.Message
+  M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
   data: unknown,
   schema?: T | SuperValidateOptions<UnwrapEffects<T>>,

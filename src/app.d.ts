@@ -8,10 +8,10 @@ declare global {
       flash?: { type: 'success' | 'error'; message: string };
     }
     // interface Platform {}
-  }
-  namespace Superforms {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    type Message = any;
+    namespace Superforms {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      type Message = any;
+    }
   }
 }
 

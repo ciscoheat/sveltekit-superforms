@@ -10,7 +10,8 @@ declare global {
     // interface Platform {}
   }
   namespace Superforms {
-    type Message = string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type Message = any;
   }
 }
 

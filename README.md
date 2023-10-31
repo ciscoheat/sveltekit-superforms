@@ -37,7 +37,7 @@ Making SvelteKit **validation** and **displaying** of forms a pleasure!
 - Works both on the server and with [single-page applications](https://superforms.rocks/concepts/spa) (SPA)!
 - [Proxy objects](https://superforms.rocks/concepts/proxy-objects) for handling data conversions to string and back again.
 - Realtime [client-side validators](https://superforms.rocks/concepts/client-validation) for immediate user feedback.
-- Provide submit state feedback with three [auto-updating timers](https://superforms.rocks/concepts/timers), based on human perception research.
+- Create loading spinners easily with three [auto-updating timers](https://superforms.rocks/concepts/timers), based on human perception research.
 - Even more care for the user: No form data loss, by [preventing error page rendering](https://superforms.rocks/concepts/enhance#differences-from-sveltekits-useenhance) as default.
 - Hook into [a number of events](https://superforms.rocks/concepts/events) for full control over the validation data and the `ActionResult`, with a possibility to cancel the update at every step.
 - Complete customization with a [huge list of options](https://superforms.rocks/api#superformform-options).

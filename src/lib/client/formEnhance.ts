@@ -153,7 +153,7 @@ export function formEnhance<T extends AnyZodObject, M>(
         else validityEl = null;
     }
 
-    const newErrors = await validateField(
+    const result = await validateField(
       change,
       options,
       data,
@@ -162,7 +162,11 @@ export function formEnhance<T extends AnyZodObject, M>(
     );
 
     if (validityEl) {
-      setCustomValidity(validityEl as any, newErrors);
+      setCustomValidity(validityEl as HTMLInputElement, result.errors);
+    }
+
+    if (result.data) {
+      data.set(result.data);
     }
   }
 
@@ -226,6 +230,7 @@ export function formEnhance<T extends AnyZodObject, M>(
       );
       if (!validityEl) continue;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const hadErrors = traversePath(get(errors), change as any);
       if (hadErrors && hadErrors.key in hadErrors.parent) {
         // Problem - store hasn't updated here with new value yet.

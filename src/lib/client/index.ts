@@ -191,9 +191,9 @@ const defaultFormOptions = {
   validateMethod: 'auto'
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SuperFormSnapshot<
   T extends AnyZodObject,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = Superforms.Message extends never ? any : Superforms.Message
 > = SuperValidated<T, M> & { tainted: TaintedFields<T> | undefined };
 
@@ -203,9 +203,9 @@ export type TaintOption<T extends AnyZodObject = AnyZodObject> =
   | 'untaint-all'
   | { fields: FormPathLeaves<z.infer<T>> | FormPathLeaves<z.infer<T>>[] };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type SuperForm<
   T extends ZodValidation<AnyZodObject>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = Superforms.Message extends never ? any : Superforms.Message
 > = {
   form: {
@@ -909,7 +909,9 @@ export function superForm<
     })
   ) as unknown as FormFields<UnwrappedT>;
 
-  function validate<Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>>(
+  async function validate<
+    Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>
+  >(
     path?: Path,
     opts?: ValidateOptions<
       FormPathType<z.infer<UnwrapEffects<T>>, Path>,
@@ -925,7 +927,7 @@ export function superForm<
         false
       );
     }
-    return validateField<UnwrapEffects<T>, M>(
+    const result = await validateField<UnwrapEffects<T>, M>(
       splitPath(path) as string[],
       options,
       Form,
@@ -933,6 +935,7 @@ export function superForm<
       Tainted,
       opts
     );
+    return result.errors;
   }
 
   return {

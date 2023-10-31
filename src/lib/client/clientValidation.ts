@@ -282,6 +282,12 @@ export async function validateObjectErrors<T extends AnyZodObject, M>(
   }
 }
 
+type ValidationResult<T extends ZodValidation<AnyZodObject>> = {
+  validated: boolean | 'all';
+  errors: string[] | undefined;
+  data: SuperForm<T, unknown>['form'] | undefined;
+};
+
 /**
  * Validate a specific form field.
  * @DCI-context
@@ -296,7 +302,7 @@ export async function validateField<
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown, UnwrapEffects<T>> = {}
-): Promise<string[] | undefined> {
+): Promise<ValidationResult<T>> {
   function Errors_clear() {
     clearErrors(Errors, { undefinePath: path, clearFormLevelErrors: true });
   }
@@ -352,16 +358,18 @@ export async function validateField<
       // the tainted+error check in oninput.
       Errors_clear();
     } else {
-      return Errors_update(errors.errors);
+      errors.errors = Errors_update(errors.errors);
+      return errors;
     }
   } else if (
     errors.validated === false &&
     formOptions.defaultValidator == 'clear'
   ) {
-    return Errors_update(undefined);
+    errors.errors = Errors_update(errors.errors);
+    return errors;
   }
 
-  return errors.errors;
+  return errors;
 }
 
 // @DCI-context
@@ -372,7 +380,7 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown, UnwrapEffects<T>> = {}
-): Promise<{ validated: boolean | 'all'; errors: string[] | undefined }> {
+): Promise<ValidationResult<T>> {
   if (options.update === undefined) options.update = true;
   if (options.taint === undefined) options.taint = false;
   if (typeof options.errors == 'string') options.errors = [options.errors];
@@ -386,7 +394,7 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
   };
 
   async function defaultValidate() {
-    return { validated: false, errors: undefined } as const;
+    return { validated: false, errors: undefined, data: undefined } as const;
   }
 
   ///// Roles ///////////////////////////////////////////////////////
@@ -516,11 +524,16 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
 
       return {
         validated: true,
-        errors: options.errors ?? current?.value
+        errors: options.errors ?? current?.value,
+        data: undefined
       };
     } else {
       Errors_clearAll();
-      return { validated: true, errors: undefined };
+      return {
+        validated: true,
+        errors: undefined,
+        data: result.data // For a successful Zod result, return the possibly transformed data.
+      };
     }
   } else {
     // SuperForms validator
@@ -539,7 +552,8 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
 
       return {
         validated: true,
-        errors: result ? options.errors ?? result : result
+        errors: result ? options.errors ?? result : result,
+        data: undefined // No transformation for Superforms validators
       };
     }
   }

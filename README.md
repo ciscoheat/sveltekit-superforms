@@ -21,7 +21,7 @@
 
 <br/>
 
-Making SvelteKit **validation** and **displaying** of forms easier than ever!
+Making SvelteKit **validation** and **displaying** of forms a pleasure!
 
 # Feature list
 
@@ -46,11 +46,11 @@ Making SvelteKit **validation** and **displaying** of forms easier than ever!
 # Installation
 
 ```
- npm i -D sveltekit-superforms zod
+npm i -D sveltekit-superforms zod
 ```
 
 ```
- pnpm i -D sveltekit-superforms zod
+pnpm i -D sveltekit-superforms zod
 ```
 
 # Get started
@@ -62,8 +62,6 @@ You can also watch this excellent introduction video to see what's possible: htt
 # Contributing and sponsoring
 
 Ideas, general feedback, bug reports, PR:s, etc, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues) [discussion](https://github.com/ciscoheat/sveltekit-superforms/discussions), or on the [Discord server](https://discord.gg/AptebvVuhB)!
-
-Now that version 1.0 is released, there will be bug fixes, more support questions on the Discord server, future features to work on, and so on.
 
 If you're using Superforms in non-profit circumstances, the library is completely free, a star on Github is more than enough if you want to give your support. But if you are using Superforms in a commercial project, would you or the company you work for consider donating?
 

@@ -103,13 +103,17 @@
   ///// Collapse behavior ///////////////////////////////////////////
 
   /**
-   * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output.
-   *
-   * Default is `false`.
+   * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output. Default is `false`.
+   * When toggled, the state is saved in session storage for all SuperDebug components on the page.
    */
   export let collapsible = false;
 
-  let collapsed = false;
+  /**
+   * Initial state for the collapsed component. Use together with the `collapsible` prop.
+   * On subsequent page loads, the session storage will determine the state of all SuperDebug components on the page.
+   */
+  export let collapsed = false;
+
   if (browser && collapsible) setCollapse();
 
   /**
@@ -127,11 +131,11 @@
       data = { collapsed: data && data.collapsed ? data.collapsed : {} };
 
       data.collapsed[route] =
-        status === undefined ? data.collapsed[route] ?? false : status;
+        status === undefined ? data.collapsed[route] ?? collapsed : status;
     } catch {
       data = {
         collapsed: {
-          [route]: false
+          [route]: collapsed
         }
       };
     }

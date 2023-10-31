@@ -106,6 +106,13 @@
     <SuperDebug label="Sample User" data={$form} collapsible />
   </section>
   <section>
+    <h4>SuperDebug, initially collapsed</h4>
+    <p>
+      Use the <code>collapsible</code> and <code>collapsed</code> props for this.
+    </p>
+    <SuperDebug label="Sample User" data={$form} collapsible collapsed />
+  </section>
+  <section>
     <h4>SuperDebug without status</h4>
     <SuperDebug label="Sample User" status={false} data={$form} />
   </section>

@@ -165,9 +165,10 @@ export function formEnhance<T extends AnyZodObject, M>(
       setCustomValidity(validityEl as HTMLInputElement, result.errors);
     }
 
-    if (result.data) {
-      data.set(result.data);
-    }
+    // NOTE: Uncomment if Zod transformations should be immediately applied, not just when submitting.
+    // Not enabled because it's not great UX, and it's rare to have transforms, which will just result in
+    // redundant store updates.
+    //if (result.data) data.set(result.data);
   }
 
   /**
@@ -338,25 +339,21 @@ export function formEnhance<T extends AnyZodObject, M>(
         if (options.SPA) {
           cancel();
 
-          const validationResult: SuperValidated<T> = {
-            valid: true,
-            posted: true,
-            errors: {},
-            data: get(data),
-            constraints: get(constraints),
-            message: undefined,
-            id: get(formId)
-          };
+          const validationResult = { ...validation, posted: true };
 
           const result = {
-            type: 'success' as const,
-            status: 200,
+            type: validationResult.valid ? 'success' : 'failure',
+            status: validationResult.valid
+              ? 200
+              : typeof options.SPA == 'object'
+              ? options.SPA?.failStatus
+              : 400 ?? 400,
             data: { form: validationResult }
-          };
+          } as ActionResult;
 
           setTimeout(() => validationResponse({ result }), 0);
         } else if (options.dataType === 'json') {
-          const postData = get(data);
+          const postData = validation.data;
           const chunks = chunkSubstr(
             stringify(postData),
             options.jsonChunkSize ?? 500000

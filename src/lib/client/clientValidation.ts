@@ -110,6 +110,8 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
           errorShape(validator)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ) as any;
+      } else {
+        checkData = result.data;
       }
     } else {
       // SuperForms validator

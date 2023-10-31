@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `FormResult<T>`, which can be used in [onResult](https://superforms.rocks/concepts/events#onresult) to make the ActionResult strongly typed.
 - [SuperDebug](https://superforms.rocks/super-debug) now has a `collapsed` prop, to make it initially collapsed. Use together with `collapsible`. ([#279](https://github.com/ciscoheat/sveltekit-superforms/issues/279))
 
+### Fixed
+
+- Schema `transform` operations weren't applied in [SPA forms](https://superforms.rocks/concepts/spa) and when posting to the server with client-side [validators](https://superforms.rocks/concepts/client-validation#validators).
+
 ## [1.8.0]
 
 ### Fixed

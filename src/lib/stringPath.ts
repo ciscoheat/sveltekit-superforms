@@ -21,8 +21,8 @@ export function mergePath(path: (string | number | symbol)[]) {
 /**
  * Lists all paths in an object as string accessors.
  */
-export type FormPath<T extends object> =
-  | (string & StringPath<T>)
+export type FormPath<T extends object, OnlyArrays extends boolean = false> =
+  | (string & StringPath<T, OnlyArrays>)
   | FormPathLeaves<T>;
 
 /**
@@ -31,7 +31,10 @@ export type FormPath<T extends object> =
  */
 export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
 
-export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
+export type StringPath<
+  T extends object,
+  OnlyArrays extends boolean = false
+> = NonNullable<T> extends (infer U)[]
   ? NonNullable<U> extends object
     ?
         | `[${number}]`
@@ -40,10 +43,20 @@ export type StringPath<T extends object> = NonNullable<T> extends (infer U)[]
             : '.'}${NonNullable<U> extends Date | Set<unknown>
             ? never
             : StringPath<NonNullable<U>> & string}`
-    : `[${number}]` | `[${number}].${U & string}`
+    : `[${number}]` /*| `[${number}].${U & string}`*/
   : NonNullable<T> extends object
   ?
-      | keyof T
+      | (OnlyArrays extends false
+          ? keyof T
+          : {
+              [K in keyof T]-?: K extends string
+                ? NonNullable<T[K]> extends (infer U2)[]
+                  ? U2 extends object
+                    ? never
+                    : K
+                  : never
+                : never;
+            }[keyof T])
       | {
           [K in keyof T]-?: K extends string
             ? NonNullable<T[K]> extends object

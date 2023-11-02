@@ -2,9 +2,11 @@
 import type {
   StringPath,
   FormPathType,
+  FormPathArrays,
   StringPathLeaves
 } from '$lib/stringPath';
 import { test } from 'vitest';
+import type { z } from 'zod';
 
 type Obj = {
   name: string;
@@ -16,29 +18,53 @@ type Obj = {
   tags:
     | ({ id: number; name: string; parents: number[] } | null)[]
     | undefined;
+  names: string[];
 };
 
 const i = 7 + 3;
 
 type Test = StringPath<Obj>;
+type Arrays = FormPathArrays<Obj>;
 
 test('StringPath', () => {
-  const a1: Test = 'name';
-  const a2: Test = 'city';
-  const a3: Test = 'tags';
-  const a4: Test = 'city.name';
-  const a5: Test = 'tags[3]';
-  const a6: Test = 'tags[3].name';
-  const a7: Test = 'scores[3][4]';
+  const t1: Test = 'name';
+  const t2: Test = 'city';
+  const t3: Test = 'tags';
+  const t4: Test = 'city.name';
+  const t5: Test = 'tags[3]';
+  const t6: Test = 'tags[3].name';
+  const t7: Test = 'scores[3][4]';
+  const t8: Test = 'names[3]';
 
   // @ts-expect-error incorrect path
-  const n8: Test = 'city[3]';
+  const t1e: Test = 'city[3]';
   // @ts-expect-error incorrect path
-  const n7: Test = 'city.nope';
+  const t2e: Test = 'city.nope';
   // @ts-expect-error incorrect path
-  const n9: Test = 'tags[4].nope';
+  const t3e: Test = 'tags[4].nope';
   // @ts-expect-error incorrect path
-  const n0: Test = 'nope';
+  const t4e: Test = 'nope';
+  // @ts-expect-error incorrect path
+  const t5e: Test = 'names[2].test';
+
+  const a1: Arrays = 'scores';
+  const a2: Arrays = 'scores[3]';
+  const a3: Arrays = 'tags';
+  const a4: Arrays = 'tags[2].parents';
+  const a5: Arrays = 'names';
+
+  // @ts-expect-error incorrect path
+  const a1e: Arrays = 'name';
+  // @ts-expect-error incorrect path
+  const a2e: Arrays = 'points';
+  // @ts-expect-error incorrect path
+  const a3e: Arrays = 'scores[2][1]';
+  // @ts-expect-error incorrect path
+  const a4e: Arrays = 'city';
+  // @ts-expect-error incorrect path
+  const a5e: Arrays = 'tags[1]';
+  // @ts-expect-error incorrect path
+  const a6e: Arrays = 'names[1]';
 });
 
 function checkPath<T = never>() {

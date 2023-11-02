@@ -4,16 +4,7 @@
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import AutoComplete from './AutoComplete.svelte';
 
-  import type { FormPath, FormPathLeaves } from '$lib';
-  import type { schema } from './schema';
-  import type { z } from 'zod';
-
   export let data: PageData;
-
-  type FP = FormPath<z.infer<typeof schema>, true>;
-  type FPL = FormPathLeaves<z.infer<typeof schema>>;
-
-  type OK = Exclude<FP, FPL>;
 
   const pageForm = superForm(data.form, {
     //dataType: 'json',
@@ -41,13 +32,5 @@
 <style lang="scss">
   form {
     margin: 2rem 0;
-
-    input {
-      background-color: #dedede;
-    }
-
-    .invalid {
-      color: crimson;
-    }
   }
 </style>

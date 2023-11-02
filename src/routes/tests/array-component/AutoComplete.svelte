@@ -5,15 +5,12 @@
 
 <script lang="ts" generics="T extends AnyZodObject">
   import type { z } from 'zod';
-  import type { ZodValidation, FormPath, FormPathLeaves } from '$lib';
+  import type { ZodValidation, FormPath, FormPathArrays } from '$lib';
   import type { Writable } from 'svelte/store';
   import { fieldProxy, type SuperForm } from '$lib/client';
 
   export let form: SuperForm<ZodValidation<T>, unknown>;
-  export let field: Exclude<
-    FormPath<z.infer<T>>,
-    FormPathLeaves<z.infer<T>>
-  >;
+  export let field: FormPathArrays<z.infer<T>>;
   export let options: { value: string; label: string }[];
   export let label = '';
 

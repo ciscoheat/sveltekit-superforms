@@ -23,7 +23,8 @@ export function mergePath(path: (string | number | symbol)[]) {
  */
 export type FormPath<T extends object> =
   | (string & StringPath<T>)
-  | FormPathLeaves<T>;
+  | FormPathLeaves<T>
+  | FormPathArrays<T>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
@@ -34,8 +35,29 @@ export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object> = string &
-  Exclude<StringPath<T, true>, FormPathLeaves<T>>;
+export type FormPathArrays<T extends object> = string & StringPathArrays<T>;
+
+export type StringPathArrays<T extends object, Path extends string = ''> = {
+  [K in Extract<keyof T, string>]: NonNullable<T[K]> extends
+    | Date
+    | Set<unknown>
+    ? never
+    : NonNullable<T[K]> extends (infer U)[]
+    ?
+        | `${Path}${Path extends '' ? '' : '.'}${K}`
+        | StringPathArrays<
+            NonNullable<U>,
+            `${Path}${Path extends '' ? '' : '.'}${K}[${number}]`
+          >
+    : NonNullable<T[K]> extends object
+    ? StringPathArrays<
+        NonNullable<T[K]>,
+        `${Path}${Path extends '' ? '' : '.'}${K}`
+      >
+    : NonNullable<T> extends unknown[]
+    ? Path
+    : never;
+}[Extract<keyof T, string>];
 
 export type StringPath<
   T extends object,

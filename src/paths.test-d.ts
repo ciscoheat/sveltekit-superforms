@@ -6,7 +6,6 @@ import type {
   StringPathLeaves
 } from '$lib/stringPath';
 import { test } from 'vitest';
-import type { z } from 'zod';
 
 type Obj = {
   name: string;
@@ -20,6 +19,22 @@ type Obj = {
     | undefined;
   names: string[];
 };
+
+type FormData = {
+  field1: string[] | null;
+  field2: {
+    subField1: number[] | null;
+    subField2: {
+      nestedField: boolean[] | null;
+    } | null;
+  } | null;
+  field3: {
+    nestedArray: {
+      innerArray: string[] | null;
+    }[];
+  };
+};
+type FormDataArrays = FormPathArrays<FormData>;
 
 const i = 7 + 3;
 

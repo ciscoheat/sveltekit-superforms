@@ -5,7 +5,7 @@
 
 <script lang="ts" generics="T extends AnyZodObject">
   import type { z } from 'zod';
-  import type { ZodValidation, FormPath, FormPathArrays } from '$lib';
+  import type { ZodValidation, FormPathArrays } from '$lib';
   import type { Writable } from 'svelte/store';
   import { fieldProxy, type SuperForm } from '$lib/client';
 
@@ -15,10 +15,7 @@
   export let label = '';
 
   const value = fieldProxy(form.form, field) as Writable<unknown[]>;
-  const errors = fieldProxy(
-    form.errors,
-    `${field}._errors` as FormPath<z.infer<T>>
-  );
+  const errors = fieldProxy(form.errors, `${field}._errors` as any);
 </script>
 
 {#if label}<label for={field}>{label}</label>{/if}

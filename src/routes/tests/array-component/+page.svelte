@@ -7,7 +7,7 @@
   export let data: PageData;
 
   const pageForm = superForm(data.form, {
-    //dataType: 'json',
+    dataType: 'json'
     //validators: schema
   });
   const { form, errors, message, enhance } = pageForm;
@@ -23,7 +23,7 @@
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
-  <AutoComplete form={pageForm} field="tags2" {options} />
+  <AutoComplete form={pageForm} field="sub.tags" {options} />
   <div>
     <button>Submit</button>
   </div>

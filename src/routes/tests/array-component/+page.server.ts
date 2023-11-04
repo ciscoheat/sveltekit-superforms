@@ -13,10 +13,10 @@ export const actions = {
     console.log(formData);
 
     const form = await superValidate(formData, schema);
-    console.log('POST', form);
+    console.dir(form, { depth: 5 });
 
     if (!form.valid) return fail(400, { form });
 
-    return message(form, 'Posted OK!');
+    return message(form, 'OK:' + form.data.sub.tags);
   }
 };

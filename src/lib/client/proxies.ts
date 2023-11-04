@@ -13,7 +13,7 @@ import {
   type FormPathLeaves,
   type FormPathType
 } from '../stringPath.js';
-import type { ZodValidation } from '../index.js';
+import type { FormPathArrays, ZodValidation } from '../index.js';
 
 type DefaultOptions = {
   trueStringValue: string;
@@ -233,12 +233,33 @@ function _stringProxy<
   };
 }
 
+export function arrayProxy<
+  T extends ZodValidation<AnyZodObject>,
+  Path extends FormPathArrays<z.infer<UnwrapEffects<T>>>
+>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  superForm: SuperForm<T, any>,
+  path: Path
+): {
+  path: Path;
+  value: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
+  errors: Writable<string[] | undefined>;
+} {
+  return {
+    path,
+    value: fieldProxy(superForm.form, path),
+    errors: fieldProxy(
+      superForm.errors,
+      `${path}._errors` as any
+    ) as Writable<string[] | undefined>
+  };
+}
 export function formFieldProxy<
   T extends ZodValidation<AnyZodObject>,
   Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>
 >(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  form: SuperForm<T, any>,
+  superForm: SuperForm<T, any>,
   path: Path
 ): {
   path: Path;
@@ -253,19 +274,19 @@ export function formFieldProxy<
     .filter((p) => isNaN(parseInt(String(p))))
     .join('.');
 
-  const taintedProxy = derived<typeof form.tainted, boolean | undefined>(
-    form.tainted,
-    ($tainted) => {
-      if (!$tainted) return $tainted;
-      const taintedPath = traversePath($tainted, path2);
-      return taintedPath ? taintedPath.value : undefined;
-    }
-  );
+  const taintedProxy = derived<
+    typeof superForm.tainted,
+    boolean | undefined
+  >(superForm.tainted, ($tainted) => {
+    if (!$tainted) return $tainted;
+    const taintedPath = traversePath($tainted, path2);
+    return taintedPath ? taintedPath.value : undefined;
+  });
 
   const tainted = {
     subscribe: taintedProxy.subscribe,
     update(upd: Updater<boolean | undefined>) {
-      form.tainted.update(($tainted) => {
+      superForm.tainted.update(($tainted) => {
         if (!$tainted) $tainted = {};
         const output = traversePath($tainted, path2, (path) => {
           if (!path.value) path.parent[path.key] = {};
@@ -276,7 +297,7 @@ export function formFieldProxy<
       });
     },
     set(value: boolean | undefined) {
-      form.tainted.update(($tainted) => {
+      superForm.tainted.update(($tainted) => {
         if (!$tainted) $tainted = {};
         const output = traversePath($tainted, path2, (path) => {
           if (!path.value) path.parent[path.key] = {};
@@ -290,12 +311,12 @@ export function formFieldProxy<
 
   return {
     path,
-    value: fieldProxy(form.form, path),
-    errors: fieldProxy(form.errors, path) as unknown as Writable<
+    value: fieldProxy(superForm.form, path),
+    errors: fieldProxy(superForm.errors, path) as unknown as Writable<
       string[] | undefined
     >,
     constraints: fieldProxy(
-      form.constraints,
+      superForm.constraints,
       constraintsPath as never
     ) as Writable<InputConstraint | undefined>,
     tainted

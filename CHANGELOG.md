@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `FormPathArrays` type, enumerating all arrays in an object as string accessors.
+- Added `arrayProxy`, for proxying arrays and their errors in the form data.
+- Added `FormPathArrays` type, enumerating all arrays in an object as string accessors. Used to access `arrayProxy` in a type-safe manner.
 
 ## [1.9.0] - 2023-10-31
 

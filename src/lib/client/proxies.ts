@@ -250,6 +250,7 @@ export function arrayProxy<
     value: fieldProxy(superForm.form, path),
     errors: fieldProxy(
       superForm.errors,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       `${path}._errors` as any
     ) as Writable<string[] | undefined>
   };

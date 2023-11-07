@@ -7,7 +7,7 @@
   import type { z } from 'zod';
   import type { ZodValidation, FormPathArrays } from '$lib';
   import type { SuperForm } from '$lib/client';
-  import { arrayProxy, type TaintOptions } from '$lib/client/proxies';
+  import { arrayProxy, type TaintOptions } from '$lib/client';
 
   export let form: SuperForm<ZodValidation<T>, unknown>;
   export let field: FormPathArrays<z.infer<T>>;

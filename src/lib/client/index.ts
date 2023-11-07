@@ -58,7 +58,9 @@ export {
   dateProxy,
   fieldProxy,
   formFieldProxy,
-  stringProxy
+  stringProxy,
+  arrayProxy,
+  type TaintOptions
 } from './proxies.js';
 
 export {

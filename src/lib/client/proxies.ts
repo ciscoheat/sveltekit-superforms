@@ -242,12 +242,12 @@ export function arrayProxy<
   path: Path
 ): {
   path: Path;
-  value: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
+  values: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
   errors: Writable<string[] | undefined>;
 } {
   return {
     path,
-    value: fieldProxy(superForm.form, path),
+    values: fieldProxy(superForm.form, path),
     errors: fieldProxy(
       superForm.errors,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

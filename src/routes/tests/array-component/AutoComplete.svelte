@@ -14,15 +14,15 @@
   export let options: { value: string; label: string }[];
   export let label = '';
 
-  const { value, errors } = arrayProxy(form, field);
+  const { values, errors } = arrayProxy(form, field);
 </script>
 
 {#if label}<label for={field}>{label}</label>{/if}
 
 <!-- Note that the selected attribute is required for this to work without JS -->
-<select multiple name={field} bind:value={$value}>
+<select multiple name={field} bind:value={$values}>
   {#each options as option}
-    <option value={option.value} selected={$value.includes(option.value)}
+    <option value={option.value} selected={$values.includes(option.value)}
       >{option.label}</option
     >
   {/each}

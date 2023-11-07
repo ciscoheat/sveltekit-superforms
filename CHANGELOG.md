@@ -5,12 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.10.0] - 2023-11-07
 
 ### Added
 
 - Added `arrayProxy`, for proxying arrays and their errors in the form data.
 - Added `FormPathArrays` type, enumerating all arrays in an object as string accessors. Used to access `arrayProxy` in a type-safe manner.
+- `formFieldProxy` now has a `taint` option, in case a modification should not taint the form.
 
 ## [1.9.0] - 2023-10-31
 

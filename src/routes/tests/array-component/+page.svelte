@@ -10,7 +10,7 @@
     dataType: 'json'
     //validators: schema
   });
-  const { form, errors, message, enhance } = pageForm;
+  const { form, errors, message, enhance, tainted } = pageForm;
 
   const options = [
     { value: 'A', label: 'Aldebaran' },
@@ -20,10 +20,12 @@
 
 <SuperDebug data={{ $form, $errors }} />
 
+{#if $tainted}<h3>FORM IS TAINTED</h3>{/if}
+
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
-  <AutoComplete form={pageForm} field="sub.tags" {options} />
+  <AutoComplete form={pageForm} field="sub.tags" {options} taint={false} />
   <div>
     <button>Submit</button>
   </div>

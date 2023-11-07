@@ -203,24 +203,26 @@ export type TaintOption<T extends AnyZodObject = AnyZodObject> =
   | 'untaint-all'
   | { fields: FormPathLeaves<z.infer<T>> | FormPathLeaves<z.infer<T>>[] };
 
+type SuperFormData<T extends ZodValidation<AnyZodObject>> = {
+  subscribe: Readable<z.infer<UnwrapEffects<T>>>['subscribe'];
+  set(
+    this: void,
+    value: z.infer<UnwrapEffects<T>>,
+    options?: { taint?: TaintOption<UnwrapEffects<T>> }
+  ): void;
+  update(
+    this: void,
+    updater: Updater<z.infer<UnwrapEffects<T>>>,
+    options?: { taint?: TaintOption<UnwrapEffects<T>> }
+  ): void;
+};
+
 export type SuperForm<
   T extends ZodValidation<AnyZodObject>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = {
-  form: {
-    subscribe: Readable<z.infer<UnwrapEffects<T>>>['subscribe'];
-    set(
-      this: void,
-      value: z.infer<UnwrapEffects<T>>,
-      options?: { taint?: TaintOption<UnwrapEffects<T>> }
-    ): void;
-    update(
-      this: void,
-      updater: Updater<z.infer<UnwrapEffects<T>>>,
-      options?: { taint?: TaintOption<UnwrapEffects<T>> }
-    ): void;
-  };
+  form: SuperFormData<T>;
   formId: Writable<string | undefined>;
   errors: Writable<SuperValidated<T, M>['errors']> & {
     clear: () => void;

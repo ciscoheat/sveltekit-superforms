@@ -1,4 +1,9 @@
-import { derived, type Updater, type Writable } from 'svelte/store';
+import {
+  derived,
+  type Readable,
+  type Updater,
+  type Writable
+} from 'svelte/store';
 import {
   SuperFormError,
   type InputConstraint,
@@ -38,6 +43,8 @@ const defaultOptions: DefaultOptions = {
   dateFormat: 'iso',
   emptyIfZero: true
 };
+
+export type TaintOptions = boolean | 'untaint' | 'untaint-all';
 
 ///// Proxy functions ///////////////////////////////////////////////
 
@@ -239,7 +246,8 @@ export function arrayProxy<
 >(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   superForm: SuperForm<T, any>,
-  path: Path
+  path: Path,
+  options?: { taint?: TaintOptions }
 ): {
   path: Path;
   values: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
@@ -247,7 +255,7 @@ export function arrayProxy<
 } {
   return {
     path,
-    values: fieldProxy(superForm.form, path),
+    values: superFieldProxy(superForm, path, options),
     errors: fieldProxy(
       superForm.errors,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -255,16 +263,18 @@ export function arrayProxy<
     ) as Writable<string[] | undefined>
   };
 }
+
 export function formFieldProxy<
   T extends ZodValidation<AnyZodObject>,
   Path extends FormPathLeaves<z.infer<UnwrapEffects<T>>>
 >(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   superForm: SuperForm<T, any>,
-  path: Path
+  path: Path,
+  options?: { taint?: TaintOptions }
 ): {
   path: Path;
-  value: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
+  value: SuperFieldProxy<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
   errors: Writable<string[] | undefined>;
   constraints: Writable<InputConstraint | undefined>;
   tainted: Writable<boolean | undefined>;
@@ -312,7 +322,7 @@ export function formFieldProxy<
 
   return {
     path,
-    value: fieldProxy(superForm.form, path),
+    value: superFieldProxy(superForm, path, options),
     errors: fieldProxy(superForm.errors, path) as unknown as Writable<
       string[] | undefined
     >,
@@ -321,6 +331,60 @@ export function formFieldProxy<
       constraintsPath as never
     ) as Writable<InputConstraint | undefined>,
     tainted
+  };
+}
+
+type SuperFieldProxy<T extends object> = /*Writable<T> &*/ {
+  subscribe: Readable<T>['subscribe'];
+  set(this: void, value: T, options?: { taint?: TaintOptions }): void;
+  update(
+    this: void,
+    updater: Updater<T>,
+    options?: { taint?: TaintOptions }
+  ): void;
+};
+
+function superFieldProxy<
+  T extends ZodValidation<AnyZodObject>,
+  Path extends FormPath<z.infer<T>>
+>(
+  superForm: SuperForm<T>,
+  path: Path,
+  baseOptions?: { taint?: TaintOptions }
+): SuperFieldProxy<FormPathType<z.infer<T>, Path>> {
+  const form = superForm.form;
+  const path2 = splitPath<z.infer<T>>(path);
+
+  const proxy = derived(form, ($form) => {
+    const data = traversePath($form, path2);
+    return data?.value;
+  });
+
+  return {
+    subscribe(...params: Parameters<typeof proxy.subscribe>) {
+      const unsub = proxy.subscribe(...params);
+      return () => unsub();
+    },
+    update(
+      upd: Updater<FormPathType<z.infer<T>, Path>>,
+      options?: { taint?: TaintOptions }
+    ) {
+      form.update((f) => {
+        const output = traversePath(f, path2);
+        if (output) output.parent[output.key] = upd(output.value);
+        return f;
+      }, options ?? baseOptions);
+    },
+    set(
+      value: FormPathType<z.infer<T>, Path>,
+      options?: { taint?: TaintOptions }
+    ) {
+      form.update((f) => {
+        const output = traversePath(f, path2);
+        if (output) output.parent[output.key] = value;
+        return f;
+      }, options ?? baseOptions);
+    }
   };
 }
 
@@ -337,30 +401,21 @@ export function fieldProxy<T extends object, Path extends FormPath<T>>(
 
   return {
     subscribe(...params: Parameters<typeof proxy.subscribe>) {
-      //console.log('~ fieldproxy ~ subscribe', path);
       const unsub = proxy.subscribe(...params);
 
-      return () => {
-        //console.log('~ fieldproxy ~ unsubscribe', field);
-        unsub();
-      };
+      return () => unsub();
     },
-    //subscribe: proxy.subscribe,
     update(upd: Updater<FormPathType<T, Path>>) {
-      //console.log('~ fieldStore ~ update value for', path);
       form.update((f) => {
         const output = traversePath(f, path2);
         if (output) output.parent[output.key] = upd(output.value);
-        //else console.log('[update] Not found:', path, 'in', f);
         return f;
       });
     },
     set(value: FormPathType<T, Path>) {
-      //console.log('~ fieldStore ~ set value for', path, value);
       form.update((f) => {
         const output = traversePath(f, path2);
         if (output) output.parent[output.key] = value;
-        //else console.log('[set] Not found:', path, 'in', f);
         return f;
       });
     }

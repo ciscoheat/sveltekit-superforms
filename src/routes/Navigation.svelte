@@ -1,51 +1,62 @@
-<nav>
-  <a href="/">Start</a>
-  <a href="/test">Test page</a>
-  <a href="/crud">CRUD</a>
-  <a href="/super-debug">SuperDebug</a>
-  <a href="/nested">Nested</a>
-  <a href="/timers">Timers</a>
-  <a href="/multiple">Multiple</a>
-  <a href="/multiple2">Multiple 2</a>
-  <a href="/snapshot">Snapshot</a>
-  <a href="/dates">Dates</a>
-  <a href="/reset">Reset</a>
-  <a href="/url">URL</a>
-  <a href="/tainted">Tainted</a>
-  <a href="/proxies">Proxies</a>
-  <a href="/tests/datetime-local">Proxies 2</a>
-  <a href="/properly-nested">Properly nested</a>
-  <a href="/nested-validation">Nested client validation</a>
-  <a href="/tests/rex">Side-effect validation</a>
-  <a href="/tests/superform-c">Side-effect 2</a>
-  <a href="/tests/custom-validity">Custom validity</a>
-  <a href="/files">Files</a>
-  <a href="/spa">SPA</a>
-  <a href="/tests/multiselect">Multi-select</a>
-  <a href="/tests/spa-values-disappearing">SPA onUpdate</a>
-  <a href="/posted">Posted store</a>
-  <a href="/tests/flash-onerror">Flash onError</a>
-  <a href="/tests/reset-component">Reset component 1</a>
-  <a href="/tests/reset-component-2">Reset component 2</a>
-  <a href="/tests/tainted-proxy">Tainted formFieldProxy</a>
-  <a href="/tests/spa-schema-transform?SPA">SPA schema transform</a>
-  <a href="/tests/array-component">Array proxy</a>
+<nav class="flex-list">
+  <ul>
+    <li><a href="/">Start</a></li>
+    <li><a href="/test">Test page</a></li>
+    <li><a href="/crud">CRUD</a></li>
+    <li><a href="/super-debug">SuperDebug</a></li>
+    <li><a href="/nested">Nested</a></li>
+    <li><a href="/timers">Timers</a></li>
+    <li><a href="/multiple">Multiple</a></li>
+    <li><a href="/multiple2">Multiple 2</a></li>
+    <li><a href="/snapshot">Snapshot</a></li>
+    <li><a href="/dates">Dates</a></li>
+    <li><a href="/reset">Reset</a></li>
+    <li><a href="/url">URL</a></li>
+    <li><a href="/tainted">Tainted</a></li>
+    <li><a href="/proxies">Proxies</a></li>
+    <li><a href="/tests/datetime-local">Proxies 2</a></li>
+    <li><a href="/properly-nested">Properly nested</a></li>
+    <li><a href="/nested-validation">Nested client validation</a></li>
+    <li><a href="/tests/rex">Side-effect validation</a></li>
+    <li><a href="/tests/superform-c">Side-effect 2</a></li>
+    <li><a href="/tests/custom-validity">Custom validity</a></li>
+    <li><a href="/files">Files</a></li>
+    <li><a href="/spa">SPA</a></li>
+    <li><a href="/tests/multiselect">Multi-select</a></li>
+    <li><a href="/tests/spa-values-disappearing">SPA onUpdate</a></li>
+    <li><a href="/posted">Posted store</a></li>
+    <li><a href="/tests/flash-onerror">Flash onError</a></li>
+    <li><a href="/tests/reset-component">Reset component 1</a></li>
+    <li><a href="/tests/reset-component-2">Reset component 2</a></li>
+    <li><a href="/tests/tainted-proxy">Tainted formFieldProxy</a></li>
+    <li>
+      <a href="/tests/spa-schema-transform?SPA">SPA schema transform</a>
+    </li>
+    <li><a href="/tests/array-component">Array proxy</a></li>
+    <li><a href="/tests/redirect-same-route">Redirect with delay</a></li>
+  </ul>
 </nav>
 
 <style lang="scss">
-  nav {
+  .flex-list {
+    position: relative;
+    overflow: hidden;
+  }
+  .flex-list ul {
+    padding: 0;
+    list-style-type: none;
     display: flex;
-    text-align: center;
-    margin-bottom: 12px;
+    flex-direction: row;
     flex-wrap: wrap;
-    column-gap: 5px;
-    justify-content: center;
-
-    a {
-      white-space: nowrap;
-      &:not(:last-child)::after {
-        content: ' | ';
-      }
-    }
+    justify-content: space-between;
+    margin-left: -1px;
+  }
+  .flex-list li {
+    flex-grow: 1;
+    flex-basis: auto;
+    margin: 0;
+    padding: 0 0.2em;
+    text-align: center;
+    border-left: 1px solid #bbb;
   }
 </style>

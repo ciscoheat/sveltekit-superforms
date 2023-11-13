@@ -24,6 +24,8 @@ import { traversePath } from './traversal.js';
 import type {
   z,
   AnyZodObject,
+  ZodBranded,
+  ZodTypeAny,
   ZodNumber,
   ZodLiteral,
   ZodNativeEnum,
@@ -194,7 +196,10 @@ function formDataToValidation<T extends AnyZodObject>(
     typeInfo: ZodTypeInfo
   ): unknown {
     const newValue = valueOrDefault(value, false, true, typeInfo);
-    const zodType = typeInfo.zodType;
+    const zodType: ZodTypeAny =
+      typeInfo.zodType._def.typeName === 'ZodBranded'
+        ? (typeInfo.zodType as ZodBranded<any, any>).unwrap()
+        : typeInfo.zodType;
 
     // If the value was empty, it now contains the default value,
     // so it can be returned immediately, unless it's boolean, which
@@ -531,7 +536,7 @@ export async function superValidate<
     | FormData
     | URLSearchParams
     | URL
-    | Partial<z.infer<UnwrapEffects<T>>>
+    | Partial<z.input<UnwrapEffects<T>>>
     | null
     | undefined,
   schema: T,

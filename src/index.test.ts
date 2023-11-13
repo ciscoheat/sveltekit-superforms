@@ -219,6 +219,18 @@ test('Optional values', async () => {
   expect(output.errors).toStrictEqual({});
 });
 
+test('Braded values', async () => {
+  const schema = z.object({
+    name: z.string().brand('name'),
+  });
+
+  const output = await superValidate({ name: 'Name' }, schema);
+  expect(output.valid).equals(true);
+  expect(output.message).toBeUndefined();
+  expect(output.data.name).equals('Name');
+  expect(output.errors).toStrictEqual({});
+});
+
 describe('Default values', () => {
   test('With a partial entity', async () => {
     const now = new Date();
@@ -801,7 +813,7 @@ test('Passthrough validation', async () => {
   });
 });
 
-test.only('Preprocessed fields', async () => {
+test('Preprocessed fields', async () => {
   const schema = z.object({
     tristate: z.preprocess(
       (value) => (value === undefined ? undefined : Boolean(value)),

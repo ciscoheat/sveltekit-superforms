@@ -2,15 +2,17 @@
   import { superForm } from '$lib/client';
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import { schema } from './schema';
 
   export let data: PageData;
+
+  let shouldCancel = false;
 
   const { form, errors, tainted, message, enhance, submitting } = superForm(
     data.form,
     {
-      //dataType: 'json',
-      //validators: schema
+      onSubmit({ cancel }) {
+        if (shouldCancel) cancel();
+      }
     }
   );
 </script>
@@ -28,17 +30,31 @@
     <button>Submit</button>
     {#if $submitting}
       <svg
-        xmlns="http://www.w3.org/2000/svg"
         width="24"
         height="24"
         viewBox="0 0 24 24"
-        ><path
-          fill="currentColor"
-          d="M12 21a9 9 0 1 1 6.18-15.55a.75.75 0 0 1 0 1.06a.74.74 0 0 1-1.06 0A7.51 7.51 0 1 0 19.5 12a.75.75 0 0 1 1.5 0a9 9 0 0 1-9 9Z"
+        xmlns="http://www.w3.org/2000/svg"
+        ><style>
+          .spinner_ajPY {
+            transform-origin: center;
+            animation: spinner_AtaB 0.75s infinite linear;
+          }
+          @keyframes spinner_AtaB {
+            100% {
+              transform: rotate(360deg);
+            }
+          }
+        </style><path
+          d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"
+          opacity=".25"
+        /><path
+          d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+          class="spinner_ajPY"
         /></svg
       >
     {/if}
   </div>
+  <input type="checkbox" bind:checked={shouldCancel} /> Cancel submit
 </form>
 
 <style lang="scss">

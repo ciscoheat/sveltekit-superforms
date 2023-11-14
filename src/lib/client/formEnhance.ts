@@ -254,21 +254,25 @@ export function formEnhance<T extends AnyZodObject, M>(
   let currentRequest: AbortController | null;
 
   return enhance(formEl, async (submit) => {
-    const submitCancel = submit.cancel;
+    const _submitCancel = submit.cancel;
 
     let cancelled = false;
-    function cancel() {
+    function cancel(resetTimers = true) {
       cancelled = true;
-      return submitCancel();
+      if (resetTimers && htmlForm.isSubmitting()) {
+        htmlForm.completed(true);
+      }
+      return _submitCancel();
     }
     submit.cancel = cancel;
 
     if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
-      cancel();
+      cancel(false);
     } else {
       if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
         if (currentRequest) currentRequest.abort();
       }
+      htmlForm.submitting();
       currentRequest = submit.controller;
 
       for (const event of formEvents.onSubmit) {
@@ -327,8 +331,6 @@ export function formEnhance<T extends AnyZodObject, M>(
         ) {
           options.flashMessage.module.getFlash(page).set(undefined);
         }
-
-        htmlForm.submitting();
 
         // Deprecation fix
         const submitData =

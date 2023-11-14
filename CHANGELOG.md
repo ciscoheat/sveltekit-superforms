@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Timers weren't starting until after `onSubmit`, allowing multiple form submissions on longer async operations. ([#284](https://github.com/ciscoheat/sveltekit-superforms/issues/284))
+- Fixed constraints on fields that starts with a number. ([#285](https://github.com/ciscoheat/sveltekit-superforms/issues/285))
 
 ## [1.10.0] - 2023-11-07
 

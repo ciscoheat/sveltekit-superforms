@@ -88,7 +88,7 @@ export function mapErrors<T extends AnyZodObject>(
   for (const [key, value] of entries.filter(([key]) => key !== '_errors')) {
     // Keep current errorShape if the object key is numeric
     // which means we are in an array.
-    const numericKey = !isNaN(parseInt(key, 10));
+    const numericKey = /^\d+$/.test(key);
 
     // _errors are filtered out, so casting is fine
     output[key] = mapErrors(

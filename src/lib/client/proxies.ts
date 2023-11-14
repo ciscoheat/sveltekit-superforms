@@ -282,7 +282,7 @@ export function formFieldProxy<
   const path2 = splitPath<z.infer<UnwrapEffects<T>>>(path);
   // Filter out array indices, the constraints structure doesn't contain these.
   const constraintsPath = (path2 as unknown[])
-    .filter((p) => isNaN(parseInt(String(p))))
+    .filter((p) => /\D/.test(String(p)))
     .join('.');
 
   const taintedProxy = derived<

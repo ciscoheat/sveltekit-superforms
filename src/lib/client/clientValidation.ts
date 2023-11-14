@@ -133,7 +133,7 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
 
       await traversePathsAsync(checkData, async ({ value, path }) => {
         // Filter out array indices, the validator structure doesn't contain these.
-        const validationPath = path.filter((p) => isNaN(parseInt(p)));
+        const validationPath = path.filter((p) => /\D/.test(String(p)));
         const maybeValidator = traversePath(
           validator,
           validationPath as FieldPath<typeof validator>
@@ -392,7 +392,7 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
     shouldUpdate: true,
     currentData: undefined as z.infer<T> | undefined,
     // Remove numeric indices, they're not used for validators.
-    validationPath: path.filter((p) => isNaN(parseInt(p)))
+    validationPath: path.filter((p) => /\D/.test(String(p)))
   };
 
   async function defaultValidate() {

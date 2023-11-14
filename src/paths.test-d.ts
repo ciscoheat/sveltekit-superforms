@@ -3,9 +3,11 @@ import type {
   StringPath,
   FormPathType,
   FormPathArrays,
-  StringPathLeaves
+  StringPathLeaves,
+  FormPathLeaves
 } from '$lib/stringPath';
 import { test } from 'vitest';
+import { z } from 'zod';
 
 type Obj = {
   name: string;
@@ -173,3 +175,14 @@ test('Objects with sets', () => {
   // @ts-expect-error incorrect path
   const b3: SetTest = 'numbers.set.size';
 });
+
+// Recursive schema test
+const baseExampleSchema = z.object({
+  name: z.string()
+});
+
+const exampleSchema = baseExampleSchema.extend({
+  children: z.lazy(() => baseExampleSchema.array().optional())
+});
+
+type ExampleFormPathLeaves = FormPathLeaves<z.infer<typeof exampleSchema>>;

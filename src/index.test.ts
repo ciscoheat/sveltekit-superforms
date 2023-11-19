@@ -219,12 +219,14 @@ test('Optional values', async () => {
   expect(output.errors).toStrictEqual({});
 });
 
-test('Braded values', async () => {
+test('Branded values', async () => {
   const schema = z.object({
     name: z.string().brand('name'),
   });
 
-  const output = await superValidate({ name: 'Name' }, schema);
+  const data = new FormData();
+  data.append('name', 'Name');
+  const output = await superValidate(data, schema);
   expect(output.valid).equals(true);
   expect(output.message).toBeUndefined();
   expect(output.data.name).equals('Name');

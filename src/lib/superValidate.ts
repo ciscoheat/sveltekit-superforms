@@ -513,6 +513,10 @@ function getSchemaData<T extends AnyZodObject>(
     catchallTypeInfo = unwrapZodType(
       unwrapSchema(unwrappedSchema._def.catchall)
     );
+
+    if (catchallTypeInfo.zodType._def.typeName === 'ZodNever') {
+      catchallTypeInfo = undefined;
+    }
   }
 
   return {

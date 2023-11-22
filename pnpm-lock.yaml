@@ -5,57 +5,69 @@ settings:
   excludeLinksFromLockfile: false
 
 devDependencies:
+  '@decs/typeschema':
+    specifier: ^0.12.1
+    version: 0.12.1(valibot@0.21.0)(vite@4.5.0)(zod@3.22.4)
   '@sveltejs/adapter-auto':
-    specifier: ^2.0.0
+    specifier: ^2.1.1
     version: 2.1.1(@sveltejs/kit@1.27.6)
   '@sveltejs/kit':
-    specifier: ^1.27.4
+    specifier: ^1.27.6
     version: 1.27.6(svelte@5.0.0-next.9)(vite@4.5.0)
   '@sveltejs/package':
-    specifier: ^2.0.0
+    specifier: ^2.2.2
     version: 2.2.2(svelte@5.0.0-next.9)(typescript@5.3.2)
   '@typescript-eslint/eslint-plugin':
-    specifier: ^6.0.0
+    specifier: ^6.12.0
     version: 6.12.0(@typescript-eslint/parser@6.12.0)(eslint@8.54.0)(typescript@5.3.2)
   '@typescript-eslint/parser':
-    specifier: ^6.0.0
+    specifier: ^6.12.0
     version: 6.12.0(eslint@8.54.0)(typescript@5.3.2)
   eslint:
-    specifier: ^8.28.0
+    specifier: ^8.54.0
     version: 8.54.0
   eslint-config-prettier:
     specifier: ^9.0.0
     version: 9.0.0(eslint@8.54.0)
   eslint-plugin-svelte:
-    specifier: ^2.30.0
+    specifier: ^2.35.1
     version: 2.35.1(eslint@8.54.0)(svelte@5.0.0-next.9)
   prettier:
-    specifier: ^3.0.0
+    specifier: ^3.1.0
     version: 3.1.0
   prettier-plugin-svelte:
-    specifier: ^3.0.0
+    specifier: ^3.1.1
     version: 3.1.1(prettier@3.1.0)(svelte@5.0.0-next.9)
   publint:
-    specifier: ^0.1.9
+    specifier: ^0.1.16
     version: 0.1.16
   svelte:
-    specifier: ^5.0.0-next.1
+    specifier: 5.0.0-next.9
     version: 5.0.0-next.9
   svelte-check:
     specifier: ^3.6.0
     version: 3.6.0(postcss@8.4.31)(svelte@5.0.0-next.9)
+  ts-deepmerge:
+    specifier: ^6.2.0
+    version: 6.2.0
   tslib:
-    specifier: ^2.4.1
+    specifier: ^2.6.2
     version: 2.6.2
   typescript:
-    specifier: ^5.0.0
+    specifier: ^5.3.2
     version: 5.3.2
+  valibot:
+    specifier: ^0.21.0
+    version: 0.21.0
   vite:
-    specifier: ^4.4.2
+    specifier: ^4.5.0
     version: 4.5.0(@types/node@20.9.3)
   vitest:
-    specifier: ^0.34.0
+    specifier: ^0.34.6
     version: 0.34.6
+  zod:
+    specifier: ^3.22.4
+    version: 3.22.4
 
 packages:
 
@@ -70,6 +82,64 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.20
+    dev: true
+
+  /@decs/typeschema@0.12.1(valibot@0.21.0)(vite@4.5.0)(zod@3.22.4):
+    resolution: {integrity: sha512-PhoCbaJ6T+9EfvUkemgYVnNfLmLoP2+Aa5yvQ3sIzH4fmIgDEFPGSRPuaTO04c99sqLeKuhHEY+WLzNubGABOA==}
+    peerDependencies:
+      '@deepkit/type': ^1.0.1-alpha.97
+      '@effect/data': ^0.18.6
+      '@effect/schema': ^0.36.5
+      '@sinclair/typebox': ^0.31.15
+      ajv: ^8.12.0
+      arktype: ^1.0.21-alpha
+      fp-ts: ^2.16.1
+      io-ts: ^2.2.20
+      joi: ^17.10.2
+      ow: ^0.28.2
+      runtypes: ^6.7.0
+      superstruct: ^1.0.3
+      valibot: ^0.17.0
+      vite: ^4.4.10
+      yup: ^1.2.0
+      zod: ^3.22.2
+    peerDependenciesMeta:
+      '@deepkit/type':
+        optional: true
+      '@effect/data':
+        optional: true
+      '@effect/schema':
+        optional: true
+      '@sinclair/typebox':
+        optional: true
+      ajv:
+        optional: true
+      arktype:
+        optional: true
+      fp-ts:
+        optional: true
+      io-ts:
+        optional: true
+      joi:
+        optional: true
+      ow:
+        optional: true
+      runtypes:
+        optional: true
+      superstruct:
+        optional: true
+      valibot:
+        optional: true
+      vite:
+        optional: true
+      yup:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      valibot: 0.21.0
+      vite: 4.5.0(@types/node@20.9.3)
+      zod: 3.22.4
     dev: true
 
   /@esbuild/android-arm64@0.18.20:
@@ -2145,6 +2215,11 @@ packages:
       typescript: 5.3.2
     dev: true
 
+  /ts-deepmerge@6.2.0:
+    resolution: {integrity: sha512-2qxI/FZVDPbzh63GwWIZYE7daWKtwXZYuyc8YNq0iTmMUwn4mL0jRLsp6hfFlgbdRSR4x2ppe+E86FnvEpN7Nw==}
+    engines: {node: '>=14.13.1'}
+    dev: true
+
   /tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
     dev: true
@@ -2195,6 +2270,10 @@ packages:
 
   /util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+    dev: true
+
+  /valibot@0.21.0:
+    resolution: {integrity: sha512-XnzpX93b1vQL7CB3fHlhpLg7OutYpc3ke8SKOvp7IXgicRfTdP/w8+bf0DjhVsySq6YdF4Opld05mj6bTobo9g==}
     dev: true
 
   /vite-node@0.34.6(@types/node@20.9.3):
@@ -2373,4 +2452,8 @@ packages:
 
   /zimmerframe@1.1.0:
     resolution: {integrity: sha512-+AmV37r9NPUy7KcuG0Fde9AAFSD88kN5pnqvD7Pkp5WLLK0jct7hAtIDXXFDCRk3l5Mc1r2Sth3gfP2ZLE+/Qw==}
+    dev: true
+
+  /zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
     dev: true

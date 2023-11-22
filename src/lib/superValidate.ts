@@ -1,5 +1,5 @@
 import type { Infer, Schema } from '@decs/typeschema';
-import { SuperFormError, type SuperValidated } from './index.js';
+import { SuperFormError, type InputConstraints, type SuperValidated } from './index.js';
 import { validate } from '@decs/typeschema';
 import { setPaths } from './traversal.js';
 import type { BaseSchema, BaseSchemaAsync } from 'valibot';
@@ -94,18 +94,23 @@ export async function superValidate<
 	options?: SuperValidateOptions<Inferred<T>, boolean>
 ): Promise<SuperValidated<Inferred<T>, M, SupportsConstraints<T>>> {
 	const addErrors = options?.errors !== undefined ? options.errors : !!data;
+	let constraints: InputConstraints<Inferred<T>> = {};
+	let defaults: Inferred<T> | undefined = options?.defaults ? options.defaults : undefined;
 
 	switch (schemaType(schema)) {
-		case 'zod':
-			options = { ...options, defaults: new ZodSchemaMeta(schema).defaults };
+		case 'zod': {
+			const meta = new ZodSchemaMeta(schema as AnyZodObject);
+			defaults = meta.defaults as Inferred<T>;
+			constraints = meta.constraints;
 			break;
+		}
 	}
 
-	if (!options?.defaults) {
+	if (!defaults) {
 		throw new SuperFormError('options.defaults must be specified.');
 	}
 
-	data = merge(options.defaults, data ?? {}) as Inferred<T>;
+	data = merge(defaults, data ?? {}) as Inferred<T>;
 
 	const status = await validate(schema, data);
 
@@ -125,8 +130,8 @@ export async function superValidate<
 			valid: false,
 			//posted: false,
 			errors,
-			data: data as Inferred<T>
-			//constraints
+			data: data as Inferred<T>,
+			constraints
 			//message
 			//id
 		};
@@ -136,8 +141,8 @@ export async function superValidate<
 		valid: true,
 		//posted: false,
 		errors: {},
-		data: data as Inferred<T>
-		//constraints
+		data: data as Inferred<T>,
+		constraints
 		//message
 		//id
 	};

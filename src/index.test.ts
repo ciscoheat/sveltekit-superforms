@@ -9,6 +9,19 @@ const defaults = { name: '', email: '', tags: ['A'] };
 const testData = { name: 'Ok', email: '' };
 const expectedData = { name: 'Ok', email: '', tags: ['A'] };
 
+const expectedConstraints = {
+	email: {
+		required: true
+	},
+	name: {
+		required: true
+	},
+	tags: {
+		minlength: 2,
+		required: true
+	}
+};
+
 describe('Typeschema validation test', () => {
 	describe('Valibot', () => {
 		const schema = object({
@@ -24,6 +37,9 @@ describe('Typeschema validation test', () => {
 			expect(output.data).toEqual(defaults);
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
+			expect(output.constraints).toEqual({});
+			// @ts-expect-error cannot assign to never
+			output.constraints = {};
 
 			const output2 = await superValidate(schema, null, { defaults, errors: true });
 			expect(output2.data).toEqual(defaults);
@@ -55,6 +71,7 @@ describe('Typeschema validation test', () => {
 			expect(output.data).toEqual(defaults);
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
+			expect(output.constraints).toEqual(expectedConstraints);
 
 			const output2 = await superValidate(schema, null, { errors: true });
 			expect(output2.data).toEqual(defaults);

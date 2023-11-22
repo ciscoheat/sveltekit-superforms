@@ -131,8 +131,8 @@ export async function superValidate<
 			//posted: false,
 			errors,
 			data: data as Inferred<T>,
-			constraints
-			//message
+			constraints,
+			message: undefined
 			//id
 		};
 	}
@@ -142,8 +142,8 @@ export async function superValidate<
 		//posted: false,
 		errors: {},
 		data: data as Inferred<T>,
-		constraints
-		//message
+		constraints,
+		message: undefined
 		//id
 	};
 }

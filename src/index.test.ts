@@ -38,6 +38,7 @@ describe('Typeschema validation test', () => {
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
 			expect(output.constraints).toEqual({});
+			expect(output.message).toBeUndefined();
 			// @ts-expect-error cannot assign to never
 			output.constraints = {};
 
@@ -72,6 +73,7 @@ describe('Typeschema validation test', () => {
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
 			expect(output.constraints).toEqual(expectedConstraints);
+			expect(output.message).toBeUndefined();
 
 			const output2 = await superValidate(schema, null, { errors: true });
 			expect(output2.data).toEqual(defaults);

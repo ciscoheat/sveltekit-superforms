@@ -157,7 +157,7 @@ function formDataToValidation<T extends AnyZodObject>(
   preprocessed?: (keyof z.infer<T>)[]
 ) {
   const output: Record<string, unknown> = {};
-  const { schemaKeys, entityInfo } = schemaData;
+  const { schemaKeys, entityInfo, catchallTypeInfo } = schemaData;
 
   function parseSingleEntry(
     key: string,
@@ -176,8 +176,7 @@ function formDataToValidation<T extends AnyZodObject>(
     return parseFormDataEntry(key, entry, typeInfo);
   }
 
-  for (const key of schemaKeys) {
-    const typeInfo = entityInfo.typeInfo[key];
+  function parseKey(key: string, typeInfo: ZodTypeInfo) {
     const entries = data.getAll(key);
 
     if (!(typeInfo.zodType._def.typeName == 'ZodArray')) {
@@ -185,6 +184,26 @@ function formDataToValidation<T extends AnyZodObject>(
     } else {
       const arrayType = unwrapZodType(typeInfo.zodType._def.type);
       output[key] = entries.map((e) => parseSingleEntry(key, e, arrayType));
+    }
+  }
+
+  for (const key of schemaKeys) {
+    const typeInfo = entityInfo.typeInfo[key];
+    parseKey(key, typeInfo);
+  }
+
+  if (catchallTypeInfo) {
+    for (const key of data.keys()) {
+      if (
+        key === '__superform_id' ||
+        key === '__superform_json' ||
+        schemaKeys.includes(key)
+      ) {
+        // Key is internal or was already handled
+        continue;
+      }
+
+      parseKey(key, catchallTypeInfo);
     }
   }
 
@@ -280,6 +299,7 @@ function formDataToValidation<T extends AnyZodObject>(
 type SchemaData<T extends AnyZodObject> = {
   originalSchema: ZodValidation<T>;
   unwrappedSchema: T;
+  catchallTypeInfo: ZodTypeInfo | undefined;
   hasEffects: boolean;
   entityInfo: Entity<T>;
   schemaKeys: string[];
@@ -462,19 +482,22 @@ function validateResult<T extends AnyZodObject, M>(
   }
 }
 
+function unwrapSchema<T extends AnyZodObject>(schema: ZodValidation<T>) {
+  let unwrapped = schema;
+  while (unwrapped._def.typeName === 'ZodEffects') {
+    unwrapped = unwrapped._def.schema;
+  }
+  return unwrapped as UnwrapEffects<T>;
+}
+
 function getSchemaData<T extends AnyZodObject>(
   schema: ZodValidation<T>,
   options: SuperValidateOptions<T> | undefined
 ): SchemaData<T> {
   const originalSchema = schema as T;
 
-  let unwrappedSchema = schema;
-  let hasEffects = false;
-
-  while (unwrappedSchema._def.typeName == 'ZodEffects') {
-    hasEffects = true;
-    unwrappedSchema = (unwrappedSchema as ZodEffects<T>)._def.schema;
-  }
+  const unwrappedSchema = unwrapSchema(schema);
+  const hasEffects = unwrappedSchema !== schema;
 
   if (!(unwrappedSchema._def.typeName == 'ZodObject')) {
     throw new SuperFormError(
@@ -483,14 +506,19 @@ function getSchemaData<T extends AnyZodObject>(
     );
   }
 
-  const entityInfo = entityData(
-    unwrappedSchema as UnwrapEffects<T>,
-    options?.warnings
-  );
+  const entityInfo = entityData(unwrappedSchema, options?.warnings);
+
+  let catchallTypeInfo: ZodTypeInfo | undefined;
+  if (unwrappedSchema._def.catchall) {
+    catchallTypeInfo = unwrapZodType(
+      unwrapSchema(unwrappedSchema._def.catchall)
+    );
+  }
 
   return {
     originalSchema,
-    unwrappedSchema: unwrappedSchema as UnwrapEffects<T>,
+    unwrappedSchema: unwrappedSchema,
+    catchallTypeInfo,
     hasEffects,
     entityInfo,
     schemaKeys: entityInfo.keys,

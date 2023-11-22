@@ -34,6 +34,7 @@
     </li>
     <li><a href="/tests/array-component">Array proxy</a></li>
     <li><a href="/tests/redirect-same-route">Redirect with delay</a></li>
+    <li><a href="/catchall">Catchall</a></li>
   </ul>
 </nav>
 

@@ -127,7 +127,7 @@ function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
 }
 
 // TODO: Move to index.ts so it can be used for all validators
-function valueOrDefault(value: unknown, strict: boolean, schemaInfo: ZodTypeInfo) {
+export function valueOrDefault(value: unknown, strict: boolean, schemaInfo: ZodTypeInfo) {
 	if (value) return value;
 
 	const { zodType, isNullable, isOptional, hasDefault, defaultValue } = schemaInfo;

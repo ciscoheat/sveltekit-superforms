@@ -67,6 +67,7 @@ export type ValidationErrors<T extends object> = {
  * Used in error mapping to determine whether to add errors to an _error field
  * (as in arrays and objects), or directly on the field itself.
  */
+// TODO: Replace with JSON schema
 export type ErrorShape = {
 	[K in string]: ErrorShape;
 };

@@ -10,41 +10,12 @@ import type {
 	ZodPipeline,
 	ZodTypeAny
 } from 'zod';
-import { SuperFormError, type InputConstraints, type ErrorShape } from './index.js';
+import { SuperFormError } from './index.js';
 import type { SuperValidateOptions } from './superValidate.js';
 import { parse, stringify } from 'devalue';
-import type { z } from 'zod';
-import { valueOrDefault } from './schemaMeta/zod.js';
-
-type EntityRecord<T extends AnyZodObject, K> = Record<keyof z.infer<T>, K>;
-
-type Entity<T extends AnyZodObject> = {
-	typeInfo: EntityRecord<T, ZodTypeInfo>;
-	defaultEntity: z.infer<T>;
-	constraints: InputConstraints<T>;
-	keys: string[];
-	hash: string;
-	errorShape: ErrorShape;
-};
-
-type ZodTypeInfo = {
-	zodType: ZodTypeAny;
-	originalType: ZodTypeAny;
-	isNullable: boolean;
-	isOptional: boolean;
-	hasDefault: boolean;
-	effects: ZodEffects<ZodTypeAny> | undefined;
-	defaultValue: unknown;
-};
-
-type SchemaData<T extends AnyZodObject> = {
-	originalSchema: ZodValidation<T>;
-	unwrappedSchema: T;
-	hasEffects: boolean;
-	entityInfo: Entity<T>;
-	schemaKeys: string[];
-	opts: SuperValidateOptions<T>;
-};
+import type { SchemaProperty } from './schemaMeta/index.js';
+import { valueOrDefault } from './schemaMeta/index.js';
+import type { JSONSchema7 } from 'json-schema';
 
 type ParsedData = {
 	id: string | undefined;
@@ -52,10 +23,10 @@ type ParsedData = {
 	data: Record<string, unknown> | null | undefined;
 };
 
-export async function parseRequest(
+export async function parseRequest<T extends object>(
 	data: unknown,
-	schemaData: SchemaData<AnyZodObject>,
-	options: SuperValidateOptions
+	schemaData: JSONSchema7,
+	options: SuperValidateOptions<T, boolean>
 ) {
 	let parsed: ParsedData;
 
@@ -66,6 +37,7 @@ export async function parseRequest(
 	} else if (data instanceof Request) {
 		parsed = await tryParseFormData(data, schemaData, options);
 	} else if (
+		// RequestEvent
 		data &&
 		typeof data === 'object' &&
 		'request' in data &&
@@ -80,15 +52,7 @@ export async function parseRequest(
 		};
 	}
 
-	//////////////////////////////////////////////////////////////////////
-	// This logic is shared between superValidate and superValidateSync //
-	const toValidate = dataToValidate(parsed, schemaData);
-	const result = toValidate
-		? await schemaData.originalSchema.safeParseAsync(toValidate)
-		: undefined;
-	//////////////////////////////////////////////////////////////////////
-
-	return { parsed, result };
+	return parsed;
 }
 
 /**
@@ -96,9 +60,10 @@ export async function parseRequest(
  * may still have to be validated if there are side-effects or errors
  * should be displayed.
  */
+/*
 function dataToValidate<T extends AnyZodObject>(
 	parsed: ParsedData,
-	schemaData: SchemaData<T>
+	schemaData: JSONSchema7
 ): Record<string, unknown> | undefined {
 	if (!parsed.data) {
 		return schemaData.hasEffects || schemaData.opts.errors === true
@@ -108,11 +73,12 @@ function dataToValidate<T extends AnyZodObject>(
 		return parsed.data;
 	}
 }
+*/
 
-async function tryParseFormData<T extends AnyZodObject>(
+async function tryParseFormData<T extends object>(
 	request: Request,
-	schemaData: SchemaData<T>,
-	options: SuperValidateOptions
+	schemaData: JSONSchema7,
+	options: SuperValidateOptions<T, boolean>
 ) {
 	let formData: FormData | undefined = undefined;
 	try {
@@ -129,17 +95,35 @@ async function tryParseFormData<T extends AnyZodObject>(
 	return parseFormData(formData, schemaData, options);
 }
 
-function parseFormData<T extends AnyZodObject>(
+function parseSearchParams<T extends object>(
+	data: URL | URLSearchParams,
+	schemaData: JSONSchema7,
+	options?: SuperValidateOptions<T, boolean>
+): ParsedData {
+	if (data instanceof URL) data = data.searchParams;
+
+	const convert = new FormData();
+	for (const [key, value] of data.entries()) {
+		convert.append(key, value);
+	}
+
+	// Only FormData can be posted.
+	const output = parseFormData(convert, schemaData, options);
+	output.posted = false;
+	return output;
+}
+
+function parseFormData<T extends object>(
 	formData: FormData,
-	schemaData: SchemaData<T>,
-	options?: SuperValidateOptions
+	schemaData: JSONSchema7,
+	options?: SuperValidateOptions<T, boolean>
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
 			try {
 				const output = parse(formData.getAll('__superform_json').join('') ?? '');
 				if (typeof output === 'object') {
-					return output as z.infer<UnwrapEffects<T>>;
+					return output as Record<string, unknown>;
 				}
 			} catch {
 				//
@@ -155,39 +139,21 @@ function parseFormData<T extends AnyZodObject>(
 		? { id, data, posted: true }
 		: {
 				id,
-				data: formDataToValidation(formData, schemaData, options?.preprocessed),
+				data: _parseFormData(formData, schemaData, options?.preprocessed),
 				posted: true
 		  };
 }
 
-function parseSearchParams<T extends AnyZodObject>(
-	data: URL | URLSearchParams,
-	schemaData: SchemaData<T>,
-	options?: SuperValidateOptions
-): ParsedData {
-	if (data instanceof URL) data = data.searchParams;
-
-	const convert = new FormData();
-	for (const [key, value] of data.entries()) {
-		convert.append(key, value);
-	}
-
-	// Only FormData can be posted.
-	const output = parseFormData(convert, schemaData, options);
-	output.posted = false;
-	return output;
-}
-
-function formDataToValidation<T extends AnyZodObject>(
-	data: FormData,
-	schemaData: SchemaData<T>,
-	preprocessed?: (keyof z.infer<T>)[]
+function _parseFormData<T extends object>(
+	formData: FormData,
+	schemaData: JSONSchema7,
+	preprocessed?: (keyof T)[]
 ) {
 	const output: Record<string, unknown> = {};
-	const { schemaKeys, entityInfo } = schemaData;
+	const schemaKeys = Object.keys(schemaData.properties ?? {});
 
-	function parseSingleEntry(key: string, entry: FormDataEntryValue, typeInfo: ZodTypeInfo) {
-		if (preprocessed && preprocessed.includes(key)) {
+	function parseSingleEntry(key: string, entry: FormDataEntryValue, typeInfo: JSONSchema7) {
+		if (preprocessed && preprocessed.includes(key as keyof T)) {
 			return entry;
 		}
 
@@ -200,48 +166,66 @@ function formDataToValidation<T extends AnyZodObject>(
 	}
 
 	for (const key of schemaKeys) {
-		const typeInfo = entityInfo.typeInfo[key];
-		const entries = data.getAll(key);
+		const typeInfo = schemaData.properties![key];
+		const entries = formData.getAll(key);
 
-		if (!(typeInfo.zodType._def.typeName == 'ZodArray')) {
+		if (typeof typeInfo == 'boolean')
+			throw new SuperFormError(
+				'Schema properties defined as boolean is not supported. Field: ' + key
+			);
+
+		if (typeInfo.type != 'array') {
 			output[key] = parseSingleEntry(key, entries[0], typeInfo);
 		} else {
-			const arrayType = unwrapZodType(typeInfo.zodType._def.type);
+			if (!typeInfo.items || typeof typeInfo.items == 'boolean') {
+				throw new SuperFormError(
+					'Array must have an items property that defines its type. Key:' + key
+				);
+			}
+			if (Array.isArray(typeInfo.items)) {
+				throw new SuperFormError('Items property cannot have multiple values. Key:' + key);
+			}
+
+			const arrayType = typeInfo.items;
 			output[key] = entries.map((e) => parseSingleEntry(key, e, arrayType));
 		}
 	}
 
-	function parseFormDataEntry(field: string, value: string | null, typeInfo: ZodTypeInfo): unknown {
-		const newValue = valueOrDefault(value, false, typeInfo);
-		const zodType = typeInfo.zodType;
+	function parseFormDataEntry(field: string, value: string | null, typeInfo: JSONSchema7): unknown {
+		const newValue = valueOrDefault(field, value, false, typeInfo);
+		const property = typeInfo.properties?.[field];
+		if (typeof property == 'boolean')
+			throw new SuperFormError('An object property cannot be defined as boolean. Key: ' + field);
+
+		const type = property.type;
 
 		// If the value was empty, it now contains the default value,
 		// so it can be returned immediately, unless it's boolean, which
 		// means it could have been posted as a checkbox.
-		if (!value && zodType._def.typeName != 'ZodBoolean') {
+		if (!value && type != 'ZodBoolean') {
 			return newValue;
 		}
 
-		//console.log(`FormData field "${field}" (${zodType._def.typeName}): ${value}`
+		//console.log(`FormData field "${field}" (${type}): ${value}`
 
-		if (zodType._def.typeName == 'ZodString') {
+		if (type == 'ZodString') {
 			return value;
-		} else if (zodType._def.typeName == 'ZodNumber') {
+		} else if (type == 'ZodNumber') {
 			return (zodType as ZodNumber).isInt ? parseInt(value ?? '', 10) : parseFloat(value ?? '');
-		} else if (zodType._def.typeName == 'ZodBoolean') {
+		} else if (type == 'ZodBoolean') {
 			return Boolean(value == 'false' ? '' : value).valueOf();
-		} else if (zodType._def.typeName == 'ZodDate') {
+		} else if (type == 'ZodDate') {
 			return new Date(value ?? '');
-		} else if (zodType._def.typeName == 'ZodArray') {
+		} else if (type == 'ZodArray') {
 			const arrayType = unwrapZodType(zodType._def.type);
 			return parseFormDataEntry(field, value, arrayType);
-		} else if (zodType._def.typeName == 'ZodBigInt') {
+		} else if (type == 'ZodBigInt') {
 			try {
 				return BigInt(value ?? '.');
 			} catch {
 				return NaN;
 			}
-		} else if (zodType._def.typeName == 'ZodLiteral') {
+		} else if (type == 'ZodLiteral') {
 			const literalType = typeof (zodType as ZodLiteral<unknown>).value;
 
 			if (literalType === 'string') return value;
@@ -250,13 +234,9 @@ function formDataToValidation<T extends AnyZodObject>(
 			else {
 				throw new SuperFormError('Unsupported ZodLiteral type: ' + literalType);
 			}
-		} else if (
-			zodType._def.typeName == 'ZodUnion' ||
-			zodType._def.typeName == 'ZodEnum' ||
-			zodType._def.typeName == 'ZodAny'
-		) {
+		} else if (type == 'ZodUnion' || type == 'ZodEnum' || type == 'ZodAny') {
 			return value;
-		} else if (zodType._def.typeName == 'ZodNativeEnum') {
+		} else if (type == 'ZodNativeEnum') {
 			const zodEnum = zodType as ZodNativeEnum<EnumLike>;
 
 			if (value !== null && value in zodEnum.enum) {
@@ -267,11 +247,11 @@ function formDataToValidation<T extends AnyZodObject>(
 				return value;
 			}
 			return undefined;
-		} else if (zodType._def.typeName == 'ZodSymbol') {
+		} else if (type == 'ZodSymbol') {
 			return Symbol(String(value));
 		}
 
-		if (zodType._def.typeName == 'ZodObject') {
+		if (type == 'ZodObject') {
 			throw new SuperFormError(
 				`Object found in form field "${field}". ` +
 					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
@@ -282,10 +262,10 @@ function formDataToValidation<T extends AnyZodObject>(
 		throw new SuperFormError('Unsupported Zod default type: ' + zodType.constructor.name);
 	}
 
-	return output as z.infer<T>;
+	return output;
 }
 
-function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
+function unwrapZodType(zodType: ZodTypeAny): SchemaProperty {
 	const originalType = zodType;
 
 	let _wrapped = true;

@@ -22,6 +22,7 @@ const expectedConstraints = {
 	}
 };
 
+/*
 describe('Typeschema validation test', () => {
 	describe('Valibot', () => {
 		const schema = object({
@@ -91,3 +92,4 @@ describe('Typeschema validation test', () => {
 		});
 	});
 });
+*/

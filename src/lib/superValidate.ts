@@ -15,17 +15,6 @@ type Inferred<T extends Schema> = NonNullable<Infer<T>>;
 
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 
-type _SuperValidateOptions<T extends object> = Partial<{
-	errors: boolean;
-	id: string;
-	warnings: {
-		multipleRegexps?: boolean;
-		multipleSteps?: boolean;
-	};
-	preprocessed: (keyof T)[];
-	defaults: T;
-}>;
-
 type SuperValidateSyncData<T extends object> =
 	| FormData
 	| URLSearchParams
@@ -42,6 +31,17 @@ export type SuperValidateOptions<
 > = NeedDefaults extends true
 	? WithRequired<_SuperValidateOptions<T>, 'defaults'>
 	: _SuperValidateOptions<T>;
+
+type _SuperValidateOptions<T extends object> = Partial<{
+	errors: boolean;
+	id: string;
+	warnings: {
+		multipleRegexps?: boolean;
+		multipleSteps?: boolean;
+	};
+	preprocessed: (keyof T)[];
+	defaults: T;
+}>;
 
 type Lib<T extends Schema> = T extends BaseSchema | BaseSchemaAsync
 	? 'valibot'

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import type { JSONSchema7 } from 'json-schema';
+import { defaultValues } from '$lib/schemaMeta/jsonSchema.js';
 
 /*
 ZodString
@@ -17,7 +19,104 @@ ZodSymbol
 ZodObject
 */
 
-const schema = {
+enum Fruits {
+	Apple,
+	Banana
+}
+
+enum FruitsStr {
+	Apple = 'Apple',
+	Banana = 'Banana'
+}
+
+const schema: JSONSchema7 = {
+	type: 'object',
+	required: [
+		'string',
+		'email',
+		'bool',
+		'agree',
+		'number',
+		'proxyNumber',
+		'nullableString',
+		'proxyString',
+		'trimmedString',
+		'numberArray',
+		'nativeEnumInt',
+		'nativeEnumString',
+		'nativeEnumString2'
+	],
+	properties: {
+		string: {
+			type: 'string',
+			default: 'Shigeru'
+		},
+		email: {
+			type: 'string'
+		},
+		bool: {
+			type: 'boolean'
+		},
+		agree: {
+			const: true,
+			default: true
+		},
+		number: {
+			type: 'number'
+		},
+		proxyNumber: {
+			type: 'number',
+			default: 0
+		},
+		nullableString: {
+			type: ['string', 'null']
+		},
+		nullishString: {
+			type: ['string', 'null']
+		},
+		optionalString: {
+			type: ['string']
+		},
+		proxyString: {
+			type: ['string']
+		},
+		trimmedString: {
+			type: ['string']
+		},
+		numberArray: {
+			type: 'array',
+			items: {
+				type: 'integer'
+			},
+			default: NaN
+		},
+		date: {
+			format: 'date-time',
+			default: new Date().toISOString()
+		},
+		coercedNumber: {
+			type: 'number',
+			default: 0
+		},
+		coercedDate: {
+			format: 'date-time'
+		},
+		nativeEnumInt: {
+			enum: Object.values(Fruits),
+			default: Fruits.Apple
+		},
+		nativeEnumString: {
+			enum: ['GRAY', 'GREEN'],
+			default: 'GREEN'
+		},
+		nativeEnumString2: {
+			enum: Object.values(FruitsStr),
+			default: FruitsStr.Apple
+		}
+	}
+};
+
+const schema2: JSONSchema7 = {
 	//$schema: 'https://json-schema.org/draft/2020-12/schema',
 	//$id: 'https://example.com/product.schema.json',
 	//title: 'Product',
@@ -25,20 +124,17 @@ const schema = {
 	type: 'object',
 	properties: {
 		productId: {
-			description: 'The unique identifier for a product',
 			type: 'integer'
 		},
 		productName: {
-			description: 'Name of the product',
 			type: 'string'
 		},
 		price: {
-			description: 'The price of the product',
 			type: 'number',
-			exclusiveMinimum: 0
+			exclusiveMinimum: 0,
+			default: 234
 		},
 		tags: {
-			description: 'Tags for the product',
 			type: 'array',
 			items: {
 				type: 'string'
@@ -62,13 +158,37 @@ const schema = {
 			required: ['length', 'width', 'height']
 		},
 		warehouseLocation: {
-			description: 'Coordinates of the warehouse where the product is located.',
 			$ref: 'https://example.com/geographical-location.schema.json'
 		}
 	},
-	required: ['productId', 'productName', 'price']
+	required: ['productId', 'productName', 'price', 'dimensions']
 };
 
-describe('JSON schema validation', () => {
-	it('Should validate JSON schemas', () => {});
+describe.only('JSON schema validation', () => {
+	it('Should transform Zod schemas to the JSON schema subset', () => {
+		expect(defaultValues(schema2)).toEqual({
+			productId: 0,
+			productName: '',
+			price: 234,
+			tags: undefined,
+			dimensions: { length: 0, width: 0, height: 0 }
+		});
+
+		expect(defaultValues(schema)).toEqual({
+			string: 'Shigeru',
+			email: '',
+			bool: false,
+			number: 0,
+			proxyNumber: 0,
+			nullableString: null,
+			nullishString: null,
+			optionalString: undefined,
+			proxyString: '',
+			trimmedString: '',
+			numberArray: NaN,
+			date: undefined,
+			coercedNumber: undefined,
+			coercedDate: undefined
+		});
+	});
 });

@@ -9,6 +9,18 @@ export class SuperFormError extends Error {
 	}
 }
 
+export class SuperFormSchemaError extends SuperFormError {
+	readonly path: string | undefined;
+	constructor(message: string, path?: string | string[]) {
+		super(message);
+		Object.setPrototypeOf(this, SuperFormSchemaError.prototype);
+		this.path = Array.isArray(path) ? path.join('.') : path;
+	}
+	override toString() {
+		return this.path ? `[${this.path}] ` : '' + this.message;
+	}
+}
+
 export type SuperValidated<
 	T extends object,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

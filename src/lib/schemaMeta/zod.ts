@@ -11,10 +11,11 @@ import type {
 	ZodDate
 } from 'zod';
 
-import type { SchemaMeta } from './index.js';
+import { valueOrDefault, type SchemaMeta } from './index.js';
 
 import { SuperFormError, type InputConstraints, type InputConstraint } from '$lib/index.js';
 import type { SuperValidateOptions } from '$lib/superValidate.js';
+import type { JSONSchema7 } from 'json-schema';
 
 type ZodTypeInfo = {
 	zodType: ZodTypeAny;
@@ -41,6 +42,7 @@ export class ZodSchemaMeta<T extends ZodValidation<AnyZodObject>>
 {
 	readonly defaults: z.infer<T>;
 	readonly constraints: InputConstraints<z.infer<T>>;
+	readonly schema: JSONSchema7;
 
 	constructor(schema: T, options?: SuperValidateOptions<z.infer<T>, false>) {
 		while (schema._def.typeName == 'ZodEffects') {
@@ -71,7 +73,7 @@ function defaultValues<T extends AnyZodObject>(schema: T): z.infer<T> {
 	return Object.fromEntries(
 		fields.map((field) => {
 			const typeInfo = schemaTypeInfo[field];
-			const newValue = valueOrDefault(undefined, true, typeInfo);
+			const newValue = valueOrDefault(field, undefined, true, typeInfo);
 
 			return [field, newValue];
 		})
@@ -124,50 +126,6 @@ function unwrapZodType(zodType: ZodTypeAny): ZodTypeInfo {
 		defaultValue,
 		effects
 	};
-}
-
-// TODO: Move to index.ts so it can be used for all validators
-export function valueOrDefault(value: unknown, strict: boolean, schemaInfo: ZodTypeInfo) {
-	if (value) return value;
-
-	const { zodType, isNullable, isOptional, hasDefault, defaultValue } = schemaInfo;
-
-	// Based on schema type, check what the empty value should be parsed to
-
-	// For convenience, make undefined into nullable if possible.
-	// otherwise all nullable fields requires a default value or optional.
-	// In the database, null is assumed if no other value (undefined doesn't exist there),
-	// so this should be ok.
-	// Also make a check for strict, so empty strings from FormData can also be set here.
-
-	if (strict && value !== undefined) return value;
-	if (hasDefault) return defaultValue;
-	if (isNullable) return null;
-	if (isOptional) return undefined;
-
-	switch (zodType._def.typeName) {
-		case 'ZodString':
-			return '';
-		case 'ZodNumber':
-			return 0;
-		case 'ZodBoolean':
-			return false;
-		// Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
-		//case "ZodDate": return new Date(NaN);
-		case 'ZodArray':
-			return [];
-		case 'ZodObject':
-			return defaultValues(zodType as AnyZodObject);
-		case 'ZodSet':
-			return new Set();
-		case 'ZodRecord':
-			return {};
-		case 'ZodBigInt':
-			return BigInt(0);
-		case 'ZodSymbol':
-			return Symbol();
-	}
-	return undefined;
 }
 
 function constraints<T extends AnyZodObject>(

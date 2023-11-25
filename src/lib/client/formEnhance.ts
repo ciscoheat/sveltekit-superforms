@@ -293,7 +293,7 @@ export function formEnhance<T extends AnyZodObject, M>(
       );
 
       if (!validation.valid) {
-        cancel();
+        cancel(false);
 
         const result = {
           type: 'failure' as const,
@@ -339,7 +339,7 @@ export function formEnhance<T extends AnyZodObject, M>(
             : (submit as { data: FormData }).data;
 
         if (options.SPA) {
-          cancel();
+          cancel(false);
 
           const validationResult = { ...validation, posted: true };
 

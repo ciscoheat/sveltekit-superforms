@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- When cancelling a request, timers were cancelled too early in [SPA mode](https://superforms.rocks/concepts/spa) and when [client-side validation](https://superforms.rocks/concepts/client-validation) failed.
+
 ## [1.10.2] - 2023-11-14
 
 ### Fixed

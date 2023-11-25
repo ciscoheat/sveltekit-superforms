@@ -695,13 +695,6 @@ export function superForm<
     compareAgainst: unknown,
     taintOptions: TaintOption<UnwrappedT>
   ) {
-    if (taintOptions === false) {
-      return;
-    } else if (taintOptions === 'untaint-all') {
-      Tainted.set(undefined);
-      return;
-    }
-
     let paths = comparePaths(newObj, compareAgainst);
 
     if (typeof taintOptions === 'object') {
@@ -715,17 +708,19 @@ export function superForm<
       taintOptions = true;
     }
 
-    if (taintOptions === true) {
-      LastChanges.set(paths);
-    }
+    LastChanges.set(paths);
 
     if (paths.length) {
-      Tainted.update((tainted) => {
-        //console.log('Update tainted:', paths, newObj, compareAgainst);
-        if (!tainted) tainted = {};
-        setPaths(tainted, paths, taintOptions === true ? true : undefined);
-        return tainted;
-      });
+      if (taintOptions === 'untaint-all') {
+        Tainted.set(undefined);
+      } else {
+        Tainted.update((tainted) => {
+          //console.log('Update tainted:', paths, newObj, compareAgainst);
+          if (!tainted) tainted = {};
+          setPaths(tainted, paths, taintOptions === true ? true : undefined);
+          return tainted;
+        });
+      }
 
       if (
         !(

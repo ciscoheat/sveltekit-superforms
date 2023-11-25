@@ -3,12 +3,13 @@
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import AutoComplete from './AutoComplete.svelte';
+  import { schema } from './schema';
 
   export let data: PageData;
 
   const pageForm = superForm(data.form, {
-    dataType: 'json'
-    //validators: schema
+    dataType: 'json',
+    validators: schema
   });
   const { form, errors, message, enhance, tainted } = pageForm;
 
@@ -16,13 +17,9 @@
     { value: 'A', label: 'Aldebaran' },
     { value: 'B', label: 'Betelgeuse' }
   ];
-
-  const { fieldErrors } = arrayProxy(pageForm, 'sub.tags');
 </script>
 
-<SuperDebug data={{ $form, $errors, $fieldErrors }} />
-
-{#if $tainted}<h3>FORM IS TAINTED</h3>{/if}
+{#if $tainted?.sub?.tags?.[0]}<h3>FORM IS TAINTED</h3>{/if}
 
 {#if $message}<h4>{$message}</h4>{/if}
 
@@ -32,6 +29,8 @@
     <button>Submit</button>
   </div>
 </form>
+
+<SuperDebug data={{ $form, $errors, $tainted }} />
 
 <style lang="scss">
   form {

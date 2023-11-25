@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A `fieldErrors` store is added to [arrayProxy](https://superforms.rocks/api#arrayproxysuperform-fieldname-options), so field errors (for items in the array, not the array itself) can be accessed.
+
 ### Fixed
 
 - When cancelling a request, timers were cancelled too early in [SPA mode](https://superforms.rocks/concepts/spa) and when [client-side validation](https://superforms.rocks/concepts/client-validation) failed.
+- [Proxies](https://superforms.rocks/concepts/proxy-objects) didn't set or update a nested path unless it previously existed.
 
 ## [1.10.2] - 2023-11-14
 

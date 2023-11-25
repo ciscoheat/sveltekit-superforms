@@ -240,6 +240,8 @@ function _stringProxy<
   };
 }
 
+type ArrayFieldErrors = any[];
+
 export function arrayProxy<
   T extends ZodValidation<AnyZodObject>,
   Path extends FormPathArrays<z.infer<UnwrapEffects<T>>>
@@ -252,7 +254,57 @@ export function arrayProxy<
   path: Path;
   values: Writable<FormPathType<z.infer<UnwrapEffects<T>>, Path>>;
   errors: Writable<string[] | undefined>;
+  fieldErrors: Writable<ArrayFieldErrors>;
 } {
+  const allErrors = fieldProxy(
+    superForm.errors,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    `${path}` as any
+  );
+
+  const onlyFieldErrors = derived<typeof allErrors, ArrayFieldErrors>(
+    allErrors,
+    ($errors) => {
+      const output: ArrayFieldErrors = [];
+      for (const key in $errors) {
+        if (key == '_errors') continue;
+        output[key] = $errors[key];
+      }
+      return output as ArrayFieldErrors;
+    }
+  );
+
+  function updateArrayErrors(
+    errors: Record<number, any> | undefined,
+    value: ArrayFieldErrors
+  ) {
+    if (errors !== undefined) {
+      for (const key in errors) {
+        if (key == '_errors') continue;
+        errors[key] = undefined;
+      }
+    }
+    if (value !== undefined) {
+      for (const key in value) {
+        if (errors === undefined) errors = {};
+        errors[key] = value[key];
+      }
+    }
+    return errors;
+  }
+
+  const fieldErrors: Writable<ArrayFieldErrors> = {
+    subscribe: onlyFieldErrors.subscribe,
+    update(upd: Updater<ArrayFieldErrors>) {
+      allErrors.update(($errors) =>
+        updateArrayErrors($errors, upd($errors))
+      );
+    },
+    set(value: ArrayFieldErrors) {
+      allErrors.update(($errors) => updateArrayErrors($errors, value));
+    }
+  };
+
   return {
     path,
     values: superFieldProxy(superForm, path, options),
@@ -260,7 +312,8 @@ export function arrayProxy<
       superForm.errors,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       `${path}._errors` as any
-    ) as Writable<string[] | undefined>
+    ) as Writable<string[] | undefined>,
+    fieldErrors
   };
 }
 
@@ -407,14 +460,20 @@ export function fieldProxy<T extends object, Path extends FormPath<T>>(
     },
     update(upd: Updater<FormPathType<T, Path>>) {
       form.update((f) => {
-        const output = traversePath(f, path2);
+        const output = traversePath(f, path2, ({ parent, key, value }) => {
+          if (value === undefined) parent[key] = {};
+          return parent[key];
+        });
         if (output) output.parent[output.key] = upd(output.value);
         return f;
       });
     },
     set(value: FormPathType<T, Path>) {
       form.update((f) => {
-        const output = traversePath(f, path2);
+        const output = traversePath(f, path2, ({ parent, key, value }) => {
+          if (value === undefined) parent[key] = {};
+          return parent[key];
+        });
         if (output) output.parent[output.key] = value;
         return f;
       });

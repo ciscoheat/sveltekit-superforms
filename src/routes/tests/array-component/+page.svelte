@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { superForm } from '$lib/client';
+  import { arrayProxy, superForm } from '$lib/client';
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import AutoComplete from './AutoComplete.svelte';
@@ -16,9 +16,11 @@
     { value: 'A', label: 'Aldebaran' },
     { value: 'B', label: 'Betelgeuse' }
   ];
+
+  const { fieldErrors } = arrayProxy(pageForm, 'sub.tags');
 </script>
 
-<SuperDebug data={{ $form, $errors }} />
+<SuperDebug data={{ $form, $errors, $fieldErrors }} />
 
 {#if $tainted}<h3>FORM IS TAINTED</h3>{/if}
 

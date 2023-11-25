@@ -8,6 +8,7 @@
   import type { ZodValidation, FormPathArrays } from '$lib';
   import type { SuperForm } from '$lib/client';
   import { arrayProxy, type TaintOptions } from '$lib/client';
+  import SuperDebug from '$lib/client/SuperDebug.svelte';
 
   export let form: SuperForm<ZodValidation<T>, unknown>;
   export let field: FormPathArrays<z.infer<T>>;
@@ -15,8 +16,10 @@
   export let label = '';
   export let taint: TaintOptions = true;
 
-  const { values, errors } = arrayProxy(form, field, { taint });
+  const { values, errors, fieldErrors } = arrayProxy(form, field, { taint });
 </script>
+
+<SuperDebug label="Component fieldErrors" data={$fieldErrors} />
 
 {#if label}<label for={field}>{label}</label>{/if}
 
@@ -29,7 +32,20 @@
   {/each}
 </select>
 
+<button
+  type="button"
+  on:click={() => {
+    $fieldErrors = [];
+  }}>Change errors</button
+>
+
 {#if $errors}<p class="invalid">{$errors}</p>{/if}
+
+{#each $fieldErrors as $err, i}
+  {#if $err}
+    <p class="invalid">Item {$values[i]}: {$err}</p>
+  {/if}
+{/each}
 
 <style>
   .invalid {

@@ -141,7 +141,7 @@ export type FormPathType<T, P extends string> = P extends keyof T
   : P extends `${number}]${infer Rest}`
   ? NonNullable<T> extends (infer U)[]
     ? FormPathType<U, Rest>
-    : { invalid_path: P; Type: T }
+    : { invalid_path1: P; Type: T }
   : P extends `${infer K}[${infer Rest}`
   ? K extends keyof NonNullable<T>
     ? FormPathType<NonNullable<T>[K], Rest>
@@ -151,23 +151,23 @@ export type FormPathType<T, P extends string> = P extends keyof T
     ? FormPathType<NonNullable<T>[K], Rest>
     : NonNullable<T> extends (infer U)[]
     ? FormPathType<U, Rest>
-    : { invalid_path: P; Type: T }
+    : { invalid_path2: P; Type: T }
   : P extends `[${infer K}].${infer Rest}`
   ? K extends number
     ? T extends (infer U)[]
       ? FormPathType<U, Rest>
-      : { invalid_path: P; Type: T }
+      : { invalid_path3: P; Type: T }
     : P extends `${number}`
     ? NonNullable<T> extends (infer U)[]
       ? U
-      : { invalid_path: P; Type: T }
+      : { invalid_path4: P; Type: T }
     : P extends keyof NonNullable<T>
     ? NonNullable<T>[P]
     : P extends `${number}`
     ? NonNullable<T> extends (infer U)[]
       ? U
-      : { invalid_path: P; Type: T }
-    : { invalid_path: P; Type: T }
+      : { invalid_path5: P; Type: T }
+    : { invalid_path6: P; Type: T }
   : P extends ''
   ? T
-  : { invalid_path: P; Type: T };
+  : { invalid_path7: P; Type: T };

@@ -919,7 +919,7 @@ export function superForm<
   ) {
     if (path === undefined) {
       return clientValidation<UnwrapEffects<T>, M>(
-        options,
+        options.validators,
         get(Form),
         _formId,
         get(Constraints),

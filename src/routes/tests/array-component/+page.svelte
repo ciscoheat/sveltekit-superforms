@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { arrayProxy, superForm } from '$lib/client';
+  import { superForm } from '$lib/client';
   import type { PageData } from './$types';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import AutoComplete from './AutoComplete.svelte';
   import { schema } from './schema';
 
   export let data: PageData;
+
+  let novalidate = false;
 
   const pageForm = superForm(data.form, {
     dataType: 'json',
@@ -23,10 +25,16 @@
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<form method="POST" use:enhance>
+<form {novalidate} method="POST" use:enhance>
   <AutoComplete form={pageForm} field="sub.tags" {options} taint={false} />
-  <div>
+  <div style="margin-top:1rem;">
     <button>Submit</button>
+    <button formnovalidate>Submit formnovalidate</button>
+    <input
+      type="checkbox"
+      bind:checked={novalidate}
+      on:click={() => (novalidate = !novalidate)}
+    /> novalidate on form
   </div>
 </form>
 

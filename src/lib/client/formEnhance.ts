@@ -285,7 +285,12 @@ export function formEnhance<T extends AnyZodObject, M>(
     } else {
       // Client validation
       const validation = await clientValidation(
-        options,
+        formEl.noValidate ||
+          ((submit.submitter instanceof HTMLButtonElement ||
+            submit.submitter instanceof HTMLInputElement) &&
+            submit.submitter.formNoValidate)
+          ? undefined
+          : options.validators,
         get(data),
         get(formId),
         get(constraints),

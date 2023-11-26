@@ -23,7 +23,7 @@
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<form novalidate method="POST" use:enhance>
+<form method="POST" use:enhance>
   <label>
     Name: <input name="name" bind:value={$form.name} />
   </label>

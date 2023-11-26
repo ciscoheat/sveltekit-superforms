@@ -71,14 +71,14 @@ export function validateForm<T extends AnyZodObject>(
  * Validate form data.
  */
 export async function clientValidation<T extends AnyZodObject, M = unknown>(
-  options: FormOptions<T, M>,
+  validators: FormOptions<T, M>['validators'],
   checkData: z.infer<T>,
   formId: string | undefined,
   constraints: SuperValidated<ZodValidation<T>>['constraints'],
   posted: boolean
 ) {
   return _clientValidation(
-    options.validators,
+    validators,
     checkData,
     formId,
     constraints,

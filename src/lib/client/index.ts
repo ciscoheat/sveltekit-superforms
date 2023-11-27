@@ -203,6 +203,7 @@ export type TaintOption<T extends AnyZodObject = AnyZodObject> =
   | boolean
   | 'untaint'
   | 'untaint-all'
+  | 'ignore'
   | { fields: FormPathLeaves<z.infer<T>> | FormPathLeaves<z.infer<T>>[] };
 
 type SuperFormData<T extends ZodValidation<AnyZodObject>> = {
@@ -695,6 +696,11 @@ export function superForm<
     compareAgainst: unknown,
     taintOptions: TaintOption<UnwrappedT>
   ) {
+    // Ignore is set when returning errors from the server
+    // so status messages and form-level errors won't be
+    // immediately cleared by client-side validation.
+    if (taintOptions == 'ignore') return;
+
     let paths = comparePaths(newObj, compareAgainst);
 
     if (typeof taintOptions === 'object') {
@@ -803,7 +809,7 @@ export function superForm<
     // Form data is not tainted when rebinding.
     // Prevents object errors from being revalidated after rebind.
     // eslint-disable-next-line dci-lint/private-role-access
-    Form.set(form.data, { taint: false });
+    Form.set(form.data, { taint: 'ignore' });
     Message.set(message);
     Errors.set(form.errors);
     FormId.set(form.id);

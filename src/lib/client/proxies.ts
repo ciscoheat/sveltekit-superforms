@@ -240,6 +240,7 @@ function _stringProxy<
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ArrayFieldErrors = any[];
 
 export function arrayProxy<
@@ -256,37 +257,34 @@ export function arrayProxy<
   errors: Writable<string[] | undefined>;
   fieldErrors: Writable<ArrayFieldErrors>;
 } {
-  const allErrors = fieldProxy(
+  const formErrors = fieldProxy(
     superForm.errors,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     `${path}` as any
   );
 
-  const onlyFieldErrors = derived<typeof allErrors, ArrayFieldErrors>(
-    allErrors,
+  const onlyFieldErrors = derived<typeof formErrors, ArrayFieldErrors>(
+    formErrors,
     ($errors) => {
       const output: ArrayFieldErrors = [];
       for (const key in $errors) {
         if (key == '_errors') continue;
-        output[key] = $errors[key];
+        output[key as unknown as number] = $errors[key];
       }
       return output as ArrayFieldErrors;
     }
   );
 
   function updateArrayErrors(
-    errors: Record<number, any> | undefined,
+    errors: Record<number, unknown>,
     value: ArrayFieldErrors
   ) {
-    if (errors !== undefined) {
-      for (const key in errors) {
-        if (key == '_errors') continue;
-        errors[key] = undefined;
-      }
+    for (const key in errors) {
+      if (key == '_errors') continue;
+      errors[key] = undefined;
     }
     if (value !== undefined) {
       for (const key in value) {
-        if (errors === undefined) errors = {};
         errors[key] = value[key];
       }
     }
@@ -296,12 +294,14 @@ export function arrayProxy<
   const fieldErrors: Writable<ArrayFieldErrors> = {
     subscribe: onlyFieldErrors.subscribe,
     update(upd: Updater<ArrayFieldErrors>) {
-      allErrors.update(($errors) =>
+      formErrors.update(($errors) =>
+        // @ts-expect-error Type is correct
         updateArrayErrors($errors, upd($errors))
       );
     },
     set(value: ArrayFieldErrors) {
-      allErrors.update(($errors) => updateArrayErrors($errors, value));
+      // @ts-expect-error Type is correct
+      formErrors.update(($errors) => updateArrayErrors($errors, value));
     }
   };
 
@@ -461,7 +461,7 @@ export function fieldProxy<T extends object, Path extends FormPath<T>>(
     update(upd: Updater<FormPathType<T, Path>>) {
       form.update((f) => {
         const output = traversePath(f, path2, ({ parent, key, value }) => {
-          if (value === undefined) parent[key] = {};
+          if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
           return parent[key];
         });
         if (output) output.parent[output.key] = upd(output.value);
@@ -471,7 +471,7 @@ export function fieldProxy<T extends object, Path extends FormPath<T>>(
     set(value: FormPathType<T, Path>) {
       form.update((f) => {
         const output = traversePath(f, path2, ({ parent, key, value }) => {
-          if (value === undefined) parent[key] = {};
+          if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
           return parent[key];
         });
         if (output) output.parent[output.key] = value;

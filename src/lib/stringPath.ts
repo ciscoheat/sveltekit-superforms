@@ -9,10 +9,10 @@ export function splitPath<T extends object>(path: string) {
 
 export function mergePath(path: (string | number | symbol)[]) {
   return path.reduce((acc: string, next) => {
-    if (typeof next === 'number' || !isNaN(parseInt(String(next), 10)))
-      acc += `[${String(next)}]`;
-    else if (!acc) acc += String(next);
-    else acc += `.${String(next)}`;
+    const key = String(next);
+    if (typeof next === 'number' || /^\d+$/.test(key)) acc += `[${key}]`;
+    else if (!acc) acc += key;
+    else acc += `.${key}`;
 
     return acc;
   }, '');

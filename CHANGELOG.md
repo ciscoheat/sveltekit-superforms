@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When cancelling a request, timers were cancelled too early in [SPA mode](https://superforms.rocks/concepts/spa) and when [client-side validation](https://superforms.rocks/concepts/client-validation) failed.
 - [Proxies](https://superforms.rocks/concepts/proxy-objects) didn't set or update a nested path unless it previously existed.
 - When the [taint option](https://superforms.rocks/concepts/tainted#tainted-store) was set to `false` or `untaint-all`, client-side validation was prevented.
-- The `novalidate` and `formnovalidate` attributes on forms and buttons weren't respected.
+- The `novalidate` and `formnovalidate` attributes on forms and buttons weren't respected. ([#287](https://github.com/ciscoheat/sveltekit-superforms/issues/287))
 
 ## [1.10.2] - 2023-11-14
 

@@ -2,23 +2,6 @@ import { describe, it, expect } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
 import { defaultValues } from '$lib/schemaMeta/jsonSchema.js';
 
-/*
-ZodString
-ZodNumber
-ZodBoolean
-ZodBoolean
-ZodDate
-ZodArray
-ZodBigInt
-ZodLiteral
-ZodUnion
-ZodEnum
-ZodNativeEnum
-ZodAny
-ZodSymbol
-ZodObject
-*/
-
 enum Fruits {
 	Apple,
 	Banana
@@ -117,10 +100,10 @@ const schema = {
 } satisfies JSONSchema7;
 
 const schema2: JSONSchema7 = {
-	//$schema: 'https://json-schema.org/draft/2020-12/schema',
-	//$id: 'https://example.com/product.schema.json',
-	//title: 'Product',
-	//description: "A product from Acme's catalog",
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
+	$id: 'https://example.com/product.schema.json',
+	title: 'Product',
+	description: "A product from Acme's catalog",
 	type: 'object',
 	properties: {
 		productId: {
@@ -177,8 +160,8 @@ const defaultTestSchema: JSONSchema7 = {
 	}
 };
 
-describe.only('JSON schema validation', () => {
-	it('Should transform Zod schemas to the JSON schema subset', () => {
+describe('JSON schema validation', () => {
+	it('Should map JSON schemas to default values', () => {
 		expect(defaultValues(schema2)).toEqual({
 			productId: 0,
 			productName: '',
@@ -203,6 +186,14 @@ describe.only('JSON schema validation', () => {
 			date: undefined,
 			coercedNumber: undefined,
 			coercedDate: undefined
+		});
+
+		expect(defaultValues(defaultTestSchema)).toEqual({
+			productId: 0,
+			productName: '',
+			price: 234,
+			tags: undefined,
+			dimensions: { length: 0, width: 0, height: 0 }
 		});
 	});
 });

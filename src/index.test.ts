@@ -2,10 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
-import { ZodSchemaMeta, zodToJSONSchema, zodToJsonSchema } from '$lib/schemaMeta/zod.js';
-import { validate } from '@decs/typeschema';
 import { constraints, defaultValues } from '$lib/schemaMeta/jsonSchema.js';
 import type { JSONSchema7 } from 'json-schema';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 const defaults = { name: '', email: '', tags: ['A'] };
 
@@ -75,7 +74,15 @@ describe('Typeschema validation test', () => {
 			reg: z.string().regex(/X/).min(3).max(30),
 			num: z.number().int().multipleOf(5).min(10).max(100),
 			date: z.date().min(new Date('2022-01-01')),
-			arr: z.union([z.string(), z.date()]).array().min(3).max(10)
+			arr: z
+				.union([z.string().min(10), z.date()])
+				.array()
+				.min(3)
+				.max(10),
+			nestedTags: z.object({
+				id: z.number().int().positive().optional(),
+				name: z.string().min(1)
+			})
 		});
 
 		const errors = {
@@ -96,7 +103,7 @@ describe('Typeschema validation test', () => {
 				zodToJsonSchema(schema, { dateStrategy: 'integer' }) as JSONSchema7
 			);
 			expect(values.foo).toEqual(Foo.A);
-			//console.dir(values, { depth: 10 });
+			console.dir(values, { depth: 10 });
 		});
 
 		it('should work with constraints', () => {
@@ -106,7 +113,6 @@ describe('Typeschema validation test', () => {
 			console.dir(values, { depth: 10 });
 		});
 
-		/*
 		it('should work with schema only', async () => {
 			const output = await superValidate(schema);
 			expect(output.data).toEqual(defaults);
@@ -127,6 +133,5 @@ describe('Typeschema validation test', () => {
 			expect(output.data).toEqual(expectedData);
 			expect(output.errors).toEqual(errors);
 		});
-		*/
 	});
 });

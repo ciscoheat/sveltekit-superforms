@@ -93,6 +93,7 @@ export async function superValidate<
 	options?: SuperValidateOptions<Inferred<T>, boolean>
 ): Promise<SuperValidated<Inferred<T>, M, SupportsConstraints<T>>> {
 	const addErrors = options?.errors !== undefined ? options.errors : !!data;
+
 	let constraints: InputConstraints<Inferred<T>> = {};
 	let defaults: Inferred<T> | undefined = options?.defaults ? options.defaults : undefined;
 

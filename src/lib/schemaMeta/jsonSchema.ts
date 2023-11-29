@@ -162,7 +162,7 @@ export function _constraints(
 	isOptional: boolean,
 	warnings: SuperValidateOptions<object, boolean>['warnings'] | undefined,
 	path: string[]
-): InputConstraints<object> | InputConstraint {
+): InputConstraints<object> | InputConstraint | undefined {
 	if (typeof schema === 'boolean') {
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
@@ -190,7 +190,7 @@ export function _constraints(
 		if (schema.properties) {
 			for (const [key, prop] of Object.entries(schema.properties)) {
 				if (typeof prop == 'boolean') {
-					throw new SchemaError('Property cannot be defined as boolean.', [key]);
+					throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
 				}
 
 				const propConstraint = _constraints(prop, !schema.required?.includes(key), warnings, [
@@ -198,7 +198,7 @@ export function _constraints(
 					key
 				]);
 
-				if (Object.values(propConstraint).length > 0) {
+				if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
 					output[key] = propConstraint;
 				}
 			}
@@ -221,7 +221,18 @@ function constraint(
 	const format = schema.format;
 	const isNullable = nullableSchema(schema);
 
-	if (type == 'string') {
+	// Must be before type check
+	if (
+		type == 'integer' &&
+		format == 'unix-time' //||
+		//format == 'date-time' ||
+		//format == 'date' ||
+		//format == 'time'
+	) {
+		const date = schema;
+		if (date.minimum !== undefined) output.min = new Date(date.minimum).toISOString();
+		if (date.maximum !== undefined) output.max = new Date(date.maximum).toISOString();
+	} else if (type == 'string') {
 		const str = schema;
 		const patterns = [
 			str.pattern,
@@ -239,16 +250,6 @@ function constraint(
 		if (patterns.length > 0) output.pattern = patterns[0];
 		if (str.minLength !== undefined) output.minlength = str.minLength;
 		if (str.maxLength !== undefined) output.maxlength = str.maxLength;
-	} else if (
-		//format == 'date-time' ||
-		format == 'unix-time' //||
-		//format == 'date' ||
-		//format == 'time'
-	) {
-		// Must be before number|integer type check
-		const date = schema;
-		if (date.minimum !== undefined) output.min = new Date(date.minimum).toISOString();
-		if (date.maximum !== undefined) output.max = new Date(date.maximum).toISOString();
 	} else if (type == 'number' || type == 'integer') {
 		const num = schema;
 		if (num.minimum !== undefined) output.min = num.minimum;

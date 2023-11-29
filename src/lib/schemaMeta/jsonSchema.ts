@@ -109,6 +109,7 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 	if (nullableSchema(schema)) return null;
 	if (isOptional) return undefined;
 
+	// Unions
 	if (schema.anyOf) {
 		for (const type of schema.anyOf) {
 			if (typeof type == 'boolean') {
@@ -120,6 +121,7 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 		throw new SchemaError('No default value found for union.', path);
 	}
 
+	// Objects
 	if (schema.type == 'object' && schema.properties) {
 		const output: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(schema.properties)) {
@@ -170,7 +172,6 @@ export function _constraints(
 		const merged = schema.anyOf
 			.map((s) => _constraints(s, isOptional, warnings, path))
 			.filter((s) => s !== undefined);
-		console.log('anyOf', merged);
 		return merge(...merged);
 	}
 
@@ -191,7 +192,15 @@ export function _constraints(
 				if (typeof prop == 'boolean') {
 					throw new SchemaError('Property cannot be defined as boolean.', [key]);
 				}
-				output[key] = _constraints(prop, !schema.required?.includes(key), warnings, [...path, key]);
+
+				const propConstraint = _constraints(prop, !schema.required?.includes(key), warnings, [
+					...path,
+					key
+				]);
+
+				if (Object.values(propConstraint).length > 0) {
+					output[key] = propConstraint;
+				}
 			}
 		}
 		return output;

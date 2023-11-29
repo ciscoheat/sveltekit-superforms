@@ -29,7 +29,7 @@ enum FruitsStr {
 	Banana = 'Banana'
 }
 
-const schema: JSONSchema7 = {
+const schema = {
 	type: 'object',
 	required: [
 		'string',
@@ -114,7 +114,7 @@ const schema: JSONSchema7 = {
 			default: FruitsStr.Apple
 		}
 	}
-};
+} satisfies JSONSchema7;
 
 const schema2: JSONSchema7 = {
 	//$schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -164,6 +164,19 @@ const schema2: JSONSchema7 = {
 	required: ['productId', 'productName', 'price', 'dimensions']
 };
 
+const defaultTestSchema: JSONSchema7 = {
+	type: 'object',
+	properties: {
+		name: { type: 'string' },
+		age: { type: 'integer', default: 25 },
+		email: { type: 'string', format: 'email' },
+		gender: {
+			type: 'string',
+			anyOf: [{ enum: ['male', 'female'] }, { type: 'string', default: 'other' }]
+		}
+	}
+};
+
 describe.only('JSON schema validation', () => {
 	it('Should transform Zod schemas to the JSON schema subset', () => {
 		expect(defaultValues(schema2)).toEqual({
@@ -175,6 +188,7 @@ describe.only('JSON schema validation', () => {
 		});
 
 		expect(defaultValues(schema)).toEqual({
+			agree: true,
 			string: 'Shigeru',
 			email: '',
 			bool: false,

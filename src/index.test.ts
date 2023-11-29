@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
-import { ZodSchemaMeta } from '$lib/schemaMeta/zod.js';
+import { ZodSchemaMeta, zodToJSONSchema, zodToJsonSchema } from '$lib/schemaMeta/zod.js';
+import { validate } from '@decs/typeschema';
+import { defaultValues } from '$lib/schemaMeta/jsonSchema.js';
+import type { JSONSchema7 } from 'json-schema';
 
 const defaults = { name: '', email: '', tags: ['A'] };
 
@@ -22,13 +25,12 @@ const expectedConstraints = {
 	}
 };
 
-/*
 describe('Typeschema validation test', () => {
 	describe('Valibot', () => {
 		const schema = object({
 			name: string(),
 			email: string([email()]),
-			tags: array(string([minLength(2)]))
+			tags: array(string([minLength(2)]), [minLength(2)])
 		});
 
 		const errors = { email: 'Invalid email', tags: { '0': 'Invalid length' } };
@@ -47,6 +49,7 @@ describe('Typeschema validation test', () => {
 			expect(output2.data).toEqual(defaults);
 			expect(output2.data).not.toBe(defaults);
 			expect(output2.errors).toEqual(errors);
+			//console.log(output2.errors);
 		});
 
 		it('should work with testdata', async () => {
@@ -56,11 +59,18 @@ describe('Typeschema validation test', () => {
 		});
 	});
 
+	enum Foo {
+		A = 2,
+		B = 3
+	}
+
 	describe('Zod', () => {
 		const schema = z.object({
-			name: z.string(),
+			name: z.union([z.string().default('B'), z.number()]).default('A'),
 			email: z.string().email(),
-			tags: z.string().min(2).array().default(['A'])
+			tags: z.string().min(2).array().min(2).default(['A']),
+			foo: z.nativeEnum(Foo),
+			d: z.set(z.string())
 		});
 
 		const errors = {
@@ -68,6 +78,21 @@ describe('Typeschema validation test', () => {
 			tags: { '0': 'String must contain at least 2 character(s)' }
 		};
 
+		it('should work with typeschema', async () => {
+			//console.dir(await validate(schema, {}), { depth: 10 });
+		});
+
+		it('should transform a Zod schema to JSON schema', () => {
+			console.dir(zodToJsonSchema(schema), { depth: 10 });
+		});
+
+		it('should work with defaultValues', () => {
+			const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema7);
+			expect(values.foo).toEqual(Foo.A);
+			console.dir(values, { depth: 10 });
+		});
+
+		/*
 		it('should work with schema only', async () => {
 			const output = await superValidate(schema);
 			expect(output.data).toEqual(defaults);
@@ -80,16 +105,14 @@ describe('Typeschema validation test', () => {
 			expect(output2.data).toEqual(defaults);
 			expect(output2.data).not.toBe(defaults);
 			expect(output2.errors).toEqual(errors);
+			console.log(output2.errors);
 		});
 
 		it('should work with testdata', async () => {
-			const zodDefaults = new ZodSchemaMeta(schema).defaults;
-			expect(zodDefaults).toEqual(defaults);
-
 			const output = await superValidate(schema, testData);
 			expect(output.data).toEqual(expectedData);
 			expect(output.errors).toEqual(errors);
 		});
+		*/
 	});
 });
-*/

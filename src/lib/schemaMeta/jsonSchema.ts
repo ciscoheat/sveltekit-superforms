@@ -1,26 +1,55 @@
 import { SuperFormSchemaError as SchemaError } from '$lib/index.js';
-import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
+import type { JSONSchema7, JSONSchema7TypeName } from 'json-schema';
 
-type FormatType = 'date-time' | 'bigint' | 'any' | 'symbol' | 'set';
-type PropertyType = JSONSchema7TypeName | FormatType;
+//type FormatType = 'date-time' | 'bigint' | 'any' | 'symbol' | 'set';
+//type PropertyType = JSONSchema7TypeName | FormatType;
 
-type PropertyInfo = {
-	isNullable: boolean;
-	isOptional: boolean;
-	defaultValue: unknown;
-};
+const conversionFormatTypes = ['date-time', 'bigint', 'any', 'symbol', 'set'];
 
-const formatTypes = ['date-time', 'bigint', 'any', 'symbol', 'set'];
+function defaultValueToFormat(format: string, value: unknown) {
+	if (format == 'any') return value;
+	if (format == 'set' && Array.isArray(value)) return new Set(value);
+	if (typeof value !== 'string' && typeof value !== 'number') return value;
 
-function defaultValue(types: PropertyType[]) {
-	if (types.length == 0) return undefined;
+	switch (format) {
+		case 'date-time':
+			return new Date(value);
+		case 'bigint':
+			return BigInt(value);
+		case 'symbol':
+			return Symbol(value);
+		default:
+			throw new SchemaError('Format not supported for default string or number value: ' + format);
+	}
+}
 
-	switch (types[0]) {
+function defaultValue(
+	type: JSONSchema7TypeName,
+	format: string | undefined,
+	enumType: unknown[] | undefined
+): unknown {
+	if (format && conversionFormatTypes.includes(format)) {
+		switch (format) {
+			case 'date-time':
+				// Cannot add default for Date due to https://github.com/Rich-Harris/devalue/issues/51
+				return undefined;
+			case 'bigint':
+				return BigInt(0);
+			case 'set':
+				return new Set();
+			case 'symbol':
+				return Symbol();
+			case 'any':
+				return undefined;
+		}
+	}
+
+	switch (type) {
 		case 'string':
-			return '';
+			return enumType && enumType.length > 0 ? enumType[0] : '';
 		case 'number':
 		case 'integer':
-			return 0;
+			return enumType && enumType.length > 0 ? enumType[0] : 0;
 		case 'boolean':
 			return false;
 		case 'array':
@@ -29,22 +58,14 @@ function defaultValue(types: PropertyType[]) {
 			return {};
 		case 'null':
 			return null;
-		case 'date-time':
-			// Cannot add default for Date due to https://github.com/Rich-Harris/devalue/issues/51
-			return undefined;
-		case 'bigint':
-			return BigInt(0);
-		case 'set':
-			return new Set();
-		case 'symbol':
-			return Symbol();
-		case 'any':
-			return undefined;
 		default:
-			throw new SchemaError('Type not supported, requires explicit default value: ' + types[0]);
+			throw new SchemaError(
+				'Schema type or format not supported, requires explicit default value: ' + type
+			);
 	}
 }
 
+/*
 function types(schema: JSONSchema7): PropertyType[] | null {
 	if (schema.format && formatTypes.includes(schema.format)) {
 		return [schema.format as FormatType];
@@ -53,54 +74,60 @@ function types(schema: JSONSchema7): PropertyType[] | null {
 	if (!schema.type) return null;
 	return Array.isArray(schema.type) ? schema.type : [schema.type];
 }
+*/
 
-function propInfo(property: string, schema: JSONSchema7Definition, path: string[]): PropertyInfo {
-	if (typeof schema == 'boolean') {
-		throw new SchemaError('Schema cannot be set to boolean.', [...path, property]);
-	}
-	if (!schema.properties || !(property in schema.properties)) {
-		throw new SchemaError('Property not found in schema.', [...path, property]);
-	}
-	const prop = schema.properties[property];
-	if (typeof prop == 'boolean') {
-		throw new SchemaError('Property cannot be set to boolean.', [...path, property]);
-	}
-	return {
-		isNullable: !!prop.type?.includes('null'),
-		isOptional: !schema.required?.includes(property),
-		defaultValue: prop.default
-	};
+export function defaultValues<T>(schema: JSONSchema7): T {
+	return _defaultValues(schema, false, []) as T;
 }
 
-export function defaultValues(schema: JSONSchema7) {
-	return _defaultValues(schema, []);
-}
+function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]): unknown {
+	if (schema.type == 'object') console.log('OBJECT');
+	else console.log(path, schema, { isOptional });
 
-function _defaultValues(schema: JSONSchema7, path: string[], type?: PropertyType[]) {
-	if (!schema.properties) {
-		if (schema.default !== undefined) return schema.default;
-		else {
-			const propTypes = type ?? types(schema);
-			return propTypes ? defaultValue(propTypes) : undefined;
+	// Default takes (early) priority.
+	if (schema.default !== undefined) {
+		// Check if a special format should be used
+		if (schema.format && conversionFormatTypes.includes(schema.format)) {
+			return defaultValueToFormat(schema.format, schema.default);
+		} else {
+			return schema.default;
 		}
 	}
 
-	const output: Record<string, unknown> = {};
-	for (const [key, property] of Object.entries(schema.properties)) {
-		const newPath = [...path, key];
+	const isNullable = schema.type == 'null' || schema.type?.includes('null');
 
-		if (typeof property == 'boolean') {
-			throw new SchemaError('Property cannot be set to boolean.', newPath);
+	if (isNullable) return null;
+	if (isOptional) return undefined;
+
+	if (schema.anyOf) {
+		for (const type of schema.anyOf) {
+			if (typeof type == 'boolean') {
+				throw new SchemaError('Schema cannot be defined as boolean.', path);
+			}
+			const defaultValue = _defaultValues(type, isOptional, path);
+			if (defaultValue !== undefined) return defaultValue;
 		}
-
-		const type = types(property);
-		if (!type) continue;
-
-		const info = propInfo(key, schema, newPath);
-
-		if (info.isNullable) output[key] = null;
-		else if (info.isOptional) output[key] = undefined;
-		else output[key] = _defaultValues(property, newPath, type);
+		throw new SchemaError('No default value found for union.', path);
 	}
-	return output;
+
+	if (schema.type == 'object' && schema.properties) {
+		const output: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(schema.properties)) {
+			if (typeof value == 'boolean') {
+				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
+			}
+			output[key] = _defaultValues(value, !schema.required?.includes(key), [...path, key]);
+		}
+		return output;
+	}
+
+	const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
+	if (!type) {
+		console.log('No type or format', path);
+		console.dir(schema, { depth: 10 });
+		//throw new SchemaError('No type or format for schema.', path);
+		return undefined;
+	}
+
+	return defaultValue(type, schema.format, schema.enum);
 }

@@ -8,14 +8,23 @@ import type {
 	ZodPipeline,
 	ZodString,
 	ZodNumber,
-	ZodDate
+	ZodDate,
+	ZodSchema,
+	ZodArray
 } from 'zod';
 
 import { valueOrDefault, type SchemaMeta } from './index.js';
 
-import { SuperFormError, type InputConstraints, type InputConstraint } from '$lib/index.js';
+import {
+	SuperFormError,
+	type InputConstraints,
+	type InputConstraint,
+	SuperFormSchemaError
+} from '$lib/index.js';
 import type { SuperValidateOptions } from '$lib/superValidate.js';
 import type { JSONSchema7 } from 'json-schema';
+
+export { zodToJsonSchema } from 'zod-to-json-schema';
 
 type ZodTypeInfo = {
 	zodType: ZodTypeAny;

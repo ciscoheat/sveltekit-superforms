@@ -1,12 +1,12 @@
 import type { InputConstraints } from '$lib/index.js';
 import type { Schema } from '@decs/typeschema';
-import type { JSONSchema7 } from 'json-schema';
+//import type { JSONSchema7 } from 'json-schema';
 
-export interface SchemaMeta<T extends object, C extends 'with-constraints' | 'no-constraints'> {
+export type SchemaMeta<T extends object> = {
 	defaults: T;
-	constraints: C extends 'with-constraints' ? InputConstraints<T> : never;
-	schema: JSONSchema7;
-}
+	constraints: InputConstraints<T>;
+	//schema: JSONSchema7;
+};
 
 export function schemaType(schema: Schema): 'zod' | 'other' {
 	if ('safeParseAsync' in schema) return 'zod';

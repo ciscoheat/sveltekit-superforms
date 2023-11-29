@@ -4,7 +4,7 @@ import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
 import { ZodSchemaMeta, zodToJSONSchema, zodToJsonSchema } from '$lib/schemaMeta/zod.js';
 import { validate } from '@decs/typeschema';
-import { defaultValues } from '$lib/schemaMeta/jsonSchema.js';
+import { constraints, defaultValues } from '$lib/schemaMeta/jsonSchema.js';
 import type { JSONSchema7 } from 'json-schema';
 
 const defaults = { name: '', email: '', tags: ['A'] };
@@ -70,7 +70,12 @@ describe('Typeschema validation test', () => {
 			email: z.string().email(),
 			tags: z.string().min(2).array().min(2).default(['A']),
 			foo: z.nativeEnum(Foo),
-			d: z.set(z.string())
+			set: z.set(z.string()),
+			reg1: z.string().regex(/\D/).regex(/p/),
+			reg: z.string().regex(/X/).min(3).max(30),
+			num: z.number().int().multipleOf(5).min(10).max(100),
+			date: z.date().min(new Date('2022-01-01')),
+			arr: z.union([z.string(), z.date()]).array().min(3).max(10)
 		});
 
 		const errors = {
@@ -83,12 +88,21 @@ describe('Typeschema validation test', () => {
 		});
 
 		it('should transform a Zod schema to JSON schema', () => {
-			console.dir(zodToJsonSchema(schema), { depth: 10 });
+			console.dir(zodToJsonSchema(schema, { dateStrategy: 'integer' }), { depth: 10 });
 		});
 
 		it('should work with defaultValues', () => {
-			const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema7);
+			const values = defaultValues<z.infer<typeof schema>>(
+				zodToJsonSchema(schema, { dateStrategy: 'integer' }) as JSONSchema7
+			);
 			expect(values.foo).toEqual(Foo.A);
+			//console.dir(values, { depth: 10 });
+		});
+
+		it('should work with constraints', () => {
+			const values = constraints<z.infer<typeof schema>>(
+				zodToJsonSchema(schema, { dateStrategy: 'integer' }) as JSONSchema7
+			);
 			console.dir(values, { depth: 10 });
 		});
 

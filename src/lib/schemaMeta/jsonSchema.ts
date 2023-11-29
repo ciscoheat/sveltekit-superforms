@@ -1,10 +1,16 @@
-import { SuperFormSchemaError as SchemaError } from '$lib/index.js';
-import type { JSONSchema7, JSONSchema7TypeName } from 'json-schema';
+import {
+	SuperFormSchemaError as SchemaError,
+	type InputConstraints,
+	type InputConstraint
+} from '$lib/index.js';
+import type { SuperValidateOptions } from '$lib/superValidate.js';
+import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
+import merge from 'ts-deepmerge';
 
-//type FormatType = 'date-time' | 'bigint' | 'any' | 'symbol' | 'set';
+//type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
 //type PropertyType = JSONSchema7TypeName | FormatType;
 
-const conversionFormatTypes = ['date-time', 'bigint', 'any', 'symbol', 'set'];
+const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
 function defaultValueToFormat(format: string, value: unknown) {
 	if (format == 'any') return value;
@@ -12,7 +18,7 @@ function defaultValueToFormat(format: string, value: unknown) {
 	if (typeof value !== 'string' && typeof value !== 'number') return value;
 
 	switch (format) {
-		case 'date-time':
+		case 'unix-time':
 			return new Date(value);
 		case 'bigint':
 			return BigInt(value);
@@ -30,7 +36,7 @@ function defaultValue(
 ): unknown {
 	if (format && conversionFormatTypes.includes(format)) {
 		switch (format) {
-			case 'date-time':
+			case 'date':
 				// Cannot add default for Date due to https://github.com/Rich-Harris/devalue/issues/51
 				return undefined;
 			case 'bigint':
@@ -76,13 +82,19 @@ function types(schema: JSONSchema7): PropertyType[] | null {
 }
 */
 
+function nullableSchema(schema: JSONSchema7) {
+	return !!(schema.type == 'null' || schema.type?.includes('null'));
+}
+
+///// Default values //////////////////////////////////////////////////////////
+
 export function defaultValues<T>(schema: JSONSchema7): T {
 	return _defaultValues(schema, false, []) as T;
 }
 
 function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]): unknown {
-	if (schema.type == 'object') console.log('OBJECT');
-	else console.log(path, schema, { isOptional });
+	//if (schema.type == 'object') console.log('OBJECT');
+	//else console.log(path, schema, { isOptional });
 
 	// Default takes (early) priority.
 	if (schema.default !== undefined) {
@@ -94,9 +106,7 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 		}
 	}
 
-	const isNullable = schema.type == 'null' || schema.type?.includes('null');
-
-	if (isNullable) return null;
+	if (nullableSchema(schema)) return null;
 	if (isOptional) return undefined;
 
 	if (schema.anyOf) {
@@ -130,4 +140,120 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 	}
 
 	return defaultValue(type, schema.format, schema.enum);
+}
+
+///// Constraints /////////////////////////////////////////////////////////////
+
+export function constraints<T extends object>(
+	schema: JSONSchema7,
+	warnings?: SuperValidateOptions<T, boolean>['warnings']
+): InputConstraints<T> {
+	if (schema.type != 'object') {
+		throw new SchemaError('Constraints must be created from an object schema.');
+	}
+
+	return _constraints(schema, false, warnings, []);
+}
+
+export function _constraints(
+	schema: JSONSchema7Definition,
+	isOptional: boolean,
+	warnings: SuperValidateOptions<object, boolean>['warnings'] | undefined,
+	path: string[]
+): InputConstraints<object> | InputConstraint {
+	if (typeof schema === 'boolean') {
+		throw new SchemaError('Schema cannot be defined as boolean', path);
+	}
+
+	// Union
+	if (schema.anyOf) {
+		const merged = schema.anyOf
+			.map((s) => _constraints(s, isOptional, warnings, path))
+			.filter((s) => s !== undefined);
+		console.log('anyOf', merged);
+		return merge(...merged);
+	}
+
+	// Arrays
+	if (schema.type == 'array') {
+		if (!schema.items) {
+			throw new SchemaError('Arrays must have an items property', path);
+		}
+		const items = Array.isArray(schema.items) ? schema.items : [schema.items];
+		return merge(...items.map((i) => _constraints(i, isOptional, warnings, path)));
+	}
+
+	// Objects
+	if (schema.type == 'object') {
+		const output: Record<string, unknown> = {};
+		if (schema.properties) {
+			for (const [key, prop] of Object.entries(schema.properties)) {
+				if (typeof prop == 'boolean') {
+					throw new SchemaError('Property cannot be defined as boolean.', [key]);
+				}
+				output[key] = _constraints(prop, !schema.required?.includes(key), warnings, [...path, key]);
+			}
+		}
+		return output;
+	}
+
+	return constraint(path, schema, isOptional, warnings?.multipleRegexps);
+}
+
+function constraint(
+	path: string[],
+	schema: JSONSchema7,
+	isOptional: boolean,
+	multipleRegexpsWarning: boolean | undefined
+): InputConstraint | undefined {
+	const output: InputConstraint = {};
+
+	const type = schema.type;
+	const format = schema.format;
+	const isNullable = nullableSchema(schema);
+
+	if (type == 'string') {
+		const str = schema;
+		const patterns = [
+			str.pattern,
+			...(str.allOf ? str.allOf.map((s) => (typeof s == 'boolean' ? undefined : s.pattern)) : [])
+		].filter((s) => s !== undefined);
+
+		if (patterns.length > 1 && multipleRegexpsWarning !== false) {
+			console.warn(
+				`Field "${path.join(
+					'.'
+				)}" has more than one regexp, only the first one will be used in constraints. Set the warnings.multipleRegexps option to false to disable this warning.`
+			);
+		}
+
+		if (patterns.length > 0) output.pattern = patterns[0];
+		if (str.minLength !== undefined) output.minlength = str.minLength;
+		if (str.maxLength !== undefined) output.maxlength = str.maxLength;
+	} else if (
+		//format == 'date-time' ||
+		format == 'unix-time' //||
+		//format == 'date' ||
+		//format == 'time'
+	) {
+		// Must be before number|integer type check
+		const date = schema;
+		if (date.minimum !== undefined) output.min = new Date(date.minimum).toISOString();
+		if (date.maximum !== undefined) output.max = new Date(date.maximum).toISOString();
+	} else if (type == 'number' || type == 'integer') {
+		const num = schema;
+		if (num.minimum !== undefined) output.min = num.minimum;
+		if (num.maximum !== undefined) output.max = num.maximum;
+		if (num.multipleOf !== undefined) output.step = num.multipleOf;
+	} else if (type == 'array') {
+		const arr = schema;
+		if (arr.minItems !== undefined) output.min = arr.minItems;
+		if (arr.maxItems !== undefined) output.max = arr.maxItems;
+	}
+
+	if (!isNullable && !isOptional) {
+		output.required = true;
+	}
+
+	return Object.keys(output).length > 0 ? output : undefined;
 }

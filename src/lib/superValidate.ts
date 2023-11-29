@@ -37,7 +37,6 @@ type _SuperValidateOptions<T extends object> = Partial<{
 	id: string;
 	warnings: {
 		multipleRegexps?: boolean;
-		multipleSteps?: boolean;
 	};
 	preprocessed: (keyof T)[];
 	defaults: T;

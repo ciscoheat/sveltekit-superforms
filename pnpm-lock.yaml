@@ -38,6 +38,9 @@ devDependencies:
   eslint-plugin-svelte:
     specifier: ^2.35.1
     version: 2.35.1(eslint@8.54.0)(svelte@5.0.0-next.9)
+  json-schema-to-ts:
+    specifier: ^2.9.2
+    version: 2.9.2
   prettier:
     specifier: ^3.1.0
     version: 3.1.0
@@ -91,6 +94,13 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.20
+    dev: true
+
+  /@babel/runtime@7.23.5:
+    resolution: {integrity: sha512-NdUTHcPe4C99WxPub+K9l9tK5/lV4UXIoaHSYgzco9BCyjKAAwzdBI+wWtYqHt7LJdbo74ZjRPJgzVweq1sz0w==}
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      regenerator-runtime: 0.14.0
     dev: true
 
   /@decs/typeschema@0.12.1(valibot@0.21.0)(vite@4.5.0)(zod@3.22.4):
@@ -1483,6 +1493,15 @@ packages:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
     dev: true
 
+  /json-schema-to-ts@2.9.2:
+    resolution: {integrity: sha512-h9WqLkTVpBbiaPb5OmeUpz/FBLS/kvIJw4oRCPiEisIu2WjMh+aai0QIY2LoOhRFx5r92taGLcerIrzxKBAP6g==}
+    engines: {node: '>=16'}
+    dependencies:
+      '@babel/runtime': 7.23.5
+      '@types/json-schema': 7.0.15
+      ts-algebra: 1.2.2
+    dev: true
+
   /json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
     dev: true
@@ -1896,6 +1915,10 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /regenerator-runtime@0.14.0:
+    resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==}
+    dev: true
+
   /resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
@@ -2213,6 +2236,10 @@ packages:
   /totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
     engines: {node: '>=6'}
+    dev: true
+
+  /ts-algebra@1.2.2:
+    resolution: {integrity: sha512-kloPhf1hq3JbCPOTYoOWDKxebWjNb2o/LKnNfkWhxVVisFFmMJPPdJeGoGmM+iRLyoXAR61e08Pb+vUXINg8aA==}
     dev: true
 
   /ts-api-utils@1.0.3(typescript@5.3.2):

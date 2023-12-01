@@ -3,8 +3,15 @@ import type { InputConstraints } from '$lib/index.js';
 import type { SuperValidateOptions } from '$lib/superValidate.js';
 import type { JSONSchema7 } from 'json-schema';
 import type { SchemaMeta } from './index.js';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { zodToJsonSchema as zodToJson } from 'zod-to-json-schema';
 import { constraints, defaultValues } from './jsonSchema.js';
+
+const defaultOptions = { dateStrategy: 'integer' } as const;
+
+export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
+	params[1] = typeof params[1] == 'object' ? { ...defaultOptions, ...params[1] } : defaultOptions;
+	return zodToJson(...params) as JSONSchema7;
+};
 
 type ZodValidation<T extends AnyZodObject> =
 	| T
@@ -22,7 +29,7 @@ export class ZodSchemaMeta<T extends ZodValidation<AnyZodObject>>
 	readonly schema: JSONSchema7;
 
 	constructor(schema: T, options?: SuperValidateOptions<z.infer<T>, false>) {
-		this.schema = zodToJsonSchema(schema, { dateStrategy: 'integer' }) as JSONSchema7;
+		this.schema = zodToJsonSchema(schema);
 		this.defaults = defaultValues(this.schema);
 		this.constraints = constraints(this.schema, options?.warnings);
 	}

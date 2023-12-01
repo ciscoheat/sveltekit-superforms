@@ -2,7 +2,7 @@ import { defaultValues } from '$lib/schemaMeta/jsonSchema.js';
 import { it } from 'vitest';
 import { z } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { zodToJsonSchema } from '$lib/schemaMeta/zod.js';
 
 enum Foo {
 	A = 2,
@@ -31,12 +31,10 @@ const schema = z.object({
 });
 
 it.skip('Zod to JSON Schema', () => {
-	console.dir(zodToJsonSchema(schema, { dateStrategy: 'integer' }), { depth: 10 });
+	console.dir(zodToJsonSchema(schema), { depth: 10 });
 });
 
 it.skip('defaultValues', () => {
-	const values = defaultValues<z.infer<typeof schema>>(
-		zodToJsonSchema(schema, { dateStrategy: 'integer' }) as JSONSchema7
-	);
+	const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema7);
 	console.dir(values, { depth: 10 });
 });

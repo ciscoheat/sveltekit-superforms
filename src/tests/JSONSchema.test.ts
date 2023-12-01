@@ -232,7 +232,7 @@ describe('JSON schema validation', () => {
 		});
 	});
 
-	it('should map the default value of a union (anyOf) to the first type with a default value', () => {
+	it('should map the default value of a union (anyOf) to the first type', () => {
 		const defaultTestSchema: JSONSchema7 = {
 			type: 'object',
 			properties: {
@@ -250,7 +250,7 @@ describe('JSON schema validation', () => {
 		expect(defaultValues(defaultTestSchema)).toEqual({
 			name: undefined,
 			email: undefined,
-			gender: 'other',
+			gender: 'male',
 			age: 25
 		});
 	});

@@ -7,7 +7,7 @@ import type { AnyZodObject, ZodEffects, ZodSchema } from 'zod';
 import type { RequestEvent } from '@sveltejs/kit';
 import merge from 'ts-deepmerge';
 import { schemaType } from './schemaMeta/index.js';
-import { ZodSchemaMeta } from './schemaMeta/zod.js';
+//import { ZodSchemaMeta } from './schemaMeta/zod.js';
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
@@ -99,7 +99,8 @@ export async function superValidate<
 
 	switch (schemaType(schema)) {
 		case 'zod': {
-			const meta = new ZodSchemaMeta(schema as AnyZodObject);
+			const zodMeta = await import('./schemaMeta/zod.js');
+			const meta = new zodMeta.ZodSchemaMeta(schema as AnyZodObject);
 			defaults = meta.defaults as Inferred<T>;
 			constraints = meta.constraints;
 			break;

@@ -12,7 +12,7 @@ import merge from 'ts-deepmerge';
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
-function defaultValueToFormat(format: string, value: unknown) {
+function defaultValueWithFormat(format: string, value: unknown) {
 	if (format == 'any') return value;
 	if (format == 'set' && Array.isArray(value)) return new Set(value);
 	if (typeof value !== 'string' && typeof value !== 'number') return value;
@@ -93,14 +93,14 @@ export function defaultValues<T>(schema: JSONSchema7): T {
 }
 
 function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]): unknown {
-	//if (schema.type == 'object') console.log('OBJECT');
+	//if (schema.type == 'object') console.log('--- OBJECT ---');
 	//else console.log(path, schema, { isOptional });
 
 	// Default takes (early) priority.
 	if (schema.default !== undefined) {
 		// Check if a special format should be used
 		if (schema.format && conversionFormatTypes.includes(schema.format)) {
-			return defaultValueToFormat(schema.format, schema.default);
+			return defaultValueWithFormat(schema.format, schema.default);
 		} else {
 			return schema.default;
 		}
@@ -133,11 +133,15 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 		return output;
 	}
 
+	// Enums
+	if (schema.enum) {
+		return schema.enum[0];
+	}
+
 	const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
 	if (!type) {
-		console.log('No type or format', path);
+		console.log('No type or format for property:', path);
 		console.dir(schema, { depth: 10 });
-		//throw new SchemaError('No type or format for schema.', path);
 		return undefined;
 	}
 

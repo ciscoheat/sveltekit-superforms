@@ -1,32 +1,23 @@
-import type {
-	AnyZodObject,
-	EnumLike,
-	ZodEffects,
-	ZodLiteral,
-	ZodNativeEnum,
-	ZodNullable,
-	ZodNumber,
-	ZodOptional,
-	ZodPipeline,
-	ZodTypeAny
-} from 'zod';
-import { SuperFormError } from './index.js';
+import { SuperFormError, SchemaError } from './index.js';
 import type { SuperValidateOptions } from './superValidate.js';
-import { parse, stringify } from 'devalue';
-import type { SchemaProperty } from './schemaMeta/index.js';
-import { valueOrDefault } from './schemaMeta/index.js';
-import type { JSONSchema7 } from 'json-schema';
+import { parse } from 'devalue';
+import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
+import { defaultValues, isNullable, schemaTypes } from './schemaMeta/jsonSchema.js';
 
 type ParsedData = {
 	id: string | undefined;
 	posted: boolean;
-	data: Record<string, unknown> | null | undefined;
+	data: Record<string, unknown> | undefined;
+};
+
+type ParseOptions<T extends object> = {
+	preprocessed: SuperValidateOptions<T, boolean>['preprocessed'];
 };
 
 export async function parseRequest<T extends object>(
 	data: unknown,
 	schemaData: JSONSchema7,
-	options: SuperValidateOptions<T, boolean>
+	options: ParseOptions<T>
 ) {
 	let parsed: ParsedData;
 
@@ -78,7 +69,7 @@ function dataToValidate<T extends AnyZodObject>(
 async function tryParseFormData<T extends object>(
 	request: Request,
 	schemaData: JSONSchema7,
-	options: SuperValidateOptions<T, boolean>
+	options: ParseOptions<T>
 ) {
 	let formData: FormData | undefined = undefined;
 	try {
@@ -98,7 +89,7 @@ async function tryParseFormData<T extends object>(
 function parseSearchParams<T extends object>(
 	data: URL | URLSearchParams,
 	schemaData: JSONSchema7,
-	options?: SuperValidateOptions<T, boolean>
+	options?: { preprocessed: SuperValidateOptions<T, boolean>['preprocessed'] }
 ): ParsedData {
 	if (data instanceof URL) data = data.searchParams;
 
@@ -113,10 +104,10 @@ function parseSearchParams<T extends object>(
 	return output;
 }
 
-function parseFormData<T extends object>(
+export function parseFormData<T extends object>(
 	formData: FormData,
 	schemaData: JSONSchema7,
-	options?: SuperValidateOptions<T, boolean>
+	options?: { preprocessed: SuperValidateOptions<T, boolean>['preprocessed'] }
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
@@ -146,165 +137,170 @@ function parseFormData<T extends object>(
 
 function _parseFormData<T extends object>(
 	formData: FormData,
-	schemaData: JSONSchema7,
+	schema: JSONSchema7,
 	preprocessed?: (keyof T)[]
 ) {
 	const output: Record<string, unknown> = {};
-	const schemaKeys = Object.keys(schemaData.properties ?? {});
+	const schemaKeys = schema.additionalProperties
+		? formData.keys()
+		: Object.keys(schema.properties ?? {});
 
-	function parseSingleEntry(key: string, entry: FormDataEntryValue, typeInfo: JSONSchema7) {
+	function parseSingleEntry(key: string, entry: FormDataEntryValue, property: JSONSchema7) {
 		if (preprocessed && preprocessed.includes(key as keyof T)) {
 			return entry;
 		}
 
 		if (entry && typeof entry !== 'string') {
 			// File object, not supported
+			// TODO: Add a warning for uploaded files that can be disabled?
 			return undefined;
 		}
 
-		return parseFormDataEntry(key, entry, typeInfo);
+		return parseFormDataEntry(key, entry, !schema.required?.includes(key), property);
 	}
 
 	for (const key of schemaKeys) {
-		const typeInfo = schemaData.properties![key];
+		const property: JSONSchema7Definition = schema.properties
+			? schema.properties[key]
+			: { type: 'string' };
+
+		if (typeof property == 'boolean') {
+			throw new SchemaError('Schema properties defined as boolean is not supported.', key);
+		}
+
 		const entries = formData.getAll(key);
 
-		if (typeof typeInfo == 'boolean')
-			throw new SuperFormError(
-				'Schema properties defined as boolean is not supported. Field: ' + key
-			);
-
-		if (typeInfo.type != 'array') {
-			output[key] = parseSingleEntry(key, entries[0], typeInfo);
+		if (property.type != 'array') {
+			output[key] = parseSingleEntry(key, entries[entries.length - 1], property);
 		} else {
-			if (!typeInfo.items || typeof typeInfo.items == 'boolean') {
-				throw new SuperFormError(
-					'Array must have an items property that defines its type. Key:' + key
-				);
-			}
-			if (Array.isArray(typeInfo.items)) {
-				throw new SuperFormError('Items property cannot have multiple values. Key:' + key);
+			const items = property.items;
+			if (!items || typeof items == 'boolean') {
+				throw new SchemaError('Arrays must have an "items" property that defines its type.', key);
 			}
 
-			const arrayType = typeInfo.items;
+			const arrayType = Array.isArray(items) ? items[0] : items;
+			if (typeof arrayType == 'boolean') {
+				throw new SchemaError('Schema properties defined as boolean is not supported.', key);
+			}
 			output[key] = entries.map((e) => parseSingleEntry(key, e, arrayType));
 		}
-	}
-
-	function parseFormDataEntry(field: string, value: string | null, typeInfo: JSONSchema7): unknown {
-		const newValue = valueOrDefault(field, value, false, typeInfo);
-		const property = typeInfo.properties?.[field];
-		if (typeof property == 'boolean')
-			throw new SuperFormError('An object property cannot be defined as boolean. Key: ' + field);
-
-		const type = property.type;
-
-		// If the value was empty, it now contains the default value,
-		// so it can be returned immediately, unless it's boolean, which
-		// means it could have been posted as a checkbox.
-		if (!value && type != 'ZodBoolean') {
-			return newValue;
-		}
-
-		//console.log(`FormData field "${field}" (${type}): ${value}`
-
-		if (type == 'ZodString') {
-			return value;
-		} else if (type == 'ZodNumber') {
-			return (zodType as ZodNumber).isInt ? parseInt(value ?? '', 10) : parseFloat(value ?? '');
-		} else if (type == 'ZodBoolean') {
-			return Boolean(value == 'false' ? '' : value).valueOf();
-		} else if (type == 'ZodDate') {
-			return new Date(value ?? '');
-		} else if (type == 'ZodArray') {
-			const arrayType = unwrapZodType(zodType._def.type);
-			return parseFormDataEntry(field, value, arrayType);
-		} else if (type == 'ZodBigInt') {
-			try {
-				return BigInt(value ?? '.');
-			} catch {
-				return NaN;
-			}
-		} else if (type == 'ZodLiteral') {
-			const literalType = typeof (zodType as ZodLiteral<unknown>).value;
-
-			if (literalType === 'string') return value;
-			else if (literalType === 'number') return parseFloat(value ?? '');
-			else if (literalType === 'boolean') return Boolean(value).valueOf();
-			else {
-				throw new SuperFormError('Unsupported ZodLiteral type: ' + literalType);
-			}
-		} else if (type == 'ZodUnion' || type == 'ZodEnum' || type == 'ZodAny') {
-			return value;
-		} else if (type == 'ZodNativeEnum') {
-			const zodEnum = zodType as ZodNativeEnum<EnumLike>;
-
-			if (value !== null && value in zodEnum.enum) {
-				const enumValue = zodEnum.enum[value];
-				if (typeof enumValue === 'number') return enumValue;
-				else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
-			} else if (value !== null && Object.values(zodEnum.enum).includes(value)) {
-				return value;
-			}
-			return undefined;
-		} else if (type == 'ZodSymbol') {
-			return Symbol(String(value));
-		}
-
-		if (type == 'ZodObject') {
-			throw new SuperFormError(
-				`Object found in form field "${field}". ` +
-					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
-					`More information: https://superforms.rocks/concepts/nested-data`
-			);
-		}
-
-		throw new SuperFormError('Unsupported Zod default type: ' + zodType.constructor.name);
 	}
 
 	return output;
 }
 
-function unwrapZodType(zodType: ZodTypeAny): SchemaProperty {
-	const originalType = zodType;
-
-	let _wrapped = true;
-	let isNullable = false;
-	let isOptional = false;
-	let hasDefault = false;
-	let effects = undefined;
-	let defaultValue: unknown = undefined;
-
-	//let i = 0;
-	while (_wrapped) {
-		//console.log(' '.repeat(++i * 2) + zodType.constructor.name);
-		if (zodType._def.typeName == 'ZodNullable') {
-			isNullable = true;
-			zodType = (zodType as ZodNullable<ZodTypeAny>).unwrap();
-		} else if (zodType._def.typeName == 'ZodDefault') {
-			hasDefault = true;
-			defaultValue = zodType._def.defaultValue();
-			zodType = zodType._def.innerType;
-		} else if (zodType._def.typeName == 'ZodOptional') {
-			isOptional = true;
-			zodType = (zodType as ZodOptional<ZodTypeAny>).unwrap();
-		} else if (zodType._def.typeName == 'ZodEffects') {
-			if (!effects) effects = zodType as ZodEffects<ZodTypeAny>;
-			zodType = zodType._def.schema;
-		} else if (zodType._def.typeName == 'ZodPipeline') {
-			zodType = (zodType as ZodPipeline<ZodTypeAny, ZodTypeAny>)._def.out;
-		} else {
-			_wrapped = false;
-		}
+function parseFormDataEntry(
+	key: string,
+	value: string | null,
+	isOptional: boolean,
+	schema: JSONSchema7Definition
+): unknown {
+	if (typeof schema == 'boolean') {
+		throw new SchemaError('An object property cannot be defined as boolean.', key);
 	}
 
-	return {
-		zodType,
-		originalType,
-		isNullable,
-		isOptional,
-		hasDefault,
-		defaultValue,
-		effects
-	};
+	const newValue = valueOrDefault(key, value, false, isOptional, schema);
+	const types = schemaTypes(schema);
+	const type = types?.[0];
+
+	console.log(`Parsing FormData "${key}" (${type}): ${value}`, schema);
+
+	// If the value was empty, newValue contains the default value
+	// so it can be returned immediately, unless it's boolean, which
+	// means it could have been posted as a checkbox.
+	if (!value && type != 'boolean') {
+		return newValue;
+	}
+
+	switch (type) {
+		case 'string':
+			return value;
+		case 'integer':
+			return parseInt(value ?? '', 10);
+		case 'number':
+			return parseFloat(value ?? '');
+		case 'boolean':
+			return Boolean(value == 'false' ? '' : value).valueOf();
+		case 'unix-time':
+			return new Date(value ?? '');
+		case 'array': {
+			const arrayType = schema.items;
+			if (typeof arrayType == 'boolean') {
+				throw new SchemaError('Arrays cannot be defined as boolean.', key);
+			}
+			if (!arrayType) {
+				throw new SchemaError('Arrays must have an "items" property.', key);
+			}
+			return parseFormDataEntry(
+				key,
+				value,
+				isOptional,
+				Array.isArray(arrayType) ? arrayType[0] : arrayType
+			);
+		}
+		case 'bigint':
+			return BigInt(value ?? '.');
+		case 'symbol':
+			return Symbol(String(value));
+		case 'any':
+		case 'null':
+		case 'set':
+			return value;
+		case 'object': {
+			throw new SuperFormError(
+				`Object found in form field "${key}". ` +
+					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
+					`More information: https://superforms.rocks/concepts/nested-data`
+			);
+		}
+		default:
+			throw new SuperFormError('Unsupported default FormData type: ' + type);
+	}
+
+	// TODO: Enum parsing
+	/*
+	} else if (type == 'NativeEnum') {
+		const zodEnum = zodType as ZodNativeEnum<EnumLike>;
+
+		if (value !== null && value in zodEnum.enum) {
+			const enumValue = zodEnum.enum[value];
+			if (typeof enumValue === 'number') return enumValue;
+			else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
+		} else if (value !== null && Object.values(zodEnum.enum).includes(value)) {
+			return value;
+		}
+		return undefined;
+	} 
+	*/
+}
+
+/**
+ * Based on schema type, check what the empty value should be parsed to
+ *
+ * Nullable takes priority over optional.
+ * Also make a check for strict, so empty strings from FormData can also be set here.
+ *
+ * @param value
+ * @param strict
+ * @param schema
+ * @param isOptional
+ * @returns
+ */
+function valueOrDefault(
+	key: string,
+	value: unknown,
+	strict: boolean,
+	isOptional: boolean,
+	schema: JSONSchema7
+) {
+	if (value) return value;
+	if (strict && value !== undefined) return value;
+
+	const defaultValue = defaultValues(schema, isOptional, [key]);
+
+	if (defaultValue !== undefined) return defaultValue;
+	if (isNullable(schema)) return null;
+	if (isOptional) return undefined;
+
+	throw new SchemaError('Required field without default value found.', key);
 }

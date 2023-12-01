@@ -1,5 +1,5 @@
 import {
-	SuperFormSchemaError as SchemaError,
+	SchemaError as SchemaError,
 	type InputConstraints,
 	type InputConstraint
 } from '$lib/index.js';
@@ -7,8 +7,8 @@ import type { SuperValidateOptions } from '$lib/superValidate.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 import merge from 'ts-deepmerge';
 
-//type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
-//type PropertyType = JSONSchema7TypeName | FormatType;
+type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
+type PropertyType = JSONSchema7TypeName | FormatType;
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
@@ -29,7 +29,7 @@ function defaultValueWithFormat(format: string, value: unknown) {
 	}
 }
 
-function defaultValue(
+export function defaultValue(
 	type: JSONSchema7TypeName,
 	format: string | undefined,
 	enumType: unknown[] | undefined
@@ -82,14 +82,23 @@ function types(schema: JSONSchema7): PropertyType[] | null {
 }
 */
 
-function nullableSchema(schema: JSONSchema7) {
+export function schemaTypes(schema: JSONSchema7): PropertyType[] | null {
+	if (schema.format && conversionFormatTypes.includes(schema.format)) {
+		return [schema.format as FormatType];
+	}
+
+	if (!schema.type) return null;
+	return Array.isArray(schema.type) ? schema.type : [schema.type];
+}
+
+export function isNullable(schema: JSONSchema7) {
 	return !!(schema.type == 'null' || schema.type?.includes('null'));
 }
 
 ///// Default values //////////////////////////////////////////////////////////
 
-export function defaultValues<T>(schema: JSONSchema7): T {
-	return _defaultValues(schema, false, []) as T;
+export function defaultValues<T>(schema: JSONSchema7, isOptional = false, path: string[] = []): T {
+	return _defaultValues(schema, isOptional, path) as T;
 }
 
 function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]): unknown {
@@ -106,7 +115,7 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 		}
 	}
 
-	if (nullableSchema(schema)) return null;
+	if (isNullable(schema)) return null;
 	if (isOptional) return undefined;
 
 	// Unions
@@ -223,7 +232,7 @@ function constraint(
 
 	const type = schema.type;
 	const format = schema.format;
-	const isNullable = nullableSchema(schema);
+	const nullable = isNullable(schema);
 
 	// Must be before type check
 	if (
@@ -265,7 +274,7 @@ function constraint(
 		if (arr.maxItems !== undefined) output.max = arr.maxItems;
 	}
 
-	if (!isNullable && !isOptional) {
+	if (!nullable && !isOptional) {
 		output.required = true;
 	}
 

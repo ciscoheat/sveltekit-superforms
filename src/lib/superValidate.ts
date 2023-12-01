@@ -6,7 +6,7 @@ import type { BaseSchema, BaseSchemaAsync } from 'valibot';
 import type { AnyZodObject, ZodEffects, ZodSchema } from 'zod';
 import type { RequestEvent } from '@sveltejs/kit';
 import merge from 'ts-deepmerge';
-import { schemaType } from './schemaMeta/index.js';
+import { validationSchemaType } from './schemaMeta/index.js';
 //import { ZodSchemaMeta } from './schemaMeta/zod.js';
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
@@ -97,7 +97,7 @@ export async function superValidate<
 	let constraints: InputConstraints<Inferred<T>> = {};
 	let defaults: Inferred<T> | undefined = options?.defaults ? options.defaults : undefined;
 
-	switch (schemaType(schema)) {
+	switch (validationSchemaType(schema)) {
 		case 'zod': {
 			const zodMeta = await import('./schemaMeta/zod.js');
 			const meta = new zodMeta.ZodSchemaMeta(schema as AnyZodObject);

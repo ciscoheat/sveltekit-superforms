@@ -8,7 +8,7 @@ export type SchemaMeta<T extends object> = {
 	schema: JSONSchema7;
 };
 
-export function schemaType(schema: Schema): 'zod' | 'other' {
+export function validationSchemaType(schema: Schema): 'zod' | 'other' {
 	if ('safeParseAsync' in schema) return 'zod';
 	return 'other';
 }

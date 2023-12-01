@@ -9,11 +9,11 @@ export class SuperFormError extends Error {
 	}
 }
 
-export class SuperFormSchemaError extends SuperFormError {
+export class SchemaError extends SuperFormError {
 	readonly path: string | undefined;
 	constructor(message: string, path?: string | string[]) {
 		super(message);
-		Object.setPrototypeOf(this, SuperFormSchemaError.prototype);
+		Object.setPrototypeOf(this, SchemaError.prototype);
 		this.path = Array.isArray(path) ? path.join('.') : path;
 	}
 	override toString() {

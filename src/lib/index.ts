@@ -12,12 +12,9 @@ export class SuperFormError extends Error {
 export class SchemaError extends SuperFormError {
 	readonly path: string | undefined;
 	constructor(message: string, path?: string | string[]) {
-		super(message);
-		Object.setPrototypeOf(this, SchemaError.prototype);
+		super((path ? `[${Array.isArray(path) ? path.join('.') : path}] ` : '') + message);
 		this.path = Array.isArray(path) ? path.join('.') : path;
-	}
-	override toString() {
-		return this.path ? `[${this.path}] ` : '' + this.message;
+		Object.setPrototypeOf(this, SchemaError.prototype);
 	}
 }
 

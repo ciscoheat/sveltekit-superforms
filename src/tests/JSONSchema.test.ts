@@ -232,7 +232,7 @@ describe('JSON schema validation', () => {
 		});
 	});
 
-	it('should map the default value of a union (anyOf) to the first type', () => {
+	it('should map the default value of a union (anyOf) if only one default value exists.', () => {
 		const defaultTestSchema: JSONSchema7 = {
 			type: 'object',
 			properties: {
@@ -250,8 +250,26 @@ describe('JSON schema validation', () => {
 		expect(defaultValues(defaultTestSchema)).toEqual({
 			name: undefined,
 			email: undefined,
-			gender: 'male',
+			gender: 'other',
 			age: 25
 		});
+
+		// @ts-expect-error Quick patching the test data
+		defaultTestSchema.properties.gender.anyOf[0].default = 'male';
+
+		expect(() => defaultValues(defaultTestSchema)).toThrow();
+
+		// @ts-expect-error Quick patching the test data
+		delete defaultTestSchema.properties.gender.anyOf[0].default;
+		// @ts-expect-error Quick patching the test data
+		delete defaultTestSchema.properties.gender.anyOf[1].default;
+
+		expect(() => defaultValues(defaultTestSchema)).toThrow();
+
+		// @ts-expect-error Quick patching the test data
+		defaultTestSchema.properties.gender.default = 'female';
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		expect(defaultValues<any>(defaultTestSchema).gender).toEqual('female');
 	});
 });

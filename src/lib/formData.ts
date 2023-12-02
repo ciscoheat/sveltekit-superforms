@@ -2,7 +2,7 @@ import { SuperFormError, SchemaError } from './index.js';
 import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
-import { defaultValues, isNullable, schemaTypes } from './schemaMeta/jsonSchema.js';
+import { schemaInfo, type SchemaInfo } from './schemaMeta/jsonSchema.js';
 
 type ParsedData = {
 	id: string | undefined;
@@ -86,7 +86,7 @@ async function tryParseFormData<T extends object>(
 	return parseFormData(formData, schemaData, options);
 }
 
-function parseSearchParams<T extends object>(
+export function parseSearchParams<T extends object>(
 	data: URL | URLSearchParams,
 	schemaData: JSONSchema7,
 	options?: { preprocessed: SuperValidateOptions<T, boolean>['preprocessed'] }
@@ -98,8 +98,9 @@ function parseSearchParams<T extends object>(
 		convert.append(key, value);
 	}
 
-	// Only FormData can be posted.
 	const output = parseFormData(convert, schemaData, options);
+
+	// Set posted to false since it's a URL
 	output.posted = false;
 	return output;
 }
@@ -145,72 +146,107 @@ function _parseFormData<T extends object>(
 		? formData.keys()
 		: Object.keys(schema.properties ?? {});
 
-	function parseSingleEntry(key: string, entry: FormDataEntryValue, property: JSONSchema7) {
+	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
 		if (preprocessed && preprocessed.includes(key as keyof T)) {
 			return entry;
 		}
 
 		if (entry && typeof entry !== 'string') {
-			// File object, not supported
+			// File objects are not supported
 			// TODO: Add a warning for uploaded files that can be disabled?
 			return undefined;
 		}
 
-		return parseFormDataEntry(key, entry, !schema.required?.includes(key), property);
+		return parseFormDataEntry(key, entry, info);
 	}
 
 	for (const key of schemaKeys) {
+		if (!schema.additionalProperties && !formData.has(key)) continue;
+
 		const property: JSONSchema7Definition = schema.properties
 			? schema.properties[key]
 			: { type: 'string' };
+
+		const unionError = () => {
+			throw new SchemaError(
+				'FormData parsing failed: ' +
+					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
+				key
+			);
+		};
 
 		if (typeof property == 'boolean') {
 			throw new SchemaError('Schema properties defined as boolean is not supported.', key);
 		}
 
+		const info = schemaInfo(property, !schema.required?.includes(key), unionError);
+
 		const entries = formData.getAll(key);
 
-		if (property.type != 'array') {
-			output[key] = parseSingleEntry(key, entries[entries.length - 1], property);
-		} else {
+		if (info.types.includes('array') || info.types.includes('set')) {
 			const items = property.items;
-			if (!items || typeof items == 'boolean') {
-				throw new SchemaError('Arrays must have an "items" property that defines its type.', key);
+			if (!items || typeof items == 'boolean' || (Array.isArray(items) && items.length != 1)) {
+				throw new SchemaError(
+					'Arrays must have a single "items" property that defines its type.',
+					key
+				);
 			}
 
 			const arrayType = Array.isArray(items) ? items[0] : items;
 			if (typeof arrayType == 'boolean') {
 				throw new SchemaError('Schema properties defined as boolean is not supported.', key);
 			}
-			output[key] = entries.map((e) => parseSingleEntry(key, e, arrayType));
+
+			const arrayInfo = schemaInfo(arrayType, info.isOptional, unionError);
+			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo));
+			output[key] = info.types.includes('set') ? new Set(arrayData) : arrayData;
+		} else {
+			output[key] = parseSingleEntry(key, entries[entries.length - 1], info);
 		}
 	}
 
 	return output;
 }
 
-function parseFormDataEntry(
-	key: string,
-	value: string | null,
-	isOptional: boolean,
-	schema: JSONSchema7Definition
-): unknown {
-	if (typeof schema == 'boolean') {
-		throw new SchemaError('An object property cannot be defined as boolean.', key);
+function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unknown {
+	if (info.types.length != 1) {
+		throw new SchemaError(
+			'FormData parsing failed: ' +
+				'Multiple types are only supported when the dataType option for superForm is set to "json".' +
+				'Types found: ' +
+				info.types,
+			key
+		);
 	}
 
-	const newValue = valueOrDefault(key, value, false, isOptional, schema);
-	const types = schemaTypes(schema);
-	const type = types?.[0];
+	const type = info.types[0];
 
-	console.log(`Parsing FormData "${key}" (${type}): ${value}`, schema);
-
-	// If the value was empty, newValue contains the default value
-	// so it can be returned immediately, unless it's boolean, which
+	// value can be returned immediately unless it's boolean, which
 	// means it could have been posted as a checkbox.
 	if (!value && type != 'boolean') {
-		return newValue;
+		console.log(`No FormData for "${key}" (${type}).`);
+		return info.isNullable ? null : value;
 	}
+
+	/*
+	if (!value) {
+		const defaultValue = defaultValues(schema, isOptional, [key]);
+
+		console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`, schema);
+
+		// defaultValue can be returned immediately unless it's boolean, which
+		// means it could have been posted as a checkbox.
+		if (defaultValue !== undefined && type != 'boolean') {
+			return defaultValue;
+		}
+		if (info.isNullable) return null;
+		if (info.isOptional) return undefined;
+	}
+	*/
+
+	//const newValue = valueOrDefault(key, value, false, isOptional, schema);
+
+	console.log(`Parsing FormData "${key}": ${value}`, info);
 
 	switch (type) {
 		case 'string':
@@ -224,6 +260,13 @@ function parseFormDataEntry(
 		case 'unix-time':
 			return new Date(value ?? '');
 		case 'array': {
+			throw new SchemaError(
+				`Array type found. ` +
+					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
+					`More information: https://superforms.rocks/concepts/nested-data`,
+				key
+			);
+			/*
 			const arrayType = schema.items;
 			if (typeof arrayType == 'boolean') {
 				throw new SchemaError('Arrays cannot be defined as boolean.', key);
@@ -237,24 +280,25 @@ function parseFormDataEntry(
 				isOptional,
 				Array.isArray(arrayType) ? arrayType[0] : arrayType
 			);
+			*/
 		}
 		case 'bigint':
 			return BigInt(value ?? '.');
 		case 'symbol':
 			return Symbol(String(value));
 		case 'any':
-		case 'null':
 		case 'set':
 			return value;
 		case 'object': {
-			throw new SuperFormError(
-				`Object found in form field "${key}". ` +
+			throw new SchemaError(
+				`Object type found. ` +
 					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
-					`More information: https://superforms.rocks/concepts/nested-data`
+					`More information: https://superforms.rocks/concepts/nested-data`,
+				key
 			);
 		}
 		default:
-			throw new SuperFormError('Unsupported default FormData type: ' + type);
+			throw new SuperFormError('Unsupported schema type for FormData: ' + type);
 	}
 
 	// TODO: Enum parsing
@@ -286,6 +330,7 @@ function parseFormDataEntry(
  * @param isOptional
  * @returns
  */
+/*
 function valueOrDefault(
 	key: string,
 	value: unknown,
@@ -299,8 +344,9 @@ function valueOrDefault(
 	const defaultValue = defaultValues(schema, isOptional, [key]);
 
 	if (defaultValue !== undefined) return defaultValue;
-	if (isNullable(schema)) return null;
+	if (isSchemaNullable(schema)) return null;
 	if (isOptional) return undefined;
 
 	throw new SchemaError('Required field without default value found.', key);
 }
+*/

@@ -74,21 +74,22 @@ export async function superValidate<
 		validation = adapter as ValidationAdapter<T, ValidationLibrary>;
 	}
 
-	// Set to undefined, to spot compilation errors
+	// Set adapter argument to undefined, to spot compilation errors since
+	// it should not be used below this point.
 	adapter = undefined;
 
-	const addErrors = options?.errors !== undefined ? options.errors : !!data;
-
 	const parsed = await parseRequest<Inferred<T>>(data, validation.jsonSchema, options);
-	const shouldValidate = !!(parsed.data || addErrors);
 
-	const status = shouldValidate
-		? await validate(validation.schema, parsed.data ?? validation.defaults)
-		: { success: false, issues: [] };
+	const addErrors = options?.errors !== undefined ? options.errors : !!data;
+	const status =
+		parsed.data || addErrors
+			? await validate(validation.schema, parsed.data ?? validation.defaults)
+			: { success: false, issues: [] };
+
+	const valid = status.success;
+	const errors = {};
 
 	if (!status.success) {
-		const errors = {};
-
 		if (addErrors) {
 			const issues = status.issues;
 			setPaths(
@@ -98,25 +99,18 @@ export async function superValidate<
 			);
 		}
 
+		// All data may not be present here (missing FormData field, for example)
+		// Merge defaults to make data type-safe.
 		parsed.data = merge(validation.defaults, parsed.data ?? {}) as Inferred<T>;
-
-		return {
-			id: parsed.id,
-			valid: false,
-			posted: parsed.posted,
-			errors,
-			data: parsed.data as Inferred<T>,
-			constraints: validation.constraints,
-			message: undefined
-		};
 	}
 
 	return {
 		id: parsed.id,
-		valid: true,
+		valid,
 		posted: parsed.posted,
-		errors: {},
-		data: data as Inferred<T>,
+		errors,
+		// TODO: Strip keys not belonging to schema?
+		data: (valid ? data : parsed.data) as Inferred<T>,
 		constraints: validation.constraints,
 		message: undefined
 	};

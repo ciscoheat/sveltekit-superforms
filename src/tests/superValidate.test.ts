@@ -34,7 +34,7 @@ describe('superValidate', () => {
 		const errors = { email: 'Invalid email', tags: { '0': 'Invalid length' } };
 
 		it('should work with adapter only', async () => {
-			const output = await superValidate(valibot(schema, defaults));
+			const output = await superValidate(valibot(schema, { defaults }));
 			expect(output.data).toEqual(defaults);
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
@@ -43,7 +43,7 @@ describe('superValidate', () => {
 			// @ts-expect-error cannot assign to never
 			output.constraints = {};
 
-			const output2 = await superValidate(valibot(schema, defaults), { errors: true });
+			const output2 = await superValidate(valibot(schema, { defaults }), { errors: true });
 			expect(output2.data).toEqual(defaults);
 			expect(output2.data).not.toBe(defaults);
 			expect(output2.errors).toEqual(errors);
@@ -51,7 +51,7 @@ describe('superValidate', () => {
 		});
 
 		it('should work with testdata', async () => {
-			const output = await superValidate(testData, valibot(schema, defaults));
+			const output = await superValidate(testData, valibot(schema, { defaults }));
 			expect(output.data).toEqual(expectedData);
 			expect(output.errors).toEqual(errors);
 		});

@@ -13,15 +13,30 @@ export type ValidationAdapter<T extends Schema, Lib extends ValidationLibrary> =
 	jsonSchema: JSONSchema7;
 };
 
-export type ValidationAdapterOptions<T extends Schema> = {
-	jsonSchema: JSONSchema7;
+export type ValidationAdapterOptions<
+	T extends Schema,
+	RequiresDefaults extends 'requires-defaults' | ''
+> = RequiresDefaults extends 'requires-defaults'
+	? ValidationAdapterOptionsRequireDefaults<T>
+	: ValidationAdapterOptionsOptionalDefaults<T>;
+
+export type ValidationAdapterOptionsOptionalDefaults<T extends Schema> = {
+	jsonSchema?: JSONSchema7;
 	defaults?: Inferred<T>;
 };
 
-export function baseAdapter<T extends Schema, Lib extends ValidationLibrary>(
+export type ValidationAdapterOptionsRequireDefaults<T extends Schema> = {
+	jsonSchema?: JSONSchema7;
+	defaults: Inferred<T>;
+};
+
+export function validationAdapter<T extends Schema, Lib extends ValidationLibrary>(
 	validationLibrary: Lib,
 	schema: T,
-	options: ValidationAdapterOptions<T>
+	options: {
+		jsonSchema: JSONSchema7;
+		defaults?: Inferred<T>;
+	}
 ): ValidationAdapter<T, Lib> {
 	return {
 		superFormValidationLibrary: validationLibrary,
@@ -30,9 +45,4 @@ export function baseAdapter<T extends Schema, Lib extends ValidationLibrary>(
 		defaults: options.defaults ?? defaultValues<Inferred<T>>(options.jsonSchema),
 		constraints: constraints(options.jsonSchema)
 	};
-}
-
-export function validationSchemaType(schema: Schema): ValidationLibrary {
-	if ('safeParseAsync' in schema) return 'zod';
-	return 'other';
 }

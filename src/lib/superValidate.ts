@@ -6,7 +6,8 @@ import type { BaseSchema, BaseSchemaAsync } from 'valibot';
 import type { AnyZodObject, ZodEffects, ZodSchema } from 'zod';
 import type { RequestEvent } from '@sveltejs/kit';
 import merge from 'ts-deepmerge';
-import { validationSchemaType } from './schemaMeta/index.js';
+import { validationSchemaType, type SchemaMeta } from './schemaMeta/index.js';
+import { parseRequest } from './formData.js';
 //import { ZodSchemaMeta } from './schemaMeta/zod.js';
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
@@ -94,26 +95,27 @@ export async function superValidate<
 ): Promise<SuperValidated<Inferred<T>, M, SupportsConstraints<T>>> {
 	const addErrors = options?.errors !== undefined ? options.errors : !!data;
 
-	let constraints: InputConstraints<Inferred<T>> = {};
-	let defaults: Inferred<T> | undefined = options?.defaults ? options.defaults : undefined;
+	let meta: SchemaMeta<Inferred<T>>;
 
 	switch (validationSchemaType(schema)) {
 		case 'zod': {
 			const zodMeta = await import('./schemaMeta/zod.js');
-			const meta = new zodMeta.ZodSchemaMeta(schema as AnyZodObject);
-			defaults = meta.defaults as Inferred<T>;
-			constraints = meta.constraints;
+			meta = new zodMeta.ZodSchemaMeta(schema as AnyZodObject) as SchemaMeta<Inferred<T>>;
+			break;
+		}
+		default: {
+			if (!options?.defaults) {
+				throw new SuperFormError('options.defaults must be specified.');
+			}
+			const objectMeta = await import('./schemaMeta/object.js');
+			meta = new objectMeta.ObjectSchemaMeta(options.defaults);
 			break;
 		}
 	}
 
-	if (!defaults) {
-		throw new SuperFormError('options.defaults must be specified.');
-	}
+	const parsed = await parseRequest<Inferred<T>>(data, meta.schema, options);
 
-	data = merge(defaults, data ?? {}) as Inferred<T>;
-
-	const status = await validate(schema, data);
+	const status = await validate(schema, parsed.data);
 
 	if (!status.success) {
 		const errors = {};
@@ -127,24 +129,26 @@ export async function superValidate<
 			);
 		}
 
+		data = merge(meta.defaults, data ?? {}) as Inferred<T>;
+
 		return {
+			id: parsed.id,
 			valid: false,
-			//posted: false,
+			posted: parsed.posted,
 			errors,
 			data: data as Inferred<T>,
-			constraints,
+			constraints: meta.constraints,
 			message: undefined
-			//id
 		};
 	}
 
 	return {
+		id: parsed.id,
 		valid: true,
-		//posted: false,
+		posted: parsed.posted,
 		errors: {},
 		data: data as Inferred<T>,
-		constraints,
+		constraints: meta.constraints,
 		message: undefined
-		//id
 	};
 }

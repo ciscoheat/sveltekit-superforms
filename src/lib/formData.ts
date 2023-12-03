@@ -11,13 +11,13 @@ type ParsedData = {
 };
 
 type ParseOptions<T extends object> = {
-	preprocessed: SuperValidateOptions<T, boolean>['preprocessed'];
+	preprocessed?: SuperValidateOptions<T, boolean>['preprocessed'];
 };
 
 export async function parseRequest<T extends object>(
 	data: unknown,
 	schemaData: JSONSchema7,
-	options: ParseOptions<T>
+	options?: ParseOptions<T>
 ) {
 	let parsed: ParsedData;
 
@@ -69,7 +69,7 @@ function dataToValidate<T extends AnyZodObject>(
 async function tryParseFormData<T extends object>(
 	request: Request,
 	schemaData: JSONSchema7,
-	options: ParseOptions<T>
+	options?: ParseOptions<T>
 ) {
 	let formData: FormData | undefined = undefined;
 	try {
@@ -89,7 +89,7 @@ async function tryParseFormData<T extends object>(
 export function parseSearchParams<T extends object>(
 	data: URL | URLSearchParams,
 	schemaData: JSONSchema7,
-	options?: { preprocessed: SuperValidateOptions<T, boolean>['preprocessed'] }
+	options?: ParseOptions<T>
 ): ParsedData {
 	if (data instanceof URL) data = data.searchParams;
 
@@ -108,7 +108,7 @@ export function parseSearchParams<T extends object>(
 export function parseFormData<T extends object>(
 	formData: FormData,
 	schemaData: JSONSchema7,
-	options?: { preprocessed: SuperValidateOptions<T, boolean>['preprocessed'] }
+	options?: ParseOptions<T>
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
@@ -228,6 +228,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 		return info.isNullable ? null : value;
 	}
 
+	// TODO: Probably better to merge default values later, to avoid this code:
 	/*
 	if (!value) {
 		const defaultValue = defaultValues(schema, isOptional, [key]);
@@ -244,12 +245,22 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	}
 	*/
 
-	//const newValue = valueOrDefault(key, value, false, isOptional, schema);
-
 	console.log(`Parsing FormData "${key}": ${value}`, info);
+
+	function typeError() {
+		throw new SchemaError(
+			type[0].toUpperCase() +
+				type.slice(1) +
+				` type found. ` +
+				`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
+				`More information: https://superforms.rocks/concepts/nested-data`,
+			key
+		);
+	}
 
 	switch (type) {
 		case 'string':
+		case 'any':
 			return value;
 		case 'integer':
 			return parseInt(value ?? '', 10);
@@ -259,44 +270,16 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 			return Boolean(value == 'false' ? '' : value).valueOf();
 		case 'unix-time':
 			return new Date(value ?? '');
-		case 'array': {
-			throw new SchemaError(
-				`Array type found. ` +
-					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
-					`More information: https://superforms.rocks/concepts/nested-data`,
-				key
-			);
-			/*
-			const arrayType = schema.items;
-			if (typeof arrayType == 'boolean') {
-				throw new SchemaError('Arrays cannot be defined as boolean.', key);
-			}
-			if (!arrayType) {
-				throw new SchemaError('Arrays must have an "items" property.', key);
-			}
-			return parseFormDataEntry(
-				key,
-				value,
-				isOptional,
-				Array.isArray(arrayType) ? arrayType[0] : arrayType
-			);
-			*/
-		}
 		case 'bigint':
 			return BigInt(value ?? '.');
 		case 'symbol':
 			return Symbol(String(value));
-		case 'any':
+
 		case 'set':
-			return value;
-		case 'object': {
-			throw new SchemaError(
-				`Object type found. ` +
-					`Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +
-					`More information: https://superforms.rocks/concepts/nested-data`,
-				key
-			);
-		}
+		case 'array':
+		case 'object':
+			return typeError();
+
 		default:
 			throw new SuperFormError('Unsupported schema type for FormData: ' + type);
 	}
@@ -317,36 +300,3 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	} 
 	*/
 }
-
-/**
- * Based on schema type, check what the empty value should be parsed to
- *
- * Nullable takes priority over optional.
- * Also make a check for strict, so empty strings from FormData can also be set here.
- *
- * @param value
- * @param strict
- * @param schema
- * @param isOptional
- * @returns
- */
-/*
-function valueOrDefault(
-	key: string,
-	value: unknown,
-	strict: boolean,
-	isOptional: boolean,
-	schema: JSONSchema7
-) {
-	if (value) return value;
-	if (strict && value !== undefined) return value;
-
-	const defaultValue = defaultValues(schema, isOptional, [key]);
-
-	if (defaultValue !== undefined) return defaultValue;
-	if (isSchemaNullable(schema)) return null;
-	if (isOptional) return undefined;
-
-	throw new SchemaError('Required field without default value found.', key);
-}
-*/

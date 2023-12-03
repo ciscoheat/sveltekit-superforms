@@ -31,7 +31,7 @@ const schema = z.object({
 	literal: z.literal(true).default(false as true)
 });
 
-it('Zod to JSON Schema', () => {
+it.skip('Zod to JSON Schema', () => {
 	console.dir(zodToJsonSchema(schema), { depth: 10 });
 });
 

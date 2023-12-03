@@ -19,5 +19,5 @@ type ZodValidation<T extends AnyZodObject> =
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
 export function zod<T extends ZodValidation<AnyZodObject>>(schema: T) {
-	return validationAdapter<T, 'zod'>('zod', schema, { jsonSchema: zodToJsonSchema(schema) });
+	return validationAdapter<T, 'zod'>('zod', schema, zodToJsonSchema(schema));
 }

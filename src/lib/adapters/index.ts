@@ -3,6 +3,8 @@ import { constraints, defaultValues } from '$lib/jsonSchema.js';
 import type { Schema } from '@decs/typeschema';
 import type { JSONSchema7 } from 'json-schema';
 
+export type { JSONSchema7 } from 'json-schema';
+
 export type ValidationLibrary = 'zod' | 'valibot' | 'defaults' | 'other';
 
 export type ValidationAdapter<T extends Schema, Lib extends ValidationLibrary> = {
@@ -33,16 +35,15 @@ export type ValidationAdapterOptionsRequireDefaults<T extends Schema> = {
 export function validationAdapter<T extends Schema, Lib extends ValidationLibrary>(
 	validationLibrary: Lib,
 	schema: T,
-	options: {
-		jsonSchema: JSONSchema7;
-		defaults?: Inferred<T>;
-	}
+	cacheableJsonSchema: JSONSchema7
 ): ValidationAdapter<T, Lib> {
-	return {
+	const adapter = {
 		superFormValidationLibrary: validationLibrary,
 		schema,
-		jsonSchema: options.jsonSchema,
-		defaults: options.defaults ?? defaultValues<Inferred<T>>(options.jsonSchema),
-		constraints: constraints(options.jsonSchema)
+		jsonSchema: cacheableJsonSchema,
+		defaults: defaultValues<Inferred<T>>(cacheableJsonSchema),
+		constraints: constraints(cacheableJsonSchema)
 	};
+
+	return adapter;
 }

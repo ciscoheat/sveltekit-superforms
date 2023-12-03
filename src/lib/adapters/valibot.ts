@@ -11,8 +11,9 @@ export function valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
 	options: ValidationAdapterOptions<T, 'requires-defaults'>
 ): ValidationAdapter<T, 'valibot'> {
-	return validationAdapter<T, 'valibot'>('valibot', schema, {
-		defaults: options.defaults,
-		jsonSchema: options.jsonSchema ?? (toJsonSchema(options.defaults) as JSONSchema7)
-	});
+	return validationAdapter<T, 'valibot'>(
+		'valibot',
+		schema,
+		toJsonSchema(options.defaults) as JSONSchema7
+	);
 }

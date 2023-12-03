@@ -6,6 +6,7 @@ import type { RequestEvent } from '@sveltejs/kit';
 import merge from 'ts-deepmerge';
 import type { ValidationAdapter, ValidationLibrary } from './adapters/index.js';
 import { parseRequest } from './formData.js';
+import type { JSONSchema7 } from 'json-schema';
 
 //import { ZodSchemaMeta } from './schemaMeta/zod.js';
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
@@ -26,6 +27,8 @@ export type SuperValidateOptions<T extends object> = Partial<{
 	errors: boolean;
 	id: string;
 	preprocessed: (keyof T)[];
+	defaults: T;
+	jsonSchema: JSONSchema7;
 }>;
 
 export async function superValidate<
@@ -74,16 +77,15 @@ export async function superValidate<
 		validation = adapter as ValidationAdapter<T, ValidationLibrary>;
 	}
 
-	// Set adapter argument to undefined, to spot compilation errors since
-	// it should not be used below this point.
-	adapter = undefined;
-
-	const parsed = await parseRequest<Inferred<T>>(data, validation.jsonSchema, options);
-
+	const defaults = options?.defaults ?? validation.defaults;
+	const jsonSchema = options?.jsonSchema ?? validation.jsonSchema;
 	const addErrors = options?.errors !== undefined ? options.errors : !!data;
+
+	const parsed = await parseRequest<Inferred<T>>(data, jsonSchema, options);
+
 	const status =
 		parsed.data || addErrors
-			? await validate(validation.schema, parsed.data ?? validation.defaults)
+			? await validate(validation.schema, parsed.data ?? defaults)
 			: { success: false, issues: [] };
 
 	const valid = status.success;
@@ -101,7 +103,7 @@ export async function superValidate<
 
 		// All data may not be present here (missing FormData field, for example)
 		// Merge defaults to make data type-safe.
-		parsed.data = merge(validation.defaults, parsed.data ?? {}) as Inferred<T>;
+		parsed.data = merge(defaults, parsed.data ?? {}) as Inferred<T>;
 	}
 
 	return {

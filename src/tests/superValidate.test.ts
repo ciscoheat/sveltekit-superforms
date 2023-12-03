@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
-import { constraints, defaultValues } from '$lib/schemaMeta/jsonSchema.js';
-import { zodToJsonSchema } from '$lib/schemaMeta/zod.js';
+import { constraints, defaultValues } from '$lib/jsonSchema.js';
+import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { Foo, bigZodSchema } from './data.js';
+import { valibot } from '$lib/adapters/valibot.js';
 
 const defaults = { name: '', email: '', tags: ['A'] };
 const testData = { name: 'Ok', email: '' };
@@ -32,8 +33,8 @@ describe('superValidate', () => {
 
 		const errors = { email: 'Invalid email', tags: { '0': 'Invalid length' } };
 
-		it('should work with schema only', async () => {
-			const output = await superValidate(schema, null, { defaults });
+		it('should work with adapter only', async () => {
+			const output = await superValidate(valibot(schema, defaults));
 			expect(output.data).toEqual(defaults);
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
@@ -42,7 +43,7 @@ describe('superValidate', () => {
 			// @ts-expect-error cannot assign to never
 			output.constraints = {};
 
-			const output2 = await superValidate(schema, null, { defaults, errors: true });
+			const output2 = await superValidate(valibot(schema, defaults), { errors: true });
 			expect(output2.data).toEqual(defaults);
 			expect(output2.data).not.toBe(defaults);
 			expect(output2.errors).toEqual(errors);
@@ -50,7 +51,7 @@ describe('superValidate', () => {
 		});
 
 		it('should work with testdata', async () => {
-			const output = await superValidate(schema, testData, { defaults });
+			const output = await superValidate(testData, valibot(schema, defaults));
 			expect(output.data).toEqual(expectedData);
 			expect(output.errors).toEqual(errors);
 		});
@@ -81,9 +82,7 @@ describe('superValidate', () => {
 				arr: { minlength: 10, required: true },
 				nestedTags: { name: { minlength: 1, required: true } }
 			};
-			const values = constraints<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema), {
-				multipleRegexps: false
-			});
+			const values = constraints<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema));
 			expect(values).toEqual(expected);
 		});
 
@@ -93,21 +92,21 @@ describe('superValidate', () => {
 		};
 
 		it('should work with schema only', async () => {
-			const output = await superValidate(schema);
+			const output = await superValidate(zod(schema));
 			expect(output.data).toEqual(defaults);
 			expect(output.data).not.toBe(defaults);
 			expect(output.errors).toEqual({});
 			expect(output.constraints).toEqual(expectedConstraints);
 			expect(output.message).toBeUndefined();
 
-			const output2 = await superValidate(schema, null, { errors: true });
+			const output2 = await superValidate(zod(schema), { errors: true });
 			expect(output2.data).toEqual(defaults);
 			expect(output2.data).not.toBe(defaults);
 			expect(output2.errors).toEqual(errors);
 		});
 
 		it('should work with testdata', async () => {
-			const output = await superValidate(schema, testData);
+			const output = await superValidate(testData, zod(schema));
 			expect(output.data).toEqual(expectedData);
 			expect(output.errors).toEqual(errors);
 		});

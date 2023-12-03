@@ -1,8 +1,8 @@
-import { defaultValues } from '$lib/schemaMeta/jsonSchema.js';
+import { defaultValues } from '$lib/jsonSchema.js';
 import { it } from 'vitest';
 import { z } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import { zodToJsonSchema } from '$lib/schemaMeta/zod.js';
+import { zodToJsonSchema } from '$lib/adapters/zod.js';
 
 enum Foo {
 	A = 2,

@@ -3,7 +3,6 @@ import {
 	type InputConstraints,
 	type InputConstraint
 } from '$lib/index.js';
-import type { SuperValidateOptions } from '$lib/superValidate.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 import merge from 'ts-deepmerge';
 
@@ -202,21 +201,17 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 
 ///// Constraints /////////////////////////////////////////////////////////////
 
-export function constraints<T extends object>(
-	schema: JSONSchema7,
-	warnings?: SuperValidateOptions<T, boolean>['warnings']
-): InputConstraints<T> {
+export function constraints<T extends object>(schema: JSONSchema7): InputConstraints<T> {
 	if (schema.type != 'object') {
 		throw new SchemaError('Constraints must be created from an object schema.');
 	}
 
-	return _constraints(schema, false, warnings, []);
+	return _constraints(schema, false, []);
 }
 
 export function _constraints(
 	schema: JSONSchema7Definition,
 	isOptional: boolean,
-	warnings: SuperValidateOptions<object, boolean>['warnings'] | undefined,
 	path: string[]
 ): InputConstraints<object> | InputConstraint | undefined {
 	if (typeof schema === 'boolean') {
@@ -226,7 +221,7 @@ export function _constraints(
 	// Union
 	if (schema.anyOf) {
 		const merged = schema.anyOf
-			.map((s) => _constraints(s, isOptional, warnings, path))
+			.map((s) => _constraints(s, isOptional, path))
 			.filter((s) => s !== undefined);
 		return merge(...merged);
 	}
@@ -237,7 +232,7 @@ export function _constraints(
 			throw new SchemaError('Arrays must have an items property', path);
 		}
 		const items = Array.isArray(schema.items) ? schema.items : [schema.items];
-		return merge(...items.map((i) => _constraints(i, isOptional, warnings, path)));
+		return merge(...items.map((i) => _constraints(i, isOptional, path)));
 	}
 
 	// Objects
@@ -249,10 +244,7 @@ export function _constraints(
 					throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
 				}
 
-				const propConstraint = _constraints(prop, !schema.required?.includes(key), warnings, [
-					...path,
-					key
-				]);
+				const propConstraint = _constraints(prop, !schema.required?.includes(key), [...path, key]);
 
 				if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
 					output[key] = propConstraint;
@@ -262,14 +254,13 @@ export function _constraints(
 		return output;
 	}
 
-	return constraint(path, schema, isOptional, warnings?.multipleRegexps);
+	return constraint(path, schema, isOptional);
 }
 
 function constraint(
 	path: string[],
 	schema: JSONSchema7,
-	isOptional: boolean,
-	multipleRegexpsWarning: boolean | undefined
+	isOptional: boolean
 ): InputConstraint | undefined {
 	const output: InputConstraint = {};
 
@@ -294,14 +285,6 @@ function constraint(
 			str.pattern,
 			...(str.allOf ? str.allOf.map((s) => (typeof s == 'boolean' ? undefined : s.pattern)) : [])
 		].filter((s) => s !== undefined);
-
-		if (patterns.length > 1 && multipleRegexpsWarning !== false) {
-			console.warn(
-				`Field "${path.join(
-					'.'
-				)}" has more than one regexp, only the first one will be used in constraints. Set the warnings.multipleRegexps option to false to disable this warning.`
-			);
-		}
 
 		if (patterns.length > 0) output.pattern = patterns[0];
 		if (str.minLength !== undefined) output.minlength = str.minLength;

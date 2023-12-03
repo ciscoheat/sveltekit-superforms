@@ -1,4 +1,8 @@
+import type { Infer, Schema } from '@decs/typeschema';
+
 export type MaybePromise<T> = T | Promise<T>;
+
+export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
 
 export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
 
@@ -22,7 +26,7 @@ export type SuperValidated<
 	T extends object,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	C extends 'with-constraints' | 'no-constraints' = 'no-constraints'
+	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
 > = {
 	valid: boolean;
 	posted: boolean;

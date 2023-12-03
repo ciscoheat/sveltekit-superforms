@@ -2,7 +2,7 @@ import { SuperFormError, SchemaError } from './index.js';
 import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
-import { schemaInfo, type SchemaInfo } from './schemaMeta/jsonSchema.js';
+import { schemaInfo, type SchemaInfo } from './jsonSchema.js';
 
 type ParsedData = {
 	id: string | undefined;

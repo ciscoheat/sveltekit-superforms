@@ -1,7 +1,7 @@
 import { describe, it, expect, assert } from 'vitest';
 import { parseFormData } from '$lib/formData.js';
 import { z } from 'zod';
-import { zodToJsonSchema } from '$lib/schemaMeta/zod.js';
+import { zodToJsonSchema } from '$lib/adapters/zod.js';
 
 enum Foo {
 	A = 2,

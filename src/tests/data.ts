@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from '$lib/schemaMeta/zod.js';
+import { zodToJsonSchema } from '$lib/adapters/zod.js';
 
 export enum Foo {
 	A = 2,

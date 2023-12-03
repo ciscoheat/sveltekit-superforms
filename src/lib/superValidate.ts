@@ -114,8 +114,11 @@ export async function superValidate<
 	}
 
 	const parsed = await parseRequest<Inferred<T>>(data, meta.schema, options);
+	const shouldValidate = parsed.data !== undefined || addErrors;
 
-	const status = await validate(schema, parsed.data);
+	const status = shouldValidate
+		? await validate(schema, parsed.data ?? meta.defaults)
+		: { success: false, issues: [] };
 
 	if (!status.success) {
 		const errors = {};
@@ -129,14 +132,14 @@ export async function superValidate<
 			);
 		}
 
-		data = merge(meta.defaults, data ?? {}) as Inferred<T>;
+		parsed.data = merge(meta.defaults, parsed.data ?? {}) as Inferred<T>;
 
 		return {
 			id: parsed.id,
 			valid: false,
 			posted: parsed.posted,
 			errors,
-			data: data as Inferred<T>,
+			data: parsed.data as Inferred<T>,
 			constraints: meta.constraints,
 			message: undefined
 		};

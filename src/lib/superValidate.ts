@@ -30,22 +30,20 @@ export type SuperValidateOptions<T extends object> = Partial<{
 
 export async function superValidate<
 	T extends Schema,
-	Adapter extends ValidationAdapter<T, ValidationLibrary>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	adapter: Adapter,
+	adapter: ValidationAdapter<T, ValidationLibrary>,
 	options?: SuperValidateOptions<Inferred<T>>
 ): Promise<SuperValidated<Inferred<T>, M>>;
 
 export async function superValidate<
 	T extends Schema,
-	Adapter extends ValidationAdapter<T, ValidationLibrary>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
 	data: SuperValidateData<Inferred<T>>,
-	adapter: Adapter,
+	adapter: ValidationAdapter<T, ValidationLibrary>,
 	options?: SuperValidateOptions<Inferred<T>>
 ): Promise<SuperValidated<Inferred<T>, M>>;
 
@@ -56,22 +54,24 @@ export async function superValidate<
  */
 export async function superValidate<
 	T extends Schema,
-	Adapter extends ValidationAdapter<T, ValidationLibrary>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	data: Adapter | SuperValidateData<Inferred<T>>,
-	adapter?: Adapter | SuperValidateData<Inferred<T>> | SuperValidateOptions<Inferred<T>>,
+	data: ValidationAdapter<T, ValidationLibrary> | SuperValidateData<Inferred<T>>,
+	adapter?:
+		| ValidationAdapter<T, ValidationLibrary>
+		| SuperValidateData<Inferred<T>>
+		| SuperValidateOptions<Inferred<T>>,
 	options?: SuperValidateOptions<Inferred<T>>
 ): Promise<SuperValidated<Inferred<T>, M>> {
-	let validation: Adapter;
+	let validation: ValidationAdapter<T, ValidationLibrary>;
 
 	if (data && 'superFormValidationLibrary' in data) {
 		options = adapter as SuperValidateOptions<Inferred<T>>;
 		validation = data;
 		data = undefined;
 	} else {
-		validation = adapter as Adapter;
+		validation = adapter as ValidationAdapter<T, ValidationLibrary>;
 	}
 
 	// Set to undefined, to spot compilation errors

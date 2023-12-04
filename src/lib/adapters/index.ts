@@ -1,49 +1,66 @@
-import type { Inferred, InputConstraints } from '$lib/index.js';
+import type { InputConstraints } from '$lib/index.js';
 import { constraints, defaultValues } from '$lib/jsonSchema.js';
-import type { Schema } from '@decs/typeschema';
+import type { Schema, validate } from '@decs/typeschema';
 import type { JSONSchema7 } from 'json-schema';
 
-export type { JSONSchema7 } from 'json-schema';
+export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'unknown';
 
-export type ValidationLibrary = 'zod' | 'valibot' | 'defaults' | 'other';
-
-export type ValidationAdapter<T extends Schema, Lib extends ValidationLibrary> = {
+export type ValidationAdapter<
+	T extends Record<string, unknown>,
+	Lib extends ValidationLibrary = ValidationLibrary
+> = {
 	superFormValidationLibrary: Lib;
-	defaults: Inferred<T>;
-	constraints: InputConstraints<Inferred<T>>;
-	schema: T;
+	defaults: T;
+	constraints: InputConstraints<T>;
+	schema: Schema;
 	jsonSchema: JSONSchema7;
+	customValidator?: (data: unknown) => ReturnType<typeof validate>;
 };
 
-export type ValidationAdapterOptions<
-	T extends Schema,
-	RequiresDefaults extends 'requires-defaults' | ''
-> = RequiresDefaults extends 'requires-defaults'
-	? ValidationAdapterOptionsRequireDefaults<T>
-	: ValidationAdapterOptionsOptionalDefaults<T>;
-
-export type ValidationAdapterOptionsOptionalDefaults<T extends Schema> = {
-	jsonSchema?: JSONSchema7;
-	defaults?: Inferred<T>;
-};
-
-export type ValidationAdapterOptionsRequireDefaults<T extends Schema> = {
-	jsonSchema?: JSONSchema7;
-	defaults: Inferred<T>;
-};
-
-export function validationAdapter<T extends Schema, Lib extends ValidationLibrary>(
+export function validationAdapter<T extends Record<string, unknown>, Lib extends ValidationLibrary>(
 	validationLibrary: Lib,
-	schema: T,
-	cacheableJsonSchema: JSONSchema7
+	validator: Schema,
+	cacheData: () => { jsonSchema: JSONSchema7; defaults?: T },
+	cacheKeys?: object[],
+	customValidator?: (data: unknown) => ReturnType<typeof validate>
 ): ValidationAdapter<T, Lib> {
-	const adapter = {
-		superFormValidationLibrary: validationLibrary,
-		schema,
-		jsonSchema: cacheableJsonSchema,
-		defaults: defaultValues<Inferred<T>>(cacheableJsonSchema),
-		constraints: constraints(cacheableJsonSchema)
-	};
+	if (!cacheKeys) cacheKeys = [validator];
 
-	return adapter;
+	let currentCache: WeakMap<object, object> | undefined = cacheKeys.length
+		? schemaCache
+		: undefined;
+
+	while (cacheKeys.length) {
+		const key = cacheKeys.shift();
+		if (!key) break;
+		if (!currentCache?.has(key)) {
+			const nextCache = new WeakMap<object, object>();
+			currentCache?.set(key, nextCache);
+			currentCache = nextCache;
+		} else {
+			currentCache = currentCache.get(key) as WeakMap<object, object>;
+		}
+	}
+
+	if (!currentCache || !currentCache.has(validator)) {
+		const { jsonSchema, defaults } = cacheData();
+		const adapter = {
+			superFormValidationLibrary: validationLibrary,
+			schema: validator,
+			jsonSchema,
+			defaults: defaults ?? defaultValues<T>(jsonSchema),
+			constraints: constraints(jsonSchema),
+			customValidator
+		};
+
+		if (!currentCache) return adapter;
+		else currentCache.set(validator, adapter);
+	}
+
+	return currentCache.get(validator) as ValidationAdapter<T, Lib>;
 }
+
+const schemaCache = new WeakMap<
+	object,
+	object | ValidationAdapter<Record<string, unknown>, ValidationLibrary>
+>();

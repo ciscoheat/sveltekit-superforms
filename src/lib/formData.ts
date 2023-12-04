@@ -11,7 +11,7 @@ type ParsedData = {
 };
 
 type ParseOptions<T extends object> = {
-	preprocessed?: SuperValidateOptions<T, boolean>['preprocessed'];
+	preprocessed?: SuperValidateOptions<T>['preprocessed'];
 };
 
 export async function parseRequest<T extends object>(
@@ -245,7 +245,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	}
 	*/
 
-	console.log(`Parsing FormData "${key}": ${value}`, info);
+	//console.log(`Parsing FormData "${key}": ${value}`, info);
 
 	function typeError() {
 		throw new SchemaError(

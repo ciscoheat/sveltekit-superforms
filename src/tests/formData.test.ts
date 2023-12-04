@@ -55,7 +55,7 @@ describe.only('FormData parsing', () => {
 		assert(parsed.data);
 		expect(parsed.data.foo).toEqual(Foo.B);
 
-		console.dir(bigJsonSchema, { depth: 10 });
-		console.dir(parsed, { depth: 10 });
+		//console.dir(bigJsonSchema, { depth: 10 });
+		//console.dir(parsed, { depth: 10 });
 	});
 });

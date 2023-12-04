@@ -2,6 +2,7 @@ import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import { validationAdapter } from './index.js';
 import { zodToJsonSchema as zodToJson } from 'zod-to-json-schema';
+import type { z } from 'zod';
 
 const defaultOptions = { dateStrategy: 'integer' } as const;
 
@@ -19,5 +20,7 @@ type ZodValidation<T extends AnyZodObject> =
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
 export function zod<T extends ZodValidation<AnyZodObject>>(schema: T) {
-	return validationAdapter<T, 'zod'>('zod', schema, zodToJsonSchema(schema));
+	return validationAdapter<z.infer<T>, 'zod'>('zod', schema, () => ({
+		jsonSchema: zodToJsonSchema(schema)
+	}));
 }

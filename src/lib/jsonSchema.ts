@@ -6,6 +6,8 @@ import {
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 import merge from 'ts-deepmerge';
 
+export type { JSONSchema7 } from 'json-schema';
+
 type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
 
 export type SchemaType = JSONSchema7TypeName | FormatType;
@@ -137,6 +139,9 @@ export function defaultValues<T>(schema: JSONSchema7, isOptional = false, path: 
 }
 
 function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]): unknown {
+	if (!schema) {
+		throw new SchemaError('Schema was undefined', path);
+	}
 	//if (schema.type == 'object') console.log('--- OBJECT ---');
 	//else console.log(path, schema, { isOptional });
 
@@ -220,19 +225,39 @@ export function _constraints(
 
 	// Union
 	if (schema.anyOf) {
-		const merged = schema.anyOf
-			.map((s) => _constraints(s, isOptional, path))
-			.filter((s) => s !== undefined);
-		return merge(...merged);
+		if (!schema.anyOf.length) {
+			throw new SchemaError('Unions (anyOf) cannot be empty.', path);
+		}
+		if (schema.anyOf.length > 1) {
+			const merged = schema.anyOf
+				.map((s) => _constraints(s, isOptional, path))
+				.filter((s) => s !== undefined);
+			return merge(...merged);
+		} else {
+			return _constraints(schema.anyOf[0], isOptional, path);
+		}
 	}
 
 	// Arrays
 	if (schema.type == 'array') {
-		if (!schema.items) {
+		if (!schema.items || (Array.isArray(schema.items) && !schema.items.length)) {
 			throw new SchemaError('Arrays must have an items property', path);
 		}
+
 		const items = Array.isArray(schema.items) ? schema.items : [schema.items];
-		return merge(...items.map((i) => _constraints(i, isOptional, path)));
+		if (items.length == 1) {
+			//console.log('Array constraint', schema, path);
+			return _constraints(items[0], isOptional, path);
+		}
+
+		try {
+			return merge(...items.map((i) => _constraints(i, isOptional, path)));
+		} catch (error) {
+			if (error instanceof TypeError) {
+				console.log('ERROR', schema);
+				throw new SchemaError('TypeError');
+			}
+		}
 	}
 
 	// Objects

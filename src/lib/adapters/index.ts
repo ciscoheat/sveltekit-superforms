@@ -1,7 +1,6 @@
-import { WeakMapCache } from '$lib/cache.js';
 import type { InputConstraints } from '$lib/index.js';
-import { constraints, defaultValues } from '$lib/jsonSchema.js';
-import type { Schema, validate } from '@decs/typeschema';
+import { constraints as schemaConstraints, defaultValues } from '$lib/jsonSchema.js';
+import type { Schema } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema.js';
 
 // Lifted from TypeSchema, since they are not exported
@@ -23,58 +22,36 @@ type ValidationResult<TOutput = any> =
 
 export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'unknown';
 
-export type TypedValidationAdapterSignature<
-	T extends object,
-	O extends Record<string, unknown>,
-	D extends Record<string, unknown>
-> = (schema: T, options?: O) => ValidationAdapter<D>;
-
-export type ValidationAdapterSignature = (
-	schema: object,
-	options?: Record<string, unknown>
-) => ValidationAdapter<Record<string, unknown>>;
-
 export interface ValidationAdapter<T extends Record<string, unknown>> {
 	superFormValidationLibrary: ValidationLibrary;
-	validator: () => Schema;
-	jsonSchema: () => JSONSchema;
-	cacheKeys?: [Schema, ...object[]];
+	validator: Schema;
+	jsonSchema: JSONSchema;
 	customValidator?: (data: unknown) => Promise<ValidationResult<T>>;
 	defaults?: T;
+	constraints?: InputConstraints<T>;
 }
 
-export type MappedValidationAdapter<T extends Record<string, unknown>> = {
-	library: ValidationLibrary;
+export interface MappedValidationAdapter<T extends Record<string, unknown>>
+	extends ValidationAdapter<T> {
 	defaults: T;
-	jsonSchema: JSONSchema;
-	customValidator?: (data: unknown) => ReturnType<typeof validate>;
-	validator: Schema;
 	constraints: InputConstraints<T>;
-};
+}
 
 export function mapAdapter<T extends Record<string, unknown>>(
 	adapter: ValidationAdapter<T>
 ): MappedValidationAdapter<T> {
-	const cache = schemaCache.get<MappedValidationAdapter<T>>(
-		adapter.cacheKeys ?? [adapter.validator()]
-	);
-
-	if (!cache.data) {
-		const jsonSchema = adapter.jsonSchema();
-
-		const validation: MappedValidationAdapter<T> = {
-			library: adapter.superFormValidationLibrary,
-			defaults: adapter.defaults ?? defaultValues(jsonSchema),
-			jsonSchema,
-			customValidator: adapter.customValidator,
-			validator: adapter.validator(),
-			constraints: constraints(jsonSchema)
+	if (!adapterCache.has(adapter)) {
+		const mapped: MappedValidationAdapter<T> = {
+			...adapter,
+			constraints: adapter.constraints ?? schemaConstraints(adapter.jsonSchema),
+			defaults: adapter.defaults ?? defaultValues(adapter.jsonSchema)
 		};
-
-		return cache.set(validation);
+		adapterCache.set(adapter, mapped);
 	}
-
-	return cache.data;
+	return adapterCache.get(adapter) as MappedValidationAdapter<T>;
 }
 
-const schemaCache = new WeakMapCache<MappedValidationAdapter<Record<string, unknown>>>();
+const adapterCache = new WeakMap<
+	ValidationAdapter<Record<string, unknown>>,
+	MappedValidationAdapter<Record<string, unknown>>
+>();

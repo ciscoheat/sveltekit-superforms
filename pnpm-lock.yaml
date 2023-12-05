@@ -50,6 +50,9 @@ devDependencies:
   json-schema-to-ts:
     specifier: ^2.9.2
     version: 2.9.2
+  memoize-weak:
+    specifier: ^1.0.2
+    version: 1.0.2
   prettier:
     specifier: ^3.1.0
     version: 3.1.0
@@ -1656,6 +1659,10 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
+
+  /memoize-weak@1.0.2:
+    resolution: {integrity: sha512-gj39xkrjEw7nCn4nJ1M5ms6+MyMlyiGmttzsqAUsAKn6bYKwuTHh/AO3cKPF8IBrTIYTxb0wWXFs3E//Y8VoWQ==}
     dev: true
 
   /merge2@1.4.1:

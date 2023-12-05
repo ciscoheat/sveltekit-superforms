@@ -3,6 +3,7 @@ import type { JSONSchema7 } from 'json-schema';
 import type { ValidationAdapter } from './index.js';
 import { zodToJsonSchema as zodToJson } from 'zod-to-json-schema';
 import type { z } from 'zod';
+import { memoize } from '$lib/memoize.js';
 
 const defaultOptions = { dateStrategy: 'integer' } as const;
 
@@ -19,16 +20,12 @@ type ZodValidation<T extends AnyZodObject> =
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
-export function zod<T extends ZodValidation<AnyZodObject>>(
-	schema: T
-): ValidationAdapter<z.infer<T>> {
+function _zod<T extends ZodValidation<AnyZodObject>>(schema: T): ValidationAdapter<z.infer<T>> {
 	return {
 		superFormValidationLibrary: 'zod',
-		validator() {
-			return schema;
-		},
-		jsonSchema() {
-			return zodToJsonSchema(schema);
-		}
+		validator: schema,
+		jsonSchema: zodToJsonSchema(schema)
 	};
 }
+
+export const zod = memoize(_zod);

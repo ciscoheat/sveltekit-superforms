@@ -1,28 +1,23 @@
 import Ajv from 'ajv';
 import type { JSONSchema } from '$lib/jsonSchema.js';
 import addFormats from 'ajv-formats';
+import { memoize } from '$lib/memoize.js';
 
 import type { ValidationAdapter } from './index.js';
 
-export function ajv<T extends Record<string, unknown>>(
+function _ajv<T extends Record<string, unknown>>(
 	schema: JSONSchema,
 	options?: Ajv.Options
 ): ValidationAdapter<T> {
-	options = { allErrors: true, ...(options || {}) };
-	const ajv = new Ajv.default(options);
+	const ajv = new Ajv.default({ allErrors: true, ...(options || {}) });
 	// @ts-expect-error No type info exists
 	addFormats(ajv);
 	const validator = ajv.compile(schema);
 
 	return {
 		superFormValidationLibrary: 'ajv',
-		validator() {
-			return validator;
-		},
-		jsonSchema() {
-			return schema;
-		},
-		cacheKeys: [schema, options],
+		validator,
+		jsonSchema: schema,
 		async customValidator(data: unknown) {
 			if (validator(data)) {
 				return {
@@ -42,3 +37,5 @@ export function ajv<T extends Record<string, unknown>>(
 		}
 	};
 }
+
+export const ajv = memoize(_ajv);

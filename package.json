@@ -43,6 +43,7 @@
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-svelte": "^2.35.1",
 		"json-schema-to-ts": "^2.9.2",
+		"memoize-weak": "^1.0.2",
 		"prettier": "^3.1.0",
 		"prettier-plugin-svelte": "^3.1.2",
 		"publint": "^0.1.16",

@@ -1,6 +1,6 @@
 import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import { validationAdapter } from './index.js';
+import type { ValidationAdapter } from './index.js';
 import { zodToJsonSchema as zodToJson } from 'zod-to-json-schema';
 import type { z } from 'zod';
 
@@ -19,8 +19,16 @@ type ZodValidation<T extends AnyZodObject> =
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
-export function zod<T extends ZodValidation<AnyZodObject>>(schema: T) {
-	return validationAdapter<z.infer<T>, 'zod'>('zod', schema, () => ({
-		jsonSchema: zodToJsonSchema(schema)
-	}));
+export function zod<T extends ZodValidation<AnyZodObject>>(
+	schema: T
+): ValidationAdapter<z.infer<T>> {
+	return {
+		superFormValidationLibrary: 'zod',
+		validator() {
+			return schema;
+		},
+		jsonSchema() {
+			return zodToJsonSchema(schema);
+		}
+	};
 }

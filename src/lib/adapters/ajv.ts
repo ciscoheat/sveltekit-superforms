@@ -1,43 +1,37 @@
 import Ajv from 'ajv';
-import type { SchemaObject } from 'ajv';
-import type { JSONSchema7 } from '$lib/jsonSchema.js';
+import type { JSONSchema } from '$lib/jsonSchema.js';
 import addFormats from 'ajv-formats';
 
-import { validationAdapter } from './index.js';
-import type { Inferred } from '$lib/index.js';
+import type { ValidationAdapter } from './index.js';
 
-// TODO: Use json-schema-to-ts? Seems to have performance issues in VS Code
-export function ajv<const T extends JSONSchema7>(schema: T) {
-	let validation: SchemaObject;
+export function ajv<T extends Record<string, unknown>>(
+	schema: JSONSchema,
+	options?: Ajv.Options
+): ValidationAdapter<T> {
+	options = { allErrors: true, ...(options || {}) };
+	const ajv = new Ajv.default(options);
+	// @ts-expect-error No type info exists
+	addFormats(ajv);
+	const validator = ajv.compile(schema);
 
-	// TODO: Put in interface, get validation instance
-	if (!compilationCache.has(schema)) {
-		const ajv = new Ajv.default({ allErrors: true });
-		// @ts-expect-error No type info exists
-		addFormats(ajv);
-		validation = ajv.compile(schema);
-		compilationCache.set(schema, validation);
-	} else {
-		validation = compilationCache.get(schema)!;
-	}
-
-	// TODO: Make adapter interface, use instead of helper
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return validationAdapter<Inferred<T>, 'ajv'>(
-		'ajv',
-		schema,
-		() => ({ jsonSchema: schema as JSONSchema7 }),
-		[schema],
-		async (data) => {
-			// @ts-expect-error No type information
-			if (validation(data)) {
+	return {
+		superFormValidationLibrary: 'ajv',
+		validator() {
+			return validator;
+		},
+		jsonSchema() {
+			return schema;
+		},
+		cacheKeys: [schema, options],
+		async customValidator(data: unknown) {
+			if (validator(data)) {
 				return {
-					data,
+					data: data as T,
 					success: true
 				};
 			}
 			return {
-				issues: (validation.errors ?? []).map(
+				issues: (validator.errors ?? []).map(
 					({ message, instancePath }: { message?: string; instancePath?: string }) => ({
 						message: message ?? '',
 						path: (instancePath ?? '/').slice(1).split('/')
@@ -46,7 +40,5 @@ export function ajv<const T extends JSONSchema7>(schema: T) {
 				success: false
 			};
 		}
-	);
+	};
 }
-
-const compilationCache = new WeakMap<JSONSchema7, SchemaObject>();

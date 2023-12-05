@@ -2,15 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
-import { constraints, defaultValues, type JSONSchema7 } from '$lib/jsonSchema.js';
+import { constraints, defaultValues, type JSONSchema } from '$lib/jsonSchema.js';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { Foo, bigZodSchema } from './data.js';
 import { valibot } from '$lib/adapters/valibot.js';
-import type { ValidationAdapter } from '$lib/adapters/index.js';
+import type { MappedValidationAdapter } from '$lib/adapters/index.js';
 import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 
 /* 
 TEST SCHEMA TEMPLATE:
@@ -55,7 +53,7 @@ const expectedConstraints = {
 };
 
 function schemaTest(
-	adapter: () => ValidationAdapter<Record<string, unknown>>,
+	adapter: () => MappedValidationAdapter<Record<string, unknown>>,
 	expectedErrors: Record<string, unknown>,
 	testConstraints: boolean
 ) {
@@ -121,7 +119,7 @@ describe('Valibot', () => {
 ///////////////////////////////////////////////////////////////////////////////
 
 describe('ajv', () => {
-	const schema: JSONSchema7 = {
+	const schema: JSONSchema = {
 		type: 'object',
 		properties: {
 			name: { type: 'string' },

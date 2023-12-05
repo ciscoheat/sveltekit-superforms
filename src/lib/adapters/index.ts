@@ -1,66 +1,69 @@
+import { WeakMapCache } from '$lib/cache.js';
 import type { InputConstraints } from '$lib/index.js';
 import { constraints, defaultValues } from '$lib/jsonSchema.js';
 import type { Schema, validate } from '@decs/typeschema';
-import type { JSONSchema7 } from 'json-schema';
+import type { JSONSchema } from '$lib/jsonSchema.js';
+
+// Lifted from TypeSchema, since they are not exported
+type ValidationIssue = {
+	message: string;
+	path?: Array<string | number | symbol>;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ValidationResult<TOutput = any> =
+	| {
+			success: true;
+			data: TOutput;
+	  }
+	| {
+			success: false;
+			issues: Array<ValidationIssue>;
+	  };
 
 export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'unknown';
 
-export type ValidationAdapter<
-	T extends Record<string, unknown>,
-	Lib extends ValidationLibrary = ValidationLibrary
-> = {
-	superFormValidationLibrary: Lib;
-	defaults: T;
-	constraints: InputConstraints<T>;
-	schema: Schema;
-	jsonSchema: JSONSchema7;
-	customValidator?: (data: unknown) => ReturnType<typeof validate>;
-};
-
-export function validationAdapter<T extends Record<string, unknown>, Lib extends ValidationLibrary>(
-	validationLibrary: Lib,
-	validator: Schema,
-	cacheData: () => { jsonSchema: JSONSchema7; defaults?: T },
-	cacheKeys?: object[],
-	customValidator?: (data: unknown) => ReturnType<typeof validate>
-): ValidationAdapter<T, Lib> {
-	if (!cacheKeys) cacheKeys = [validator];
-
-	let currentCache: WeakMap<object, object> | undefined = cacheKeys.length
-		? schemaCache
-		: undefined;
-
-	while (cacheKeys.length) {
-		const key = cacheKeys.shift();
-		if (!key) break;
-		if (!currentCache?.has(key)) {
-			const nextCache = new WeakMap<object, object>();
-			currentCache?.set(key, nextCache);
-			currentCache = nextCache;
-		} else {
-			currentCache = currentCache.get(key) as WeakMap<object, object>;
-		}
-	}
-
-	if (!currentCache || !currentCache.has(validator)) {
-		const { jsonSchema, defaults } = cacheData();
-		const adapter = {
-			superFormValidationLibrary: validationLibrary,
-			schema: validator,
-			jsonSchema,
-			defaults: defaults ?? defaultValues<T>(jsonSchema),
-			constraints: constraints(jsonSchema),
-			customValidator
-		};
-
-		if (!currentCache) return adapter;
-		else currentCache.set(validator, adapter);
-	}
-
-	return currentCache.get(validator) as ValidationAdapter<T, Lib>;
+export interface ValidationAdapter<T extends Record<string, unknown>> {
+	superFormValidationLibrary: ValidationLibrary;
+	validator: () => Schema;
+	jsonSchema: () => JSONSchema;
+	cacheKeys?: [Schema, ...object[]];
+	customValidator?: (data: unknown) => Promise<ValidationResult<T>>;
+	defaults?: T;
 }
 
-const schemaCache = new WeakMap<
-	object,
-	object | ValidationAdapter<Record<string, unknown>, ValidationLibrary>
->();
+export type MappedValidationAdapter<T extends Record<string, unknown>> = {
+	library: ValidationLibrary;
+	defaults: T;
+	jsonSchema: JSONSchema;
+	customValidator?: (data: unknown) => ReturnType<typeof validate>;
+	validator: Schema;
+	constraints: InputConstraints<T>;
+};
+
+export function mapAdapter<T extends Record<string, unknown>>(
+	adapter: ValidationAdapter<T>
+): MappedValidationAdapter<T> {
+	const cache = schemaCache.get<MappedValidationAdapter<T>>(
+		adapter.cacheKeys ?? [adapter.validator()]
+	);
+
+	if (!cache.data) {
+		const jsonSchema = adapter.jsonSchema();
+
+		const validation: MappedValidationAdapter<T> = {
+			library: adapter.superFormValidationLibrary,
+			defaults: adapter.defaults ?? defaultValues(jsonSchema),
+			jsonSchema,
+			customValidator: adapter.customValidator,
+			validator: adapter.validator(),
+			constraints: constraints(jsonSchema)
+		};
+
+		return cache.set(validation);
+	}
+
+	return cache.data;
+}
+
+const schemaCache = new WeakMapCache<MappedValidationAdapter<Record<string, unknown>>>();

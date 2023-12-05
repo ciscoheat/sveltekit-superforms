@@ -6,7 +6,7 @@ import {
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 import merge from 'ts-deepmerge';
 
-export type { JSONSchema7 } from 'json-schema';
+export type { JSONSchema7 as JSONSchema } from 'json-schema';
 
 type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
 
@@ -84,11 +84,11 @@ export function defaultValue(
 export function schemaInfo(
 	schema: JSONSchema7,
 	isOptional: boolean,
-	onUnion?: (schemas: JSONSchema7[]) => SchemaInfo
+	onUnion?: (schemas: JSONSchema7[], isOptional: boolean) => SchemaInfo
 ): SchemaInfo {
 	if (schema.anyOf) {
-		if (!onUnion) throw new SchemaError('anyOf not supported without onUnion callback.');
-		return onUnion(schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[]);
+		if (!onUnion) throw new SchemaError('Unions (anyOf) not supported without onUnion callback.');
+		return onUnion(schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[], isOptional);
 	}
 
 	const types = schemaTypes(schema);

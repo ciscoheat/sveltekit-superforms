@@ -23,6 +23,17 @@ type ValidationResult<TOutput = any> =
 
 export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'unknown';
 
+export type TypedValidationAdapterSignature<
+	T extends object,
+	O extends Record<string, unknown>,
+	D extends Record<string, unknown>
+> = (schema: T, options?: O) => ValidationAdapter<D>;
+
+export type ValidationAdapterSignature = (
+	schema: object,
+	options?: Record<string, unknown>
+) => ValidationAdapter<Record<string, unknown>>;
+
 export interface ValidationAdapter<T extends Record<string, unknown>> {
 	superFormValidationLibrary: ValidationLibrary;
 	validator: () => Schema;

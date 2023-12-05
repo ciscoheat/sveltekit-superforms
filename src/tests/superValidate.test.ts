@@ -6,7 +6,7 @@ import { constraints, defaultValues, type JSONSchema } from '$lib/jsonSchema.js'
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { Foo, bigZodSchema } from './data.js';
 import { valibot } from '$lib/adapters/valibot.js';
-import type { MappedValidationAdapter } from '$lib/adapters/index.js';
+import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
 
@@ -53,7 +53,7 @@ const expectedConstraints = {
 };
 
 function schemaTest(
-	adapter: () => MappedValidationAdapter<Record<string, unknown>>,
+	adapter: () => ValidationAdapter<Record<string, unknown>>,
 	expectedErrors: Record<string, unknown>,
 	testConstraints: boolean
 ) {

@@ -3,6 +3,10 @@ import { constraints as schemaConstraints, defaultValues } from '$lib/jsonSchema
 import type { Schema } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema.js';
 
+export { zod } from './zod.js';
+export { ajv } from './ajv.js';
+export { valibot } from './valibot.js';
+
 // Lifted from TypeSchema, since they are not exported
 type ValidationIssue = {
 	message: string;

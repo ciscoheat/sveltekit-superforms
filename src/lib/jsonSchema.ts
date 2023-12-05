@@ -39,7 +39,7 @@ function valueWithFormat(format: string, value: unknown) {
 	}
 }
 
-export function defaultValue(
+function defaultValue(
 	type: JSONSchema7TypeName,
 	format: string | undefined,
 	enumType: unknown[] | undefined

@@ -10,6 +10,7 @@ import type { Inferred } from '$lib/index.js';
 export function ajv<const T extends JSONSchema7>(schema: T) {
 	let validation: SchemaObject;
 
+	// TODO: Put in interface, get validation instance
 	if (!compilationCache.has(schema)) {
 		const ajv = new Ajv.default({ allErrors: true });
 		// @ts-expect-error No type info exists
@@ -20,6 +21,7 @@ export function ajv<const T extends JSONSchema7>(schema: T) {
 		validation = compilationCache.get(schema)!;
 	}
 
+	// TODO: Make adapter interface, use instead of helper
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return validationAdapter<Inferred<T>, 'ajv'>(
 		'ajv',

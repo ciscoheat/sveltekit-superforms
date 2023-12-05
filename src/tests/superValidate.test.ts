@@ -118,7 +118,9 @@ describe('Valibot', () => {
 	schemaTest(() => valibot(schema, { defaults }), errors, false);
 });
 
-describe('With ajv', () => {
+///////////////////////////////////////////////////////////////////////////////
+
+describe('ajv', () => {
 	const schema: JSONSchema7 = {
 		type: 'object',
 		properties: {
@@ -144,7 +146,9 @@ describe('With ajv', () => {
 	schemaTest(() => ajv(schema), errors, true);
 });
 
-describe('with Zod', () => {
+///////////////////////////////////////////////////////////////////////////////
+
+describe('Zod', () => {
 	const schema = z.object({
 		name: z.string(),
 		email: z.string().email(),

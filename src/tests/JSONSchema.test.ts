@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
-import { defaultValues } from '$lib/jsonSchema.js';
+import { defaultValues, schemaInfo } from '$lib/jsonSchema.js';
 import type { FromSchema } from 'json-schema-to-ts';
 
 describe('JSON schema validation', () => {
@@ -60,6 +60,7 @@ describe('JSON schema validation', () => {
 					default: 0
 				},
 				coercedDate: {
+					type: 'string',
 					format: 'date-time'
 				}
 			}
@@ -223,13 +224,41 @@ describe('JSON schema validation', () => {
 			required: ['productId', 'productName', 'price', 'dimensions', 'tags']
 		};
 
-		expect(defaultValues(schema2)).toEqual({
+		const defs = defaultValues(schema2);
+
+		expect('warehouseLocation' in defs).toBe(false);
+		expect(defs).toEqual({
 			productId: 0,
 			productName: '',
 			price: 234,
 			tags: [],
 			dimensions: { length: 0, width: 0, height: 0 }
 		});
+	});
+
+	it('should collect types from unions (anyOf)', () => {
+		const unionSchema: JSONSchema7 = {
+			type: 'string',
+			anyOf: [
+				{ enum: ['male', 'female'] },
+				{ type: 'string', default: 'other' },
+				{ type: 'number', minimum: 5 },
+				{ type: 'null' }
+			]
+		};
+
+		const infos = schemaInfo(unionSchema);
+		assert(infos);
+
+		expect(infos.schema).toBe(unionSchema);
+		expect(infos.isNullable).toBe(true);
+		expect(infos.isOptional).toBe(false);
+		expect(infos.types).toEqual(new Set(['string', 'number']));
+
+		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean' && s.type != 'null');
+		expect(infos.union.types).toEqual(filtered);
+		expect(infos.union.isNullable).toBe(true);
+		expect(infos.union.type).toBeUndefined();
 	});
 
 	it('should map the default value of a union (anyOf) if only one default value exists.', () => {

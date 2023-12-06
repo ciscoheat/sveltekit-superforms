@@ -16,7 +16,9 @@ export class SuperFormError extends Error {
 export class SchemaError extends SuperFormError {
 	readonly path: string | undefined;
 	constructor(message: string, path?: string | string[]) {
-		super((path ? `[${Array.isArray(path) ? path.join('.') : path}] ` : '') + message);
+		super(
+			(path && path.length ? `[${Array.isArray(path) ? path.join('.') : path}] ` : '') + message
+		);
 		this.path = Array.isArray(path) ? path.join('.') : path;
 		Object.setPrototypeOf(this, SchemaError.prototype);
 	}

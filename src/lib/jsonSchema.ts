@@ -13,10 +13,11 @@ type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
 export type SchemaType = JSONSchema7TypeName | FormatType;
 
 export type SchemaInfo = {
-	types: Exclude<SchemaType, 'null'>[];
+	types: Set<Exclude<SchemaType, 'null'>>;
 	isOptional: boolean;
 	isNullable: boolean;
 	schema: JSONSchema7;
+	union: ReturnType<typeof unionInfo>;
 };
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
@@ -39,27 +40,7 @@ function valueWithFormat(format: string, value: unknown) {
 	}
 }
 
-function defaultValue(
-	type: JSONSchema7TypeName,
-	format: string | undefined,
-	enumType: unknown[] | undefined
-): unknown {
-	if (format && conversionFormatTypes.includes(format)) {
-		switch (format as FormatType) {
-			case 'unix-time':
-				// Cannot add default for Date due to https://github.com/Rich-Harris/devalue/issues/51
-				return undefined;
-			case 'bigint':
-				return BigInt(0);
-			case 'set':
-				return new Set();
-			case 'symbol':
-				return Symbol();
-			case 'any':
-				return undefined;
-		}
-	}
-
+function defaultValue(type: SchemaType, enumType: unknown[] | undefined): unknown {
 	switch (type) {
 		case 'string':
 			return enumType && enumType.length > 0 ? enumType[0] : '';
@@ -74,6 +55,18 @@ function defaultValue(
 			return {};
 		case 'null':
 			return null;
+		case 'unix-time':
+			// Cannot add default for Date due to https://github.com/Rich-Harris/devalue/issues/51
+			return undefined;
+		case 'bigint':
+			return BigInt(0);
+		case 'set':
+			return new Set();
+		case 'symbol':
+			return Symbol();
+		case 'any':
+			return undefined;
+
 		default:
 			throw new SchemaError(
 				'Schema type or format not supported, requires explicit default value: ' + type
@@ -81,60 +74,101 @@ function defaultValue(
 	}
 }
 
+function unionInfo(schema: JSONSchema7) {
+	if (!schema.anyOf) return { types: undefined, isNullable: false };
+
+	const filtered = schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	const output = filtered.filter((s) => s.type !== 'null');
+	const isNullable = filtered.length != output.length;
+
+	switch (output.length) {
+		// 0 = Only null
+		case 0:
+			return { types: undefined, isNullable };
+		case 1:
+			return { type: output[0], isNullable };
+		default:
+			return { types: output, isNullable };
+	}
+}
+
 export function schemaInfo(
-	schema: JSONSchema7,
-	isOptional: boolean,
-	onUnion?: (schemas: JSONSchema7[], isOptional: boolean) => SchemaInfo
-): SchemaInfo {
-	if (schema.anyOf) {
+	schema: JSONSchema7Definition,
+	isOptional = false,
+	path: string[] = []
+	//onUnion?: (union: JSONSchema7[], isOptional: boolean, isNullable: boolean) => SchemaInfo
+): SchemaInfo | undefined {
+	//const union = unionInfo(schema);
+
+	/*
+	if (union.types) {
 		if (!onUnion) throw new SchemaError('Unions (anyOf) not supported without onUnion callback.');
-		return onUnion(schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[], isOptional);
+		return onUnion(union.types, isOptional, union.isNullable);
+	}
+	*/
+
+	if (typeof schema === 'boolean') {
+		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
-	const types = schemaTypes(schema);
+	const union = unionInfo(schema);
+	const types = schemaTypes(schema, union);
 
 	if (!types.length) {
-		throw new SchemaError('No types found in schema.');
+		//console.warn('No types found', schema);
+		return undefined;
 	}
 
 	return {
-		types: types.filter((s) => s !== 'null') as SchemaInfo['types'],
+		types: new Set(types.filter((s) => s !== 'null')) as SchemaInfo['types'],
 		isOptional,
 		isNullable: isSchemaNullable(schema),
-		schema
+		schema,
+		union
 	};
 }
 
-function schemaTypes(schema: JSONSchema7): SchemaType[] {
-	if (schema.anyOf) throw new SchemaError('anyOf is not supported for schemaTypes.');
+function schemaTypes(schema: JSONSchema7, union: ReturnType<typeof unionInfo>): SchemaType[] {
+	let types: SchemaType[] = [];
 
-	let types: SchemaType[] = schema.type
-		? Array.isArray(schema.type)
-			? schema.type
-			: [schema.type]
-		: [];
+	if (union.types) types = union.types.flatMap((s) => schemaTypes(s, unionInfo(s)));
+	else if (union.type) types = schemaTypes(union.type, unionInfo(union.type));
+	else types = [];
+
+	if (schema.type) {
+		types = types.concat(Array.isArray(schema.type) ? schema.type : [schema.type]);
+	}
 
 	if (types.includes('array') && schema.uniqueItems) {
-		types = types.filter((t) => t != 'array');
-		types.unshift('set');
+		const i = types.findIndex((t) => t != 'array');
+		types[i] = 'set';
 	} else if (schema.format && conversionFormatTypes.includes(schema.format)) {
 		types.unshift(schema.format as SchemaType);
 	}
 
 	if (types.includes('unix-time')) {
-		types = types.filter((t) => t != 'integer');
+		const i = types.findIndex((t) => t == 'integer');
+		types.splice(i, 1);
 	}
 
-	return types;
+	return Array.from(new Set(types));
 }
 
 function isSchemaNullable(schema: JSONSchema7) {
-	return !!(schema.type == 'null' || schema.type?.includes('null'));
+	return !!(
+		schema.type == 'null' ||
+		schema.type?.includes('null') ||
+		(schema.anyOf && schema.anyOf.find((s) => typeof s !== 'boolean' && s.type == 'null'))
+	);
 }
 
 ///// Default values //////////////////////////////////////////////////////////
 
-export function defaultValues<T>(schema: JSONSchema7, isOptional = false, path: string[] = []): T {
+export function defaultValues<T = Record<string, unknown>>(
+	schema: JSONSchema7,
+	isOptional = false,
+	path: string[] = []
+): T {
 	return _defaultValues(schema, isOptional, path) as T;
 }
 
@@ -142,6 +176,7 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 	if (!schema) {
 		throw new SchemaError('Schema was undefined', path);
 	}
+
 	//if (schema.type == 'object') console.log('--- OBJECT ---');
 	//else console.log(path, schema, { isOptional });
 
@@ -155,12 +190,20 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 		}
 	}
 
-	if (isSchemaNullable(schema)) return null;
-	if (isOptional) return undefined;
+	const info = schemaInfo(schema, isOptional);
+	if (!info) {
+		return undefined;
+		// TODO: Throw if no default value?
+		//throw new SchemaError('No types found for default value', path);
+	}
+
+	// Null takes priority over undefined
+	if (info.isNullable) return null;
+	if (info.isOptional) return undefined;
 
 	// Unions
-	if (schema.anyOf) {
-		const singleDefault = schema.anyOf.filter(
+	if (info.union.types) {
+		const singleDefault = info.union.types.filter(
 			(s) => typeof s !== 'boolean' && s.default !== undefined
 		);
 		if (singleDefault.length == 0) {
@@ -170,11 +213,11 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 				'Only one default value can exist in a union, or set a default value for the whole union.',
 				path
 			);
-		} else if (typeof singleDefault[0] === 'boolean') {
-			throw new SchemaError('Schema cannot be defined as boolean.', path);
 		}
 
 		return _defaultValues(singleDefault[0], isOptional, path);
+	} else if (info.union.type) {
+		return _defaultValues(info.union.type, isOptional, path);
 	}
 
 	// Objects
@@ -184,7 +227,9 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 			if (typeof value == 'boolean') {
 				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
 			}
-			output[key] = _defaultValues(value, !schema.required?.includes(key), [...path, key]);
+			const def = _defaultValues(value, !schema.required?.includes(key), [...path, key]);
+			// TODO: Remove undefined fields, or set them?
+			if (def !== undefined) output[key] = def;
 		}
 		return output;
 	}
@@ -194,14 +239,18 @@ function _defaultValues(schema: JSONSchema7, isOptional: boolean, path: string[]
 		return schema.enum[0];
 	}
 
-	const type = Array.isArray(schema.type) ? schema.type[0] : schema.type;
-	if (!type) {
+	// Basic type
+	if (info.types.size > 1) {
+		throw new SchemaError('Default values cannot have more than one type.', path);
+	} else if (info.types.size == 0) {
 		console.log('No type or format for property:', path);
 		console.dir(schema, { depth: 10 });
 		return undefined;
 	}
 
-	return defaultValue(type, schema.format, schema.enum);
+	const [formatType] = info.types;
+
+	return defaultValue(formatType, schema.enum);
 }
 
 ///// Constraints /////////////////////////////////////////////////////////////
@@ -223,11 +272,10 @@ export function _constraints(
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
+	//const info = schemaInfo(schema)
+
 	// Union
-	if (schema.anyOf) {
-		if (!schema.anyOf.length) {
-			throw new SchemaError('Unions (anyOf) cannot be empty.', path);
-		}
+	if (schema.anyOf && schema.anyOf.length) {
 		if (schema.anyOf.length > 1) {
 			const merged = schema.anyOf
 				.map((s) => _constraints(s, isOptional, path))

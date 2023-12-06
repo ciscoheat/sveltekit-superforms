@@ -165,25 +165,26 @@ function _parseFormData<T extends object>(
 
 		const property: JSONSchema7Definition = schema.properties
 			? schema.properties[key]
-			: { type: 'string' };
-
-		const unionError = () => {
-			throw new SchemaError(
-				'FormData parsing failed: ' +
-					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
-				key
-			);
-		};
+			: { type: 'string' }; // TODO: Option for setting type of extra posted values?
 
 		if (typeof property == 'boolean') {
 			throw new SchemaError('Schema properties defined as boolean is not supported.', key);
 		}
 
-		const info = schemaInfo(property, !schema.required?.includes(key), unionError);
+		const info = schemaInfo(property, !schema.required?.includes(key), [key]);
+		if (!info) continue;
 
 		const entries = formData.getAll(key);
 
-		if (info.types.includes('array') || info.types.includes('set')) {
+		if (info.union.types) {
+			throw new SchemaError(
+				'FormData parsing failed: ' +
+					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
+				key
+			);
+		}
+
+		if (info.types.has('array') || info.types.has('set')) {
 			const items = property.items;
 			if (!items || typeof items == 'boolean' || (Array.isArray(items) && items.length != 1)) {
 				throw new SchemaError(
@@ -197,9 +198,11 @@ function _parseFormData<T extends object>(
 				throw new SchemaError('Schema properties defined as boolean is not supported.', key);
 			}
 
-			const arrayInfo = schemaInfo(arrayType, info.isOptional, unionError);
+			const arrayInfo = schemaInfo(arrayType, info.isOptional, [key]);
+			if (!arrayInfo) continue;
+
 			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo));
-			output[key] = info.types.includes('set') ? new Set(arrayData) : arrayData;
+			output[key] = info.types.has('set') ? new Set(arrayData) : arrayData;
 		} else {
 			output[key] = parseSingleEntry(key, entries[entries.length - 1], info);
 		}
@@ -209,7 +212,7 @@ function _parseFormData<T extends object>(
 }
 
 function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unknown {
-	if (info.types.length != 1) {
+	if (info.types.size != 1) {
 		throw new SchemaError(
 			'FormData parsing failed: ' +
 				'Multiple types are only supported when the dataType option for superForm is set to "json".' +
@@ -219,7 +222,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 		);
 	}
 
-	const type = info.types[0];
+	const [type] = info.types;
 
 	// value can be returned immediately unless it's boolean, which
 	// means it could have been posted as a checkbox.

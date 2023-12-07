@@ -1,12 +1,13 @@
-import { validate } from '@decs/typeschema';
-import { setPaths, traversePath } from './traversal.js';
+import { validate, type ValidationIssue } from '@decs/typeschema';
+import { pathExists, traversePath } from './traversal.js';
 import { ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter } from './adapters/index.js';
 import { parseRequest } from './formData.js';
 import type { JSONSchema7 } from 'json-schema';
-import type { SuperValidated } from './index.js';
+import { SuperFormError, type SuperValidated } from './index.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
+import type { ObjectShape } from './jsonSchema/objectShape.js';
 
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 //type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
@@ -91,29 +92,9 @@ export async function superValidate<
 			: { success: false, issues: [] };
 
 	const valid = status.success;
-	const errors = {};
+	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validation.objects);
 
-	if (!status.success) {
-		if (addErrors) {
-			const issues = status.issues;
-			setPaths(
-				errors,
-				issues.map((i) => i.path) as (string | number | symbol)[][],
-				(path, data) => {
-					const issue = issues.find((i) => i.path == path);
-					if (!issue) return data.value;
-
-					if (!data.value) {
-						return [issue.message];
-					} else {
-						data.parent.push(issue.message);
-						return data.value;
-					}
-				}
-			);
-		}
-		// Alternative place for parsed.data merging
-	}
+	// Alternative place for parsed.data merging
 
 	return {
 		id: parsed.id,
@@ -126,6 +107,36 @@ export async function superValidate<
 		constraints: validation.constraints,
 		message: undefined
 	};
+}
+
+function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
+	//console.log('===', errors.length, 'errors', shape);
+	const output: Record<string, unknown> = {};
+	for (const error of errors) {
+		if (!error.path) continue;
+		const objectError = pathExists(shape, error.path)?.value;
+		//console.log(objectError ? '[OBJ]' : '', error.path, error.message);
+
+		const leaf = traversePath(output, error.path, ({ value, parent, key }) => {
+			if (value === undefined) parent[key] = {};
+			return parent[key];
+		});
+
+		if (!leaf) throw new SuperFormError('Error leaf should exist.');
+
+		const { parent, key } = leaf;
+
+		if (objectError) {
+			if (!(key in parent)) parent[key] = { _errors: [error.message] };
+			else parent[key]._errors.push(error.message);
+		} else {
+			if (!(key in parent)) parent[key] = [error.message];
+			else parent[key].push(error.message);
+		}
+
+		//console.log(parent, leaf.path, objectError ? '[OBJ]' : '');
+	}
+	return output;
 }
 
 /**

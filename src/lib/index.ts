@@ -1,6 +1,6 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
-import type { ArrayShape } from './jsonSchema/arrayInfo.js';
+import type { ObjectShape } from './jsonSchema/objectShape.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
@@ -48,7 +48,7 @@ export type Entity<T extends object> = {
 	constraints: InputConstraints<T>;
 	keys: string[];
 	hash: string;
-	errorShape: ArrayShape;
+	errorShape: ObjectShape;
 };
 
 export type ZodTypeInfo = {

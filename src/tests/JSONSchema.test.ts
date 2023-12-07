@@ -3,7 +3,7 @@ import type { JSONSchema7 } from 'json-schema';
 import { schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
-import { arrayInfo } from '$lib/jsonSchema/arrayInfo.js';
+import { objectShape } from '$lib/jsonSchema/objectShape.js';
 import { z } from 'zod';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 
@@ -311,7 +311,7 @@ describe('Unions (anyOf)', () => {
 	});
 });
 
-describe.only('Array info', () => {
+describe('Object shapes', () => {
 	const schema = z.object({
 		tags: z
 			.object({
@@ -323,13 +323,12 @@ describe.only('Array info', () => {
 			.min(2)
 	});
 
-	it('should return correct info about nested arrays', () => {
-		expect(arrayInfo(zodToJsonSchema(schema))).toStrictEqual({
+	it('should return correct info about nested objects and arrays', () => {
+		expect(objectShape(zodToJsonSchema(schema))).toStrictEqual({
 			tags: { names: {}, test: {} }
 		});
 	});
 
-	/*
 	it('should return correct info about arrays in the schema', () => {
 		const schema = {
 			type: 'object',
@@ -347,12 +346,8 @@ describe.only('Array info', () => {
 			}
 		} satisfies JSONSchema7;
 
-		expect(arrayInfo(schema)).toEqual({
-			// TODO: Default value for an array with an item that has a default value?
-			numberArray: {
-				_array: true
-			}
+		expect(objectShape(schema)).toEqual({
+			numberArray: {}
 		});
 	});
-	*/
 });

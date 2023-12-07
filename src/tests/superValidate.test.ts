@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { object, string, email, minLength, array } from 'valibot';
+import { object, string, email, minLength, array, safeParse } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
@@ -11,6 +11,7 @@ import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import type { Inferred } from '$lib/index.js';
 
 /* 
 TEST SCHEMA TEMPLATE:
@@ -146,7 +147,7 @@ describe('ajv', () => {
 
 	const errors = {
 		email: 'must match format "email"',
-		tags: 'length',
+		tags: 'must NOT have fewer than 2 items',
 		tags0: 'must NOT have fewer than 2 characters'
 	};
 
@@ -186,7 +187,7 @@ describe('Zod', () => {
 
 	const errors = {
 		email: 'Invalid email',
-		tags: 'Length',
+		tags: 'Array must contain at least 2 element(s)',
 		tags0: 'String must contain at least 2 character(s)'
 	};
 

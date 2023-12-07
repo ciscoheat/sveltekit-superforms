@@ -176,7 +176,7 @@ function _parseFormData<T extends object>(
 
 		const entries = formData.getAll(key);
 
-		if (info.union.types) {
+		if (info.union) {
 			throw new SchemaError(
 				'FormData parsing failed: ' +
 					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',

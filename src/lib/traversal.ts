@@ -16,7 +16,7 @@ function setPath<T extends object>(parent: T, key: keyof T, value: any) {
 	return 'skip' as const;
 }
 
-export function isInvalidPath(originalPath: string[], pathData: PathData) {
+export function isInvalidPath(originalPath: (string | number | symbol)[], pathData: PathData) {
 	return (
 		pathData.value !== undefined &&
 		typeof pathData.value !== 'object' &&
@@ -26,7 +26,7 @@ export function isInvalidPath(originalPath: string[], pathData: PathData) {
 
 export function pathExists<T extends object>(
 	obj: T,
-	path: string[],
+	path: (string | number | symbol)[],
 	options: {
 		value?: (value: unknown) => boolean;
 		modifier?: (data: PathData) => undefined | unknown | void;
@@ -43,6 +43,7 @@ export function pathExists<T extends object>(
 	return options.value(exists.value) ? exists : undefined;
 }
 
+/*
 export async function traversePathAsync<T extends object>(
 	obj: T,
 	realPath: FieldPath<T>,
@@ -84,14 +85,15 @@ export async function traversePathAsync<T extends object>(
 		set: (v) => setPath(parent, key as keyof typeof parent, v)
 	};
 }
+*/
 
 export function traversePath<T extends object>(
 	obj: T,
-	realPath: FieldPath<T>,
+	realPath: (string | number | symbol)[],
 	modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
 	if (!realPath.length) return undefined;
-	const path: FieldPath<T> = [realPath[0]];
+	const path = [realPath[0]];
 
 	let parent = obj;
 

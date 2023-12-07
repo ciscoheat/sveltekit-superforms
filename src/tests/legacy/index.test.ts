@@ -9,8 +9,8 @@ import { z, type AnyZodObject } from 'zod';
 import { SuperFormError } from '$lib/index.js';
 import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/index.js';
-import { defaultValues } from '$lib/jsonSchema/index.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 
 const testDate = new Date();
 

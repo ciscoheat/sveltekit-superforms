@@ -1,8 +1,8 @@
 import type { InputConstraints } from '$lib/index.js';
-import { defaultValues } from '$lib/jsonSchema/index.js';
 import type { Schema } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
+import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 
 export { zod } from './zod.js';
 export { ajv } from './ajv.js';

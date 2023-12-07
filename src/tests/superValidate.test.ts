@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
-import { defaultValues, type JSONSchema } from '$lib/jsonSchema/index.js';
+import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { Foo, bigZodSchema } from './data.js';
 import { valibot } from '$lib/adapters/valibot.js';
@@ -10,6 +10,7 @@ import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
 import { constraints } from '$lib/jsonSchema/constraints.js';
+import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 
 /* 
 TEST SCHEMA TEMPLATE:

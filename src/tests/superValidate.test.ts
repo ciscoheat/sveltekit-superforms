@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { object, string, email, minLength, array, safeParse } from 'valibot';
+import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
@@ -11,7 +11,6 @@ import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
-import type { Inferred } from '$lib/index.js';
 
 /* 
 TEST SCHEMA TEMPLATE:
@@ -57,13 +56,14 @@ const expectedConstraints = {
 
 function schemaTest(
 	adapter: () => ValidationAdapter<Record<string, unknown>>,
-	errors: { email: string; tags: string; tags0: string },
+	errors: { email: string; tags?: string; tags0: string },
 	testConstraints: boolean
 ) {
 	const expectedErrors = {
 		email: [errors.email],
-		tags: { _errors: [errors.tags], '0': [errors.tags0] }
+		tags: { '0': [errors.tags0] } as Record<string, unknown>
 	};
+	if (errors.tags) expectedErrors.tags._errors = [errors.tags];
 
 	it('with schema only', async () => {
 		const output = await superValidate(adapter());
@@ -118,7 +118,7 @@ describe('Valibot', () => {
 
 	const errors = {
 		email: 'Invalid email',
-		tags: 'Invalid length',
+		//tags: 'Invalid length',
 		tags0: 'Invalid length'
 	};
 

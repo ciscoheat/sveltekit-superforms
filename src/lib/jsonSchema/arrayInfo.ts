@@ -30,13 +30,7 @@ function _arrayInfo(schema: JSONSchema7Definition, path: string[]): ArrayShape |
 
 	if (info.array || info.union) {
 		const arr = info.array || [];
-		const union = info.union
-			? info.union.types
-				? info.union.types
-				: info.union.type
-				  ? [info.union.type]
-				  : []
-			: [];
+		const union = info.union ? info.union.types : [];
 		return arr.concat(union).reduce(
 			(shape, next) => {
 				const nextShape = _arrayInfo(next, path);

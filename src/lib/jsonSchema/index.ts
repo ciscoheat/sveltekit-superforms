@@ -12,7 +12,7 @@ export type SchemaInfo = {
 	isOptional: boolean;
 	isNullable: boolean;
 	schema: JSONSchema7;
-	union?: ReturnType<typeof unionInfo>;
+	union?: { types: JSONSchema7[]; isNullable: boolean };
 	array?: JSONSchema7[];
 	properties?: { [key: string]: JSONSchema7 };
 };
@@ -22,19 +22,11 @@ const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 function unionInfo(schema: JSONSchema7) {
 	if (!schema.anyOf) return undefined;
 
-	const filtered = schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
-	const output = filtered.filter((s) => s.type !== 'null');
-	const isNullable = filtered.length != output.length;
+	const schemas = schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	const types = schemas.filter((s) => s.type !== 'null');
+	const isNullable = schemas.length != types.length;
 
-	switch (output.length) {
-		// 0 = Only null
-		case 0:
-			return { types: [], isNullable };
-		case 1:
-			return { type: output[0], isNullable };
-		default:
-			return { types: output, isNullable };
-	}
+	return { types, isNullable };
 }
 
 export function schemaInfo(
@@ -89,12 +81,11 @@ export function schemaInfo(
 	};
 }
 
-function schemaTypes(schema: JSONSchema7, union: ReturnType<typeof unionInfo>): SchemaType[] {
+function schemaTypes(schema: JSONSchema7, union: SchemaInfo['union']): SchemaType[] {
 	let types: SchemaType[] = [];
 
 	if (union) {
-		if (union.types) types = union.types.flatMap((s) => schemaTypes(s, unionInfo(s)));
-		else if (union.type) types = schemaTypes(union.type, unionInfo(union.type));
+		types = union.types.flatMap((s) => schemaTypes(s, unionInfo(s)));
 	}
 
 	if (schema.type) {

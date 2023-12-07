@@ -308,7 +308,6 @@ describe('Unions (anyOf)', () => {
 		assert(infos.union);
 		expect(infos.union.types).toEqual(filtered);
 		expect(infos.union.isNullable).toBe(true);
-		expect(infos.union.type).toBeUndefined();
 	});
 });
 

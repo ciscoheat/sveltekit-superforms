@@ -34,7 +34,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	// Unions
 	if (info.union) {
-		if (info.union.types) {
+		if (info.union.types.length > 1) {
 			const singleDefault = info.union.types.filter(
 				(s) => typeof s !== 'boolean' && s.default !== undefined
 			);
@@ -48,8 +48,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			}
 
 			return _defaultValues(singleDefault[0], isOptional, path);
-		} else if (info.union.type) {
-			return _defaultValues(info.union.type, isOptional, path);
+		} else {
+			return _defaultValues(info.union.types[0], isOptional, path);
 		}
 	}
 

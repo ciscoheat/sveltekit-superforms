@@ -32,7 +32,7 @@ function dataToFormData(data: Record<string, string | number | string[] | number
 	return output;
 }
 
-describe.only('FormData parsing', () => {
+describe('FormData parsing', () => {
 	const data = {
 		name: 'Test',
 		email: 'test@example.com',

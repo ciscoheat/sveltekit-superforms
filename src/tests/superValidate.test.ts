@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
-import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
@@ -11,6 +10,7 @@ import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { superValidate } from '$lib/superValidate.js';
 
 /* 
 TEST SCHEMA TEMPLATE:
@@ -118,7 +118,7 @@ describe('Valibot', () => {
 
 	const errors = {
 		email: 'Invalid email',
-		//tags: 'Invalid length',
+		tags: 'Invalid length',
 		tags0: 'Invalid length'
 	};
 

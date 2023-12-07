@@ -176,7 +176,7 @@ function _parseFormData<T extends object>(
 
 		const entries = formData.getAll(key);
 
-		if (info.union) {
+		if (info.union && info.union.types.length > 1) {
 			throw new SchemaError(
 				'FormData parsing failed: ' +
 					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
@@ -227,7 +227,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	// value can be returned immediately unless it's boolean, which
 	// means it could have been posted as a checkbox.
 	if (!value && type != 'boolean') {
-		console.log(`No FormData for "${key}" (${type}).`);
+		//console.log(`No FormData for "${key}" (${type}).`);
 		return info.isNullable ? null : value;
 	}
 

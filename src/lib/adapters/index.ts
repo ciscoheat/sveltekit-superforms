@@ -11,7 +11,7 @@ export { valibot } from './valibot.js';
 
 // Lifted from TypeSchema, since they are not exported
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ValidationResult<TOutput = any> =
+export type ValidationResult<TOutput = any> =
 	| {
 			success: true;
 			data: TOutput;

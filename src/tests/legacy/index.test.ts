@@ -1,7 +1,7 @@
 import {
-	superValidate,
 	setError,
-	setMessage
+	setMessage,
+	superValidate
 	//superValidateSync
 } from '$lib/superValidate.js';
 import { assert, expect, test, describe } from 'vitest';
@@ -81,113 +81,113 @@ test('Failed model validation', async () => {
 	expect(data).toStrictEqual(testData);
 });
 
+test('FormData validation', async () => {
+	const formData = new FormData();
+	for (const [key, value] of Object.entries(model)) {
+		formData.set(key, value ? `${value}` : '');
+	}
+
+	// Remove the default
+	formData.delete('def');
+
+	const validation = await superValidate(formData, zod(userForm));
+	const data = validation.data;
+
+	assert(validation.valid);
+	expect(validation.errors).toStrictEqual({});
+
+	// Date is transformed to string, so it cannot be compared directly.
+	expect(data).toStrictEqual({
+		...model,
+		...{
+			createdAt: new Date(formData.get('createdAt')?.toString() ?? ''),
+			nullable: null,
+			def: 999
+		}
+	});
+});
+
+test('Failed FormData validation', async () => {
+	const formData = new FormData();
+	for (const [key, value] of Object.entries(model)) {
+		formData.set(key, value ? `${value}` : '');
+	}
+	formData.set('name', 'A');
+
+	const validation = await superValidate(formData, zod(userForm));
+	const data = validation.data;
+
+	assert(!validation.valid, 'FormData validation should fail');
+
+	expect(validation.errors).toStrictEqual(validationErrors);
+
+	// Date is transformed to string, so it cannot be compared directly.
+	expect(data).toStrictEqual({
+		...model,
+		...{
+			name: 'A',
+			createdAt: new Date(formData.get('createdAt')?.toString() ?? ''),
+			nullable: null
+		}
+	});
+});
+
+test('FormData with nullable', async () => {
+	const formData = new FormData();
+	for (const [key, value] of Object.entries(model)) {
+		formData.set(key, value ? `${value}` : '');
+	}
+	formData.set('name', '');
+
+	const validation = await superValidate(formData, zod(userForm));
+
+	expect(validation.data.name).toBeNull();
+});
+
+test('FormData array data', async () => {
+	const formData = new FormData();
+
+	formData.append('name', 'Nr1');
+	formData.append('name', 'Nr2');
+
+	const form = await superValidate(formData, zod(z.object({ name: z.string().array() })));
+
+	expect(form.data.name).toEqual(['Nr1', 'Nr2']);
+});
+
+test('Nullable values', async () => {
+	const refinedSchema = z
+		.object({
+			scopeId: z.number().int().min(1),
+			name: z.string().nullable()
+		})
+		.refine((data) => data);
+
+	const output = defaultValues<z.infer<typeof refinedSchema>>(zodToJsonSchema(refinedSchema));
+	expect(output.scopeId).equals(0);
+	expect(output.name).equals(null);
+
+	const schema = refinedSchema._def.schema;
+	const extended = schema
+		.extend({
+			scopeId: schema.shape.scopeId.default(7)
+		})
+		.transform((data) => ({ ...data, name: `Test${data.scopeId}` }));
+
+	const output4 = await superValidate({}, zod(extended), { errors: false });
+	assert(output4.valid);
+	expect(output4.data.scopeId).toEqual(7);
+	expect(output4.data.name).toEqual('Test7');
+
+	// If null is passed in and all fields have defaults, return them
+	const extSchema = schema.extend({ scopeId: schema.shape.scopeId.default(10) });
+
+	const output2 = defaultValues<z.infer<typeof extSchema>>(zodToJsonSchema(extSchema));
+	expect(output2.scopeId).toEqual(10);
+	expect(output2.name).toBeNull();
+});
+
 describe.skip('Not tested yet', () => {
-	test('FormData validation', async () => {
-		const formData = new FormData();
-		for (const [key, value] of Object.entries(model)) {
-			formData.set(key, value ? `${value}` : '');
-		}
-
-		// Remove the default
-		formData.delete('def');
-
-		const validation = await superValidate(formData, zod(userForm));
-		const data = validation.data;
-
-		assert(validation.valid);
-		expect(validation.errors).toStrictEqual({});
-
-		// Date is transformed to string, so it cannot be compared directly.
-		expect(data).toStrictEqual({
-			...model,
-			...{
-				createdAt: new Date(formData.get('createdAt')?.toString() ?? ''),
-				nullable: null,
-				def: 999
-			}
-		});
-	});
-
-	test('Failed FormData validation', async () => {
-		const formData = new FormData();
-		for (const [key, value] of Object.entries(model)) {
-			formData.set(key, value ? `${value}` : '');
-		}
-		formData.set('name', 'A');
-
-		const validation = await superValidate(formData, zod(userForm));
-		const data = validation.data;
-
-		assert(!validation.valid, 'FormData validation should fail');
-
-		expect(validation.errors).toStrictEqual(validationErrors);
-
-		// Date is transformed to string, so it cannot be compared directly.
-		expect(data).toStrictEqual({
-			...model,
-			...{
-				name: 'A',
-				createdAt: new Date(formData.get('createdAt')?.toString() ?? ''),
-				nullable: null
-			}
-		});
-	});
-
-	test('FormData with nullable', async () => {
-		const formData = new FormData();
-		for (const [key, value] of Object.entries(model)) {
-			formData.set(key, value ? `${value}` : '');
-		}
-		formData.set('name', '');
-
-		const validation = await superValidate(formData, zod(userForm));
-
-		expect(validation.data.name).toBeNull();
-	});
-
-	test('FormData array data', async () => {
-		const formData = new FormData();
-
-		formData.append('name', 'Nr1');
-		formData.append('name', 'Nr2');
-
-		const form = await superValidate(formData, zod(z.object({ name: z.string().array() })));
-
-		expect(form.data.name).toEqual(['Nr1', 'Nr2']);
-	});
-
-	test('Nullable values', async () => {
-		const refinedSchema = z
-			.object({
-				scopeId: z.number().int().min(1),
-				name: z.string().nullable()
-			})
-			.refine((data) => data);
-
-		const output = defaultValues<z.infer<typeof refinedSchema>>(zodToJsonSchema(refinedSchema));
-		expect(output.scopeId).equals(0);
-		expect(output.name).equals(null);
-
-		const schema = refinedSchema._def.schema;
-		const extended = schema
-			.extend({
-				scopeId: schema.shape.scopeId.default(7)
-			})
-			.transform((data) => ({ ...data, name: `Test${data.scopeId}` }));
-
-		const output4 = await superValidate(null, zod(extended));
-		assert(output4.valid);
-		expect(output4.data.scopeId).toEqual(7);
-		expect(output4.data.name).toEqual('Test7');
-
-		// If null is passed in and all fields have defaults, return them
-		const extSchema = schema.extend({ scopeId: schema.shape.scopeId.default(10) });
-
-		const output2 = defaultValues<z.infer<typeof extSchema>>(zodToJsonSchema(extSchema));
-		expect(output2.scopeId).toEqual(10);
-		expect(output2.name).toBeNull();
-	});
-
 	test('Optional values', async () => {
 		const schema = z.object({
 			other: z.string(),

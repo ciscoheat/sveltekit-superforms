@@ -1,7 +1,7 @@
 import { validate } from '@decs/typeschema';
 import { traversePath } from './traversal.js';
 import { ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
-import { mapAdapter, type ValidationAdapter } from './adapters/index.js';
+import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
 import type { SuperValidated } from './index.js';
 import type { NumericRange } from './utils.js';
@@ -84,11 +84,11 @@ export async function superValidate<
 	*/
 	parsed.data = { ...defaults, ...(parsed.data ?? {}) } as T;
 
-	const status =
+	const status: ValidationResult<T> =
 		hasData || addErrors
 			? validation.customValidator
 				? await validation.customValidator(parsed.data ?? defaults)
-				: await validate(validation.validator, parsed.data ?? defaults)
+				: ((await validate(validation.validator, parsed.data ?? defaults)) as ValidationResult<T>)
 			: { success: false, issues: [] };
 
 	const valid = status.success;
@@ -103,7 +103,7 @@ export async function superValidate<
 		errors,
 		// TODO: Copy data or return same object? (Probably copy, to be consistent with fail behavior)
 		// TODO: Strip keys not belonging to schema? (additionalProperties)
-		data: (valid ? { ...data } : parsed.data) as T,
+		data: status.success ? status.data : (parsed.data as T),
 		constraints: validation.constraints,
 		message: undefined
 	};

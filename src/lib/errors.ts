@@ -21,7 +21,8 @@ export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
 		const { parent, key } = leaf;
 
 		if (objectError) {
-			if (!(key in parent)) parent[key] = { _errors: [error.message] };
+			if (!(key in parent)) parent[key] = {};
+			if (!('_errors' in parent[key])) parent[key]._errors = [error.message];
 			else parent[key]._errors.push(error.message);
 		} else {
 			if (!(key in parent)) parent[key] = [error.message];

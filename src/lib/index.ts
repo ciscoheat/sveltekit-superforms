@@ -1,5 +1,6 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import type { ArrayShape } from './jsonSchema/arrayInfo.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
@@ -47,7 +48,7 @@ export type Entity<T extends object> = {
 	constraints: InputConstraints<T>;
 	keys: string[];
 	hash: string;
-	errorShape: ErrorShape;
+	errorShape: ArrayShape;
 };
 
 export type ZodTypeInfo = {
@@ -64,13 +65,3 @@ export type ZodTypeInfo = {
 export type ValidationErrors<T extends object> = {
 	_errors?: string[];
 } & SuperStructArray<T, string[], { _errors?: string[] }>;
-
-/**
- * A tree structure where the existence of a node means that its not a leaf.
- * Used in error mapping to determine whether to add errors to an _error field
- * (as in arrays and objects), or directly on the field itself.
- */
-// TODO: Replace with JSON schema
-export type ErrorShape = {
-	[K in string]: ErrorShape;
-};

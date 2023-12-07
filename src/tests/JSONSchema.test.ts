@@ -3,6 +3,9 @@ import type { JSONSchema7 } from 'json-schema';
 import { schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { arrayInfo } from '$lib/jsonSchema/arrayInfo.js';
+import { z } from 'zod';
+import { zodToJsonSchema } from '$lib/adapters/zod.js';
 
 describe('Default values', () => {
 	it('should map primitive types to default values', () => {
@@ -302,8 +305,55 @@ describe('Unions (anyOf)', () => {
 		expect(infos.types).toEqual(new Set(['string', 'number']));
 
 		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean' && s.type != 'null');
+		assert(infos.union);
 		expect(infos.union.types).toEqual(filtered);
 		expect(infos.union.isNullable).toBe(true);
 		expect(infos.union.type).toBeUndefined();
 	});
+});
+
+describe.only('Array info', () => {
+	const schema = z.object({
+		tags: z
+			.object({
+				id: z.number(),
+				names: z.string().min(2).array(),
+				test: z.union([z.string(), z.string().array()])
+			})
+			.array()
+			.min(2)
+	});
+
+	it('should return correct info about nested arrays', () => {
+		expect(arrayInfo(zodToJsonSchema(schema))).toStrictEqual({
+			tags: { names: {}, test: {} }
+		});
+	});
+
+	/*
+	it('should return correct info about arrays in the schema', () => {
+		const schema = {
+			type: 'object',
+			properties: {
+				numberArray: {
+					type: 'array',
+					items: {
+						type: 'integer',
+						default: NaN
+					}
+				},
+				name: {
+					type: 'string'
+				}
+			}
+		} satisfies JSONSchema7;
+
+		expect(arrayInfo(schema)).toEqual({
+			// TODO: Default value for an array with an item that has a default value?
+			numberArray: {
+				_array: true
+			}
+		});
+	});
+	*/
 });

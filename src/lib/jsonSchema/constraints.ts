@@ -23,7 +23,7 @@ export function constraints<T extends object>(schema: JSONSchema): InputConstrai
 	return _constraints(schema, false, []);
 }
 
-export function _constraints(
+function _constraints(
 	schema: JSONSchema7Definition,
 	isOptional: boolean,
 	path: string[]

@@ -33,28 +33,30 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	if (info.isOptional) return undefined;
 
 	// Unions
-	if (info.union.types) {
-		const singleDefault = info.union.types.filter(
-			(s) => typeof s !== 'boolean' && s.default !== undefined
-		);
-		if (singleDefault.length == 0) {
-			throw new SchemaError('No default value found for union.', path);
-		} else if (singleDefault.length > 1) {
-			throw new SchemaError(
-				'Only one default value can exist in a union, or set a default value for the whole union.',
-				path
+	if (info.union) {
+		if (info.union.types) {
+			const singleDefault = info.union.types.filter(
+				(s) => typeof s !== 'boolean' && s.default !== undefined
 			);
-		}
+			if (singleDefault.length == 0) {
+				throw new SchemaError('No default value found for union.', path);
+			} else if (singleDefault.length > 1) {
+				throw new SchemaError(
+					'Only one default value can exist in a union, or set a default value for the whole union.',
+					path
+				);
+			}
 
-		return _defaultValues(singleDefault[0], isOptional, path);
-	} else if (info.union.type) {
-		return _defaultValues(info.union.type, isOptional, path);
+			return _defaultValues(singleDefault[0], isOptional, path);
+		} else if (info.union.type) {
+			return _defaultValues(info.union.type, isOptional, path);
+		}
 	}
 
 	// Objects
-	if (schema.type == 'object' && schema.properties) {
+	if (info.properties) {
 		const output: Record<string, unknown> = {};
-		for (const [key, value] of Object.entries(schema.properties)) {
+		for (const [key, value] of Object.entries(info.properties)) {
 			if (typeof value == 'boolean') {
 				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
 			}

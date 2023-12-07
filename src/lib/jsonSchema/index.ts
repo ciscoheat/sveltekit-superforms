@@ -12,13 +12,15 @@ export type SchemaInfo = {
 	isOptional: boolean;
 	isNullable: boolean;
 	schema: JSONSchema7;
-	union: ReturnType<typeof unionInfo>;
+	union?: ReturnType<typeof unionInfo>;
+	array?: JSONSchema7[];
+	properties?: { [key: string]: JSONSchema7 };
 };
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
 function unionInfo(schema: JSONSchema7) {
-	if (!schema.anyOf) return { types: undefined, isNullable: false };
+	if (!schema.anyOf) return undefined;
 
 	const filtered = schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
 	const output = filtered.filter((s) => s.type !== 'null');
@@ -27,7 +29,7 @@ function unionInfo(schema: JSONSchema7) {
 	switch (output.length) {
 		// 0 = Only null
 		case 0:
-			return { types: undefined, isNullable };
+			return { types: [], isNullable };
 		case 1:
 			return { type: output[0], isNullable };
 		default:
@@ -62,21 +64,38 @@ export function schemaInfo(
 		return undefined;
 	}
 
+	const array =
+		schema.items && types.includes('array')
+			? ((Array.isArray(schema.items) ? schema.items : [schema.items]).filter(
+					(s) => typeof s !== 'boolean'
+			  ) as JSONSchema7[])
+			: undefined;
+
+	const properties =
+		schema.properties && types.includes('object')
+			? (Object.fromEntries(
+					Object.entries(schema.properties).filter(([, value]) => typeof value !== 'boolean')
+			  ) as { [key: string]: JSONSchema7 })
+			: undefined;
+
 	return {
 		types: new Set(types.filter((s) => s !== 'null')) as SchemaInfo['types'],
 		isOptional,
 		isNullable: isSchemaNullable(schema),
 		schema,
-		union
+		union,
+		array,
+		properties
 	};
 }
 
 function schemaTypes(schema: JSONSchema7, union: ReturnType<typeof unionInfo>): SchemaType[] {
 	let types: SchemaType[] = [];
 
-	if (union.types) types = union.types.flatMap((s) => schemaTypes(s, unionInfo(s)));
-	else if (union.type) types = schemaTypes(union.type, unionInfo(union.type));
-	else types = [];
+	if (union) {
+		if (union.types) types = union.types.flatMap((s) => schemaTypes(s, unionInfo(s)));
+		else if (union.type) types = schemaTypes(union.type, unionInfo(union.type));
+	}
 
 	if (schema.type) {
 		types = types.concat(Array.isArray(schema.type) ? schema.type : [schema.type]);

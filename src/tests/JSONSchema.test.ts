@@ -1,10 +1,11 @@
 import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
-import { defaultValues, schemaInfo } from '$lib/jsonSchema/index.js';
+import { schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
+import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 
-describe('JSON schema validation', () => {
-	it('Should map primitive types to default values', () => {
+describe('Default values', () => {
+	it('should map primitive types to default values', () => {
 		const schema = {
 			type: 'object',
 			required: [
@@ -30,6 +31,7 @@ describe('JSON schema validation', () => {
 					type: 'boolean'
 				},
 				agree: {
+					type: 'boolean',
 					const: true,
 					default: true
 				},
@@ -75,11 +77,9 @@ describe('JSON schema validation', () => {
 			proxyNumber: 0,
 			nullableString: null,
 			nullishString: null,
-			optionalString: undefined,
 			proxyString: '',
 			trimmedString: '',
-			coercedNumber: 0,
-			coercedDate: undefined
+			coercedNumber: 0
 		});
 	});
 
@@ -120,14 +120,17 @@ describe('JSON schema validation', () => {
 			required: ['nativeEnumInt', 'nativeEnumString', 'nativeEnumString2'],
 			properties: {
 				nativeEnumInt: {
+					type: 'number',
 					enum: Object.values(Fruits),
 					default: Fruits.Apple
 				},
 				nativeEnumString: {
+					type: 'string',
 					enum: ['GRAY', 'GREEN'],
 					default: 'GREEN'
 				},
 				nativeEnumString2: {
+					type: 'string',
 					enum: Object.values(FruitsStr),
 					default: FruitsStr.Banana
 				}
@@ -236,31 +239,6 @@ describe('JSON schema validation', () => {
 		});
 	});
 
-	it('should collect types from unions (anyOf)', () => {
-		const unionSchema: JSONSchema7 = {
-			type: 'string',
-			anyOf: [
-				{ enum: ['male', 'female'] },
-				{ type: 'string', default: 'other' },
-				{ type: 'number', minimum: 5 },
-				{ type: 'null' }
-			]
-		};
-
-		const infos = schemaInfo(unionSchema);
-		assert(infos);
-
-		expect(infos.schema).toBe(unionSchema);
-		expect(infos.isNullable).toBe(true);
-		expect(infos.isOptional).toBe(false);
-		expect(infos.types).toEqual(new Set(['string', 'number']));
-
-		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean' && s.type != 'null');
-		expect(infos.union.types).toEqual(filtered);
-		expect(infos.union.isNullable).toBe(true);
-		expect(infos.union.type).toBeUndefined();
-	});
-
 	it('should map the default value of a union (anyOf) if only one default value exists.', () => {
 		const defaultTestSchema: JSONSchema7 = {
 			type: 'object',
@@ -300,5 +278,32 @@ describe('JSON schema validation', () => {
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		expect(defaultValues<any>(defaultTestSchema).gender).toEqual('female');
+	});
+});
+
+describe('Unions (anyOf)', () => {
+	it('should collect types from unions', () => {
+		const unionSchema: JSONSchema7 = {
+			type: 'string',
+			anyOf: [
+				{ enum: ['male', 'female'] },
+				{ type: 'string', default: 'other' },
+				{ type: 'number', minimum: 5 },
+				{ type: 'null' }
+			]
+		};
+
+		const infos = schemaInfo(unionSchema);
+		assert(infos);
+
+		expect(infos.schema).toBe(unionSchema);
+		expect(infos.isNullable).toBe(true);
+		expect(infos.isOptional).toBe(false);
+		expect(infos.types).toEqual(new Set(['string', 'number']));
+
+		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean' && s.type != 'null');
+		expect(infos.union.types).toEqual(filtered);
+		expect(infos.union.isNullable).toBe(true);
+		expect(infos.union.type).toBeUndefined();
 	});
 });

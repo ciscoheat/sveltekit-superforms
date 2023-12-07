@@ -99,7 +99,17 @@ export async function superValidate<
 			setPaths(
 				errors,
 				issues.map((i) => i.path) as (string | number | symbol)[][],
-				(path) => issues.find((i) => i.path == path)?.message
+				(path, data) => {
+					const issue = issues.find((i) => i.path == path);
+					if (!issue) return data.value;
+
+					if (!data.value) {
+						return [issue.message];
+					} else {
+						data.parent.push(issue.message);
+						return data.value;
+					}
+				}
 			);
 		}
 		// Alternative place for parsed.data merging

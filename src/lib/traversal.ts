@@ -6,7 +6,7 @@ type PathData = {
 	parent: any;
 	key: string;
 	value: any;
-	path: string[];
+	path: (string | number | symbol)[];
 	isLeaf: boolean;
 	set: (value: any) => 'skip';
 };
@@ -195,7 +195,7 @@ function eqSet(xs: Set<unknown>, ys: Set<unknown>) {
  * Compare two objects and return the differences as paths.
  */
 export function comparePaths(newObj: unknown, oldObj: unknown) {
-	const diffPaths = new Map<string, string[]>();
+	const diffPaths = new Map<string, (string | number | symbol)[]>();
 
 	function checkPath(data: PathData, compareTo: object) {
 		const exists = traversePath(compareTo, data.path as FieldPath<object>);
@@ -237,7 +237,7 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 export function setPaths(
 	obj: Record<string, unknown>,
 	paths: (string | number | symbol)[][],
-	value: (path: (string | number | symbol)[]) => unknown | unknown
+	value: (path: (string | number | symbol)[], data: PathData) => unknown
 ) {
 	const isFunction = typeof value === 'function';
 
@@ -250,6 +250,6 @@ export function setPaths(
 			}
 			return parent[key];
 		});
-		if (leaf) leaf.parent[leaf.key] = isFunction ? value(path) : value;
+		if (leaf) leaf.parent[leaf.key] = isFunction ? value(path, leaf) : value;
 	}
 }

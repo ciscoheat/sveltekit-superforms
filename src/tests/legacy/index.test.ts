@@ -9,7 +9,7 @@ import { z, type AnyZodObject } from 'zod';
 import { SuperFormError } from '$lib/index.js';
 import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/index.js';
-import { defaultValues } from '$lib/jsonSchema.js';
+import { defaultValues } from '$lib/jsonSchema/index.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 
 const testDate = new Date();
@@ -71,17 +71,17 @@ test('Model validation', async () => {
 	expect(data).toStrictEqual(model);
 });
 
+test('Failed model validation', async () => {
+	const testData = { ...model, name: 'A' };
+	const validation = await superValidate(testData, zod(userForm));
+	const data = validation.data;
+
+	assert(!validation.valid, 'Validation should fail');
+	expect(validation.errors).toStrictEqual(validationErrors);
+	expect(data).toStrictEqual(testData);
+});
+
 describe.skip('Not tested yet', () => {
-	test('Failed model validation', async () => {
-		const testData = { ...model, name: 'A' };
-		const validation = await superValidate(testData, zod(userForm));
-		const data = validation.data;
-
-		assert(!validation.valid, 'Validation should fail');
-		expect(validation.errors).toStrictEqual(validationErrors);
-		expect(data).toStrictEqual(testData);
-	});
-
 	test('FormData validation', async () => {
 		const formData = new FormData();
 		for (const [key, value] of Object.entries(model)) {

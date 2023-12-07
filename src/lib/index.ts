@@ -1,10 +1,10 @@
 import type { Infer, Schema } from '@decs/typeschema';
+import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 
 export type MaybePromise<T> = T | Promise<T>;
-
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
-
 export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
+export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';
 
 export class SuperFormError extends Error {
 	constructor(message?: string) {
@@ -60,18 +60,6 @@ export type ZodTypeInfo = {
 	//effects: ZodEffects<ZodTypeAny> | undefined;
 	defaultValue: unknown;
 };
-
-export type InputConstraint = Partial<{
-	pattern: string; // RegExp
-	min: number | string; // Date
-	max: number | string; // Date
-	required: boolean;
-	step: number | 'any';
-	minlength: number;
-	maxlength: number;
-}>;
-
-export type InputConstraints<T extends object> = SuperStruct<T, InputConstraint>;
 
 export type ValidationErrors<T extends object> = {
 	_errors?: string[];

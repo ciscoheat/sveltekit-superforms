@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import type { JSONSchema } from '$lib/jsonSchema.js';
+import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import addFormats from 'ajv-formats';
 import { memoize } from '$lib/memoize.js';
 

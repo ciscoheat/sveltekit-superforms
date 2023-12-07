@@ -2,7 +2,7 @@ import type { ValidationAdapter } from './index.js';
 import toJsonSchema from 'to-json-schema';
 import type { BaseSchema, BaseSchemaAsync } from 'valibot';
 import type { Inferred } from '$lib/index.js';
-import type { JSONSchema } from '$lib/jsonSchema.js';
+import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { memoize } from '$lib/memoize.js';
 
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(

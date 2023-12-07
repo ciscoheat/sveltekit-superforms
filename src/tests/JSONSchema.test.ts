@@ -1,6 +1,6 @@
 import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
-import { defaultValues, schemaInfo } from '$lib/jsonSchema.js';
+import { defaultValues, schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
 
 describe('JSON schema validation', () => {

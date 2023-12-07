@@ -2,13 +2,14 @@ import { describe, it, expect } from 'vitest';
 import { object, string, email, minLength, array } from 'valibot';
 import { superValidate } from '$lib/superValidate.js';
 import { z } from 'zod';
-import { constraints, defaultValues, type JSONSchema } from '$lib/jsonSchema.js';
+import { defaultValues, type JSONSchema } from '$lib/jsonSchema/index.js';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { Foo, bigZodSchema } from './data.js';
 import { valibot } from '$lib/adapters/valibot.js';
 import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { ajv } from '$lib/adapters/ajv.js';
 import merge from 'ts-deepmerge';
+import { constraints } from '$lib/jsonSchema/constraints.js';
 
 /* 
 TEST SCHEMA TEMPLATE:
@@ -54,9 +55,14 @@ const expectedConstraints = {
 
 function schemaTest(
 	adapter: () => ValidationAdapter<Record<string, unknown>>,
-	expectedErrors: Record<string, unknown>,
+	errors: { email: string; tags: string; tags0: string },
 	testConstraints: boolean
 ) {
+	const expectedErrors = {
+		email: [errors.email],
+		tags: { _errors: [errors.tags], '0': [errors.tags0] }
+	};
+
 	it('with schema only', async () => {
 		const output = await superValidate(adapter());
 		expect(output.valid).toEqual(false);
@@ -110,7 +116,8 @@ describe('Valibot', () => {
 
 	const errors = {
 		email: 'Invalid email',
-		tags: { '0': 'Invalid length' }
+		tags: 'Invalid length',
+		tags0: 'Invalid length'
 	};
 
 	schemaTest(() => valibot(schema, { defaults }), errors, false);
@@ -138,7 +145,8 @@ describe('ajv', () => {
 
 	const errors = {
 		email: 'must match format "email"',
-		tags: { '0': 'must NOT have fewer than 2 characters' }
+		tags: 'length',
+		tags0: 'must NOT have fewer than 2 characters'
 	};
 
 	schemaTest(() => ajv(schema), errors, true);
@@ -177,7 +185,8 @@ describe('Zod', () => {
 
 	const errors = {
 		email: 'Invalid email',
-		tags: { '0': 'String must contain at least 2 character(s)' }
+		tags: 'Length',
+		tags0: 'String must contain at least 2 character(s)'
 	};
 
 	schemaTest(() => zod(schema), errors, true);

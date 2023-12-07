@@ -1,4 +1,4 @@
-import { defaultValues } from '$lib/jsonSchema.js';
+import { defaultValues } from '$lib/jsonSchema/index.js';
 import { it } from 'vitest';
 import { z } from 'zod';
 import type { JSONSchema7 } from 'json-schema';

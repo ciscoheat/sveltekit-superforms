@@ -801,7 +801,7 @@ test('Passthrough validation', async () => {
   });
 });
 
-test.only('Preprocessed fields', async () => {
+test('Preprocessed fields', async () => {
   const schema = z.object({
     tristate: z.preprocess(
       (value) => (value === undefined ? undefined : Boolean(value)),
@@ -818,3 +818,94 @@ test.only('Preprocessed fields', async () => {
   assert(form.valid);
   expect(form.data.tristate).toBeUndefined();
 });
+
+
+describe('Strict tests', () => {
+  const tests = [
+    {
+      name: 'Should be invalid if foo is not present in object and strict=true',
+      schema: z.object({
+        foo: z.string()
+      }),
+      input: {},
+      data: {},
+      valid: false,
+      errors: {
+        foo: ['Required']
+      },
+    },
+    {
+      name: 'Should be valid if foo is not present but optional in object and strict=true',
+      schema: z.object({
+        foo: z.string().optional()
+      }),
+      input: {},
+      data: {},
+      valid: true,
+      errors: {},
+    },
+    {
+      name: 'Should be invalid if key is mispelled strict=true',
+      schema: z.object({
+        foo: z.string()
+      }),
+      input: {
+        fo: 'bar'
+      },
+      data: {},
+      valid: false,
+      errors: {
+        foo: ['Required']
+      },
+    },
+    {
+      name: 'Should work with strict=true and number',
+      schema: z.object({
+        cost: z.number()
+      }),
+      input: {
+        cost: 20
+      },
+      data: {
+        cost: 20
+      },
+      valid: true,
+      errors: {},
+    },
+  ]
+
+  for (const {name, input, schema, valid, data, errors} of tests) {
+    test(name + ' (POJO)', async () => {
+      const form = await superValidate(input as any, schema, {
+        strict: true
+      });
+      expect(form.data).toEqual(data)
+      expect(form.errors).toEqual(errors)
+      expect(form.valid).toEqual(valid)
+    });
+    test(name + ' (FormData)', async () => {
+      const formData = new FormData();
+      for (const [key, value] of Object.entries(input)) {
+        formData.set(key, value ? `${value}` : '');
+      }
+      const form = await superValidate(formData, schema, {
+        strict: true
+      });
+      expect(form.data).toEqual(data)
+      expect(form.errors).toEqual(errors)
+      expect(form.valid).toEqual(valid)
+    });
+    test(name + ' (UrlSearchParams)', async () => {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(input)) {
+        params.set(key, `${value}`);
+      }
+      const form = await superValidate(params, schema, {
+        strict: true
+      });
+      expect(form.data).toEqual(data)
+      expect(form.errors).toEqual(errors)
+      expect(form.valid).toEqual(valid)
+    });
+  }
+})

@@ -154,7 +154,8 @@ export function setError<T extends ZodValidation<AnyZodObject>>(
 function formDataToValidation<T extends AnyZodObject>(
   data: FormData,
   schemaData: SchemaData<T>,
-  preprocessed?: (keyof z.infer<T>)[]
+  preprocessed?: (keyof z.infer<T>)[],
+  strict?: boolean
 ) {
   const output: Record<string, unknown> = {};
   const { schemaKeys, entityInfo } = schemaData;
@@ -180,6 +181,10 @@ function formDataToValidation<T extends AnyZodObject>(
     const typeInfo = entityInfo.typeInfo[key];
     const entries = data.getAll(key);
 
+    if (entries.length === 0 && strict && typeInfo.isOptional === false) {
+      continue;
+    }
+
     if (!(typeInfo.zodType._def.typeName == 'ZodArray')) {
       output[key] = parseSingleEntry(key, entries[0], typeInfo);
     } else {
@@ -193,7 +198,7 @@ function formDataToValidation<T extends AnyZodObject>(
     value: string | null,
     typeInfo: ZodTypeInfo
   ): unknown {
-    const newValue = valueOrDefault(value, false, true, typeInfo);
+    const newValue = valueOrDefault(value, strict ?? false, true, typeInfo);
     const zodType = typeInfo.zodType;
 
     // If the value was empty, it now contains the default value,
@@ -341,7 +346,8 @@ function parseFormData<T extends AnyZodObject>(
         data: formDataToValidation(
           formData,
           schemaData,
-          options?.preprocessed
+          options?.preprocessed,
+          options?.strict
         ),
         posted: true
       };
@@ -429,17 +435,22 @@ function validateResult<T extends AnyZodObject, M>(
       // passthrough, strip, strict
       const zodKeyStatus = unwrappedSchema._def.unknownKeys;
 
-      const data =
-        zodKeyStatus == 'passthrough'
-          ? { ...clone(entityInfo.defaultEntity), ...partialData }
-          : Object.fromEntries(
-              schemaKeys.map((key) => [
-                key,
-                key in partialData
-                  ? partialData[key]
-                  : clone(entityInfo.defaultEntity[key])
-              ])
-            );
+      let data;
+
+      if (zodKeyStatus == 'passthrough') {
+        data = { ...clone(entityInfo.defaultEntity), ...partialData }
+      } else if (options.strict) {
+        data= parsed.data;
+      } else {
+        data = Object.fromEntries(
+          schemaKeys.map((key) => [
+            key,
+            key in partialData
+              ? partialData[key]
+              : clone(entityInfo.defaultEntity[key])
+          ])
+        );
+      }
 
       return {
         id,
@@ -502,6 +513,7 @@ function getSchemaData<T extends AnyZodObject>(
 
 export type SuperValidateOptions<T extends AnyZodObject = AnyZodObject> =
   Partial<{
+    strict: boolean;
     errors: boolean;
     id: string;
     warnings: {
@@ -615,6 +627,16 @@ export async function superValidate<
   }
 
   const { parsed, result } = await parseRequest();
+
+  if (options?.strict) {
+    for (const key of Object.keys(parsed.data ?? {})) { 
+      const isKeyInSchema = schemaData.schemaKeys.includes(key);
+      if (!isKeyInSchema && parsed.data) {
+        delete parsed.data[key];
+      }
+    }
+  }
+
   return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);
 }
 

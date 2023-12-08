@@ -230,7 +230,7 @@ export function valueOrDefault(
   // so this should be ok.
   // Also make a check for strict, so empty strings from FormData can also be set here.
 
-  if (strict && value !== undefined) return value;
+  if (strict) return value;
   if (hasDefault) return defaultValue;
   if (isNullable) return null;
   if (isOptional) return undefined;
@@ -279,7 +279,7 @@ export function defaultValues<T extends ZodValidation<AnyZodObject>>(
   return Object.fromEntries(
     fields.map((field) => {
       const typeInfo = schemaTypeInfo[field];
-      const newValue = valueOrDefault(undefined, true, true, typeInfo);
+      const newValue = valueOrDefault(undefined, false, true, typeInfo);
 
       return [field, newValue];
     })

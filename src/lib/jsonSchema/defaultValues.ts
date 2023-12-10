@@ -21,7 +21,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	//else console.log(path, schema, { isOptional });
 
 	// Default takes (early) priority.
-	if (schema.default !== undefined) {
+	if ('default' in schema) {
 		// TODO: Handle multiple default types by using the first one?
 		// Otherwise, format conversion is problematic.
 		const [type] = info.types;

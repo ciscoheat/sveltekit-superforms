@@ -1,6 +1,6 @@
 import { SchemaError } from '$lib/index.js';
 import type { JSONSchema7Definition } from 'json-schema';
-import { isSchemaNullable, type JSONSchema } from './index.js';
+import { isSchemaNullable, schemaInfo, type JSONSchema } from './index.js';
 import merge from 'ts-deepmerge';
 
 export type InputConstraint = Partial<{
@@ -32,57 +32,40 @@ function _constraints(
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
-	//const info = schemaInfo(schema)
+	const info = schemaInfo(schema);
+	if (!info) return undefined;
 
 	// Union
-	if (schema.anyOf && schema.anyOf.length) {
-		if (schema.anyOf.length > 1) {
+	if (info.union) {
+		if (info.union.types.length > 1) {
 			// TODO: Simpler merge of constraints?
-			const merged = schema.anyOf
+			const merged = info.union.types
 				.map((s) => _constraints(s, isOptional, path))
 				.filter((s) => s !== undefined);
 			return merge(...merged);
 		} else {
-			return _constraints(schema.anyOf[0], isOptional, path);
+			return _constraints(info.union.types[0], isOptional, path);
 		}
 	}
 
 	// Arrays
-	if (schema.type == 'array') {
-		if (!schema.items || (Array.isArray(schema.items) && !schema.items.length)) {
-			throw new SchemaError('Arrays must have an items property', path);
-		}
-
-		const items = Array.isArray(schema.items) ? schema.items : [schema.items];
-		if (items.length == 1) {
+	if (info.array) {
+		if (info.array.length == 1) {
 			//console.log('Array constraint', schema, path);
-			return _constraints(items[0], isOptional, path);
+			return _constraints(info.array[0], isOptional, path);
 		}
 
-		try {
-			return merge(...items.map((i) => _constraints(i, isOptional, path)));
-		} catch (error) {
-			if (error instanceof TypeError) {
-				console.log('ERROR', schema);
-				throw new SchemaError('TypeError');
-			}
-		}
+		return merge(...info.array.map((i) => _constraints(i, isOptional, path)));
 	}
 
 	// Objects
-	if (schema.type == 'object') {
+	if (info.properties) {
 		const output: Record<string, unknown> = {};
-		if (schema.properties) {
-			for (const [key, prop] of Object.entries(schema.properties)) {
-				if (typeof prop == 'boolean') {
-					throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
-				}
+		for (const [key, prop] of Object.entries(info.properties)) {
+			const propConstraint = _constraints(prop, !schema.required?.includes(key), [...path, key]);
 
-				const propConstraint = _constraints(prop, !schema.required?.includes(key), [...path, key]);
-
-				if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
-					output[key] = propConstraint;
-				}
+			if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
+				output[key] = propConstraint;
 			}
 		}
 		return output;

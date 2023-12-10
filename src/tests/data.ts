@@ -62,5 +62,6 @@ export const dataTypeForm = z.object({
 	coercedDate: z.coerce.date().optional(),
 	nativeEnumInt: z.nativeEnum(Fruits).default(Fruits.Apple),
 	nativeEnumString: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' }).default('GREEN'),
-	nativeEnumString2: z.nativeEnum(FruitsStr).default(FruitsStr.Banana)
+	nativeEnumString2: z.nativeEnum(FruitsStr).default(FruitsStr.Banana),
+	zodEnum: z.enum(['a', 'b', 'c'])
 });

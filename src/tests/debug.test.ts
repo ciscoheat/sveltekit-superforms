@@ -32,8 +32,8 @@ const schema = z.object({
 	literal: z.literal(true).default(false as true)
 });
 
-it('Zod to JSON Schema', () => {
-	console.dir(zodToJsonSchema(bigZodSchema), { depth: 10 });
+it.skip('Zod to JSON Schema', () => {
+	console.dir(zodToJsonSchema(dataTypeForm), { depth: 10 });
 });
 
 it.skip('defaultValues', () => {

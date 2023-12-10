@@ -302,10 +302,9 @@ describe('Unions (anyOf)', () => {
 		expect(infos.schema).toBe(unionSchema);
 		expect(infos.isNullable).toBe(true);
 		expect(infos.isOptional).toBe(false);
-		expect(infos.types).toEqual(new Set(['string', 'number']));
-		expect(infos.default).toEqual('other');
+		expect(infos.types).toEqual(['string', 'number']);
 
-		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean' && s.type != 'null');
+		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean');
 		assert(infos.union);
 		expect(infos.union).toEqual(filtered);
 	});

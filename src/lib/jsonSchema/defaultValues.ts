@@ -33,6 +33,11 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	if (info.isOptional) return undefined;
 
 	// Unions
+	/*
+	if (info.union) {
+		throw new SchemaError('A default value must exist for a non-optional union.', path);
+	}
+	*/
 	if (info.union) {
 		if (info.union.length > 1) {
 			const singleDefault = info.union.filter(

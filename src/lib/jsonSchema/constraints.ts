@@ -32,10 +32,14 @@ function _constraints(
 	if (info.union) {
 		if (info.union.length > 1) {
 			// TODO: Simpler merge of constraints?
-			const merged = info.union
-				.map((s) => _constraints(schemaInfo(s, info.isOptional), path))
-				.filter((s) => s !== undefined);
-			return merge(...merged);
+			const infos = info.union.map((s) => schemaInfo(s, info.isOptional));
+			const merged = infos.map((i) => _constraints(i, path)).filter((s) => s !== undefined);
+			const output = merge(...merged);
+			// Delete required if any part of the union is optional
+			if (infos.some((i) => i?.isNullable || i?.isOptional)) {
+				delete output.required;
+			}
+			return output;
 		} else {
 			return _constraints(schemaInfo(info.union[0], info.isOptional), path);
 		}
@@ -55,10 +59,11 @@ function _constraints(
 	if (info.properties) {
 		const output: Record<string, unknown> = {};
 		for (const [key, prop] of Object.entries(info.properties)) {
-			const propConstraint = _constraints(schemaInfo(prop, !info.required?.includes(key)), [
-				...path,
-				key
-			]);
+			const propInfo = schemaInfo(
+				prop,
+				!info.required?.includes(key) || prop.default !== undefined
+			);
+			const propConstraint = _constraints(propInfo, [...path, key]);
 
 			if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
 				output[key] = propConstraint;
@@ -77,9 +82,11 @@ function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefin
 	const type = schema.type;
 	const format = schema.format;
 
-	if (path[0] == 'name') {
+	/*
+	if (path[0] == 'proxyNumber') {
 		console.log(path, schema, info.isOptional, info.isNullable);
 	}
+	*/
 
 	// Must be before type check
 	if (

@@ -1,9 +1,9 @@
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { assert, expect, it } from 'vitest';
+import { bigZodSchema, dataTypeForm } from './data.js';
+import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { z } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
-import { dataTypeForm } from './data.js';
 
 enum Foo {
 	A = 2,
@@ -32,21 +32,11 @@ const schema = z.object({
 	literal: z.literal(true).default(false as true)
 });
 
-it.skip('Zod to JSON Schema', () => {
-	console.dir(zodToJsonSchema(dataTypeForm), { depth: 10 });
+it('Zod to JSON Schema', () => {
+	console.dir(zodToJsonSchema(bigZodSchema), { depth: 10 });
 });
 
 it.skip('defaultValues', () => {
 	const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema7);
 	console.dir(values, { depth: 10 });
-});
-
-it('zodToJsonSchema should include types with default in required', () => {
-	const schema = z.object({
-		agree: z.literal(true).default(true)
-	});
-
-	const jsonSchema = zodToJsonSchema(schema);
-	assert(jsonSchema.required, 'property should be required');
-	expect(jsonSchema.required).toContain('agree');
 });

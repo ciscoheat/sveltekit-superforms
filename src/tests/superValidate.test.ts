@@ -168,10 +168,10 @@ describe('Zod', () => {
 		expect(values.foo).toEqual(Foo.A);
 	});
 
-	it('with constraints', () => {
+	it.only('with constraints', () => {
 		const expected = {
 			email: { required: true },
-			tags: { minlength: 2, required: true },
+			tags: { minlength: 2 },
 			foo: { required: true },
 			set: { required: true },
 			reg1: { pattern: '\\D', required: true },

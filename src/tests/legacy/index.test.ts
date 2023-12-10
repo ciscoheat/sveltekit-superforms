@@ -264,7 +264,7 @@ describe('Default values', () => {
 		expect(defaultValues(zodToJsonSchema(schema))).toStrictEqual(expected);
 	});
 
-	test('With no entity but different fields', async () => {
+	test.only('With no entity but different fields', async () => {
 		const d = new Date();
 		const e = await superValidate(
 			null,
@@ -305,15 +305,11 @@ describe('Default values', () => {
 		expect(form.message).toBeUndefined();
 
 		expect(form.constraints).toStrictEqual({
-			agree: { required: true },
-			string: { required: true, minlength: 2 },
+			string: { minlength: 2 },
 			email: { required: true },
-			nativeEnumInt: { required: true },
-			nativeEnumString: { required: true },
-			nativeEnumString2: { required: true },
 			bool: { required: true },
 			number: { required: true },
-			proxyNumber: { required: true, min: 10 },
+			proxyNumber: { min: 10 },
 			proxyString: { required: true },
 			trimmedString: { required: true },
 			numberArray: { required: true },

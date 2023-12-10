@@ -176,7 +176,7 @@ function _parseFormData<T extends object>(
 
 		const entries = formData.getAll(key);
 
-		if (info.union && info.union.types.length > 1) {
+		if (info.union && info.union.length > 1) {
 			throw new SchemaError(
 				'FormData parsing failed: ' +
 					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
@@ -184,7 +184,7 @@ function _parseFormData<T extends object>(
 			);
 		}
 
-		if (info.types.has('array') || info.types.has('set')) {
+		if (info.types.includes('array') || info.types.includes('set')) {
 			const items = property.items;
 			if (!items || typeof items == 'boolean' || (Array.isArray(items) && items.length != 1)) {
 				throw new SchemaError(
@@ -202,7 +202,7 @@ function _parseFormData<T extends object>(
 			if (!arrayInfo) continue;
 
 			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo));
-			output[key] = info.types.has('set') ? new Set(arrayData) : arrayData;
+			output[key] = info.types.includes('set') ? new Set(arrayData) : arrayData;
 		} else {
 			output[key] = parseSingleEntry(key, entries[entries.length - 1], info);
 		}
@@ -212,7 +212,7 @@ function _parseFormData<T extends object>(
 }
 
 function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unknown {
-	if (info.types.size != 1) {
+	if (info.types.length != 1) {
 		throw new SchemaError(
 			'FormData parsing failed: ' +
 				'Multiple types are only supported when the dataType option for superForm is set to "json".' +

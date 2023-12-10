@@ -1,6 +1,5 @@
 import { SchemaError } from '$lib/index.js';
-import type { JSONSchema7Definition } from 'json-schema';
-import { isSchemaNullable, schemaInfo, type JSONSchema } from './index.js';
+import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
 import merge from 'ts-deepmerge';
 
 export type InputConstraint = Partial<{
@@ -20,31 +19,25 @@ export function constraints<T extends object>(schema: JSONSchema): InputConstrai
 		throw new SchemaError('Constraints must be created from an object schema.');
 	}
 
-	return _constraints(schema, false, []);
+	return _constraints(schemaInfo(schema, false), []);
 }
 
 function _constraints(
-	schema: JSONSchema7Definition,
-	isOptional: boolean,
+	info: SchemaInfo | undefined,
 	path: string[]
 ): InputConstraints<object> | InputConstraint | undefined {
-	if (typeof schema === 'boolean') {
-		throw new SchemaError('Schema cannot be defined as boolean', path);
-	}
-
-	const info = schemaInfo(schema);
 	if (!info) return undefined;
 
 	// Union
 	if (info.union) {
-		if (info.union.types.length > 1) {
+		if (info.union.length > 1) {
 			// TODO: Simpler merge of constraints?
-			const merged = info.union.types
-				.map((s) => _constraints(s, isOptional, path))
+			const merged = info.union
+				.map((s) => _constraints(schemaInfo(s, info.isOptional), path))
 				.filter((s) => s !== undefined);
 			return merge(...merged);
 		} else {
-			return _constraints(info.union.types[0], isOptional, path);
+			return _constraints(schemaInfo(info.union[0], info.isOptional), path);
 		}
 	}
 
@@ -52,17 +45,20 @@ function _constraints(
 	if (info.array) {
 		if (info.array.length == 1) {
 			//console.log('Array constraint', schema, path);
-			return _constraints(info.array[0], isOptional, path);
+			return _constraints(schemaInfo(info.array[0], info.isOptional), path);
 		}
 
-		return merge(...info.array.map((i) => _constraints(i, isOptional, path)));
+		return merge(...info.array.map((i) => _constraints(schemaInfo(i, info.isOptional), path)));
 	}
 
 	// Objects
 	if (info.properties) {
 		const output: Record<string, unknown> = {};
 		for (const [key, prop] of Object.entries(info.properties)) {
-			const propConstraint = _constraints(prop, !schema.required?.includes(key), [...path, key]);
+			const propConstraint = _constraints(schemaInfo(prop, !info.required?.includes(key)), [
+				...path,
+				key
+			]);
 
 			if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
 				output[key] = propConstraint;
@@ -71,19 +67,19 @@ function _constraints(
 		return output;
 	}
 
-	return constraint(path, schema, isOptional);
+	return constraint(info, path);
 }
 
-function constraint(
-	path: string[],
-	schema: JSONSchema,
-	isOptional: boolean
-): InputConstraint | undefined {
+function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefined {
 	const output: InputConstraint = {};
+	const schema = info.schema;
 
 	const type = schema.type;
 	const format = schema.format;
-	const nullable = isSchemaNullable(schema);
+
+	if (path[0] == 'name') {
+		console.log(path, schema, info.isOptional, info.isNullable);
+	}
 
 	// Must be before type check
 	if (
@@ -117,7 +113,7 @@ function constraint(
 		if (arr.maxItems !== undefined) output.max = arr.maxItems;
 	}
 
-	if (!nullable && !isOptional) {
+	if (!info.isNullable && !info.isOptional) {
 		output.required = true;
 	}
 

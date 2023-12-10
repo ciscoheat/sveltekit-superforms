@@ -8,48 +8,34 @@ type FormatType = 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
 export type SchemaType = JSONSchema7TypeName | FormatType;
 
 export type SchemaInfo = {
-	types: Set<Exclude<SchemaType, 'null'>>;
+	types: Exclude<SchemaType, 'null'>[];
 	isOptional: boolean;
 	isNullable: boolean;
 	schema: JSONSchema7;
-	union?: { types: JSONSchema7[]; isNullable: boolean };
+	union?: JSONSchema7[];
 	array?: JSONSchema7[];
 	properties?: { [key: string]: JSONSchema7 };
+	default?: unknown;
+	required?: string[];
 };
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
 function unionInfo(schema: JSONSchema7) {
 	if (!schema.anyOf) return undefined;
-
-	const schemas = schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
-	const types = schemas.filter((s) => s.type !== 'null');
-	const isNullable = schemas.length != types.length;
-
-	return { types, isNullable };
+	return schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
 }
 
 export function schemaInfo(
 	schema: JSONSchema7Definition,
-	isOptional = false,
+	isOptional: boolean,
 	path: string[] = []
-	//onUnion?: (union: JSONSchema7[], isOptional: boolean, isNullable: boolean) => SchemaInfo
 ): SchemaInfo | undefined {
-	//const union = unionInfo(schema);
-
-	/*
-	if (union.types) {
-		if (!onUnion) throw new SchemaError('Unions (anyOf) not supported without onUnion callback.');
-		return onUnion(union.types, isOptional, union.isNullable);
-	}
-	*/
-
 	if (typeof schema === 'boolean') {
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
-	const union = unionInfo(schema);
-	const types = schemaTypes(schema, union);
+	const types = schemaTypes(schema, path);
 
 	if (!types.length) {
 		//console.warn('No types found', schema);
@@ -71,25 +57,33 @@ export function schemaInfo(
 			: undefined;
 
 	return {
-		types: new Set(types.filter((s) => s !== 'null')) as SchemaInfo['types'],
-		isOptional,
-		isNullable: isSchemaNullable(schema),
+		types: types.filter((s) => s !== 'null') as SchemaInfo['types'],
+		isOptional: schema.default !== undefined ? true : isOptional,
+		isNullable: types.includes('null'),
 		schema,
-		union,
+		union: unionInfo(schema),
 		array,
-		properties
+		properties,
+		default: schema.default,
+		required: schema.required
 	};
 }
 
-function schemaTypes(schema: JSONSchema7, union: SchemaInfo['union']): SchemaType[] {
-	let types: SchemaType[] = [];
-
-	if (union) {
-		types = union.types.flatMap((s) => schemaTypes(s, unionInfo(s)));
+function schemaTypes(schema: JSONSchema7Definition, path: string[]): SchemaType[] {
+	if (typeof schema === 'boolean') {
+		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
+	if (!schema) {
+		console.log('null schema?', path);
+	}
+
+	let types: SchemaType[] = [];
+
 	if (schema.type) {
-		types = types.concat(Array.isArray(schema.type) ? schema.type : [schema.type]);
+		types = Array.isArray(schema.type) ? schema.type : [schema.type];
+	} else if (schema.anyOf) {
+		types = schema.anyOf.flatMap((s) => schemaTypes(s, path));
 	}
 
 	if (types.includes('array') && schema.uniqueItems) {
@@ -105,12 +99,4 @@ function schemaTypes(schema: JSONSchema7, union: SchemaInfo['union']): SchemaTyp
 	}
 
 	return Array.from(new Set(types));
-}
-
-export function isSchemaNullable(schema: JSONSchema7) {
-	return !!(
-		schema.type == 'null' ||
-		schema.type?.includes('null') ||
-		(schema.anyOf && schema.anyOf.find((s) => typeof s !== 'boolean' && s.type == 'null'))
-	);
 }

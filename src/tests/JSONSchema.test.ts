@@ -296,18 +296,18 @@ describe('Unions (anyOf)', () => {
 			]
 		};
 
-		const infos = schemaInfo(unionSchema);
+		const infos = schemaInfo(unionSchema, false);
 		assert(infos);
 
 		expect(infos.schema).toBe(unionSchema);
 		expect(infos.isNullable).toBe(true);
 		expect(infos.isOptional).toBe(false);
 		expect(infos.types).toEqual(new Set(['string', 'number']));
+		expect(infos.default).toEqual('other');
 
 		const filtered = unionSchema.anyOf?.filter((s) => typeof s !== 'boolean' && s.type != 'null');
 		assert(infos.union);
-		expect(infos.union.types).toEqual(filtered);
-		expect(infos.union.isNullable).toBe(true);
+		expect(infos.union).toEqual(filtered);
 	});
 });
 

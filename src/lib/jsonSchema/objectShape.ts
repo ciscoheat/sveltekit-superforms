@@ -25,12 +25,12 @@ function _objectShape(schema: JSONSchema7Definition, path: string[]): ObjectShap
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
-	const info = schemaInfo(schema);
+	const info = schemaInfo(schema, false);
 	if (!info) return undefined;
 
 	if (info.array || info.union) {
 		const arr = info.array || [];
-		const union = info.union ? info.union.types : [];
+		const union = info.union || [];
 		return arr.concat(union).reduce(
 			(shape, next) => {
 				const nextShape = _objectShape(next, path);

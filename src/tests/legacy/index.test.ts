@@ -264,7 +264,7 @@ describe('Default values', () => {
 		expect(defaultValues(zodToJsonSchema(schema))).toStrictEqual(expected);
 	});
 
-	test.only('With no entity but different fields', async () => {
+	test('With no entity but different fields', async () => {
 		const d = new Date();
 		const e = await superValidate(
 			null,
@@ -316,9 +316,7 @@ describe('Default values', () => {
 			zodEnum: { required: true }
 		});
 	});
-});
 
-describe.skip('Not tested yet', () => {
 	enum Fruits {
 		Apple,
 		Banana
@@ -338,11 +336,12 @@ describe.skip('Not tested yet', () => {
 
 	test('Zod enums and native enums', async () => {
 		const form = await superValidate(null, zod(enumschema));
+		delete form.id;
+
 		expect(form.valid).toEqual(false);
 		expect(form.posted).toEqual(false);
 
 		expect(form).toStrictEqual({
-			id: '1aiv7x7',
 			valid: false,
 			errors: {},
 			data: {
@@ -353,7 +352,6 @@ describe.skip('Not tested yet', () => {
 			},
 			posted: false,
 			constraints: {
-				color: { required: true },
 				fruit: { required: true },
 				fruitsstring: { required: true }
 			}
@@ -371,9 +369,9 @@ describe.skip('Not tested yet', () => {
 		data.set('color', 'GRAY');
 
 		const form = await superValidate(data, zod(enumschema));
+		delete form.id;
 
 		expect(form).toStrictEqual({
-			id: '1aiv7x7',
 			posted: true,
 			valid: true,
 			errors: {},
@@ -391,399 +389,401 @@ describe.skip('Not tested yet', () => {
 		});
 	});
 
-	test('Agressive type coercion to avoid schema duplication', async () => {
-		const form = await superValidate(
-			null,
-			zod(
-				z.object({
-					agree: z.literal(true).default(false as true),
-					fruit: z.nativeEnum(Fruits).default(undefined as unknown as Fruits),
-					number: z.number().positive().default(NaN)
-				})
-			)
-		);
+	describe.skip('Not tested yet', () => {
+		test('Agressive type coercion to avoid schema duplication', async () => {
+			const form = await superValidate(
+				null,
+				zod(
+					z.object({
+						agree: z.literal(true).default(false as true),
+						fruit: z.nativeEnum(Fruits).default(undefined as unknown as Fruits),
+						number: z.number().positive().default(NaN)
+					})
+				)
+			);
 
-		expect(form).toStrictEqual({
-			id: '1la9dse',
-			valid: false,
-			errors: {},
-			data: { agree: false, fruit: undefined, number: NaN },
-			posted: false,
-			constraints: {
-				agree: { required: true },
-				fruit: { required: true },
-				number: { min: 0, required: true }
-			}
-		});
-	});
-
-	test('Passing an array schema instead of an object', async () => {
-		const schema = z
-			.object({
-				name: z.string()
-			})
-			.array();
-
-		await expect(
-			superValidate(null, zod(z.string() as unknown as AnyZodObject))
-		).rejects.toThrowError(SuperFormError);
-
-		await expect(superValidate(null, zod(schema as unknown as AnyZodObject))).rejects.toThrowError(
-			SuperFormError
-		);
-	});
-
-	test('Deeply nested objects', async () => {
-		const schema = z.object({
-			id: z.number().positive(),
-			user: z.object({
-				name: z.string().min(2),
-				posts: z.object({ subject: z.string().min(1) }).array()
-			})
-		});
-
-		const data = new FormData();
-		data.set('id', '123');
-
-		const form = await superValidate(data, zod(schema));
-
-		expect(form.valid).toEqual(false);
-		expect(form.posted).toEqual(true);
-
-		expect(form.errors).toStrictEqual({
-			user: { name: ['String must contain at least 2 character(s)'] }
-		});
-		expect(form.data).toStrictEqual({
-			id: 123,
-			user: {
-				name: '',
-				posts: []
-			}
-		});
-	});
-
-	const nestedSchema = z.object({
-		id: z.number().positive(),
-		users: z
-			.object({
-				name: z.string().min(2).regex(/X/),
-				posts: z
-					.object({ subject: z.string().min(1) })
-					.array()
-					.min(2)
-					.optional()
-			})
-			.array()
-	});
-
-	test('Deeply nested errors', async () => {
-		const form = await superValidate(
-			{ users: [{ name: 'A', posts: [{ subject: '' }] }] },
-			zod(nestedSchema)
-		);
-
-		expect(form.errors).toStrictEqual({
-			id: ['Required'],
-			users: {
-				'0': {
-					name: ['String must contain at least 2 character(s)', 'Invalid'],
-					posts: {
-						'0': { subject: ['String must contain at least 1 character(s)'] },
-						_errors: ['Array must contain at least 2 element(s)']
-					}
+			expect(form).toStrictEqual({
+				id: '1la9dse',
+				valid: false,
+				errors: {},
+				data: { agree: false, fruit: undefined, number: NaN },
+				posted: false,
+				constraints: {
+					agree: { required: true },
+					fruit: { required: true },
+					number: { min: 0, required: true }
 				}
-			}
+			});
 		});
-	});
 
-	test('Deeply nested constraints', async () => {
-		const form = await superValidate(null, zod(nestedSchema));
-
-		expect(form.constraints).toStrictEqual({
-			id: { min: 0, required: true },
-			users: {
-				name: { required: true, minlength: 2, pattern: 'X' },
-				posts: {
-					subject: { required: true, minlength: 1 }
-				}
-			}
-		});
-	});
-
-	test('Refined schemas', async () => {
-		const form = await superValidate(
-			{ id: 123, users: [{ name: 'Xenon' }] },
-			zod(
-				nestedSchema.superRefine((check, ctx) => {
-					if (check.id > 100) {
-						ctx.addIssue({
-							code: z.ZodIssueCode.custom,
-							message: 'Too high ID',
-							path: ['id']
-						});
-					}
+		test('Passing an array schema instead of an object', async () => {
+			const schema = z
+				.object({
+					name: z.string()
 				})
-			)
-		);
+				.array();
 
-		assert(!form.valid);
-		expect(form.errors).toStrictEqual({ id: ['Too high ID'] });
-	});
+			await expect(
+				superValidate(null, zod(z.string() as unknown as AnyZodObject))
+			).rejects.toThrowError(SuperFormError);
 
-	test('Deeply nested objects', async () => {
-		const schema = z.object({
-			id: z.number().positive(),
-			user: z.object({
-				name: z.string().min(2),
-				posts: z.object({ subject: z.string().min(1) }).array()
-			})
+			await expect(
+				superValidate(null, zod(schema as unknown as AnyZodObject))
+			).rejects.toThrowError(SuperFormError);
 		});
 
-		const data = new FormData();
-		data.set('id', '123');
+		test('Deeply nested objects', async () => {
+			const schema = z.object({
+				id: z.number().positive(),
+				user: z.object({
+					name: z.string().min(2),
+					posts: z.object({ subject: z.string().min(1) }).array()
+				})
+			});
 
-		const form = await superValidate(data, zod(schema));
+			const data = new FormData();
+			data.set('id', '123');
 
-		expect(form.valid).toStrictEqual(false);
-		expect(form.posted).toStrictEqual(true);
+			const form = await superValidate(data, zod(schema));
 
-		expect(form.errors).toStrictEqual({
-			user: { name: ['String must contain at least 2 character(s)'] }
-		});
+			expect(form.valid).toEqual(false);
+			expect(form.posted).toEqual(true);
 
-		expect(form.data).toStrictEqual({
-			id: 123,
-			user: {
-				name: '',
-				posts: []
-			}
-		});
-	});
-
-	test('URL and URLSearchParams validation', async () => {
-		const urlSchema = z.object({
-			id: z.number().int().positive(),
-			createdAt: z.coerce.date().default(testDate),
-			name: z.string().min(2).nullable(),
-			tags: z.string().regex(/^\w+$/).array()
-		});
-
-		const url = new URL(
-			'https://example.com/test?id=123&createdAt=2023-04-06&name=A%20test&tags=A&tags=B&tags=C'
-		);
-
-		const form = await superValidate(url, zod(urlSchema));
-
-		const expected = {
-			valid: true,
-			errors: {},
-			data: {
+			expect(form.errors).toStrictEqual({
+				user: { name: ['String must contain at least 2 character(s)'] }
+			});
+			expect(form.data).toStrictEqual({
 				id: 123,
-				name: 'A test',
-				tags: ['A', 'B', 'C']
-			},
-			posted: false,
-			constraints: {
+				user: {
+					name: '',
+					posts: []
+				}
+			});
+		});
+
+		const nestedSchema = z.object({
+			id: z.number().positive(),
+			users: z
+				.object({
+					name: z.string().min(2).regex(/X/),
+					posts: z
+						.object({ subject: z.string().min(1) })
+						.array()
+						.min(2)
+						.optional()
+				})
+				.array()
+		});
+
+		test('Deeply nested errors', async () => {
+			const form = await superValidate(
+				{ users: [{ name: 'A', posts: [{ subject: '' }] }] },
+				zod(nestedSchema)
+			);
+
+			expect(form.errors).toStrictEqual({
+				id: ['Required'],
+				users: {
+					'0': {
+						name: ['String must contain at least 2 character(s)', 'Invalid'],
+						posts: {
+							'0': { subject: ['String must contain at least 1 character(s)'] },
+							_errors: ['Array must contain at least 2 element(s)']
+						}
+					}
+				}
+			});
+		});
+
+		test('Deeply nested constraints', async () => {
+			const form = await superValidate(null, zod(nestedSchema));
+
+			expect(form.constraints).toStrictEqual({
 				id: { min: 0, required: true },
-				createdAt: { required: true },
-				name: { minlength: 2 },
-				tags: { pattern: '^\\w+$', required: true }
-			}
-		};
-
-		expect(form.data.createdAt.getTime()).toEqual(new Date('2023-04-06').getTime());
-
-		expect(form).toMatchObject(expected);
-
-		const form2 = await superValidate(url.searchParams, zod(urlSchema));
-
-		expect(form2.data.createdAt.getTime()).toEqual(new Date('2023-04-06').getTime());
-
-		expect(form2).toMatchObject(expected);
-	});
-
-	test('Call without data', async () => {
-		const schema = z.object({
-			name: z.string(),
-			id: z.number()
+				users: {
+					name: { required: true, minlength: 2, pattern: 'X' },
+					posts: {
+						subject: { required: true, minlength: 1 }
+					}
+				}
+			});
 		});
 
-		const form = await superValidate(zod(schema), { id: 'test' });
+		test('Refined schemas', async () => {
+			const form = await superValidate(
+				{ id: 123, users: [{ name: 'Xenon' }] },
+				zod(
+					nestedSchema.superRefine((check, ctx) => {
+						if (check.id > 100) {
+							ctx.addIssue({
+								code: z.ZodIssueCode.custom,
+								message: 'Too high ID',
+								path: ['id']
+							});
+						}
+					})
+				)
+			);
 
-		expect(form).toStrictEqual({
-			id: 'test',
-			valid: false,
-			errors: {},
-			data: { name: '', id: 0 },
-			posted: false,
-			constraints: { name: { required: true }, id: { required: true } }
+			assert(!form.valid);
+			expect(form.errors).toStrictEqual({ id: ['Too high ID'] });
 		});
 
-		const form2 = await superValidate(zod(schema.refine(() => false, 'Some error')), {
-			id: 'test2'
+		test('Deeply nested objects', async () => {
+			const schema = z.object({
+				id: z.number().positive(),
+				user: z.object({
+					name: z.string().min(2),
+					posts: z.object({ subject: z.string().min(1) }).array()
+				})
+			});
+
+			const data = new FormData();
+			data.set('id', '123');
+
+			const form = await superValidate(data, zod(schema));
+
+			expect(form.valid).toStrictEqual(false);
+			expect(form.posted).toStrictEqual(true);
+
+			expect(form.errors).toStrictEqual({
+				user: { name: ['String must contain at least 2 character(s)'] }
+			});
+
+			expect(form.data).toStrictEqual({
+				id: 123,
+				user: {
+					name: '',
+					posts: []
+				}
+			});
 		});
 
-		expect(form2).toStrictEqual({
-			id: 'test2',
-			valid: false,
-			errors: {},
-			data: { name: '', id: 0 },
-			posted: false,
-			constraints: { name: { required: true }, id: { required: true } }
+		test('URL and URLSearchParams validation', async () => {
+			const urlSchema = z.object({
+				id: z.number().int().positive(),
+				createdAt: z.coerce.date().default(testDate),
+				name: z.string().min(2).nullable(),
+				tags: z.string().regex(/^\w+$/).array()
+			});
+
+			const url = new URL(
+				'https://example.com/test?id=123&createdAt=2023-04-06&name=A%20test&tags=A&tags=B&tags=C'
+			);
+
+			const form = await superValidate(url, zod(urlSchema));
+
+			const expected = {
+				valid: true,
+				errors: {},
+				data: {
+					id: 123,
+					name: 'A test',
+					tags: ['A', 'B', 'C']
+				},
+				posted: false,
+				constraints: {
+					id: { min: 0, required: true },
+					createdAt: { required: true },
+					name: { minlength: 2 },
+					tags: { pattern: '^\\w+$', required: true }
+				}
+			};
+
+			expect(form.data.createdAt.getTime()).toEqual(new Date('2023-04-06').getTime());
+
+			expect(form).toMatchObject(expected);
+
+			const form2 = await superValidate(url.searchParams, zod(urlSchema));
+
+			expect(form2.data.createdAt.getTime()).toEqual(new Date('2023-04-06').getTime());
+
+			expect(form2).toMatchObject(expected);
 		});
-	});
 
-	test('ZodObject defaults', async () => {
-		const imageCreationFormSchema = z.object({
-			textresource: z.string().trim(),
-			promptExtra: z.string().trim().optional(),
-			promptMetaData: z.object({
-				textServiceId: z.enum(['a', 'b']).nullable().optional(),
-				imageServiceId: z.enum(['c', 'd']).nullable().optional()
-			}),
-			provider: z.string().optional(),
-			numbers: z.record(z.number())
-		});
-
-		const form = await superValidate(zod(imageCreationFormSchema));
-
-		expect(form).toStrictEqual({
-			id: '1fbjabj',
-			valid: false,
-			errors: {},
-			data: {
-				textresource: '',
-				promptExtra: undefined,
-				promptMetaData: { textServiceId: null, imageServiceId: null },
-				provider: undefined,
-				numbers: {}
-			},
-			posted: false,
-			constraints: {
-				textresource: { required: true },
-				promptMetaData: {},
-				numbers: { required: true }
-			}
-		});
-	});
-
-	test('setMessage and setError with refined schema', async () => {
-		const schema = z
-			.object({
+		test('Call without data', async () => {
+			const schema = z.object({
 				name: z.string(),
 				id: z.number()
-			})
-			.refine((data) => data)
-			.refine((data) => data);
+			});
 
-		const form = await superValidate({ name: '', id: 0 }, zod(schema));
-		assert(form.valid);
-		expect(form.message).toBeUndefined();
+			const form = await superValidate(zod(schema), { id: 'test' });
 
-		setMessage(form, 'A message');
-		expect(form.message).toEqual('A message');
+			expect(form).toStrictEqual({
+				id: 'test',
+				valid: false,
+				errors: {},
+				data: { name: '', id: 0 },
+				posted: false,
+				constraints: { name: { required: true }, id: { required: true } }
+			});
 
-		expect(form.errors).toEqual({});
-		setError(form, 'id', 'Id error');
+			const form2 = await superValidate(zod(schema.refine(() => false, 'Some error')), {
+				id: 'test2'
+			});
 
-		expect(form.errors).toEqual({
-			id: ['Id error']
-		});
-	});
-
-	test('Schema with pipe()', async () => {
-		const schema = z.object({
-			len: z
-				.string()
-				.transform((val) => val.length)
-				.pipe(z.number().min(5)),
-			date: z.union([z.number(), z.string(), z.date()]).pipe(z.coerce.date()),
-			num: z.number().or(z.string()).pipe(z.coerce.number())
+			expect(form2).toStrictEqual({
+				id: 'test2',
+				valid: false,
+				errors: {},
+				data: { name: '', id: 0 },
+				posted: false,
+				constraints: { name: { required: true }, id: { required: true } }
+			});
 		});
 
-		const form = await superValidate(zod(schema));
-		assert(form.valid === false);
-		expect(form.data.len).toEqual(0);
-		expect(form.data.num).toEqual(0);
+		test('ZodObject defaults', async () => {
+			const imageCreationFormSchema = z.object({
+				textresource: z.string().trim(),
+				promptExtra: z.string().trim().optional(),
+				promptMetaData: z.object({
+					textServiceId: z.enum(['a', 'b']).nullable().optional(),
+					imageServiceId: z.enum(['c', 'd']).nullable().optional()
+				}),
+				provider: z.string().optional(),
+				numbers: z.record(z.number())
+			});
 
-		const formData4 = new FormData();
-		formData4.set('len', 'four');
-		formData4.set('date', '2023-05-28');
-		formData4.set('num', '123');
-		const form4 = await superValidate(formData4, zod(schema));
-		assert(form4.valid === false);
-		expect(form4.data.len).toBeNaN();
-		expect(form4.data.date.getDate()).toEqual(28);
-		expect(form4.data.num).toEqual(123);
-	});
+			const form = await superValidate(zod(imageCreationFormSchema));
 
-	test('Passthrough validation', async () => {
-		const schema = z.object({
-			name: z.string().min(2)
+			expect(form).toStrictEqual({
+				id: '1fbjabj',
+				valid: false,
+				errors: {},
+				data: {
+					textresource: '',
+					promptExtra: undefined,
+					promptMetaData: { textServiceId: null, imageServiceId: null },
+					provider: undefined,
+					numbers: {}
+				},
+				posted: false,
+				constraints: {
+					textresource: { required: true },
+					promptMetaData: {},
+					numbers: { required: true }
+				}
+			});
 		});
 
-		const data = {
-			name: 'test',
-			extra: 'field'
-		};
+		test('setMessage and setError with refined schema', async () => {
+			const schema = z
+				.object({
+					name: z.string(),
+					id: z.number()
+				})
+				.refine((data) => data)
+				.refine((data) => data);
 
-		const form = await superValidate(data, zod(schema.passthrough()));
-		assert(form.valid === true);
-		expect(form.data).toStrictEqual({
-			name: 'test',
-			extra: 'field'
+			const form = await superValidate({ name: '', id: 0 }, zod(schema));
+			assert(form.valid);
+			expect(form.message).toBeUndefined();
+
+			setMessage(form, 'A message');
+			expect(form.message).toEqual('A message');
+
+			expect(form.errors).toEqual({});
+			setError(form, 'id', 'Id error');
+
+			expect(form.errors).toEqual({
+				id: ['Id error']
+			});
 		});
 
-		const failedData = {
-			name: '',
-			extra2: 'field2'
-		};
+		test('Schema with pipe()', async () => {
+			const schema = z.object({
+				len: z
+					.string()
+					.transform((val) => val.length)
+					.pipe(z.number().min(5)),
+				date: z.union([z.number(), z.string(), z.date()]).pipe(z.coerce.date()),
+				num: z.number().or(z.string()).pipe(z.coerce.number())
+			});
 
-		const form2 = await superValidate(failedData, zod(schema.passthrough()));
-		assert(form2.valid === false);
-		expect(form2.data).toStrictEqual({
-			name: '',
-			extra2: 'field2'
+			const form = await superValidate(zod(schema));
+			assert(form.valid === false);
+			expect(form.data.len).toEqual(0);
+			expect(form.data.num).toEqual(0);
+
+			const formData4 = new FormData();
+			formData4.set('len', 'four');
+			formData4.set('date', '2023-05-28');
+			formData4.set('num', '123');
+			const form4 = await superValidate(formData4, zod(schema));
+			assert(form4.valid === false);
+			expect(form4.data.len).toBeNaN();
+			expect(form4.data.date.getDate()).toEqual(28);
+			expect(form4.data.num).toEqual(123);
 		});
 
-		const data3 = {
-			name: 'test',
-			extra: 'field'
-		};
+		test('Passthrough validation', async () => {
+			const schema = z.object({
+				name: z.string().min(2)
+			});
 
-		const form3 = await superValidate(data3, zod(schema));
-		assert(form3.valid === true);
-		expect(form3.data).toStrictEqual({
-			name: 'test'
+			const data = {
+				name: 'test',
+				extra: 'field'
+			};
+
+			const form = await superValidate(data, zod(schema.passthrough()));
+			assert(form.valid === true);
+			expect(form.data).toStrictEqual({
+				name: 'test',
+				extra: 'field'
+			});
+
+			const failedData = {
+				name: '',
+				extra2: 'field2'
+			};
+
+			const form2 = await superValidate(failedData, zod(schema.passthrough()));
+			assert(form2.valid === false);
+			expect(form2.data).toStrictEqual({
+				name: '',
+				extra2: 'field2'
+			});
+
+			const data3 = {
+				name: 'test',
+				extra: 'field'
+			};
+
+			const form3 = await superValidate(data3, zod(schema));
+			assert(form3.valid === true);
+			expect(form3.data).toStrictEqual({
+				name: 'test'
+			});
+
+			const failedData2 = {
+				name: '',
+				extra2: 'field2'
+			};
+
+			const form4 = await superValidate(failedData2, zod(schema));
+			assert(form4.valid === false);
+			expect(form4.data).toStrictEqual({
+				name: ''
+			});
 		});
 
-		const failedData2 = {
-			name: '',
-			extra2: 'field2'
-		};
+		test('Preprocessed fields', async () => {
+			const schema = z.object({
+				tristate: z.preprocess(
+					(value) => (value === undefined ? undefined : Boolean(value)),
+					z.boolean().optional()
+				)
+			});
 
-		const form4 = await superValidate(failedData2, zod(schema));
-		assert(form4.valid === false);
-		expect(form4.data).toStrictEqual({
-			name: ''
+			const formData = new FormData();
+
+			const form = await superValidate(formData, zod(schema), {
+				preprocessed: ['tristate']
+			});
+
+			assert(form.valid);
+			expect(form.data.tristate).toBeUndefined();
 		});
-	});
-
-	test('Preprocessed fields', async () => {
-		const schema = z.object({
-			tristate: z.preprocess(
-				(value) => (value === undefined ? undefined : Boolean(value)),
-				z.boolean().optional()
-			)
-		});
-
-		const formData = new FormData();
-
-		const form = await superValidate(formData, zod(schema), {
-			preprocessed: ['tristate']
-		});
-
-		assert(form.valid);
-		expect(form.data.tristate).toBeUndefined();
 	});
 });

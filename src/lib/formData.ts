@@ -3,9 +3,10 @@ import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo } from './jsonSchema/index.js';
+import { customAlphabet } from 'nanoid';
 
 type ParsedData = {
-	id: string | undefined;
+	id: string;
 	posted: boolean;
 	data: Record<string, unknown> | undefined;
 };
@@ -13,6 +14,12 @@ type ParsedData = {
 type ParseOptions<T extends object> = {
 	preprocessed?: SuperValidateOptions<T>['preprocessed'];
 };
+
+const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
+
+function formId() {
+	return nanoid();
+}
 
 export async function parseRequest<T extends object>(
 	data: unknown,
@@ -69,7 +76,7 @@ function dataToValidate<T extends AnyZodObject>(
 async function tryParseFormData<T extends object>(
 	request: Request,
 	schemaData: JSONSchema7,
-	options?: ParseOptions<T>
+	options?: SuperValidateOptions<T>
 ) {
 	let formData: FormData | undefined = undefined;
 	try {
@@ -81,7 +88,7 @@ async function tryParseFormData<T extends object>(
 			throw e;
 		}
 		// No data found, return an empty form
-		return { id: undefined, data: undefined, posted: false };
+		return { id: options?.id ?? formId(), data: undefined, posted: false };
 	}
 	return parseFormData(formData, schemaData, options);
 }
@@ -108,7 +115,7 @@ export function parseSearchParams<T extends object>(
 export function parseFormData<T extends object>(
 	formData: FormData,
 	schemaData: JSONSchema7,
-	options?: ParseOptions<T>
+	options?: SuperValidateOptions<T>
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
@@ -125,7 +132,7 @@ export function parseFormData<T extends object>(
 	}
 
 	const data = tryParseSuperJson();
-	const id = formData.get('__superform_id')?.toString() ?? undefined;
+	const id = formData.get('__superform_id')?.toString() ?? options?.id ?? formId();
 
 	return data
 		? { id, data, posted: true }
@@ -177,6 +184,7 @@ function _parseFormData<T extends object>(
 		const entries = formData.getAll(key);
 
 		if (info.union && info.union.length > 1) {
+			console.dir(info, { depth: 10 });
 			throw new SchemaError(
 				'FormData parsing failed: ' +
 					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',

@@ -49,13 +49,9 @@ describe('FormData parsing', () => {
 		const formData = dataToFormData(data);
 		const parsed = parseFormData(formData, bigJsonSchema);
 
-		expect(parsed.id).toBeUndefined();
-		expect(parsed.posted).toEqual(true);
-
 		assert(parsed.data);
-		expect(parsed.data.foo).toEqual(Foo.B);
 
-		//console.dir(bigJsonSchema, { depth: 10 });
-		//console.dir(parsed, { depth: 10 });
+		expect(parsed.posted).toEqual(true);
+		expect(parsed.data.foo).toEqual(Foo.B);
 	});
 });

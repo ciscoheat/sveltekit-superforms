@@ -55,12 +55,14 @@ export function schemaInfo(
 			  ) as { [key: string]: JSONSchema7 })
 			: undefined;
 
+	const union = unionInfo(schema)?.filter((u) => u.type !== 'null');
+
 	return {
 		types: types.filter((s) => s !== 'null') as SchemaInfo['types'],
 		isOptional,
 		isNullable: types.includes('null'),
 		schema,
-		union: unionInfo(schema),
+		union: union?.length ? union : undefined,
 		array,
 		properties,
 		required: schema.required

@@ -30,19 +30,18 @@ function _constraints(
 
 	// Union
 	if (info.union) {
-		if (info.union.length > 1) {
-			// TODO: Simpler merge of constraints?
-			const infos = info.union.map((s) => schemaInfo(s, info.isOptional));
-			const merged = infos.map((i) => _constraints(i, path)).filter((s) => s !== undefined);
-			const output = merge(...merged);
-			// Delete required if any part of the union is optional
-			if (infos.some((i) => i?.isNullable || i?.isOptional)) {
-				delete output.required;
-			}
-			return output;
-		} else {
-			return _constraints(schemaInfo(info.union[0], info.isOptional), path);
+		// TODO: Simpler merge of constraints?
+		const infos = info.union.map((s) => schemaInfo(s, info.isOptional, path));
+		const merged = infos.map((i) => _constraints(i, path)).filter((s) => s !== undefined);
+		const output = merged.length > 1 ? merge(...merged) : merged[0];
+		// Delete required if any part of the union is optional
+		if (
+			output &&
+			(info.isNullable || info.isOptional || infos.some((i) => i?.isNullable || i?.isOptional))
+		) {
+			delete output.required;
 		}
+		return output && Object.values(output).length ? output : undefined;
 	}
 
 	// Arrays
@@ -82,11 +81,9 @@ function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefin
 	const type = schema.type;
 	const format = schema.format;
 
-	/*
-	if (path[0] == 'proxyNumber') {
+	if (path[0] == 'nullableString') {
 		console.log(path, schema, info.isOptional, info.isNullable);
 	}
-	*/
 
 	// Must be before type check
 	if (

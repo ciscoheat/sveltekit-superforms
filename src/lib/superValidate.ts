@@ -104,8 +104,7 @@ export async function superValidate<
 		// TODO: Copy data or return same object? (Probably copy, to be consistent with fail behavior)
 		// TODO: Strip keys not belonging to schema? (additionalProperties)
 		data: status.success ? status.data : (parsed.data as T),
-		constraints: validation.constraints,
-		message: undefined
+		constraints: validation.constraints
 	};
 }
 

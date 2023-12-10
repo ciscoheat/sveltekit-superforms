@@ -8,6 +8,14 @@ import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors } from './errors.js';
+import { customAlphabet } from 'nanoid';
+
+const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz123456789', 6);
+
+// TODO: Where and when to generate id?
+function formId() {
+	return nanoid();
+}
 
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 //type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
@@ -97,7 +105,7 @@ export async function superValidate<
 	// Alternative place for parsed.data merging
 
 	return {
-		id: parsed.id,
+		id: parsed.id ?? options?.id ?? (parsed.posted ? undefined : formId()),
 		valid,
 		posted: parsed.posted,
 		errors,

@@ -8,8 +8,13 @@ export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
 	const output: Record<string, unknown> = {};
 	for (const error of errors) {
 		if (!error.path) continue;
-		const objectError = pathExists(shape, error.path)?.value;
-		//console.log(objectError ? '[OBJ]' : '', error.path, error.message);
+
+		// Path must filter away number indices, since
+		// the object shape doesn't contain these.
+		const objectError = pathExists(
+			shape,
+			error.path.filter((p) => /\D/.test(String(p)))
+		)?.value;
 
 		const leaf = traversePath(output, error.path, ({ value, parent, key }) => {
 			if (value === undefined) parent[key] = {};
@@ -20,6 +25,8 @@ export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
 
 		const { parent, key } = leaf;
 
+		//console.log(error.path, error.message, objectError ? '[OBJ]' : '');
+
 		if (objectError) {
 			if (!(key in parent)) parent[key] = {};
 			if (!('_errors' in parent[key])) parent[key]._errors = [error.message];
@@ -28,8 +35,6 @@ export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
 			if (!(key in parent)) parent[key] = [error.message];
 			else parent[key].push(error.message);
 		}
-
-		//console.log(parent, leaf.path, objectError ? '[OBJ]' : '');
 	}
 	return output;
 }

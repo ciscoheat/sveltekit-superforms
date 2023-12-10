@@ -3,28 +3,17 @@ import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo } from './jsonSchema/index.js';
-import { customAlphabet } from 'nanoid';
 
 type ParsedData = {
-	id: string;
+	id: string | undefined;
 	posted: boolean;
 	data: Record<string, unknown> | undefined;
 };
 
-type ParseOptions<T extends object> = {
-	preprocessed?: SuperValidateOptions<T>['preprocessed'];
-};
-
-const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 6);
-
-function formId() {
-	return nanoid();
-}
-
 export async function parseRequest<T extends object>(
 	data: unknown,
 	schemaData: JSONSchema7,
-	options?: ParseOptions<T>
+	options?: SuperValidateOptions<T>
 ) {
 	let parsed: ParsedData;
 
@@ -88,7 +77,7 @@ async function tryParseFormData<T extends object>(
 			throw e;
 		}
 		// No data found, return an empty form
-		return { id: options?.id ?? formId(), data: undefined, posted: false };
+		return { id: undefined, data: undefined, posted: false };
 	}
 	return parseFormData(formData, schemaData, options);
 }
@@ -96,7 +85,7 @@ async function tryParseFormData<T extends object>(
 export function parseSearchParams<T extends object>(
 	data: URL | URLSearchParams,
 	schemaData: JSONSchema7,
-	options?: ParseOptions<T>
+	options?: SuperValidateOptions<T>
 ): ParsedData {
 	if (data instanceof URL) data = data.searchParams;
 
@@ -132,7 +121,7 @@ export function parseFormData<T extends object>(
 	}
 
 	const data = tryParseSuperJson();
-	const id = formData.get('__superform_id')?.toString() ?? options?.id ?? formId();
+	const id = formData.get('__superform_id')?.toString() ?? options?.id;
 
 	return data
 		? { id, data, posted: true }

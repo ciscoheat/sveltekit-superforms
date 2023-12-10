@@ -179,7 +179,7 @@ describe('Zod', () => {
 			num: { min: 10, max: 100, step: 5, required: true },
 			date: { min: '2022-01-01T00:00:00.000Z', required: true },
 			arr: { minlength: 10, required: true },
-			nestedTags: { name: { minlength: 1, required: true } }
+			nestedTags: { id: { min: 1 }, name: { minlength: 1, required: true } }
 		};
 		const values = constraints<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema));
 		expect(values).toEqual(expected);

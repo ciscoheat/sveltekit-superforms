@@ -81,9 +81,11 @@ function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefin
 	const type = schema.type;
 	const format = schema.format;
 
+	/*
 	if (path[0] == 'nullableString') {
 		console.log(path, schema, info.isOptional, info.isNullable);
 	}
+	*/
 
 	// Must be before type check
 	if (
@@ -109,7 +111,13 @@ function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefin
 	} else if (type == 'number' || type == 'integer') {
 		const num = schema;
 		if (num.minimum !== undefined) output.min = num.minimum;
+		else if (num.exclusiveMinimum !== undefined)
+			output.min = num.exclusiveMinimum + (type == 'integer' ? 1 : Number.MIN_VALUE);
+
 		if (num.maximum !== undefined) output.max = num.maximum;
+		else if (num.exclusiveMaximum !== undefined)
+			output.max = num.exclusiveMaximum - (type == 'integer' ? 1 : Number.MIN_VALUE);
+
 		if (num.multipleOf !== undefined) output.step = num.multipleOf;
 	} else if (type == 'array') {
 		const arr = schema;

@@ -121,7 +121,7 @@ export function parseFormData<T extends object>(
 	}
 
 	const data = tryParseSuperJson();
-	const id = formData.get('__superform_id')?.toString() ?? options?.id;
+	const id = formData.get('__superform_id')?.toString();
 
 	return data
 		? { id, data, posted: true }
@@ -149,7 +149,7 @@ function _parseFormData<T extends object>(
 
 		if (entry && typeof entry !== 'string') {
 			// File objects are not supported
-			// TODO: Add a warning for uploaded files that can be disabled?
+			// TODO: Add "allowFiles" option for uploaded files
 			return undefined;
 		}
 
@@ -173,10 +173,8 @@ function _parseFormData<T extends object>(
 		const entries = formData.getAll(key);
 
 		if (info.union && info.union.length > 1) {
-			console.dir(info, { depth: 10 });
 			throw new SchemaError(
-				'FormData parsing failed: ' +
-					'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
+				'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
 				key
 			);
 		}

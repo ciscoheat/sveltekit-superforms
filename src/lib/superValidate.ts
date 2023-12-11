@@ -104,14 +104,25 @@ export async function superValidate<
 
 	// Alternative place for parsed.data merging
 
+	const parsedData = status.success ? status.data : parsed.data;
+	let outputData: typeof parsedData = {};
+
+	// Strip keys not belonging to schema
+	// TODO: Strict mode
+	if (!jsonSchema.additionalProperties) {
+		for (const key of Object.keys(jsonSchema.properties ?? {})) {
+			if (key in parsedData) outputData[key] = parsedData[key];
+		}
+	} else {
+		outputData = parsedData;
+	}
+
 	return {
 		id: parsed.id ?? options?.id ?? (parsed.posted ? undefined : formId()),
 		valid,
 		posted: parsed.posted,
 		errors,
-		// TODO: Copy data or return same object? (Probably copy, to be consistent with fail behavior)
-		// TODO: Strip keys not belonging to schema? (additionalProperties)
-		data: status.success ? status.data : (parsed.data as T),
+		data: outputData as T,
 		constraints: validation.constraints
 	};
 }

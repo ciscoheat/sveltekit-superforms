@@ -11,6 +11,7 @@ import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/index.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { stringify } from 'devalue';
 
 const testDate = new Date();
 
@@ -678,103 +679,128 @@ describe('Default values', () => {
 		});
 	});
 
-	test('Schema with pipe()', async () => {
+	test.skip('Schema with pipe() and dataType: form', async () => {
 		const schema = z.object({
 			len: z
 				.string()
-				.transform((val) => val.length)
-				.pipe(z.number().min(5)),
-			date: z.union([z.number(), z.string(), z.date()]).pipe(z.coerce.date()),
-			num: z.number().or(z.string()).pipe(z.coerce.number())
+				.default(0 as unknown as string) // TODO: requires zodToJsonSchema pipeStrategy: output
+				.transform((val) => (val ? val.length : 0))
+				.pipe(z.number().min(5))
 		});
-
-		console.dir(zodToJsonSchema(schema), { depth: 10 }); //debug
 
 		const form = await superValidate(zod(schema));
 		assert(form.valid === false);
 		expect(form.data.len).toEqual(0);
-		expect(form.data.num).toEqual(0);
 
 		const formData4 = new FormData();
 		formData4.set('len', 'four');
-		formData4.set('date', '2023-05-28');
-		formData4.set('num', '123');
+
 		const form4 = await superValidate(formData4, zod(schema));
 		assert(form4.valid === false);
-		expect(form4.data.len).toBeNaN();
-		expect(form4.data.date.getDate()).toEqual(28);
+		expect(form4.data.len).toEqual(0);
+
+		const formData5 = new FormData();
+		formData5.set('len', 'fiver');
+
+		const form5 = await superValidate(formData5, zod(schema));
+		assert(form5.valid);
+		expect(form5.data.len).toEqual(5);
+	});
+
+	test('Schema with pipe() and dataType: json', async () => {
+		const dateStr = '2023-05-28';
+
+		const schema = z.object({
+			num: z.number().or(z.string()).pipe(z.coerce.number()).default(0),
+			date: z
+				.union([z.number(), z.string(), z.date()])
+				.pipe(z.coerce.date())
+				.default(new Date(dateStr))
+		});
+
+		const form = await superValidate(zod(schema));
+		assert(form.valid === false);
+		expect(form.data.num).toEqual(0);
+		expect(form.data.date.toISOString().substring(0, 10)).toEqual(dateStr);
+
+		const data = stringify({ date: new Date(dateStr), num: 123 });
+
+		const formData4 = new FormData();
+		formData4.set('__superform_json', data);
+
+		const form4 = await superValidate(formData4, zod(schema));
+		assert(form4.valid === true);
+		expect(form4.data.date.toISOString().substring(0, 10)).toEqual(dateStr);
 		expect(form4.data.num).toEqual(123);
 	});
 
-	describe.skip('Not tested yet', () => {
-		test('Passthrough validation', async () => {
-			const schema = z.object({
-				name: z.string().min(2)
-			});
-
-			const data = {
-				name: 'test',
-				extra: 'field'
-			};
-
-			const form = await superValidate(data, zod(schema.passthrough()));
-			assert(form.valid === true);
-			expect(form.data).toStrictEqual({
-				name: 'test',
-				extra: 'field'
-			});
-
-			const failedData = {
-				name: '',
-				extra2: 'field2'
-			};
-
-			const form2 = await superValidate(failedData, zod(schema.passthrough()));
-			assert(form2.valid === false);
-			expect(form2.data).toStrictEqual({
-				name: '',
-				extra2: 'field2'
-			});
-
-			const data3 = {
-				name: 'test',
-				extra: 'field'
-			};
-
-			const form3 = await superValidate(data3, zod(schema));
-			assert(form3.valid === true);
-			expect(form3.data).toStrictEqual({
-				name: 'test'
-			});
-
-			const failedData2 = {
-				name: '',
-				extra2: 'field2'
-			};
-
-			const form4 = await superValidate(failedData2, zod(schema));
-			assert(form4.valid === false);
-			expect(form4.data).toStrictEqual({
-				name: ''
-			});
+	test('Passthrough validation', async () => {
+		const schema = z.object({
+			name: z.string().min(2)
 		});
 
-		test('Preprocessed fields', async () => {
-			const schema = z.object({
-				tristate: z.preprocess(
-					(value) => (value === undefined ? undefined : Boolean(value)),
-					z.boolean().optional()
-				)
-			});
+		const data = {
+			name: 'test',
+			extra: 'field'
+		};
 
-			const formData = new FormData();
-
-			const form = await superValidate(formData, zod(schema), {
-				preprocessed: ['tristate']
-			});
-
-			assert(form.valid);
-			expect(form.data.tristate).toBeUndefined();
+		const form = await superValidate(data, zod(schema.passthrough()));
+		assert(form.valid === true);
+		expect(form.data).toStrictEqual({
+			name: 'test',
+			extra: 'field'
 		});
+
+		const failedData = {
+			name: '',
+			extra2: 'field2'
+		};
+
+		const form2 = await superValidate(failedData, zod(schema.passthrough()));
+		assert(form2.valid === false);
+		expect(form2.data).toStrictEqual({
+			name: '',
+			extra2: 'field2'
+		});
+
+		const data3 = {
+			name: 'test',
+			extra: 'field'
+		};
+
+		const form3 = await superValidate(data3, zod(schema));
+		assert(form3.valid === true);
+		expect(form3.data).toStrictEqual({
+			name: 'test'
+		});
+
+		const failedData2 = {
+			name: '',
+			extra2: 'field2'
+		};
+
+		const form4 = await superValidate(failedData2, zod(schema));
+		assert(form4.valid === false);
+		expect(form4.data).toStrictEqual({
+			name: ''
+		});
+	});
+
+	test('Preprocessed fields', async () => {
+		const schema = z.object({
+			tristate: z.preprocess(
+				(value) => (value === undefined ? undefined : Boolean(value)),
+				z.boolean().optional()
+			)
+		});
+
+		const formData = new FormData();
+
+		const form = await superValidate(formData, zod(schema), {
+			preprocessed: ['tristate']
+		});
+
+		assert(form.valid);
+		expect(form.data.tristate).toBeUndefined();
 	});
 });

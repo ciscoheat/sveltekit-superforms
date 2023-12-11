@@ -1,11 +1,14 @@
 import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import type { ValidationAdapter } from './index.js';
-import { zodToJsonSchema as zodToJson } from 'zod-to-json-schema';
+import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
 import type { z } from 'zod';
 import { memoize } from '$lib/memoize.js';
 
-const defaultOptions = { dateStrategy: 'integer' } as const;
+const defaultOptions: Partial<Options> = {
+	dateStrategy: 'integer',
+	pipeStrategy: 'input' // TODO: Switch to output as soon as it's available
+} as const;
 
 export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
 	params[1] = typeof params[1] == 'object' ? { ...defaultOptions, ...params[1] } : defaultOptions;

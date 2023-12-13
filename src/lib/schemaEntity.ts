@@ -214,7 +214,6 @@ function schemaInfo<T extends AnyZodObject>(schema: T) {
 export function valueOrDefault(
   value: unknown,
   strict: boolean,
-  implicitDefaults: true,
   schemaInfo: ZodTypeInfo
 ) {
   if (value) return value;
@@ -235,21 +234,19 @@ export function valueOrDefault(
   if (isNullable) return null;
   if (isOptional) return undefined;
 
-  if (implicitDefaults) {
-    if (zodType._def.typeName == 'ZodString') return '';
-    if (zodType._def.typeName == 'ZodNumber') return 0;
-    if (zodType._def.typeName == 'ZodBoolean') return false;
-    // Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
-    //if (zodType._def.typeName == "ZodDate") return new Date(NaN);
-    if (zodType._def.typeName == 'ZodArray') return [];
-    if (zodType._def.typeName == 'ZodObject') {
-      return defaultValues(zodType as AnyZodObject);
-    }
-    if (zodType._def.typeName == 'ZodSet') return new Set();
-    if (zodType._def.typeName == 'ZodRecord') return {};
-    if (zodType._def.typeName == 'ZodBigInt') return BigInt(0);
-    if (zodType._def.typeName == 'ZodSymbol') return Symbol();
+  if (zodType._def.typeName == 'ZodString') return '';
+  if (zodType._def.typeName == 'ZodNumber') return 0;
+  if (zodType._def.typeName == 'ZodBoolean') return false;
+  // Cannot add default for ZodDate due to https://github.com/Rich-Harris/devalue/issues/51
+  //if (zodType._def.typeName == "ZodDate") return new Date(NaN);
+  if (zodType._def.typeName == 'ZodArray') return [];
+  if (zodType._def.typeName == 'ZodObject') {
+    return defaultValues(zodType as AnyZodObject);
   }
+  if (zodType._def.typeName == 'ZodSet') return new Set();
+  if (zodType._def.typeName == 'ZodRecord') return {};
+  if (zodType._def.typeName == 'ZodBigInt') return BigInt(0);
+  if (zodType._def.typeName == 'ZodSymbol') return Symbol();
 
   return undefined;
 }
@@ -279,7 +276,7 @@ export function defaultValues<T extends ZodValidation<AnyZodObject>>(
   return Object.fromEntries(
     fields.map((field) => {
       const typeInfo = schemaTypeInfo[field];
-      const newValue = valueOrDefault(undefined, false, true, typeInfo);
+      const newValue = valueOrDefault(undefined, false, typeInfo);
 
       return [field, newValue];
     })

@@ -198,7 +198,7 @@ function formDataToValidation<T extends AnyZodObject>(
     value: string | null,
     typeInfo: ZodTypeInfo
   ): unknown {
-    const newValue = valueOrDefault(value, strict ?? false, true, typeInfo);
+    const newValue = valueOrDefault(value, strict ?? false, typeInfo);
     const zodType = typeInfo.zodType;
 
     // If the value was empty, it now contains the default value,
@@ -437,10 +437,10 @@ function validateResult<T extends AnyZodObject, M>(
 
       let data;
 
-      if (zodKeyStatus == 'passthrough') {
-        data = { ...clone(entityInfo.defaultEntity), ...partialData }
-      } else if (options.strict) {
-        data= parsed.data;
+      if (options.strict) {
+        data = parsed.data;
+      } else if (zodKeyStatus == 'passthrough') {
+        data = { ...clone(entityInfo.defaultEntity), ...partialData };
       } else {
         data = Object.fromEntries(
           schemaKeys.map((key) => [
@@ -629,7 +629,7 @@ export async function superValidate<
   const { parsed, result } = await parseRequest();
 
   if (options?.strict) {
-    for (const key of Object.keys(parsed.data ?? {})) { 
+    for (const key of Object.keys(parsed.data ?? {})) {
       const isKeyInSchema = schemaData.schemaKeys.includes(key);
       if (!isKeyInSchema && parsed.data) {
         delete parsed.data[key];

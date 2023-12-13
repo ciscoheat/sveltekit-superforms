@@ -821,6 +821,22 @@ test('Preprocessed fields', async () => {
 
 
 describe('Strict tests', () => {
+
+  test('Should be pure, even if strict mode is enabled', async () => {
+    const input = {fooo: 'wrong-key', foo: 'correct-key'};
+    const schema = z.object({
+      foo: z.string()
+    })
+
+    const form = await superValidate(input as any, schema, {
+      strict: true
+    });
+    expect(input).toMatchObject({fooo: 'wrong-key', foo: 'correct-key'});
+    expect(form.data).toEqual({foo: 'correct-key'});
+    expect(form.errors).toEqual({});
+    expect(form.valid).toEqual(true);
+  });
+
   const tests = [
     {
       name: 'Should be invalid if foo is not present in object and strict=true',
@@ -876,14 +892,17 @@ describe('Strict tests', () => {
 
   for (const {name, input, schema, valid, data, errors} of tests) {
     test(name + ' (POJO)', async () => {
+      const inputClone = structuredClone(input);
       const form = await superValidate(input as any, schema, {
         strict: true
       });
+      expect(input).toMatchObject(inputClone);
       expect(form.data).toEqual(data)
       expect(form.errors).toEqual(errors)
       expect(form.valid).toEqual(valid)
     });
     test(name + ' (FormData)', async () => {
+      const inputClone = structuredClone(input);
       const formData = new FormData();
       for (const [key, value] of Object.entries(input)) {
         formData.set(key, value ? `${value}` : '');
@@ -891,11 +910,13 @@ describe('Strict tests', () => {
       const form = await superValidate(formData, schema, {
         strict: true
       });
+      expect(input).toMatchObject(inputClone);
       expect(form.data).toEqual(data)
       expect(form.errors).toEqual(errors)
       expect(form.valid).toEqual(valid)
     });
     test(name + ' (UrlSearchParams)', async () => {
+      const inputClone = structuredClone(input);
       const params = new URLSearchParams();
       for (const [key, value] of Object.entries(input)) {
         params.set(key, `${value}`);
@@ -903,6 +924,7 @@ describe('Strict tests', () => {
       const form = await superValidate(params, schema, {
         strict: true
       });
+      expect(input).toMatchObject(inputClone);
       expect(form.data).toEqual(data)
       expect(form.errors).toEqual(errors)
       expect(form.valid).toEqual(valid)

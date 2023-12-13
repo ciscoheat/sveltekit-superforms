@@ -629,12 +629,18 @@ export async function superValidate<
   const { parsed, result } = await parseRequest();
 
   if (options?.strict) {
+    /*
+    In strict mode, we expect no extra keys in the data.
+    To make the library pure, we therefore have to clone the data.
+    */
+    const parsedClone = structuredClone(parsed);
     for (const key of Object.keys(parsed.data ?? {})) {
       const isKeyInSchema = schemaData.schemaKeys.includes(key);
-      if (!isKeyInSchema && parsed.data) {
-        delete parsed.data[key];
+      if (!isKeyInSchema && parsedClone.data) {
+        delete parsedClone.data[key];
       }
     }
+    return validateResult<UnwrapEffects<T>, M>(parsedClone, schemaData, result);
   }
 
   return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);

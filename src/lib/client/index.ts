@@ -721,9 +721,18 @@ export function superForm<
         Tainted.set(undefined);
       } else {
         Tainted.update((tainted) => {
-          //console.log('Update tainted:', paths, newObj, compareAgainst);
-          if (!tainted) tainted = {};
-          setPaths(tainted, paths, taintOptions === true ? true : undefined);
+          if (taintOptions !== true && tainted) {
+            // Check if the paths are tainted already, then set to undefined or skip entirely.
+            const _tainted = tainted;
+            paths = paths.filter((path) => pathExists(_tainted, path));
+            if (paths.length) {
+              if (!tainted) tainted = {};
+              setPaths(tainted, paths, undefined);
+            }
+          } else if (taintOptions === true) {
+            if (!tainted) tainted = {};
+            setPaths(tainted, paths, true);
+          }
           return tainted;
         });
       }

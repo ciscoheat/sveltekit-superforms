@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Tainted fields were set to undefined when not needed, unnecessarily triggering client-side validation.
+- Schema transformations weren't updating the form data on the client. ([#298](https://github.com/ciscoheat/sveltekit-superforms/issues/298))
 
 ## [1.11.0] - 2023-11-28
 

@@ -224,7 +224,7 @@ async function _clientValidation<T extends AnyZodObject, M = unknown>(
  */
 export async function validateObjectErrors<T extends AnyZodObject, M>(
   formOptions: FormOptions<T, M>,
-  data: z.infer<T>,
+  Form: SuperForm<T, M>['form'],
   Errors: SuperForm<T, M>['errors'],
   tainted: TaintedFields<UnwrapEffects<T>> | undefined
 ) {
@@ -236,7 +236,7 @@ export async function validateObjectErrors<T extends AnyZodObject, M>(
   }
 
   const validators = formOptions.validators as AnyZodObject;
-  const result = await validators.safeParseAsync(data);
+  const result = await validators.safeParseAsync(get(Form));
 
   if (!result.success) {
     const newErrors = mapErrors(
@@ -281,13 +281,15 @@ export async function validateObjectErrors<T extends AnyZodObject, M>(
       });
       return currentErrors;
     });
+    // Disable if form values shouldn't be updated immediately:
+    if (result.data) Form.set(result.data);
   }
 }
 
 type ValidationResult<T extends ZodValidation<AnyZodObject>> = {
   validated: boolean | 'all';
   errors: string[] | undefined;
-  data: SuperForm<T, unknown>['form'] | undefined;
+  data: z.infer<T> | undefined;
 };
 
 /**
@@ -344,7 +346,7 @@ export async function validateField<
     return errorMsgs ?? undefined;
   }
 
-  const errors = await _validateField(
+  const result = await _validateField(
     path,
     formOptions.validators,
     data,
@@ -353,25 +355,25 @@ export async function validateField<
     options
   );
 
-  if (errors.validated) {
-    if (errors.validated === 'all' && !errors.errors) {
+  if (result.validated) {
+    if (result.validated === 'all' && !result.errors) {
       // We validated the whole data structure, so clear all errors on success after delayed validators.
       // it will also set the current path to undefined, so it can be used in
       // the tainted+error check in oninput.
       Errors_clear();
     } else {
-      errors.errors = Errors_update(errors.errors);
-      return errors;
+      result.errors = Errors_update(result.errors);
     }
   } else if (
-    errors.validated === false &&
+    result.validated === false &&
     formOptions.defaultValidator == 'clear'
   ) {
-    errors.errors = Errors_update(errors.errors);
-    return errors;
+    result.errors = Errors_update(result.errors);
   }
 
-  return errors;
+  if (result.data) data.set(result.data, options);
+
+  return result;
 }
 
 // @DCI-context

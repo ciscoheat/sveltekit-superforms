@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for Zod [branded types](https://zod.dev/?id=brand) in schemas. ([#286](https://github.com/ciscoheat/sveltekit-superforms/pull/286))
+
 ### Fixed
 
-- Tainted fields were set to undefined when not needed, unnecessarily triggering client-side validation.
-- Schema transformations now updates the form data on the client depending on input type. Checkboxes, radio buttons and selects updates the data immediately. Other inputs waits until blurred. ([#298](https://github.com/ciscoheat/sveltekit-superforms/issues/298))
-- If in [SPA mode](https://superforms.rocks/concepts/spa), the `novalidate` attribute now only disables the browser validation constraints, not the entire client-side validation.
+- Tainted fields were set to undefined when not needed, unwantingly triggering client-side validation.
+- Schema transformations now updates the form data depending on input type. Checkboxes, radio buttons and selects updates the data immediately. Other inputs waits until blurred. ([#298](https://github.com/ciscoheat/sveltekit-superforms/issues/298))
+- In [SPA mode](https://superforms.rocks/concepts/spa), the `novalidate` attribute now only disables the browser validation constraints, not the entire client-side validation. ([#297](https://github.com/ciscoheat/sveltekit-superforms/discussions/297))
 
 ## [1.11.0] - 2023-11-28
 

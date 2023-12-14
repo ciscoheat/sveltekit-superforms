@@ -304,13 +304,15 @@ export function formEnhance<T extends AnyZodObject, M>(
       if (options.flashMessage) cancelFlash(options);
     } else {
       // Client validation
-      const validation = await clientValidation(
-        formEl.noValidate ||
+      const noValidate =
+        !options.SPA &&
+        (formEl.noValidate ||
           ((submit.submitter instanceof HTMLButtonElement ||
             submit.submitter instanceof HTMLInputElement) &&
-            submit.submitter.formNoValidate)
-          ? undefined
-          : options.validators,
+            submit.submitter.formNoValidate));
+
+      const validation = await clientValidation(
+        noValidate ? undefined : options.validators,
         get(data),
         get(formId),
         get(constraints),

@@ -131,27 +131,37 @@ export function formEnhance<T extends AnyZodObject, M>(
   const errors = errs as SuperForm<T, M>['errors'];
 
   async function validateChange(
+    validityEl: HTMLElement,
+    event: 'blur' | 'input',
+    errors: string[] | undefined
+  ) {
+    if (!options.customValidity) return;
+    if (options.validationMethod == 'submit-only') return;
+
+    // Always reset validity, in case it has been validated on the server.
+    if ('setCustomValidity' in validityEl) {
+      (validityEl as HTMLInputElement).setCustomValidity('');
+    }
+
+    if (event == 'input' && options.validationMethod == 'onblur') return;
+
+    // If event is input but element shouldn't use custom validity,
+    // return immediately since validateField don't have to be called
+    // in this case, validation is happening elsewhere.
+    if (noCustomValidityDataAttribute in validityEl.dataset) return;
+
+    setCustomValidity(validityEl as HTMLInputElement, errors);
+  }
+
+  // Called upon an event from a HTML element that affects the form.
+  async function htmlInputChange(
     change: string[],
     event: 'blur' | 'input',
-    validityEl: HTMLElement | null
+    target: HTMLElement | null
   ) {
     if (options.validationMethod == 'submit-only') return;
 
-    if (options.customValidity && validityEl) {
-      // Always reset validity, in case it has been validated on the server.
-      if ('setCustomValidity' in validityEl) {
-        (validityEl as HTMLInputElement).setCustomValidity('');
-      }
-
-      if (event == 'input' && options.validationMethod == 'onblur') return;
-
-      // If event is input but element shouldn't use custom validity,
-      // return immediately since validateField don't have to be called
-      // in this case, validation is happening elsewhere.
-      if (noCustomValidityDataAttribute in validityEl.dataset)
-        if (event == 'input') return;
-        else validityEl = null;
-    }
+    console.log('htmlInputChange', change, event, target);
 
     const result = await validateField(
       change,
@@ -161,25 +171,33 @@ export function formEnhance<T extends AnyZodObject, M>(
       tainted
     );
 
-    if (validityEl) {
-      setCustomValidity(validityEl as HTMLInputElement, result.errors);
-    }
+    // Update data if target exists (immediate is set, refactor please)
+    if (result.data && target) data.set(result.data);
 
-    // NOTE: Uncomment if Zod transformations should be immediately applied, not just when submitting.
-    // Not enabled because it's not great UX, and it's rare to have transforms, which will just result in
-    // redundant store updates.
-    //if (result.data) data.set(result.data);
+    if (options.customValidity) {
+      const name = CSS.escape(mergePath(change));
+      const el = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+      if (el) validateChange(el, event, result.errors);
+    }
   }
+
+  const immediateInputTypes = [
+    'button',
+    'checkbox',
+    'radio',
+    'range',
+    'submit'
+  ];
 
   /**
    * Some input fields have timing issues with the stores, need to wait in that case.
    */
-  function timingIssue(el: EventTarget | null) {
+  function immediateInput(el: EventTarget | null) {
     return (
       el &&
       (el instanceof HTMLSelectElement ||
         (el instanceof HTMLInputElement &&
-          (el.type == 'radio' || el.type == 'checkbox')))
+          immediateInputTypes.includes(el.type)))
     );
   }
 
@@ -192,19 +210,16 @@ export function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    if (timingIssue(e.target)) {
+    const target = e.target instanceof HTMLElement ? e.target : null;
+    const immediateUpdate = immediateInput(target);
+
+    // Immediate inputs has a timing issue and needs to be waited for
+    if (immediateUpdate) {
       await new Promise((r) => setTimeout(r, 0));
     }
 
     for (const change of get(lastChanges)) {
-      let validityEl: HTMLElement | null = null;
-
-      if (options.customValidity) {
-        const name = CSS.escape(mergePath(change));
-        validityEl = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
-      }
-
-      validateChange(change, 'blur', validityEl);
+      htmlInputChange(change, 'blur', immediateUpdate ? null : target);
     }
     // Clear last changes after blur (not after input)
     lastChanges.set([]);
@@ -212,7 +227,7 @@ export function formEnhance<T extends AnyZodObject, M>(
   formEl.addEventListener('focusout', checkBlur);
 
   // Add input event, for custom validity
-  async function checkCustomValidity(e: Event) {
+  async function checkInput(e: Event) {
     if (
       options.validationMethod == 'onblur' ||
       options.validationMethod == 'submit-only'
@@ -220,33 +235,41 @@ export function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    if (timingIssue(e.target)) {
+    const immediateUpdate = immediateInput(e.target);
+
+    if (immediateUpdate) {
       await new Promise((r) => setTimeout(r, 0));
     }
 
-    for (const change of get(lastChanges)) {
-      const name = CSS.escape(mergePath(change));
-      const validityEl = formEl.querySelector<HTMLElement>(
-        `[name="${name}"]`
-      );
-      if (!validityEl) continue;
+    const target = e.target instanceof HTMLElement ? e.target : null;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hadErrors = traversePath(get(errors), change as any);
-      if (hadErrors && hadErrors.key in hadErrors.parent) {
+    for (const change of get(lastChanges)) {
+      const hadErrors =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        immediateUpdate || traversePath(get(errors), change as any);
+      if (
+        immediateUpdate ||
+        (typeof hadErrors == 'object' && hadErrors.key in hadErrors.parent)
+      ) {
         // Problem - store hasn't updated here with new value yet.
-        setTimeout(() => validateChange(change, 'input', validityEl), 0);
+        setTimeout(
+          () =>
+            htmlInputChange(
+              change,
+              'input',
+              immediateUpdate ? target : null
+            ),
+          0
+        );
       }
     }
   }
 
-  if (options.customValidity) {
-    formEl.addEventListener('input', checkCustomValidity);
-  }
+  formEl.addEventListener('input', checkInput);
 
   onDestroy(() => {
     formEl.removeEventListener('focusout', checkBlur);
-    formEl.removeEventListener('input', checkCustomValidity);
+    formEl.removeEventListener('input', checkInput);
   });
 
   const htmlForm = Form(formEl, { submitting, delayed, timeout }, options);

@@ -281,15 +281,16 @@ export async function validateObjectErrors<T extends AnyZodObject, M>(
       });
       return currentErrors;
     });
+
     // Disable if form values shouldn't be updated immediately:
-    if (result.data) Form.set(result.data);
+    //if (result.data) Form.set(result.data);
   }
 }
 
-type ValidationResult<T extends ZodValidation<AnyZodObject>> = {
+export type ValidationResult<T extends Record<string, unknown>> = {
   validated: boolean | 'all';
   errors: string[] | undefined;
-  data: z.infer<T> | undefined;
+  data: T | undefined;
 };
 
 /**
@@ -306,7 +307,7 @@ export async function validateField<
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown, UnwrapEffects<T>> = {}
-): Promise<ValidationResult<T>> {
+): Promise<ValidationResult<z.infer<T>>> {
   function Errors_clear() {
     clearErrors(Errors, { undefinePath: path, clearFormLevelErrors: true });
   }
@@ -371,8 +372,6 @@ export async function validateField<
     result.errors = Errors_update(result.errors);
   }
 
-  if (result.data) data.set(result.data, options);
-
   return result;
 }
 
@@ -384,7 +383,7 @@ async function _validateField<T extends ZodValidation<AnyZodObject>, M>(
   Errors: SuperForm<T, M>['errors'],
   Tainted: SuperForm<T, M>['tainted'],
   options: ValidateOptions<unknown, UnwrapEffects<T>> = {}
-): Promise<ValidationResult<T>> {
+): Promise<ValidationResult<z.infer<T>>> {
   if (options.update === undefined) options.update = true;
   if (options.taint === undefined) options.taint = false;
   if (typeof options.errors == 'string') options.errors = [options.errors];

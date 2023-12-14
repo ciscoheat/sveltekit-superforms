@@ -4,23 +4,36 @@
   import { superValidateSync } from '$lib/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
 
-  export const timePatternSchema = z.object({
-    recurrenceRuleSets: z
+  function ruleSet<T extends readonly [string, ...string[]]>(options: T) {
+    let prev: string | undefined = undefined;
+    let current = options[0];
+    return z
       .object({
-        endType: z.enum(['never', 'date', 'after']),
-        rrule: z.string()
+        options: z.enum(options).default(options[0] as any),
+        prev: z.string().optional()
       })
       .transform((value) => {
-        let newRrule = 'after';
-        console.log({ ...value, rrule: newRrule });
-        return { ...value, rrule: newRrule };
-      })
+        const output = { ...value, prev: prev };
+        prev = current;
+        current = value.options as string;
+        return output;
+      });
+  }
+
+  const r1 = ['r1A', 'r1B', 'r1C'] as const;
+  const r2 = ['r2A', 'r2B', 'r2C'] as const;
+
+  const schema = z.object({
+    r1: ruleSet(r1),
+    r2: ruleSet(r2)
   });
 
-  const superForm = _superForm(superValidateSync(timePatternSchema), {
+  type T = z.infer<typeof schema>;
+
+  const superForm = _superForm(superValidateSync(schema), {
     SPA: true,
     dataType: 'json',
-    validators: timePatternSchema,
+    validators: schema,
     taintedMessage: null
   });
 
@@ -30,11 +43,11 @@
 <SuperDebug data={$form} />
 
 <form use:superForm.enhance method="post">
-  {#each ['never', 'date', 'after'] as item}
+  {#each r1 as item}
     <div>
       <input
         value={item}
-        bind:group={$form.recurrenceRuleSets.endType}
+        bind:group={$form.r1.options}
         type="radio"
         id={item}
         name={item}
@@ -42,4 +55,12 @@
       {item}
     </div>
   {/each}
+
+  <hr />
+
+  <select bind:value={$form.r2.options}>
+    {#each r2 as item}
+      <option value={item}>{item}</option>
+    {/each}
+  </select>
 </form>

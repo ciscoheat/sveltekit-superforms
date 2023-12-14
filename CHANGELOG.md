@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for Zod [branded types](https://zod.dev/?id=brand) in schemas. ([#286](https://github.com/ciscoheat/sveltekit-superforms/pull/286))
+- Peer dependencies updated to support SvelteKit 2. ([#299](https://github.com/ciscoheat/sveltekit-superforms/issues/299))
 
 ### Fixed
 

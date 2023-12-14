@@ -84,7 +84,7 @@
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "peerDependencies": {
-    "@sveltejs/kit": "1.x",
+    "@sveltejs/kit": "1.x || 2.x",
     "svelte": "3.x || 4.x",
     "zod": "3.x"
   },

@@ -130,7 +130,7 @@ export function formEnhance<T extends AnyZodObject, M>(
   // Using this type in the function argument causes a type recursion error.
   const errors = errs as SuperForm<T, M>['errors'];
 
-  async function validateChange(
+  async function updateCustomValidity(
     validityEl: HTMLElement,
     event: 'blur' | 'input',
     errors: string[] | undefined
@@ -161,7 +161,7 @@ export function formEnhance<T extends AnyZodObject, M>(
   ) {
     if (options.validationMethod == 'submit-only') return;
 
-    console.log('htmlInputChange', change, event, target);
+    //console.log('htmlInputChange', change, event, target);
 
     const result = await validateField(
       change,
@@ -177,22 +177,16 @@ export function formEnhance<T extends AnyZodObject, M>(
     if (options.customValidity) {
       const name = CSS.escape(mergePath(change));
       const el = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
-      if (el) validateChange(el, event, result.errors);
+      if (el) updateCustomValidity(el, event, result.errors);
     }
   }
 
-  const immediateInputTypes = [
-    'button',
-    'checkbox',
-    'radio',
-    'range',
-    'submit'
-  ];
+  const immediateInputTypes = ['checkbox', 'radio', 'range'];
 
   /**
    * Some input fields have timing issues with the stores, need to wait in that case.
    */
-  function immediateInput(el: EventTarget | null) {
+  function isImmediateInput(el: EventTarget | null) {
     return (
       el &&
       (el instanceof HTMLSelectElement ||
@@ -201,7 +195,6 @@ export function formEnhance<T extends AnyZodObject, M>(
     );
   }
 
-  // Add blur event, to check tainted
   async function checkBlur(e: Event) {
     if (
       options.validationMethod == 'oninput' ||
@@ -210,23 +203,23 @@ export function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
+    // Wait for changes to update
+    const immediateUpdate = isImmediateInput(e.target);
+    if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+
+    const changes = get(lastChanges);
+    if (!changes.length) return;
+
     const target = e.target instanceof HTMLElement ? e.target : null;
-    const immediateUpdate = immediateInput(target);
 
-    // Immediate inputs has a timing issue and needs to be waited for
-    if (immediateUpdate) {
-      await new Promise((r) => setTimeout(r, 0));
-    }
-
-    for (const change of get(lastChanges)) {
+    for (const change of changes) {
       htmlInputChange(change, 'blur', immediateUpdate ? null : target);
     }
+
     // Clear last changes after blur (not after input)
     lastChanges.set([]);
   }
-  formEl.addEventListener('focusout', checkBlur);
 
-  // Add input event, for custom validity
   async function checkInput(e: Event) {
     if (
       options.validationMethod == 'onblur' ||
@@ -235,15 +228,16 @@ export function formEnhance<T extends AnyZodObject, M>(
       return;
     }
 
-    const immediateUpdate = immediateInput(e.target);
+    // Wait for changes to update
+    const immediateUpdate = isImmediateInput(e.target);
+    if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-    if (immediateUpdate) {
-      await new Promise((r) => setTimeout(r, 0));
-    }
+    const changes = get(lastChanges);
+    if (!changes.length) return;
 
     const target = e.target instanceof HTMLElement ? e.target : null;
 
-    for (const change of get(lastChanges)) {
+    for (const change of changes) {
       const hadErrors =
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         immediateUpdate || traversePath(get(errors), change as any);
@@ -265,12 +259,15 @@ export function formEnhance<T extends AnyZodObject, M>(
     }
   }
 
+  formEl.addEventListener('focusout', checkBlur);
   formEl.addEventListener('input', checkInput);
 
   onDestroy(() => {
     formEl.removeEventListener('focusout', checkBlur);
     formEl.removeEventListener('input', checkInput);
   });
+
+  ///// SvelteKit enhance function //////////////////////////////////
 
   const htmlForm = Form(formEl, { submitting, delayed, timeout }, options);
 

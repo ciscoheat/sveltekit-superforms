@@ -13,7 +13,11 @@ import {
 import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
 import type { Entity } from '../schemaEntity.js';
-import type { FormOptions, SuperForm } from './index.js';
+import {
+  defaultOnError,
+  type FormOptions,
+  type SuperForm
+} from './index.js';
 import { clientValidation, validateField } from './clientValidation.js';
 import { Form } from './form.js';
 import { onDestroy } from 'svelte';
@@ -423,7 +427,14 @@ export function formEnhance<T extends AnyZodObject, M>(
     }
 
     async function validationResponse(event: ValidationResponse) {
-      const result = event.result;
+      // Check if an error was thrown in hooks, in which case it has no type.
+      const result: ActionResult = event.result.type
+        ? event.result
+        : {
+            type: 'error',
+            status: 500,
+            error: event.result
+          };
 
       currentRequest = null;
       let cancelled = false;
@@ -505,8 +516,14 @@ export function formEnhance<T extends AnyZodObject, M>(
             if (options.onError !== 'apply') {
               const data = { result, message };
 
-              for (const event of formEvents.onError) {
-                if (event !== 'apply') await event(data);
+              for (const onErrorEvent of formEvents.onError) {
+                if (
+                  onErrorEvent !== 'apply' &&
+                  (onErrorEvent != defaultOnError ||
+                    !options.flashMessage?.onError)
+                ) {
+                  await onErrorEvent(data);
+                }
               }
             }
           }

@@ -159,6 +159,13 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   };
 }>;
 
+export const defaultOnError = (event: { result: { error: unknown } }) => {
+  console.warn(
+    'Unhandled Superform error, use onError event to handle it:',
+    event.result.error
+  );
+};
+
 const defaultFormOptions = {
   applyAction: true,
   invalidateAll: true,
@@ -174,12 +181,7 @@ const defaultFormOptions = {
   onResult: undefined,
   onUpdate: undefined,
   onUpdated: undefined,
-  onError: (event: { result: { error: unknown } }) => {
-    console.warn(
-      'Unhandled Superform error, use onError event to handle it:',
-      event.result.error
-    );
-  },
+  onError: defaultOnError,
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',

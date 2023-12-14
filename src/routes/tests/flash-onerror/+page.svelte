@@ -4,6 +4,7 @@
   import * as flashModule from 'sveltekit-flash-message/client';
   import SuperDebug from '$lib/client/SuperDebug.svelte';
   import { schema } from './schema';
+  import { page } from '$app/stores';
 
   export let data: PageData;
 
@@ -17,13 +18,17 @@
       }
     }
   });
+
+  $: action = $page.url.searchParams.has('throw-hooks-error')
+    ? '?throw-hooks-error'
+    : '';
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<form method="POST" use:enhance>
+<form method="POST" {action} use:enhance>
   <label>
     Name: <input name="name" bind:value={$form.name} />
     {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}

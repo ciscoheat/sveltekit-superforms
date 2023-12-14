@@ -5,7 +5,7 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.12.0] - 2023-12-14
 
 ### Added
 
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tainted fields were set to undefined when not needed, unwantingly triggering client-side validation.
 - Schema transformations now updates the form data depending on input type. Checkboxes, radio buttons and selects updates the data immediately. Other inputs waits until blurred. ([#298](https://github.com/ciscoheat/sveltekit-superforms/issues/298))
 - In [SPA mode](https://superforms.rocks/concepts/spa), the `novalidate` attribute now only disables the browser validation constraints, not the entire client-side validation. ([#297](https://github.com/ciscoheat/sveltekit-superforms/discussions/297))
-- Exceptions throw in hooks are now handled properly by `onError`. Status will always be 500 though. ([#292](https://github.com/ciscoheat/sveltekit-superforms/issues/292))
+- Errors thrown in hooks are now handled properly by `onError`. Status will always be 500 though. ([#292](https://github.com/ciscoheat/sveltekit-superforms/issues/292))
 
 ## [1.11.0] - 2023-11-28
 

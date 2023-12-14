@@ -844,7 +844,9 @@ describe('Strict tests', () => {
         foo: z.string()
       }),
       input: {},
-      data: {},
+      data: {
+        foo: ''
+      },
       valid: false,
       errors: {
         foo: ['Required']
@@ -868,7 +870,9 @@ describe('Strict tests', () => {
       input: {
         fo: 'bar'
       },
-      data: {},
+      data: {
+        foo: ''
+      },
       valid: false,
       errors: {
         foo: ['Required']
@@ -887,6 +891,22 @@ describe('Strict tests', () => {
       },
       valid: true,
       errors: {},
+    },
+    {
+      name: 'Should work with strict=true and a string with min length requirements',
+      schema: z.object({
+        foo: z.string().min(2)
+      }),
+      input: {
+        foo: ''
+      },
+      data: {
+        foo: ''
+      },
+      valid: false,
+      errors: {
+        foo: ['String must contain at least 2 character(s)']
+      },
     },
   ]
 

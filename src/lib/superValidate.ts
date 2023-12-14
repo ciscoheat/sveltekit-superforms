@@ -295,6 +295,7 @@ type ParsedData = {
   id: string | undefined;
   posted: boolean;
   data: Record<string, unknown> | null | undefined;
+  dataWithoutDefaults: Record<string, unknown> | null | undefined;
 };
 
 /**
@@ -304,15 +305,16 @@ type ParsedData = {
  */
 function dataToValidate<T extends AnyZodObject>(
   parsed: ParsedData,
-  schemaData: SchemaData<T>
+  schemaData: SchemaData<T>,
+  strict: boolean
 ): Record<string, unknown> | undefined {
   if (!parsed.data) {
     return schemaData.hasEffects || schemaData.opts.errors === true
       ? schemaData.entityInfo.defaultEntity
       : undefined;
-  } else {
-    return parsed.data;
-  }
+  } else if (strict && parsed.dataWithoutDefaults) {
+    return parsed.dataWithoutDefaults;
+  } else return parsed.data;
 }
 
 function parseFormData<T extends AnyZodObject>(
@@ -340,10 +342,16 @@ function parseFormData<T extends AnyZodObject>(
   const id = formData.get('__superform_id')?.toString() ?? undefined;
 
   return data
-    ? { id, data, posted: true }
+    ? { id, data, posted: true, dataWithoutDefaults: null }
     : {
         id,
         data: formDataToValidation(
+          formData,
+          schemaData,
+          options?.preprocessed,
+          false
+        ),
+        dataWithoutDefaults: formDataToValidation(
           formData,
           schemaData,
           options?.preprocessed,
@@ -586,7 +594,7 @@ export async function superValidate<
         throw e;
       }
       // No data found, return an empty form
-      return { id: undefined, data: undefined, posted: false };
+      return { id: undefined, data: undefined, posted: false, dataWithoutDefaults: undefined };
     }
     return parseFormData(formData, schemaData, options);
   }
@@ -607,17 +615,22 @@ export async function superValidate<
       data.request instanceof Request
     ) {
       parsed = await tryParseFormData(data.request);
+    } else if (options?.strict) {
+      // Ensure that defaults are set on data if strict mode is enabled (Should this maybe always happen?)
+      const params = new URLSearchParams(data as Record<string, string>);
+      parsed = parseSearchParams(params, schemaData, options);
     } else {
       parsed = {
         id: undefined,
         data: data as Record<string, unknown>,
-        posted: false
+        posted: false,
+        dataWithoutDefaults: data as Record<string, unknown>
       };
     }
 
     //////////////////////////////////////////////////////////////////////
     // This logic is shared between superValidate and superValidateSync //
-    const toValidate = dataToValidate(parsed, schemaData);
+    const toValidate = dataToValidate(parsed, schemaData, options?.strict || false);
     const result = toValidate
       ? await schemaData.originalSchema.safeParseAsync(toValidate)
       : undefined;
@@ -628,22 +641,12 @@ export async function superValidate<
 
   const { parsed, result } = await parseRequest();
 
-  if (options?.strict) {
-    /*
-    In strict mode, we expect no extra keys in the data.
-    To make the library pure, we therefore have to clone the data.
-    */
-    const parsedClone = structuredClone(parsed);
-    for (const key of Object.keys(parsed.data ?? {})) {
-      const isKeyInSchema = schemaData.schemaKeys.includes(key);
-      if (!isKeyInSchema && parsedClone.data) {
-        delete parsedClone.data[key];
-      }
-    }
-    return validateResult<UnwrapEffects<T>, M>(parsedClone, schemaData, result);
-  }
-
-  return validateResult<UnwrapEffects<T>, M>(parsed, schemaData, result);
+  const superValidated = validateResult<UnwrapEffects<T>, M>(
+    parsed,
+    schemaData,
+    result
+  );
+  return superValidated;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -703,12 +706,13 @@ export function superValidateSync<
       : {
           id: undefined,
           data: data as Record<string, unknown>,
+          dataWithoutDefaults: data as Record<string, unknown>,
           posted: false
         }; // Only schema, null or undefined left
 
   //////////////////////////////////////////////////////////////////////
   // This logic is shared between superValidate and superValidateSync //
-  const toValidate = dataToValidate(parsed, schemaData);
+  const toValidate = dataToValidate(parsed, schemaData, options?.strict || false);
   const result = toValidate
     ? schemaData.originalSchema.safeParse(toValidate)
     : undefined;

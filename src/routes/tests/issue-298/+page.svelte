@@ -2,7 +2,6 @@
   import { z } from 'zod';
   import { superForm as _superForm } from '$lib/client';
   import { superValidateSync } from '$lib/client';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
 
   function ruleSet<T extends readonly [string, ...string[]]>(options: T) {
     let prev: string | undefined = undefined;
@@ -14,8 +13,10 @@
       })
       .transform((value) => {
         const output = { ...value, prev: prev };
-        prev = current;
-        current = value.options as string;
+        if (value.options != current) {
+          prev = current;
+          current = value.options as string;
+        }
         return output;
       });
   }
@@ -28,8 +29,6 @@
     r2: ruleSet(r2)
   });
 
-  type T = z.infer<typeof schema>;
-
   const superForm = _superForm(superValidateSync(schema), {
     SPA: true,
     dataType: 'json',
@@ -40,7 +39,9 @@
   $: ({ form } = superForm);
 </script>
 
-<SuperDebug data={$form} />
+<h4>
+  {$form.r1.options}-{$form.r1.prev} / {$form.r2.options}-{$form.r2.prev}
+</h4>
 
 <form use:superForm.enhance method="post">
   {#each r1 as item}

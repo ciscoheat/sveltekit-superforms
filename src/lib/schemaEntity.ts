@@ -223,11 +223,7 @@ function schemaInfo<T extends AnyZodObject>(schema: T) {
   return _mapSchema(schema, (obj) => unwrapZodType(obj));
 }
 
-export function valueOrDefault(
-  value: unknown,
-  strict: boolean,
-  schemaInfo: ZodTypeInfo
-) {
+export function valueOrDefault(value: unknown, schemaInfo: ZodTypeInfo) {
   if (value) return value;
 
   const { zodType, isNullable, isOptional, hasDefault, defaultValue } =
@@ -241,7 +237,6 @@ export function valueOrDefault(
   // so this should be ok.
   // Also make a check for strict, so empty strings from FormData can also be set here.
 
-  if (strict) return value;
   if (hasDefault) return defaultValue;
   if (isNullable) return null;
   if (isOptional) return undefined;
@@ -288,7 +283,7 @@ export function defaultValues<T extends ZodValidation<AnyZodObject>>(
   return Object.fromEntries(
     fields.map((field) => {
       const typeInfo = schemaTypeInfo[field];
-      const newValue = valueOrDefault(undefined, false, typeInfo);
+      const newValue = valueOrDefault(undefined, typeInfo);
 
       return [field, newValue];
     })

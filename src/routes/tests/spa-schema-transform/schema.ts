@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).trim(),
   email: z
     .string()
     .email()

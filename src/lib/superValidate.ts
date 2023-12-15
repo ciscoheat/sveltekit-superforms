@@ -24,6 +24,8 @@ import { traversePath } from './traversal.js';
 import type {
   z,
   AnyZodObject,
+  ZodBranded,
+  ZodTypeAny,
   ZodNumber,
   ZodLiteral,
   ZodNativeEnum,
@@ -200,36 +202,37 @@ function formDataToValidation<T extends AnyZodObject>(
   ): unknown {
     const newValue = valueOrDefault(value, strict ?? false, typeInfo);
     const zodType = typeInfo.zodType;
+    const typeName = zodType._def.typeName;
 
     // If the value was empty, it now contains the default value,
     // so it can be returned immediately, unless it's boolean, which
     // means it could have been posted as a checkbox.
-    if (!value && zodType._def.typeName != 'ZodBoolean') {
+    if (!value && typeName != 'ZodBoolean') {
       return newValue;
     }
 
-    //console.log(`FormData field "${field}" (${zodType._def.typeName}): ${value}`
+    //console.log(`FormData field "${field}" (${typeName}): ${value}`
 
-    if (zodType._def.typeName == 'ZodString') {
+    if (typeName == 'ZodString') {
       return value;
-    } else if (zodType._def.typeName == 'ZodNumber') {
+    } else if (typeName == 'ZodNumber') {
       return (zodType as ZodNumber).isInt
         ? parseInt(value ?? '', 10)
         : parseFloat(value ?? '');
-    } else if (zodType._def.typeName == 'ZodBoolean') {
+    } else if (typeName == 'ZodBoolean') {
       return Boolean(value == 'false' ? '' : value).valueOf();
-    } else if (zodType._def.typeName == 'ZodDate') {
+    } else if (typeName == 'ZodDate') {
       return new Date(value ?? '');
-    } else if (zodType._def.typeName == 'ZodArray') {
+    } else if (typeName == 'ZodArray') {
       const arrayType = unwrapZodType(zodType._def.type);
       return parseFormDataEntry(field, value, arrayType);
-    } else if (zodType._def.typeName == 'ZodBigInt') {
+    } else if (typeName == 'ZodBigInt') {
       try {
         return BigInt(value ?? '.');
       } catch {
         return NaN;
       }
-    } else if (zodType._def.typeName == 'ZodLiteral') {
+    } else if (typeName == 'ZodLiteral') {
       const literalType = typeof (zodType as ZodLiteral<unknown>).value;
 
       if (literalType === 'string') return value;
@@ -241,12 +244,12 @@ function formDataToValidation<T extends AnyZodObject>(
         );
       }
     } else if (
-      zodType._def.typeName == 'ZodUnion' ||
-      zodType._def.typeName == 'ZodEnum' ||
-      zodType._def.typeName == 'ZodAny'
+      typeName == 'ZodUnion' ||
+      typeName == 'ZodEnum' ||
+      typeName == 'ZodAny'
     ) {
       return value;
-    } else if (zodType._def.typeName == 'ZodNativeEnum') {
+    } else if (typeName == 'ZodNativeEnum') {
       const zodEnum = zodType as ZodNativeEnum<EnumLike>;
 
       if (value !== null && value in zodEnum.enum) {
@@ -260,11 +263,11 @@ function formDataToValidation<T extends AnyZodObject>(
         return value;
       }
       return undefined;
-    } else if (zodType._def.typeName == 'ZodSymbol') {
+    } else if (typeName == 'ZodSymbol') {
       return Symbol(String(value));
     }
 
-    if (zodType._def.typeName == 'ZodObject') {
+    if (typeName == 'ZodObject') {
       throw new SuperFormError(
         `Object found in form field "${field}". ` +
           `Set the dataType option to "json" and add use:enhance on the client to use nested data structures. ` +

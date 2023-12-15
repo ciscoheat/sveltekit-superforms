@@ -43,7 +43,7 @@
 
 <p>{customCheck}</p>
 
-<form method="POST" use:enhance>
+<form method="POST" novalidate use:enhance>
   <label>
     Name<br />
     <input

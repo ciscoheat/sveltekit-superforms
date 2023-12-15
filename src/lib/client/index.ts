@@ -159,6 +159,13 @@ export type FormOptions<T extends ZodValidation<AnyZodObject>, M> = Partial<{
   };
 }>;
 
+export const defaultOnError = (event: { result: { error: unknown } }) => {
+  console.warn(
+    'Unhandled Superform error, use onError event to handle it:',
+    event.result.error
+  );
+};
+
 const defaultFormOptions = {
   applyAction: true,
   invalidateAll: true,
@@ -174,12 +181,7 @@ const defaultFormOptions = {
   onResult: undefined,
   onUpdate: undefined,
   onUpdated: undefined,
-  onError: (event: { result: { error: unknown } }) => {
-    console.warn(
-      'Unhandled Superform error, use onError event to handle it:',
-      event.result.error
-    );
-  },
+  onError: defaultOnError,
   dataType: 'form',
   validators: undefined,
   defaultValidator: 'keep',
@@ -721,9 +723,18 @@ export function superForm<
         Tainted.set(undefined);
       } else {
         Tainted.update((tainted) => {
-          //console.log('Update tainted:', paths, newObj, compareAgainst);
-          if (!tainted) tainted = {};
-          setPaths(tainted, paths, taintOptions === true ? true : undefined);
+          if (taintOptions !== true && tainted) {
+            // Check if the paths are tainted already, then set to undefined or skip entirely.
+            const _tainted = tainted;
+            paths = paths.filter((path) => pathExists(_tainted, path));
+            if (paths.length) {
+              if (!tainted) tainted = {};
+              setPaths(tainted, paths, undefined);
+            }
+          } else if (taintOptions === true) {
+            if (!tainted) tainted = {};
+            setPaths(tainted, paths, true);
+          }
           return tainted;
         });
       }
@@ -740,12 +751,7 @@ export function superForm<
           updated = updated || (await Tainted__validate(path, taintOptions));
         }
         if (!updated) {
-          await validateObjectErrors(
-            options,
-            get(Form),
-            Errors,
-            get(Tainted)
-          );
+          await validateObjectErrors(options, Form, Errors, get(Tainted));
         }
       }
     }

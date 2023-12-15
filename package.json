@@ -1,6 +1,6 @@
 {
   "name": "sveltekit-superforms",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
   "description": "Making SvelteKit validation and displaying of forms easier than ever!",
   "keywords": [
@@ -84,7 +84,7 @@
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "peerDependencies": {
-    "@sveltejs/kit": "1.x",
+    "@sveltejs/kit": "1.x || 2.x",
     "svelte": "3.x || 4.x",
     "zod": "3.x"
   },

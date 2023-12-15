@@ -5,6 +5,20 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2023-12-14
+
+### Added
+
+- Support for Zod [branded types](https://zod.dev/?id=brand) in schemas. ([#286](https://github.com/ciscoheat/sveltekit-superforms/pull/286))
+- Peer dependencies updated to support SvelteKit 2. ([#299](https://github.com/ciscoheat/sveltekit-superforms/issues/299))
+
+### Fixed
+
+- Tainted fields were set to undefined when not needed, unwantingly triggering client-side validation.
+- Schema transformations now updates the form data depending on input type. Checkboxes, radio buttons and selects updates the data immediately. Other inputs waits until blurred. ([#298](https://github.com/ciscoheat/sveltekit-superforms/issues/298))
+- In [SPA mode](https://superforms.rocks/concepts/spa), the `novalidate` attribute now only disables the browser validation constraints, not the entire client-side validation. ([#297](https://github.com/ciscoheat/sveltekit-superforms/discussions/297))
+- Errors thrown in hooks are now handled properly by `onError`. Status will always be 500 though. ([#292](https://github.com/ciscoheat/sveltekit-superforms/issues/292))
+
 ## [1.11.0] - 2023-11-28
 
 ### Added
@@ -16,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When cancelling a request, timers were cancelled too early in [SPA mode](https://superforms.rocks/concepts/spa) and when [client-side validation](https://superforms.rocks/concepts/client-validation) failed.
 - [Proxies](https://superforms.rocks/concepts/proxy-objects) didn't set or update a nested path unless it previously existed.
 - When the [taint option](https://superforms.rocks/concepts/tainted#tainted-store) was set to `false` or `untaint-all`, client-side validation was prevented.
-- The `novalidate` and `formnovalidate` attributes on forms and buttons weren't respected.
+- The `novalidate` and `formnovalidate` attributes on forms and buttons weren't respected. ([#287](https://github.com/ciscoheat/sveltekit-superforms/issues/287))
 
 ## [1.10.2] - 2023-11-14
 

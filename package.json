@@ -38,6 +38,7 @@
 		"@typescript-eslint/parser": "^6.15.0",
 		"ajv": "^8.12.0",
 		"ajv-formats": "^2.1.1",
+		"arktype": "1.0.28-alpha",
 		"devalue": "^4.3.2",
 		"eslint": "^8.56.0",
 		"eslint-config-prettier": "^9.1.0",

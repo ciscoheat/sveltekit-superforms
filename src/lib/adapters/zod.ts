@@ -7,7 +7,7 @@ import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {
 	dateStrategy: 'integer',
-	pipeStrategy: 'input' // TODO: Switch to output as soon as it's available
+	pipeStrategy: 'output'
 } as const;
 
 export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {

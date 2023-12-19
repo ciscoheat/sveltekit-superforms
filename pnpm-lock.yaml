@@ -7,7 +7,7 @@ settings:
 devDependencies:
   '@decs/typeschema':
     specifier: ^0.12.1
-    version: 0.12.1(ajv@8.12.0)(valibot@0.22.0)(vite@4.5.1)(zod@3.22.4)
+    version: 0.12.1(ajv@8.12.0)(arktype@1.0.28-alpha)(valibot@0.22.0)(vite@4.5.1)(zod@3.22.4)
   '@sveltejs/adapter-auto':
     specifier: ^2.1.1
     version: 2.1.1(@sveltejs/kit@1.30.3)
@@ -35,6 +35,9 @@ devDependencies:
   ajv-formats:
     specifier: ^2.1.1
     version: 2.1.1(ajv@8.12.0)
+  arktype:
+    specifier: 1.0.28-alpha
+    version: 1.0.28-alpha
   devalue:
     specifier: ^4.3.2
     version: 4.3.2
@@ -121,7 +124,7 @@ packages:
       regenerator-runtime: 0.14.1
     dev: true
 
-  /@decs/typeschema@0.12.1(ajv@8.12.0)(valibot@0.22.0)(vite@4.5.1)(zod@3.22.4):
+  /@decs/typeschema@0.12.1(ajv@8.12.0)(arktype@1.0.28-alpha)(valibot@0.22.0)(vite@4.5.1)(zod@3.22.4):
     resolution: {integrity: sha512-PhoCbaJ6T+9EfvUkemgYVnNfLmLoP2+Aa5yvQ3sIzH4fmIgDEFPGSRPuaTO04c99sqLeKuhHEY+WLzNubGABOA==}
     peerDependencies:
       '@deepkit/type': ^1.0.1-alpha.97
@@ -175,6 +178,7 @@ packages:
         optional: true
     dependencies:
       ajv: 8.12.0
+      arktype: 1.0.28-alpha
       valibot: 0.22.0
       vite: 4.5.1(@types/node@20.10.5)
       zod: 3.22.4
@@ -900,6 +904,10 @@ packages:
     resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
     dependencies:
       dequal: 2.0.3
+    dev: true
+
+  /arktype@1.0.28-alpha:
+    resolution: {integrity: sha512-cjakiZXXa4+y1OL0oFk0HRjIrEwJhNNvkqXkiR53SOpyKHwSqFrjrQkY4K8MlnQybRhd/y4OG4NVDR1Ea4WDkQ==}
     dev: true
 
   /array-union@2.1.0:

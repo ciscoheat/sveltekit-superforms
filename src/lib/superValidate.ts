@@ -3,7 +3,7 @@ import { traversePath } from './traversal.js';
 import { ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
-import type { SuperValidated } from './index.js';
+import type { SuperValidated, ValidationErrors } from './index.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
@@ -33,6 +33,7 @@ type SuperValidateData<T extends object> = RequestEvent | Request | SuperValidat
 export type SuperValidateOptions<T extends object> = Partial<{
 	errors: boolean;
 	id: string;
+	// TODO: Rename preprocessed to passthrough
 	preprocessed: (keyof T)[];
 	defaults: T;
 	jsonSchema: JSONSchema;
@@ -122,7 +123,7 @@ export async function superValidate<
 		id: parsed.id ?? options?.id ?? (parsed.posted ? undefined : formId()),
 		valid,
 		posted: parsed.posted,
-		errors,
+		errors: errors as ValidationErrors<T>,
 		data: outputData as T,
 		constraints: validation.constraints
 	};

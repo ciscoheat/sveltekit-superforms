@@ -9,6 +9,8 @@ export { zod } from './zod.js';
 export { ajv } from './ajv.js';
 export { valibot } from './valibot.js';
 
+export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'arktype' | 'unknown';
+
 // Lifted from TypeSchema, since they are not exported
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ValidationResult<TOutput = any> =
@@ -20,8 +22,6 @@ export type ValidationResult<TOutput = any> =
 			success: false;
 			issues: Array<ValidationIssue>;
 	  };
-
-export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'unknown';
 
 export interface ValidationAdapter<T extends Record<string, unknown>> {
 	superFormValidationLibrary: ValidationLibrary;

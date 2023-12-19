@@ -679,11 +679,10 @@ describe('Default values', () => {
 		});
 	});
 
-	test.skip('Schema with pipe() and dataType: form', async () => {
+	test('Schema with pipe() and dataType: form (requires preprocessed)', async () => {
 		const schema = z.object({
 			len: z
 				.string()
-				.default(0 as unknown as string) // TODO: requires zodToJsonSchema pipeStrategy: output
 				.transform((val) => (val ? val.length : 0))
 				.pipe(z.number().min(5))
 		});
@@ -695,16 +694,25 @@ describe('Default values', () => {
 		const formData4 = new FormData();
 		formData4.set('len', 'four');
 
-		const form4 = await superValidate(formData4, zod(schema));
-		assert(form4.valid === false);
-		expect(form4.data.len).toEqual(0);
+		const form4a = await superValidate(formData4, zod(schema));
+		assert(form4a.valid === false);
+		expect(form4a.data.len).toBeNaN();
+
+		// preprocessed can break type-safety!
+		const form4b = await superValidate(formData4, zod(schema), { preprocessed: ['len'] });
+		assert(!form4b.valid);
+		expect(form4b.data.len).toEqual('four');
 
 		const formData5 = new FormData();
 		formData5.set('len', 'fiver');
 
-		const form5 = await superValidate(formData5, zod(schema));
-		assert(form5.valid);
-		expect(form5.data.len).toEqual(5);
+		const form5a = await superValidate(formData5, zod(schema));
+		assert(!form5a.valid);
+		expect(form5a.data.len).toBeNaN();
+
+		const form5b = await superValidate(formData5, zod(schema), { preprocessed: ['len'] });
+		assert(form5b.valid);
+		expect(form5b.data.len).toEqual(5);
 	});
 
 	test('Schema with pipe() and dataType: json', async () => {

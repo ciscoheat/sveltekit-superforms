@@ -11,6 +11,8 @@ import merge from 'ts-deepmerge';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { superValidate } from '$lib/superValidate.js';
+import { type } from 'arktype';
+import { arktype } from '$lib/adapters/arktype.js';
 
 /* 
 TEST SCHEMA TEMPLATE:
@@ -49,21 +51,23 @@ const expectedConstraints = {
 		required: true
 	},
 	tags: {
-		minlength: 2,
-		required: true
+		minlength: 2
 	}
 };
 
 function schemaTest(
 	adapter: () => ValidationAdapter<Record<string, unknown>>,
-	errors: { email: string; tags?: string; tags0: string },
+	errors: { email: string; tags?: string; tags0?: string },
 	testConstraints: boolean
 ) {
-	const expectedErrors = {
-		email: [errors.email],
-		tags: { '0': [errors.tags0] } as Record<string, unknown>
+	const expectedErrors: Record<string, any> = {
+		email: [errors.email]
 	};
-	if (errors.tags) expectedErrors.tags._errors = [errors.tags];
+	if (errors.tags0) expectedErrors.tags = { '0': [errors.tags0] };
+	if (errors.tags) {
+		if (!expectedErrors.tags) expectedErrors.tags = {};
+		expectedErrors.tags._errors = [errors.tags];
+	}
 
 	it('with schema only', async () => {
 		const output = await superValidate(adapter());
@@ -108,6 +112,23 @@ function schemaTest(
 }
 
 ///// Validation libraries ////////////////////////////////////////////////////
+
+describe('Arktype', () => {
+	const schema = type({
+		name: 'string',
+		email: 'email',
+		tags: '2<=(2<=string<1000)[]<1000'
+	});
+
+	const errors = {
+		email: "email must be a valid email (was '')",
+		tags: 'tags must be at least 2 characters (was 1)'
+	};
+
+	schemaTest(() => arktype(schema, { defaults }), errors, false);
+});
+
+///////////////////////////////////////////////////////////////////////////////
 
 describe('Valibot', () => {
 	const schema = object({
@@ -168,7 +189,7 @@ describe('Zod', () => {
 		expect(values.foo).toEqual(Foo.A);
 	});
 
-	it.only('with constraints', () => {
+	it('with constraints', () => {
 		const expected = {
 			email: { required: true },
 			tags: { minlength: 2 },

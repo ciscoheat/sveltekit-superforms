@@ -8,7 +8,7 @@ enum Foo {
 	B = 3
 }
 
-const bigZodSchema = z.object({
+const schema = z.object({
 	name: z.string(),
 	email: z.string().email(),
 	tags: z.string().min(2).array().min(2).default(['A']),
@@ -18,10 +18,11 @@ const bigZodSchema = z.object({
 	reg: z.string().regex(/X/).min(3).max(30),
 	num: z.number().int().multipleOf(5).min(10).max(100),
 	date: z.date().min(new Date('2022-01-01')),
-	arr: z.string().min(10).array().min(3).max(10)
+	arr: z.string().min(10).array().min(3).max(10),
+	extra: z.string().nullable()
 });
 
-const bigJsonSchema = zodToJsonSchema(bigZodSchema);
+const bigJsonSchema = zodToJsonSchema(schema);
 
 function dataToFormData(data: Record<string, string | number | string[] | number[]>) {
 	const output = new FormData();
@@ -50,8 +51,12 @@ describe('FormData parsing', () => {
 		const parsed = parseFormData(formData, bigJsonSchema);
 
 		assert(parsed.data);
+		assert(parsed.data.date instanceof Date);
+		// Just parse, no coercion
+		assert(!('extra' in parsed.data));
 
 		expect(parsed.posted).toEqual(true);
-		expect(parsed.data.foo).toEqual(Foo.B);
+		expect(parsed.data.date.toISOString().substring(0, 10)).toBe('2023-12-02');
+		expect({ ...parsed.data, date: undefined }).toEqual({ ...data, date: undefined });
 	});
 });

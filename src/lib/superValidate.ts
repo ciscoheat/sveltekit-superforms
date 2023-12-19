@@ -117,6 +117,8 @@ export async function superValidate<
 		outputData = parsedData;
 	}
 
+	// TODO: Form id must be derived on schema as in v1? (can skip undefined)
+	// Depends on how id is updated when load function is invalidated. 
 	return {
 		id: parsed.id ?? options?.id ?? (parsed.posted ? undefined : formId()),
 		valid,

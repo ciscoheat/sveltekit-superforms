@@ -18,6 +18,7 @@ TODO:
 - Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`.
 - Fields with default values don't have `required` in their constraints anymore.
 - Unions must have an explicit default value.
+- If no data, default values aren't parsed with the default data (no side-effects for default values)
 
 ### Issues
 

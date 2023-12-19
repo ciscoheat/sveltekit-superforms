@@ -18,7 +18,7 @@ export async function parseRequest<T extends object>(
 	let parsed: ParsedData;
 
 	if (data instanceof FormData) {
-		parsed = parseFormData(data, schemaData, options);
+		parsed = parseFormData(data, schemaData, options?.preprocessed);
 	} else if (data instanceof URL || data instanceof URLSearchParams) {
 		parsed = parseSearchParams(data, schemaData, options);
 	} else if (data instanceof Request) {
@@ -79,7 +79,7 @@ async function tryParseFormData<T extends object>(
 		// No data found, return an empty form
 		return { id: undefined, data: undefined, posted: false };
 	}
-	return parseFormData(formData, schemaData, options);
+	return parseFormData(formData, schemaData, options?.preprocessed);
 }
 
 export function parseSearchParams<T extends object>(
@@ -94,7 +94,7 @@ export function parseSearchParams<T extends object>(
 		convert.append(key, value);
 	}
 
-	const output = parseFormData(convert, schemaData, options);
+	const output = parseFormData(convert, schemaData, options?.preprocessed);
 
 	// Set posted to false since it's a URL
 	output.posted = false;
@@ -104,7 +104,7 @@ export function parseSearchParams<T extends object>(
 export function parseFormData<T extends object>(
 	formData: FormData,
 	schemaData: JSONSchema7,
-	options?: SuperValidateOptions<T>
+	preprocessed?: SuperValidateOptions<T>['preprocessed']
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
@@ -127,9 +127,9 @@ export function parseFormData<T extends object>(
 		? { id, data, posted: true }
 		: {
 				id,
-				data: _parseFormData(formData, schemaData, options?.preprocessed),
+				data: _parseFormData(formData, schemaData, preprocessed),
 				posted: true
-		  };
+			};
 }
 
 function _parseFormData<T extends object>(

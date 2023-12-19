@@ -36,6 +36,7 @@ export type SuperValidateOptions<T extends object> = Partial<{
 	preprocessed: (keyof T)[];
 	defaults: T;
 	jsonSchema: JSONSchema;
+	strict: boolean;
 }>;
 
 export async function superValidate<
@@ -78,47 +79,45 @@ export async function superValidate<
 
 	const defaults = options?.defaults ?? validation.defaults;
 	const jsonSchema = options?.jsonSchema ?? validation.jsonSchema;
-	const addErrors = options?.errors !== undefined ? options.errors : !!data;
+	const addErrors = options?.errors ?? (options?.strict ? true : !!data);
 
 	const parsed = await parseRequest<T>(data, jsonSchema, options);
-	const hasData = parsed.data;
+	const hasData = !!parsed.data;
 
-	// TODO: Decide whether to merge here or where validation fails
-	/*
-		All data may not be present here (missing FormData field, for example)
-		Merge defaults to make data type-safe.
-		This makes for nicer error messages, but does not completely correspond to
-		what was posted. But since this library is about forms, it may be ok.
-	*/
-	parsed.data = { ...defaults, ...(parsed.data ?? {}) } as T;
+	// Merge with defaults in non-strict mode.
+	parsed.data = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
 
 	const status: ValidationResult<T> =
 		hasData || addErrors
 			? validation.customValidator
-				? await validation.customValidator(parsed.data ?? defaults)
-				: ((await validate(validation.validator, parsed.data ?? defaults)) as ValidationResult<T>)
+				? await validation.customValidator(parsed.data)
+				: ((await validate(validation.validator, parsed.data)) as ValidationResult<T>)
 			: { success: false, issues: [] };
 
 	const valid = status.success;
 	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validation.objects);
 
-	// Alternative place for parsed.data merging
+	const finalData = valid ? status.data : parsed.data;
+	let outputData: typeof finalData;
 
-	const parsedData = status.success ? status.data : parsed.data;
-	let outputData: typeof parsedData = {};
-
-	// Strip keys not belonging to schema
-	// TODO: Strict mode
 	if (!jsonSchema.additionalProperties) {
+		// Strip keys not belonging to schema
+		outputData = {};
 		for (const key of Object.keys(jsonSchema.properties ?? {})) {
-			if (key in parsedData) outputData[key] = parsedData[key];
+			if (key in finalData) outputData[key] = finalData[key];
+			else if (defaults[key] !== undefined) outputData[key] = defaults[key];
 		}
 	} else {
-		outputData = parsedData;
+		outputData = finalData;
+		for (const key of Object.keys(defaults)) {
+			if (!(key in finalData) && defaults[key] !== undefined) {
+				outputData[key] = defaults[key];
+			}
+		}
 	}
 
 	// TODO: Form id must be derived on schema as in v1? (can skip undefined)
-	// Depends on how id is updated when load function is invalidated. 
+	// Depends on how id is updated when load function is invalidated.
 	return {
 		id: parsed.id ?? options?.id ?? (parsed.posted ? undefined : formId()),
 		valid,

@@ -1,4 +1,4 @@
-import { SchemaError } from '$lib/index.js';
+import { SchemaError, type SuperStruct } from '$lib/index.js';
 import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
 import merge from 'ts-deepmerge';
 
@@ -12,20 +12,22 @@ export type InputConstraint = Partial<{
 	maxlength: number;
 }>;
 
-export type InputConstraints<T extends object> = SuperStruct<T, InputConstraint>;
+export type InputConstraints<T extends Record<string, unknown>> = SuperStruct<T, InputConstraint>;
 
-export function constraints<T extends object>(schema: JSONSchema): InputConstraints<T> {
+export function constraints<T extends Record<string, unknown>>(
+	schema: JSONSchema
+): InputConstraints<T> {
 	if (schema.type != 'object') {
 		throw new SchemaError('Constraints must be created from an object schema.');
 	}
 
-	return _constraints(schemaInfo(schema, false), []);
+	return _constraints(schemaInfo(schema, false), []) as InputConstraints<T>;
 }
 
-function _constraints(
+function _constraints<T extends Record<string, unknown>>(
 	info: SchemaInfo | undefined,
 	path: string[]
-): InputConstraints<object> | InputConstraint | undefined {
+): InputConstraints<T> | InputConstraint | undefined {
 	if (!info) return undefined;
 
 	// Union

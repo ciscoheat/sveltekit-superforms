@@ -211,7 +211,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	errors: Writable<string[] | undefined>;
 	fieldErrors: Writable<ArrayFieldErrors>;
 } {
-	const formErrors = fieldProxy<T, Path>(
+	const formErrors = fieldProxy(
 		superForm.errors,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		`${path}` as any
@@ -259,7 +259,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	return {
 		path,
 		values: superFieldProxy(superForm, path, options),
-		errors: fieldProxy<T, Path>(
+		errors: fieldProxy(
 			superForm.errors,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			`${path}._errors` as any
@@ -322,10 +322,8 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	return {
 		path,
 		value: superFieldProxy(superForm, path, options),
-		errors: fieldProxy<T, Path>(superForm.errors, path) as unknown as Writable<
-			string[] | undefined
-		>,
-		constraints: fieldProxy<T, Path>(superForm.constraints, constraintsPath as never) as Writable<
+		errors: fieldProxy(superForm.errors, path as any) as unknown as Writable<string[] | undefined>,
+		constraints: fieldProxy(superForm.constraints, constraintsPath as never) as Writable<
 			InputConstraint | undefined
 		>,
 		tainted

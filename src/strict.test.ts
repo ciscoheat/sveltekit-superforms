@@ -5,7 +5,7 @@ import { z, type AnyZodObject } from 'zod';
 type ModeTest = {
   name: string;
   schema: AnyZodObject;
-  input: Record<string, unknown>;
+  input: Record<string, unknown> | null | undefined;
   expected: Record<string, unknown>;
   valid: boolean;
   errors: Record<string, unknown>;
@@ -103,6 +103,34 @@ describe('Strict mode', () => {
       errors: {
         foo: ['String must contain at least 2 character(s)']
       }
+    },
+    {
+      name: 'Should be invalid and display errors if null is passed',
+      schema: z.object({
+        foo: z.string()
+      }),
+      input: null,
+      expected: {
+        foo: ''
+      },
+      valid: false,
+      errors: {
+        foo: ['Required']
+      }
+    },
+    {
+      name: 'Should be invalid and display errors if undefined is passed',
+      schema: z.object({
+        foo: z.string()
+      }),
+      input: undefined,
+      expected: {
+        foo: ''
+      },
+      valid: false,
+      errors: {
+        foo: ['Required']
+      }
     }
   ];
 
@@ -198,6 +226,30 @@ describe('Non-strict mode', () => {
       errors: {
         foo: ['String must contain at least 2 character(s)']
       }
+    },
+    {
+      name: 'Should be invalid and not display errors if null is passed',
+      schema: z.object({
+        foo: z.string()
+      }),
+      input: null,
+      expected: {
+        foo: ''
+      },
+      valid: false,
+      errors: {}
+    },
+    {
+      name: 'Should be invalid and not display errors if undefined is passed',
+      schema: z.object({
+        foo: z.string()
+      }),
+      input: undefined,
+      expected: {
+        foo: ''
+      },
+      valid: false,
+      errors: {}
     }
   ];
 
@@ -214,14 +266,14 @@ function testMode(tests: ModeTest[], strict: boolean) {
     errors,
     strictPOJOErrors
   } of tests) {
+    const inputClone = input ? structuredClone(input) : input;
+
     test(name + ' (POJO)', async () => {
-      const inputClone = structuredClone(input);
-      const form = await superValidate(
-        input as Record<string, unknown>,
-        schema,
-        { strict: strictPOJOErrors ? true : strict }
-      );
-      expect(input).toMatchObject(inputClone);
+      const form = await superValidate(input, schema, {
+        strict: strictPOJOErrors ? true : strict
+      });
+
+      expect(input).toStrictEqual(inputClone);
       expect(form.data).toEqual(expected);
       expect(form.errors).toEqual(
         strictPOJOErrors ? strictPOJOErrors : errors
@@ -229,31 +281,35 @@ function testMode(tests: ModeTest[], strict: boolean) {
       expect(form.valid).toEqual(strictPOJOErrors ? false : valid);
     });
 
+    if (!input) continue;
+
     test(name + ' (FormData)', async () => {
-      const inputClone = structuredClone(input);
       const formData = new FormData();
       for (const [key, value] of Object.entries(input)) {
         formData.set(key, value ? `${value}` : '');
       }
+
       const form = await superValidate(formData, schema, {
         strict
       });
-      expect(input).toMatchObject(inputClone);
+
+      expect(input).toStrictEqual(inputClone);
       expect(form.data).toEqual(expected);
       expect(form.errors).toEqual(errors);
       expect(form.valid).toEqual(valid);
     });
 
     test(name + ' (UrlSearchParams)', async () => {
-      const inputClone = structuredClone(input);
       const params = new URLSearchParams();
       for (const [key, value] of Object.entries(input)) {
         params.set(key, `${value}`);
       }
+
       const form = await superValidate(params, schema, {
         strict
       });
-      expect(input).toMatchObject(inputClone);
+
+      expect(input).toStrictEqual(inputClone);
       expect(form.data).toEqual(expected);
       expect(form.errors).toEqual(errors);
       expect(form.valid).toEqual(valid);

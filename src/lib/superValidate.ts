@@ -317,9 +317,9 @@ type ParsedData<T extends Record<string, unknown>> = {
  */
 function dataToValidate<T extends AnyZodObject>(
   parsed: ParsedData<z.infer<T>>,
-  schemaData: SchemaData<T>,
-  strict: boolean
+  schemaData: SchemaData<T>
 ): Record<string, unknown> | undefined {
+  const strict = schemaData.opts?.strict ?? false;
   if (!parsed.data) {
     return schemaData.hasEffects || schemaData.opts.errors === true
       ? schemaData.entityInfo.defaultEntity
@@ -332,7 +332,7 @@ function dataToValidate<T extends AnyZodObject>(
 function parseFormData<T extends AnyZodObject>(
   formData: FormData,
   schemaData: SchemaData<T>,
-  options?: SuperValidateOptions<T>
+  preprocessed?: SuperValidateOptions<T>['preprocessed']
 ): ParsedData<z.infer<T>> {
   function tryParseSuperJson() {
     if (formData.has('__superform_json')) {
@@ -357,11 +357,7 @@ function parseFormData<T extends AnyZodObject>(
     return { id, data, posted: true, partialData: null };
   }
 
-  const parsed = formDataToValidation(
-    formData,
-    schemaData,
-    options?.preprocessed
-  );
+  const parsed = formDataToValidation(formData, schemaData, preprocessed);
 
   return {
     id,
@@ -374,7 +370,7 @@ function parseFormData<T extends AnyZodObject>(
 function parseSearchParams<T extends AnyZodObject>(
   data: URL | URLSearchParams,
   schemaData: SchemaData<T>,
-  options?: SuperValidateOptions<T>
+  preprocessed?: SuperValidateOptions<T>['preprocessed']
 ): ParsedData<z.infer<T>> {
   if (data instanceof URL) data = data.searchParams;
 
@@ -384,7 +380,7 @@ function parseSearchParams<T extends AnyZodObject>(
   }
 
   // Only FormData can be posted.
-  const output = parseFormData(convert, schemaData, options);
+  const output = parseFormData(convert, schemaData, preprocessed);
   output.posted = false;
   return output;
 }
@@ -410,12 +406,12 @@ function validateResult<T extends AnyZodObject, M>(
     let errors: ReturnType<typeof mapErrors> = {};
 
     const valid = result?.success ?? false;
-    const { opts: options, entityInfo } = schemaData;
+    const addErrors = options.errors ?? options.strict;
 
     if (result) {
       if (result.success) {
         data = result.data;
-      } else if (options.errors === true) {
+      } else if (addErrors) {
         errors = mapErrors<T>(result.error.format(), entityInfo.errorShape);
       }
     }
@@ -613,16 +609,16 @@ export async function superValidate<
         partialData: undefined
       };
     }
-    return parseFormData(formData, schemaData, options);
+    return parseFormData(formData, schemaData, options?.preprocessed);
   }
 
   async function parseRequest() {
     let parsed: ParsedData<z.infer<UnwrapEffects<T>>>;
 
     if (data instanceof FormData) {
-      parsed = parseFormData(data, schemaData, options);
+      parsed = parseFormData(data, schemaData, options?.preprocessed);
     } else if (data instanceof URL || data instanceof URLSearchParams) {
-      parsed = parseSearchParams(data, schemaData, options);
+      parsed = parseSearchParams(data, schemaData, options?.preprocessed);
     } else if (data instanceof Request) {
       parsed = await tryParseFormData(data);
     } else if (
@@ -635,7 +631,7 @@ export async function superValidate<
     } else if (options?.strict) {
       // Ensure that defaults are set on data if strict mode is enabled (Should this maybe always happen?)
       const params = new URLSearchParams(data as Record<string, string>);
-      parsed = parseSearchParams(params, schemaData, options);
+      parsed = parseSearchParams(params, schemaData, options?.preprocessed);
     } else {
       parsed = {
         id: undefined,
@@ -647,11 +643,7 @@ export async function superValidate<
 
     //////////////////////////////////////////////////////////////////////
     // This logic is shared between superValidate and superValidateSync //
-    const toValidate = dataToValidate(
-      parsed,
-      schemaData,
-      options?.strict || false
-    );
+    const toValidate = dataToValidate(parsed, schemaData);
     const result = toValidate
       ? await schemaData.originalSchema.safeParseAsync(toValidate)
       : undefined;
@@ -721,7 +713,7 @@ export function superValidateSync<
 
   const parsed =
     data instanceof FormData
-      ? parseFormData(data, schemaData, options)
+      ? parseFormData(data, schemaData, options?.preprocessed)
       : data instanceof URL || data instanceof URLSearchParams
       ? parseSearchParams(data, schemaData)
       : {
@@ -733,11 +725,7 @@ export function superValidateSync<
 
   //////////////////////////////////////////////////////////////////////
   // This logic is shared between superValidate and superValidateSync //
-  const toValidate = dataToValidate(
-    parsed,
-    schemaData,
-    options?.strict || false
-  );
+  const toValidate = dataToValidate(parsed, schemaData);
   const result = toValidate
     ? schemaData.originalSchema.safeParse(toValidate)
     : undefined;

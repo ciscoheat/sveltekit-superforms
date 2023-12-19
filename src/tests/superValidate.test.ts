@@ -60,6 +60,7 @@ function schemaTest(
 	errors: { email: string; tags?: string; tags0?: string },
 	testConstraints: boolean
 ) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const expectedErrors: Record<string, any> = {
 		email: [errors.email]
 	};

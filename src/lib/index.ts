@@ -1,6 +1,5 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
-import type { ObjectShape } from './jsonSchema/objectShape.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
@@ -26,7 +25,7 @@ export class SchemaError extends SuperFormError {
 }
 
 export type SuperValidated<
-	T extends object,
+	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
@@ -40,17 +39,6 @@ export type SuperValidated<
 	id?: string;
 };
 
-type EntityRecord<T extends object, K> = Record<keyof T, K>;
-
-export type Entity<T extends object> = {
-	typeInfo: EntityRecord<T, ZodTypeInfo>;
-	defaultEntity: T;
-	constraints: InputConstraints<T>;
-	keys: string[];
-	hash: string;
-	errorShape: ObjectShape;
-};
-
 export type ZodTypeInfo = {
 	type: unknown;
 	//zodType: unknown;
@@ -62,6 +50,25 @@ export type ZodTypeInfo = {
 	defaultValue: unknown;
 };
 
-export type ValidationErrors<T extends object> = {
+export type ValidationErrors<T extends Record<string, unknown>> = {
 	_errors?: string[];
 } & SuperStructArray<T, string[], { _errors?: string[] }>;
+
+export type TaintedFields<T extends Record<string, object>> = SuperStructArray<T, boolean>;
+
+// Cannot be a SuperStruct due to Property having to be passed on.
+// Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
+export type Validators<T extends Record<string, unknown>> = Partial<{
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	[Property in keyof T]: T extends any
+		? T[Property] extends Record<string, unknown>
+			? Validators<T[Property]>
+			: T[Property] extends (infer A)[]
+				? A extends Record<string, unknown>
+					? Validators<A>
+					: Validator<T[Property] extends (infer A2)[] ? A2 : T[Property]>
+				: Validator<T[Property]>
+		: never;
+}>;
+
+export type Validator<V> = (value: V) => MaybePromise<string | string[] | null | undefined>;

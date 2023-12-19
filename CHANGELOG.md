@@ -13,6 +13,10 @@ TODO:
 
 ## [Unreleased]
 
+### Removed
+
+- superForm.fields
+
 ### Changed
 
 - Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`.

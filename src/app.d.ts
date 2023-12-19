@@ -4,7 +4,9 @@ declare global {
 	namespace App {
 		// interface Error {}
 		// interface Locals {}
-		// interface PageData {}
+		interface PageData {
+			flash?: any;
+		}
 		// interface Platform {}
 		namespace Superforms {
 			type Message = any;

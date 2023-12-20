@@ -108,7 +108,7 @@ export function traversePath<T extends object>(
 					path: path.map((p) => String(p)),
 					isLeaf: false,
 					set: (v) => setPath(parent, key, v)
-			  })
+				})
 			: parent[key];
 
 		if (value === undefined) return undefined;
@@ -239,7 +239,7 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 export function setPaths(
 	obj: Record<string, unknown>,
 	paths: (string | number | symbol)[][],
-	value: (path: (string | number | symbol)[], data: PathData) => unknown
+	value: {} | ((path: (string | number | symbol)[], data: PathData) => unknown) | undefined
 ) {
 	const isFunction = typeof value === 'function';
 

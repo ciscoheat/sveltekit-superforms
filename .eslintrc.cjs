@@ -4,10 +4,14 @@ module.exports = {
 		'eslint:recommended',
 		'plugin:@typescript-eslint/recommended',
 		'plugin:svelte/recommended',
+		'plugin:dci-lint/recommended',
 		'prettier'
 	],
 	parser: '@typescript-eslint/parser',
 	plugins: ['@typescript-eslint'],
+	rules: {
+		//"dci-lint/literal-role-contracts": "off"
+	},
 	parserOptions: {
 		sourceType: 'module',
 		ecmaVersion: 2020,

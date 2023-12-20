@@ -6,6 +6,7 @@ import type { MaybePromise } from '../index.js';
 import type { FormPathLeaves, FormPathType } from '../stringPath.js';
 //import type { formEnhance, SuperFormEvents } from './formEnhance.js';
 import type { Schema } from '@decs/typeschema';
+import type { SuperFormEvents } from './formEnhance.js';
 
 export {
 	intProxy,
@@ -113,37 +114,7 @@ export const defaultOnError = (event: { result: { error: unknown } }) => {
 	console.warn('Unhandled Superform error, use onError event to handle it:', event.result.error);
 };
 
-/*
-const defaultFormOptions = {
-	applyAction: true,
-	invalidateAll: true,
-	resetForm: false,
-	autoFocusOnError: 'detect',
-	scrollToError: 'smooth',
-	errorSelector: '[aria-invalid="true"],[data-invalid]',
-	selectErrorText: false,
-	stickyNavbar: undefined,
-	taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
-	onSubmit: undefined,
-	onResult: undefined,
-	onUpdate: undefined,
-	onUpdated: undefined,
-	onError: defaultOnError,
-	dataType: 'form',
-	validators: undefined,
-	defaultValidator: 'keep',
-	customValidity: false,
-	clearOnSubmit: 'errors-and-message',
-	delayMs: 500,
-	timeoutMs: 8000,
-	multipleSubmits: 'prevent',
-	validation: undefined,
-	SPA: undefined,
-	validateMethod: 'auto'
-};
-*/
-
-type SuperFormSnapshot<
+export type SuperFormSnapshot<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
@@ -218,8 +189,3 @@ export type ValidateOptions<V> = Partial<{
 const formEnhance = () => {
 	return undefined as any;
 };
-
-export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
-	FormOptions<T, M>,
-	'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'
->;

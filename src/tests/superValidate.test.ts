@@ -118,7 +118,7 @@ describe('Arktype', () => {
 	const schema = type({
 		name: 'string',
 		email: 'email',
-		tags: '2<=(2<=string<1000)[]<1000'
+		tags: '(string>=2)[]>=2'
 	});
 
 	const errors = {
@@ -179,11 +179,15 @@ describe('ajv', () => {
 ///////////////////////////////////////////////////////////////////////////////
 
 describe('Zod', () => {
-	const schema = z.object({
-		name: z.string(),
-		email: z.string().email(),
-		tags: z.string().min(2).array().min(2).default(['A'])
-	});
+	const schema = z
+		.object({
+			name: z.string(),
+			email: z.string().email(),
+			tags: z.string().min(2).array().min(2).default(['A'])
+		})
+		.refine((a) => a)
+		.refine((a) => a)
+		.refine((a) => a);
 
 	it('with defaultValues', () => {
 		const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema));

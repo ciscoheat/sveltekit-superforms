@@ -8,88 +8,24 @@ import {
 	SuperFormError,
 	type TaintedFields,
 	type SuperValidated,
-	type ZodValidation
+	type InputConstraints
 } from '../index.js';
-import type { z, AnyZodObject } from 'zod';
 import { stringify } from 'devalue';
-import type { Entity } from '../schemaEntity.js';
 import { defaultOnError, type FormOptions, type SuperForm } from './index.js';
 import { clientValidation, validateField } from './clientValidation.js';
 import { Form } from './form.js';
 import { onDestroy } from 'svelte';
 import { traversePath } from '$lib/traversal.js';
-import { mergePath, splitPath } from '$lib/stringPath.js';
-
-export type FormUpdate = (
-	result: Exclude<ActionResult, { type: 'error' }>,
-	untaint?: boolean
-) => Promise<void>;
-
-export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
-	FormOptions<T, M>,
-	'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'
->;
-
-export type SuperFormEventList<T extends Record<string, unknown>, M> = {
-	[Property in keyof SuperFormEvents<T, M>]-?: NonNullable<SuperFormEvents<T, M>[Property]>[];
-};
-
-type ValidationResponse<
-	Success extends Record<string, unknown> | undefined = Record<
-		string,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		any
-	>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	Invalid extends Record<string, unknown> | undefined = Record<string, any>
-> = { result: ActionResult<Success, Invalid> };
-
-export function cancelFlash<T extends AnyZodObject, M>(options: FormOptions<T, M>) {
-	if (!options.flashMessage || !browser) return;
-	if (!shouldSyncFlash(options)) return;
-
-	document.cookie = `flash=; Max-Age=0; Path=${options.flashMessage.cookiePath ?? '/'};`;
-}
-
-export function shouldSyncFlash<T extends AnyZodObject, M>(options: FormOptions<T, M>) {
-	if (!options.flashMessage || !browser) return false;
-	return options.syncFlashMessage;
-}
-
-///// Custom validity /////
-
-const noCustomValidityDataAttribute = 'noCustomValidity';
-
-function setCustomValidity(el: HTMLInputElement, errors: string[] | undefined) {
-	const message = errors && errors.length ? errors.join('\n') : '';
-	el.setCustomValidity(message);
-	if (message) el.reportValidity();
-}
-
-function setCustomValidityForm<T extends AnyZodObject, M>(
-	formEl: HTMLFormElement,
-	errors: SuperValidated<ZodValidation<T>, M>['errors']
-) {
-	for (const el of formEl.querySelectorAll<
-		HTMLInputElement & HTMLSelectElement & HTMLTextAreaElement & HTMLButtonElement
-	>('input,select,textarea,button')) {
-		if (noCustomValidityDataAttribute in el.dataset) {
-			continue;
-		}
-
-		const error = traversePath(errors, splitPath(el.name));
-		setCustomValidity(el, error?.value);
-		if (error?.value) return;
-	}
-}
-
-//////////////////////////////////
+import { mergePath } from '$lib/stringPath.js';
+import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
+import { isImmediateInput } from './elements.js';
+import { cancelFlash, shouldSyncFlash } from './flash.js';
 
 /**
  * Custom use:enhance version. Flash message support, friendly error messages, for usage with initializeForm.
  * @param formEl Form element from the use:formEnhance default parameter.
  */
-export function formEnhance<T extends AnyZodObject, M>(
+export function formEnhance<T extends Record<string, unknown>, M>(
 	formEl: HTMLFormElement,
 	submitting: Writable<boolean>,
 	delayed: Writable<boolean>,
@@ -97,15 +33,17 @@ export function formEnhance<T extends AnyZodObject, M>(
 	errs: Writable<unknown>,
 	Form_updateFromActionResult: FormUpdate,
 	options: FormOptions<T, M>,
-	data: Writable<z.infer<T>>,
+	data: Writable<T>,
 	message: Writable<M | undefined>,
 	enableTaintedForm: () => void,
 	formEvents: SuperFormEventList<T, M>,
 	formId: Readable<string | undefined>,
-	constraints: Readable<Entity<T>['constraints']>,
+	constraints: Readable<InputConstraints<T>>,
 	tainted: Writable<TaintedFields<T> | undefined>,
 	lastChanges: Writable<string[][]>,
-	Context_findValidationForms: (data: Record<string, unknown>) => SuperValidated<AnyZodObject>[],
+	Context_findValidationForms: (
+		data: Record<string, unknown>
+	) => SuperValidated<Record<string, unknown>>[],
 	posted: Readable<boolean>
 ) {
 	// Now we know that we are upgraded, so we can enable the tainted form option.
@@ -113,29 +51,6 @@ export function formEnhance<T extends AnyZodObject, M>(
 
 	// Using this type in the function argument causes a type recursion error.
 	const errors = errs as SuperForm<T, M>['errors'];
-
-	async function updateCustomValidity(
-		validityEl: HTMLElement,
-		event: 'blur' | 'input',
-		errors: string[] | undefined
-	) {
-		if (!options.customValidity) return;
-		if (options.validationMethod == 'submit-only') return;
-
-		// Always reset validity, in case it has been validated on the server.
-		if ('setCustomValidity' in validityEl) {
-			(validityEl as HTMLInputElement).setCustomValidity('');
-		}
-
-		if (event == 'input' && options.validationMethod == 'onblur') return;
-
-		// If event is input but element shouldn't use custom validity,
-		// return immediately since validateField don't have to be called
-		// in this case, validation is happening elsewhere.
-		if (noCustomValidityDataAttribute in validityEl.dataset) return;
-
-		setCustomValidity(validityEl as HTMLInputElement, errors);
-	}
 
 	// Called upon an event from a HTML element that affects the form.
 	async function htmlInputChange(
@@ -155,21 +70,8 @@ export function formEnhance<T extends AnyZodObject, M>(
 		if (options.customValidity) {
 			const name = CSS.escape(mergePath(change));
 			const el = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
-			if (el) updateCustomValidity(el, event, result.errors);
+			if (el) updateCustomValidity(el, event, result.errors, options.validationMethod);
 		}
-	}
-
-	const immediateInputTypes = ['checkbox', 'radio', 'range'];
-
-	/**
-	 * Some input fields have timing issues with the stores, need to wait in that case.
-	 */
-	function isImmediateInput(el: EventTarget | null) {
-		return (
-			el &&
-			(el instanceof HTMLSelectElement ||
-				(el instanceof HTMLInputElement && immediateInputTypes.includes(el.type)))
-		);
 	}
 
 	async function checkBlur(e: Event) {

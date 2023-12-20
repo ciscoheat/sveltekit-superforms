@@ -1,7 +1,9 @@
 import type { ObjectShape } from './jsonSchema/objectShape.js';
 import type { ValidationIssue } from '@decs/typeschema';
-import { pathExists, traversePath } from './traversal.js';
-import { SuperFormError } from './index.js';
+import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
+import { SuperFormError, type ValidationErrors } from './index.js';
+import type { Writable } from 'svelte/store';
+import { mergePath } from './stringPath.js';
 
 export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
 	//console.log('===', errors.length, 'errors', shape);
@@ -51,4 +53,56 @@ export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
 		}
 	}
 	return output;
+}
+
+export function clearErrors<T extends Record<string, unknown>>(
+	Errors: Writable<ValidationErrors<T>>,
+	options: {
+		undefinePath: (string | number | symbol)[] | null;
+		clearFormLevelErrors: boolean;
+	}
+) {
+	Errors.update(($errors) => {
+		traversePaths($errors, (pathData) => {
+			if (
+				pathData.path.length == 1 &&
+				pathData.path[0] == '_errors' &&
+				!options.clearFormLevelErrors
+			) {
+				return;
+			}
+			if (Array.isArray(pathData.value)) {
+				return pathData.set(undefined);
+			}
+		});
+
+		if (options.undefinePath) setPaths($errors, [options.undefinePath], undefined);
+
+		return $errors;
+	});
+}
+
+export function flattenErrors(errors: ValidationErrors<Record<string, unknown>>) {
+	return _flattenErrors(errors, []);
+}
+
+// TODO: Does it work with array-level errors?
+function _flattenErrors(
+	errors: ValidationErrors<Record<string, unknown>>,
+	path: string[]
+): { path: string; messages: string[] }[] {
+	const entries = Object.entries(errors);
+	return entries
+		.filter(([, value]) => value !== undefined)
+		.flatMap(([key, messages]) => {
+			if (Array.isArray(messages) && messages.length > 0) {
+				const currPath = path.concat([key]);
+				return { path: mergePath(currPath), messages };
+			} else {
+				return _flattenErrors(
+					errors[key] as unknown as ValidationErrors<Record<string, unknown>>,
+					path.concat([key])
+				);
+			}
+		});
 }

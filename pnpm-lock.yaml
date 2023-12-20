@@ -15,8 +15,8 @@ devDependencies:
     specifier: ^1.30.3
     version: 1.30.3(svelte@5.0.0-next.26)(vite@4.5.1)
   '@sveltejs/package':
-    specifier: ^2.2.3
-    version: 2.2.3(svelte@5.0.0-next.26)(typescript@5.3.3)
+    specifier: ^2.2.4
+    version: 2.2.4(svelte@5.0.0-next.26)(typescript@5.3.3)
   '@types/json-schema':
     specifier: ^7.0.15
     version: 7.0.15
@@ -550,8 +550,8 @@ packages:
       - supports-color
     dev: true
 
-  /@sveltejs/package@2.2.3(svelte@5.0.0-next.26)(typescript@5.3.3):
-    resolution: {integrity: sha512-iZEC5qw+2RIjfIAHR3O+IeokJIjVM/ieoxPxj6YmZCwu5JKFADtC4jzjSUJ7GkCMUQ4HqE7u4/3cCxXBocxi8A==}
+  /@sveltejs/package@2.2.4(svelte@5.0.0-next.26)(typescript@5.3.3):
+    resolution: {integrity: sha512-Mu0YeLCEM76BM36rqtPSw1sMXW+GS2t0eGaiQ0/ZHWXgte03OIdkQogCKzSxCWXmj0qyY1udTB2oZDZ7MkGsRw==}
     engines: {node: ^16.14 || >=18}
     hasBin: true
     peerDependencies:

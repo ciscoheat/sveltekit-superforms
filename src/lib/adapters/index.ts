@@ -5,9 +5,16 @@ import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { objectShape, type ObjectShape } from '$lib/jsonSchema/objectShape.js';
 
+export { memoize as adapter } from '$lib/memoize.js';
+
+import toSchema from 'to-json-schema';
+import type { Options as SchemaOptions } from 'to-json-schema';
+export type { Options as SchemaOptions } from 'to-json-schema';
+
 export { zod } from './zod.js';
 export { ajv } from './ajv.js';
 export { valibot } from './valibot.js';
+export { arktype } from './arktype.js';
 
 export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'arktype' | 'unknown';
 
@@ -54,6 +61,14 @@ export function mapAdapter<T extends Record<string, unknown>>(
 	}
 	return adapterCache.get(adapter) as MappedValidationAdapter<T>;
 }
+
+export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOptions) => {
+	options = {
+		objects: { additionalProperties: false, ...(options?.objects ?? {}) },
+		...(options ?? {})
+	};
+	return toSchema(value, options) as JSONSchema;
+};
 
 const adapterCache = new WeakMap<
 	ValidationAdapter<Record<string, unknown>>,

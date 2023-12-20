@@ -4,9 +4,7 @@ import type { Readable, Writable, Updater } from 'svelte/store';
 import type { TaintedFields, SuperValidated, Validators } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPathLeaves, FormPathType } from '../stringPath.js';
-//import type { formEnhance, SuperFormEvents } from './formEnhance.js';
 import type { Schema } from '@decs/typeschema';
-import type { SuperFormEvents } from './formEnhance.js';
 
 export {
 	intProxy,
@@ -31,6 +29,20 @@ export {
 export { defaultValues } from '../jsonSchema/defaultValues.js';
 
 export { actionResult } from '../actionResult.js';
+
+export type FormUpdate = (
+	result: Exclude<ActionResult, { type: 'error' }>,
+	untaint?: boolean
+) => Promise<void>;
+
+export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
+	FormOptions<T, M>,
+	'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'
+>;
+
+export type SuperFormEventList<T extends Record<string, unknown>, M> = {
+	[Property in keyof SuperFormEvents<T, M>]-?: NonNullable<SuperFormEvents<T, M>[Property]>[];
+};
 
 /**
  * Helper type for making onResult strongly typed with ActionData.

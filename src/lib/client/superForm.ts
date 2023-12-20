@@ -7,7 +7,10 @@ import {
 import type { ActionResult, Page } from '@sveltejs/kit';
 import type {
 	FormOptions,
+	FormUpdate,
 	SuperForm,
+	SuperFormEventList,
+	SuperFormEvents,
 	SuperFormSnapshot,
 	TaintOption,
 	ValidateOptions
@@ -35,20 +38,6 @@ import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 
 ///// Formenhance types /////
-
-export type FormUpdate = (
-	result: Exclude<ActionResult, { type: 'error' }>,
-	untaint?: boolean
-) => Promise<void>;
-
-export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
-	FormOptions<T, M>,
-	'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'
->;
-
-export type SuperFormEventList<T extends Record<string, unknown>, M> = {
-	[Property in keyof SuperFormEvents<T, M>]-?: NonNullable<SuperFormEvents<T, M>[Property]>[];
-};
 
 type ValidationResponse<
 	Success extends Record<string, unknown> | undefined = Record<

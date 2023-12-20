@@ -707,6 +707,17 @@ export function superForm<
 
 		validate: validate as typeof validateForm<T>,
 
+		allErrors: AllErrors,
+		posted: Posted,
+
+		reset: (options?) => {
+			return Form_reset(
+				options?.keepMessage ? get(Message) : undefined,
+				options?.data,
+				options?.id
+			);
+		},
+
 		/*
 		return formEnhance(
 		el,
@@ -747,8 +758,6 @@ export function superForm<
 				if (events.onUpdate) formEvents.onUpdate.push(events.onUpdate);
 				if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
 			}
-
-			///// formEnhance /////
 
 			{
 				// Now we know that we are upgraded, so we can enable the tainted form option.
@@ -1128,14 +1137,6 @@ export function superForm<
 					return validationResponse;
 				});
 			}
-
-			///////////////////////
-		},
-
-		allErrors: AllErrors,
-		posted: Posted,
-
-		reset: (options?) =>
-			Form_reset(options?.keepMessage ? get(Message) : undefined, options?.data, options?.id)
+		}
 	};
 }

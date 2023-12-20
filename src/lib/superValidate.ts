@@ -33,7 +33,6 @@ type SuperValidateData<T extends object> = RequestEvent | Request | SuperValidat
 export type SuperValidateOptions<T extends object> = Partial<{
 	errors: boolean;
 	id: string;
-	// TODO: Rename preprocessed to passthrough
 	preprocessed: (keyof T)[];
 	defaults: T;
 	jsonSchema: JSONSchema;
@@ -120,12 +119,13 @@ export async function superValidate<
 	// TODO: Form id must be derived on schema as in v1? (can skip undefined)
 	// Depends on how id is updated when load function is invalidated.
 	return {
-		id: parsed.id ?? options?.id ?? (parsed.posted ? undefined : formId()),
+		id: parsed.id ?? options?.id ?? validation.id,
 		valid,
 		posted: parsed.posted,
 		errors: errors as ValidationErrors<T>,
 		data: outputData as T,
-		constraints: validation.constraints
+		constraints: validation.constraints,
+		shape: validation.shape
 	};
 }
 

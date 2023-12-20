@@ -337,12 +337,12 @@ describe('Default values', () => {
 
 	test('Zod enums and native enums', async () => {
 		const form = await superValidate(null, zod(enumschema));
-		delete form.id;
 
 		expect(form.valid).toEqual(false);
 		expect(form.posted).toEqual(false);
 
 		expect(form).toStrictEqual({
+			id: '1j8sq2z',
 			valid: false,
 			errors: {},
 			data: {
@@ -355,6 +355,10 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				fruitsstring: { required: true }
+			},
+			shape: {
+				fruit: {},
+				fruitsstring: {}
 			}
 		});
 	});
@@ -368,9 +372,9 @@ describe('Default values', () => {
 		data.set('color', 'GRAY');
 
 		const form = await superValidate(data, zod(enumschema));
-		delete form.id;
 
 		expect(form).toStrictEqual({
+			id: '1j8sq2z',
 			posted: true,
 			valid: true,
 			errors: {},
@@ -383,6 +387,10 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				fruitsstring: { required: true }
+			},
+			shape: {
+				fruit: {},
+				fruitsstring: {}
 			}
 		});
 	});
@@ -395,9 +403,9 @@ describe('Default values', () => {
 		});
 
 		const form = await superValidate(null, zod(schema));
-		delete form.id;
 
 		expect(form).toStrictEqual({
+			id: '1diyedk',
 			valid: false,
 			errors: {},
 			data: { agree: false, number: NaN },
@@ -405,7 +413,8 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				number: { min: Number.MIN_VALUE }
-			}
+			},
+			shape: {}
 		});
 	});
 
@@ -607,7 +616,8 @@ describe('Default values', () => {
 			errors: {},
 			data: { name: '', id: 0 },
 			posted: false,
-			constraints: { name: { required: true }, id: { required: true } }
+			constraints: { name: { required: true }, id: { required: true } },
+			shape: {}
 		});
 
 		const form2 = await superValidate(zod(schema.refine(() => false, 'Some error')), {
@@ -620,7 +630,8 @@ describe('Default values', () => {
 			errors: {},
 			data: { name: '', id: 0 },
 			posted: false,
-			constraints: { name: { required: true }, id: { required: true } }
+			constraints: { name: { required: true }, id: { required: true } },
+			shape: {}
 		});
 	});
 
@@ -637,9 +648,9 @@ describe('Default values', () => {
 		});
 
 		const form = await superValidate(zod(imageCreationFormSchema));
-		delete form.id;
 
 		expect(form).toStrictEqual({
+			id: '1tomocp',
 			valid: false,
 			errors: {},
 			data: {
@@ -648,6 +659,9 @@ describe('Default values', () => {
 				numbers: {}
 			},
 			posted: false,
+			shape: {
+				promptMetaData: {}
+			},
 			constraints: {
 				textresource: { required: true },
 				numbers: { required: true }

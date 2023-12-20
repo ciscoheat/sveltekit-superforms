@@ -167,9 +167,9 @@ describe('Errors', async () => {
 		data.append('flavours', 'Raspberry ripple');
 
 		const form = await superValidate(data, zod(schema));
-		delete form.id;
 
 		expect(form).toStrictEqual({
+			id: '1ozqkwe',
 			valid: false,
 			errors: { _errors: ["Can't order more flavours than scoops!"] },
 			data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
@@ -177,6 +177,9 @@ describe('Errors', async () => {
 			constraints: {
 				scoops: { min: 1 },
 				flavours: { minlength: 1 }
+			},
+			shape: {
+				flavours: {}
 			}
 		});
 	});

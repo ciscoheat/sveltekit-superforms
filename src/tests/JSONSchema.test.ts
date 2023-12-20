@@ -6,71 +6,86 @@ import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { objectShape } from '$lib/jsonSchema/objectShape.js';
 import { z } from 'zod';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
+
+const schema = {
+	type: 'object',
+	required: [
+		'string',
+		'email',
+		'bool',
+		'agree',
+		'number',
+		'proxyNumber',
+		'nullableString',
+		'proxyString',
+		'trimmedString'
+	],
+	properties: {
+		string: {
+			type: 'string',
+			default: 'Shigeru'
+		},
+		email: {
+			type: 'string'
+		},
+		bool: {
+			type: 'boolean'
+		},
+		agree: {
+			type: 'boolean',
+			const: true,
+			default: true
+		},
+		number: {
+			type: 'number'
+		},
+		proxyNumber: {
+			type: 'number',
+			default: 0
+		},
+		nullableString: {
+			type: ['string', 'null']
+		},
+		nullishString: {
+			type: ['string', 'null']
+		},
+		optionalString: {
+			type: ['string']
+		},
+		proxyString: {
+			type: ['string']
+		},
+		trimmedString: {
+			type: ['string']
+		},
+		coercedNumber: {
+			type: 'number',
+			default: 0
+		},
+		coercedDate: {
+			type: 'string',
+			format: 'date-time'
+		}
+	}
+} satisfies JSONSchema7;
+
+const defaultTestSchema: JSONSchema7 = {
+	type: 'object',
+	properties: {
+		name: { type: 'string' },
+		age: { type: 'integer', default: 25 },
+		email: { type: 'string', format: 'email' },
+		gender: {
+			type: 'string',
+			anyOf: [{ enum: ['male', 'female'] }, { type: 'string', default: 'other' }]
+		}
+	},
+	required: ['gender']
+};
 
 describe('Default values', () => {
 	it('should map primitive types to default values', () => {
-		const schema = {
-			type: 'object',
-			required: [
-				'string',
-				'email',
-				'bool',
-				'agree',
-				'number',
-				'proxyNumber',
-				'nullableString',
-				'proxyString',
-				'trimmedString'
-			],
-			properties: {
-				string: {
-					type: 'string',
-					default: 'Shigeru'
-				},
-				email: {
-					type: 'string'
-				},
-				bool: {
-					type: 'boolean'
-				},
-				agree: {
-					type: 'boolean',
-					const: true,
-					default: true
-				},
-				number: {
-					type: 'number'
-				},
-				proxyNumber: {
-					type: 'number',
-					default: 0
-				},
-				nullableString: {
-					type: ['string', 'null']
-				},
-				nullishString: {
-					type: ['string', 'null']
-				},
-				optionalString: {
-					type: ['string']
-				},
-				proxyString: {
-					type: ['string']
-				},
-				trimmedString: {
-					type: ['string']
-				},
-				coercedNumber: {
-					type: 'number',
-					default: 0
-				},
-				coercedDate: {
-					type: 'string',
-					format: 'date-time'
-				}
-			}
-		} satisfies JSONSchema7;
-
 		expect(defaultValues(schema)).toEqual({
 			agree: true,
 			string: 'Shigeru',
@@ -243,20 +258,6 @@ describe('Default values', () => {
 	});
 
 	it('should map the default value of a union (anyOf) if only one default value exists.', () => {
-		const defaultTestSchema: JSONSchema7 = {
-			type: 'object',
-			properties: {
-				name: { type: 'string' },
-				age: { type: 'integer', default: 25 },
-				email: { type: 'string', format: 'email' },
-				gender: {
-					type: 'string',
-					anyOf: [{ enum: ['male', 'female'] }, { type: 'string', default: 'other' }]
-				}
-			},
-			required: ['gender']
-		};
-
 		expect(defaultValues(defaultTestSchema)).toEqual({
 			name: undefined,
 			email: undefined,
@@ -348,5 +349,12 @@ describe('Object shapes', () => {
 		expect(objectShape(schema)).toEqual({
 			numberArray: {}
 		});
+	});
+});
+
+describe('Schema hash function', () => {
+	it('should return a hash for a schema based on types and properties', () => {
+		expect(schemaHash(schema)).toBe('1ipmquz');
+		expect(schemaHash(defaultTestSchema)).toBe('1k62ygs');
 	});
 });

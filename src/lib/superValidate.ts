@@ -96,7 +96,7 @@ export async function superValidate<
 			: { success: false, issues: [] };
 
 	const valid = status.success;
-	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validation.objects);
+	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validation.shape);
 
 	const finalData = valid ? status.data : parsed.data;
 	let outputData: typeof finalData;

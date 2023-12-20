@@ -1,5 +1,6 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import type { ObjectShape } from './jsonSchema/objectShape.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
@@ -30,13 +31,14 @@ export type SuperValidated<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
 > = {
+	id: string;
 	valid: boolean;
 	posted: boolean;
 	errors: ValidationErrors<T>;
 	data: T;
 	constraints: C extends 'with-constraints' ? InputConstraints<T> : never;
+	shape: ObjectShape;
 	message?: M;
-	id?: string;
 };
 
 export type ZodTypeInfo = {

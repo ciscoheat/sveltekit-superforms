@@ -9,6 +9,7 @@ export { memoize as adapter } from '$lib/memoize.js';
 
 import toSchema from 'to-json-schema';
 import type { Options as SchemaOptions } from 'to-json-schema';
+import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 export type { Options as SchemaOptions } from 'to-json-schema';
 
 export { zod } from './zod.js';
@@ -43,7 +44,8 @@ export interface MappedValidationAdapter<T extends Record<string, unknown>>
 	extends ValidationAdapter<T> {
 	defaults: T;
 	constraints: InputConstraints<T>;
-	objects: ObjectShape;
+	shape: ObjectShape;
+	id: string;
 }
 
 export function mapAdapter<T extends Record<string, unknown>>(
@@ -55,7 +57,8 @@ export function mapAdapter<T extends Record<string, unknown>>(
 			...adapter,
 			constraints: adapter.constraints ?? schemaConstraints(jsonSchema),
 			defaults: adapter.defaults ?? defaultValues(jsonSchema),
-			objects: objectShape(jsonSchema)
+			shape: objectShape(jsonSchema),
+			id: schemaHash(jsonSchema)
 		};
 		adapterCache.set(adapter, mapped);
 	}

@@ -22,12 +22,14 @@ export {
 export {
 	superValidate,
 	//superValidateSync,
-	//actionResult,
 	message,
 	setMessage,
 	setError
-	//defaultValues
 } from '../superValidate.js';
+
+export { defaultValues } from '../jsonSchema/defaultValues.js';
+
+export { actionResult } from '../actionResult.js';
 
 /**
  * Helper type for making onResult strongly typed with ActionData.

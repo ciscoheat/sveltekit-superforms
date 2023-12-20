@@ -1,7 +1,7 @@
 import { SchemaError } from '$lib/index.js';
 import { schemaInfo, type JSONSchema, type SchemaType } from './index.js';
 
-export function defaultValues<T = Record<string, unknown>>(
+export function defaultValues<T extends Record<string, unknown> = Record<string, unknown>>(
 	schema: JSONSchema,
 	isOptional = false,
 	path: string[] = []

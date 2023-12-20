@@ -5,9 +5,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     event.request.method === 'POST' &&
     event.request.url.includes('?throw-hooks-error')
   ) {
-    throw error(403, {
-      message: 'Hooks error'
-    });
+    error(403, {
+            message: 'Hooks error'
+          });
   }
 
   return await resolve(event);

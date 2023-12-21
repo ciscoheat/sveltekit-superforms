@@ -140,28 +140,19 @@ export function superForm<
 
 	form = form as SuperValidated<T, M>;
 
-	/**
-	 * Store data, subscribed to to avoid "get" usage.
-	 */
-	const Data = {
-		formId: options.id ?? form.id,
-		shape: clone(form.shape)
-	};
-
-	const _initialFormId = Data.formId;
+	const _initialFormId = options.id ?? form.id;
 	const _currentPage = get(page);
 
 	// Check multiple id's
 	if (options.warnings?.duplicateId !== false) {
-		const initialId = _initialFormId;
 		if (!formIds.has(_currentPage)) {
-			formIds.set(_currentPage, new Set([initialId]));
+			formIds.set(_currentPage, new Set([_initialFormId]));
 		} else {
 			const currentForms = formIds.get(_currentPage);
-			if (currentForms?.has(initialId)) {
-				console.warn(multipleFormIdError(initialId));
+			if (currentForms?.has(_initialFormId)) {
+				console.warn(multipleFormIdError(_initialFormId));
 			} else {
-				currentForms?.add(initialId);
+				currentForms?.add(_initialFormId);
 			}
 		}
 	}
@@ -184,7 +175,7 @@ export function superForm<
 	if (!browser && _currentPage.form && typeof _currentPage.form === 'object') {
 		const postedData = _currentPage.form;
 		for (const postedForm of Context_findValidationForms(postedData).reverse()) {
-			if (postedForm.id == Data.formId && !initializedForms.has(postedForm)) {
+			if (postedForm.id == _initialFormId && !initializedForms.has(postedForm)) {
 				// Prevent multiple "posting" that can happen when components are recreated.
 				initializedForms.set(postedData, postedData);
 
@@ -211,22 +202,24 @@ export function superForm<
 
 	///// Roles ///////////////////////////////////////////////////////
 
+	/**
+	 * Container for store data, subscribed to with Unsubscriptions
+	 * to avoid "get" usage.
+	 */
+	const Data = {
+		formId: form.id,
+		shape: form.shape,
+		form: form.data,
+		constraints: form.constraints,
+		posted: form.posted,
+		errors: form.errors,
+		lastChanges: [] as (string | number | symbol)[][],
+		message: form.message,
+		tainted: undefined as TaintedFields<T> | undefined
+	};
+
 	const FormId = writable<string>(options.id ?? form.id);
 	const Shape = writable(form.shape);
-
-	// Store subscriptions, to avoid using get
-	const Unsubscriptions: (() => void)[] = [
-		FormId.subscribe((id) => (Data.formId = id)),
-		Shape.subscribe((shape) => (Data.shape = shape))
-	];
-
-	function Unsubscriptions_add(func: () => void) {
-		Unsubscriptions.push(func);
-	}
-
-	function Unsubscriptions_unsubscribe() {
-		Unsubscriptions.forEach((unsub) => unsub());
-	}
 
 	const Context = {
 		taintedMessage: options.taintedMessage,
@@ -408,10 +401,6 @@ export function superForm<
 
 	const Tainted = writable<TaintedFields<T> | undefined>();
 
-	function Tainted_data() {
-		return get(Tainted);
-	}
-
 	function Tainted_isTainted(obj: unknown): boolean {
 		if (obj === null) throw new SuperFormError('$tainted store contained null');
 
@@ -427,7 +416,7 @@ export function superForm<
 		let shouldValidate = options.validationMethod === 'oninput';
 
 		if (!shouldValidate) {
-			const errorContent = get(Errors);
+			const errorContent = Data.errors;
 
 			const errorNode = errorContent
 				? pathExists(errorContent, path, {
@@ -503,7 +492,7 @@ export function superForm<
 					updated = updated || (await Tainted__validate(path, taintOptions));
 				}
 				if (!updated) {
-					await validateObjectErrors(options, Form, Errors, get(Tainted));
+					await validateObjectErrors(options, Form, Errors, Data.tainted);
 				}
 			}
 		}
@@ -512,6 +501,30 @@ export function superForm<
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newData: T) {
 		Tainted.set(tainted);
 		Context_setTaintedFormState(newData);
+	}
+
+	// Subscribe to certain stores and store the current
+	// value in Data, to avoid using get
+	const Unsubscriptions: (() => void)[] = [
+		// eslint-disable-next-line dci-lint/private-role-access
+		Tainted.subscribe((tainted) => (Data.tainted = tainted)),
+		// eslint-disable-next-line dci-lint/private-role-access
+		Form.subscribe((form) => (Data.form = form)),
+		FormId.subscribe((id) => (Data.formId = id)),
+		Shape.subscribe((shape) => (Data.shape = shape)),
+		Constraints.subscribe((constraints) => (Data.constraints = constraints)),
+		Posted.subscribe((posted) => (Data.posted = posted)),
+		Errors.subscribe((errors) => (Data.errors = errors)),
+		LastChanges.subscribe((lastChanges) => (Data.lastChanges = lastChanges)),
+		Message.subscribe((message) => (Data.message = message))
+	];
+
+	function Unsubscriptions_add(func: () => void) {
+		Unsubscriptions.push(func);
+	}
+
+	function Unsubscriptions_unsubscribe() {
+		Unsubscriptions.forEach((unsub) => unsub());
 	}
 
 	// Timers
@@ -583,10 +596,9 @@ export function superForm<
 	if (browser) {
 		beforeNavigate((nav) => {
 			if (options.taintedMessage && !get(Submitting)) {
-				const taintStatus = Tainted_data();
 				if (
-					taintStatus &&
-					Tainted_isTainted(taintStatus) &&
+					Data.tainted &&
+					Tainted_isTainted(Data.tainted) &&
 					!window.confirm(options.taintedMessage)
 				) {
 					nav.cancel();
@@ -650,9 +662,9 @@ export function superForm<
 		if (path === undefined) {
 			return clientValidation<T, M>(
 				options.validators,
-				get(Form),
+				Data.form,
 				Data.formId,
-				get(Constraints),
+				Data.constraints,
 				false
 			);
 		}
@@ -684,13 +696,13 @@ export function superForm<
 		capture() {
 			return {
 				valid: initialForm.valid,
-				posted: get(Posted),
-				errors: get(Errors),
-				data: get(Form),
-				constraints: get(Constraints),
-				message: get(Message),
+				posted: Data.posted,
+				errors: Data.errors,
+				data: Data.form,
+				constraints: Data.constraints,
+				message: Data.message,
 				id: Data.formId,
-				tainted: get(Tainted),
+				tainted: Data.tainted,
 				shape: Data.shape
 			};
 		},
@@ -706,7 +718,7 @@ export function superForm<
 
 		reset(options?) {
 			return Form_reset(
-				options?.keepMessage ? get(Message) : undefined,
+				options?.keepMessage ? Data.message : undefined,
 				options?.data,
 				options?.id
 			);
@@ -766,7 +778,7 @@ export function superForm<
 				const immediateUpdate = isImmediateInput(e.target);
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-				const changes = get(LastChanges);
+				const changes = Data.lastChanges;
 				if (!changes.length) return;
 
 				const target = e.target instanceof HTMLElement ? e.target : null;
@@ -788,7 +800,7 @@ export function superForm<
 				const immediateUpdate = isImmediateInput(e.target);
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-				const changes = get(LastChanges);
+				const changes = Data.lastChanges;
 				if (!changes.length) return;
 
 				const target = e.target instanceof HTMLElement ? e.target : null;
@@ -796,7 +808,7 @@ export function superForm<
 				for (const change of changes) {
 					const hadErrors =
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						immediateUpdate || traversePath(get(Errors), change as any);
+						immediateUpdate || traversePath(Data.errors, change as any);
 					if (
 						immediateUpdate ||
 						(typeof hadErrors == 'object' && hadErrors.key in hadErrors.parent)
@@ -863,13 +875,12 @@ export function superForm<
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
 
-					// TODO: More optimized way to get all this data?
 					const validation = await clientValidation(
 						noValidate ? undefined : options.validators,
-						get(Form),
+						Data.form,
 						Data.formId,
-						get(Constraints),
-						get(Posted)
+						Data.constraints,
+						Data.posted
 					);
 
 					if (!validation.valid) {

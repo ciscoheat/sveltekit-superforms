@@ -7,20 +7,20 @@ import { schemaInfo, type JSONSchema } from './index.js';
  * Used in error mapping to determine whether to add errors to an _error field
  * (as in arrays and objects), or directly on the field itself.
  */
-export type ObjectShape = {
-	[K in string]: ObjectShape;
+export type SchemaShape = {
+	[K in string]: SchemaShape;
 };
 
-export function objectShape(schema: JSONSchema, path: string[] = []): ObjectShape {
+export function objectShape(schema: JSONSchema, path: string[] = []): SchemaShape {
 	if (schema.type !== 'object') {
 		throw new SchemaError('Only objects can use errorShape', path);
 	}
 
 	// Can be casted since it guaranteed to be an object
-	return _objectShape(schema, path) as ObjectShape;
+	return _objectShape(schema, path) as SchemaShape;
 }
 
-function _objectShape(schema: JSONSchema7Definition, path: string[]): ObjectShape | undefined {
+function _objectShape(schema: JSONSchema7Definition, path: string[]): SchemaShape | undefined {
 	if (typeof schema === 'boolean') {
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
@@ -42,7 +42,7 @@ function _objectShape(schema: JSONSchema7Definition, path: string[]): ObjectShap
 	}
 
 	if (info.properties) {
-		const output: ObjectShape = {};
+		const output: SchemaShape = {};
 		for (const [key, prop] of Object.entries(info.properties)) {
 			const shape = _objectShape(prop, [...path, key]);
 			if (shape) output[key] = shape;

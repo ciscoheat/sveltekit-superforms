@@ -122,46 +122,38 @@ export function superForm<
 		}
 	}
 
-	let _formId: string | undefined = options.id;
-
-	// Normalize form argument to SuperValidated<T, M>
+	// TODO: Throw error if no form found?
 	if (!form || Context_isValidationObject(form) === false) {
-		// TODO: Throw error if no form found?
-		/*
-    if (options.warnings?.noValidationAndConstraints !== false) {
-      console.warn(
-        (form
-          ? 'Form data sent directly to superForm instead of through superValidate. No initial data validation is made. '
-          : 'No form data sent to superForm, schema type safety cannot be guaranteed. ') +
-          'Also, no constraints will exist for the form. ' +
-          'Set the warnings.noValidationAndConstraints option to false to disable this warning.'
-      );
-    }
-    form = {
-      valid: false,
-      posted: false,
-      errors: {},
-      data: form ?? {},
-      constraints: {}
-    };
-    */
-	} else {
-		if (_formId === undefined) _formId = form.id;
+		throw new SuperFormError(
+			'No form data sent to superForm. ' +
+				'Make sure the output from superValidate is used and not null or undefined.'
+		);
 	}
 
-	const _initialFormId = _formId;
+	/**
+	 * Store data, subscribed to to avoid get usage.
+	 */
+	const Data = {
+		// FormId store
+		formId: options.id ?? form.id,
+		// Shape store
+		shape: {},
+		initialFormId: options.id ?? form.id
+	};
+
 	const _currentPage = get(page);
 
 	// Check multiple id's
 	if (options.warnings?.duplicateId !== false) {
+		const initialId = Data.initialFormId;
 		if (!formIds.has(_currentPage)) {
-			formIds.set(_currentPage, new Set([_initialFormId]));
+			formIds.set(_currentPage, new Set([initialId]));
 		} else {
 			const currentForms = formIds.get(_currentPage);
-			if (currentForms?.has(_initialFormId)) {
-				console.warn(multipleFormIdError(_initialFormId));
+			if (currentForms?.has(initialId)) {
+				console.warn(multipleFormIdError(initialId));
 			} else {
-				currentForms?.add(_initialFormId);
+				currentForms?.add(initialId);
 			}
 		}
 	}
@@ -185,7 +177,7 @@ export function superForm<
 
 	if (!browser && postedData && typeof postedData === 'object') {
 		for (const postedForm of Context_findValidationForms(postedData).reverse()) {
-			if (postedForm.id === _formId && !initializedForms.has(postedForm)) {
+			if (postedForm.id == Data.formId && !initializedForms.has(postedForm)) {
 				// Prevent multiple "posting" that can happen when components are recreated.
 				initializedForms.set(postedData, postedData);
 
@@ -215,7 +207,7 @@ export function superForm<
 
 	///// Roles ///////////////////////////////////////////////////////
 
-	const FormId = writable<string | undefined>(_formId);
+	const FormId = writable<string | undefined>(Data.formId);
 
 	const Context = {
 		taintedMessage: options.taintedMessage,
@@ -285,6 +277,7 @@ export function superForm<
 		};
 	}
 
+	// TODO: Store subscriptions, to avoid using get
 	const Unsubscriptions: (() => void)[] = [FormId.subscribe((id) => (_formId = id))];
 
 	function Unsubscriptions_add(func: () => void) {

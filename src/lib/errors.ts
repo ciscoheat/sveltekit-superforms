@@ -1,11 +1,11 @@
-import type { ObjectShape } from './jsonSchema/objectShape.js';
+import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import type { ValidationIssue } from '@decs/typeschema';
 import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
 import { SuperFormError, type ValidationErrors } from './index.js';
 import type { Writable } from 'svelte/store';
 import { mergePath } from './stringPath.js';
 
-export function mapErrors(errors: ValidationIssue[], shape: ObjectShape) {
+export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	//console.log('===', errors.length, 'errors', shape);
 	const output: Record<string, unknown> = {};
 	for (const error of errors) {

@@ -1,6 +1,6 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
-import type { ObjectShape } from './jsonSchema/objectShape.js';
+import type { SchemaShape } from './jsonSchema/schemaShape.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
@@ -37,7 +37,7 @@ export type SuperValidated<
 	errors: ValidationErrors<T>;
 	data: T;
 	constraints: C extends 'with-constraints' ? InputConstraints<T> : never;
-	shape: ObjectShape;
+	shape: SchemaShape;
 	message?: M;
 };
 

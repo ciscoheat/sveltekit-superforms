@@ -1,11 +1,6 @@
-import { SchemaError, type SuperStruct } from '$lib/index.js';
 import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
 
 export function schemaHash(schema: JSONSchema): string {
-	if (schema.type != 'object') {
-		throw new SchemaError('Schema hash must be created from an object schema.');
-	}
-
 	return hashCode(_schemaHash(schemaInfo(schema, false), 0));
 }
 

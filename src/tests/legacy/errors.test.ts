@@ -1,5 +1,5 @@
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
-import { objectShape } from '$lib/jsonSchema/objectShape.js';
+import { objectShape } from '$lib/jsonSchema/schemaShape.js';
 import { setError, superValidate } from '$lib/superValidate.js';
 import { expect, test, describe, assert } from 'vitest';
 import { z } from 'zod';

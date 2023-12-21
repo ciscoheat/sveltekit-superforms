@@ -3,7 +3,7 @@ import type { Schema, ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
-import { objectShape, type ObjectShape } from '$lib/jsonSchema/objectShape.js';
+import { objectShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
 
 export { memoize as adapter } from '$lib/memoize.js';
 
@@ -44,7 +44,7 @@ export interface MappedValidationAdapter<T extends Record<string, unknown>>
 	extends ValidationAdapter<T> {
 	defaults: T;
 	constraints: InputConstraints<T>;
-	shape: ObjectShape;
+	shape: SchemaShape;
 	id: string;
 }
 

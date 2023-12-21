@@ -3,7 +3,7 @@ import type { JSONSchema7 } from 'json-schema';
 import { schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
-import { objectShape } from '$lib/jsonSchema/objectShape.js';
+import { objectShape } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';

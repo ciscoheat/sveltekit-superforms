@@ -45,14 +45,14 @@ export function schemaInfo(
 		schema.items && types.includes('array')
 			? ((Array.isArray(schema.items) ? schema.items : [schema.items]).filter(
 					(s) => typeof s !== 'boolean'
-			  ) as JSONSchema7[])
+				) as JSONSchema7[])
 			: undefined;
 
 	const properties =
 		schema.properties && types.includes('object')
 			? (Object.fromEntries(
 					Object.entries(schema.properties).filter(([, value]) => typeof value !== 'boolean')
-			  ) as { [key: string]: JSONSchema7 })
+				) as { [key: string]: JSONSchema7 })
 			: undefined;
 
 	const union = unionInfo(schema)?.filter((u) => u.type !== 'null');

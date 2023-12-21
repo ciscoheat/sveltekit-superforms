@@ -3,6 +3,7 @@ import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo } from './jsonSchema/index.js';
+import { defaultValues } from './jsonSchema/defaultValues.js';
 
 type ParsedData = {
 	id: string | undefined;
@@ -41,26 +42,6 @@ export async function parseRequest<T extends object>(
 
 	return parsed;
 }
-
-/**
- * Check what data to validate. If no parsed data, the default entity
- * may still have to be validated if there are side-effects or errors
- * should be displayed.
- */
-/*
-function dataToValidate<T extends AnyZodObject>(
-	parsed: ParsedData,
-	schemaData: JSONSchema7
-): Record<string, unknown> | undefined {
-	if (!parsed.data) {
-		return schemaData.hasEffects || schemaData.opts.errors === true
-			? schemaData.entityInfo.defaultEntity
-			: undefined;
-	} else {
-		return parsed.data;
-	}
-}
-*/
 
 async function tryParseFormData<T extends object>(
 	request: Request,
@@ -219,19 +200,12 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 
 	const [type] = info.types;
 
-	// value can be returned immediately unless it's boolean, which
-	// means it could have been posted as a checkbox.
-	if (!value && type != 'boolean') {
-		//console.log(`No FormData for "${key}" (${type}).`);
-		return info.isNullable ? null : value;
-	}
+	if (key == 'coercedDate') console.log(`Parsing FormData "${key}": ${value}`, info);
 
-	// TODO: Probably better to merge default values later, to avoid this code:
-	/*
 	if (!value) {
-		const defaultValue = defaultValues(schema, isOptional, [key]);
+		const defaultValue = defaultValues(info, info.isOptional, [key]);
 
-		console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`, schema);
+		//console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`);
 
 		// defaultValue can be returned immediately unless it's boolean, which
 		// means it could have been posted as a checkbox.
@@ -241,9 +215,15 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 		if (info.isNullable) return null;
 		if (info.isOptional) return undefined;
 	}
-	*/
 
-	//console.log(`Parsing FormData "${key}": ${value}`, info);
+	/*
+	// value can be returned immediately unless it's boolean, which
+	// means it could have been posted as a checkbox.
+	if (!value && type != 'boolean') {
+		//console.log(`No FormData for "${key}" (${type}).`);
+		return info.isNullable ? null : value;
+	}
+	*/
 
 	function typeError() {
 		throw new SchemaError(
@@ -266,8 +246,11 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 			return parseFloat(value ?? '');
 		case 'boolean':
 			return Boolean(value == 'false' ? '' : value).valueOf();
-		case 'unix-time':
-			return new Date(value ?? '');
+		case 'unix-time': {
+			// Must return undefined for invalid dates due to https://github.com/Rich-Harris/devalue/issues/51
+			const date = new Date(value ?? '');
+			return !isNaN(date as unknown as number) ? date : undefined;
+		}
 		case 'bigint':
 			return BigInt(value ?? '.');
 		case 'symbol':

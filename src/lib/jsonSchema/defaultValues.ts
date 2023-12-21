@@ -82,7 +82,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		throw new SchemaError('Default values cannot have more than one type.', path);
 	} else if (info.types.length == 0) {
 		console.log('No type or format for property:', path);
-		console.dir(schema, { depth: 10 });
+		//console.dir(schema, { depth: 10 });
 		return undefined;
 	}
 

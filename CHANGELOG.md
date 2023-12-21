@@ -23,10 +23,4 @@ TODO:
 - Fields with default values don't have `required` in their constraints anymore.
 - Unions must have an explicit default value.
 - If no data, default values aren't parsed with the default data (no side-effects for default values)
-
-### Issues
-
-Strict mode/non-strict mode behavior:
-
-1. Non-existing fields will coerce to their default value.
-2. Non-existing fields will fail validation, unless default.
+- Numeric enums cannot be parsed with their string values anymore

@@ -7,7 +7,7 @@
 
 	export let data: PageData;
 
-	console.log('superValidate', data.form);
+	//console.log('superValidate', data.form);
 
 	let runTests = true;
 	let testErrors: string[] | undefined = undefined;

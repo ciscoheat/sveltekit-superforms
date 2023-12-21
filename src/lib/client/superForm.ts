@@ -134,18 +134,16 @@ export function superForm<
 	 * Store data, subscribed to to avoid get usage.
 	 */
 	const Data = {
-		// FormId store
 		formId: options.id ?? form.id,
-		// Shape store
-		shape: {},
-		initialFormId: options.id ?? form.id
+		shape: clone(form.shape)
 	};
 
+	const _initialFormId = Data.formId;
 	const _currentPage = get(page);
 
 	// Check multiple id's
 	if (options.warnings?.duplicateId !== false) {
-		const initialId = Data.initialFormId;
+		const initialId = _initialFormId;
 		if (!formIds.has(_currentPage)) {
 			formIds.set(_currentPage, new Set([initialId]));
 		} else {
@@ -175,11 +173,8 @@ export function superForm<
 	// Detect if a form is posted without JavaScript.
 	if (!browser && _currentPage.form && typeof _currentPage.form === 'object') {
 		const postedData = _currentPage.form;
-		let found = false;
-
 		for (const postedForm of Context_findValidationForms(postedData).reverse()) {
 			if (postedForm.id == Data.formId && !initializedForms.has(postedForm)) {
-				found = true;
 				// Prevent multiple "posting" that can happen when components are recreated.
 				initializedForms.set(postedData, postedData);
 
@@ -198,17 +193,30 @@ export function superForm<
 				break;
 			}
 		}
-		if (!found) form = clone(initialForm);
 	} else {
 		form = clone(initialForm);
 	}
 
-	// Underlying store for Errors
-	const _errors = writable(form.errors);
+	// From here, form is properly initialized
 
 	///// Roles ///////////////////////////////////////////////////////
 
-	const FormId = writable<string | undefined>(Data.formId);
+	const FormId = writable<string>(options.id ?? form.id);
+	const Shape = writable(form.shape);
+
+	// Store subscriptions, to avoid using get
+	const Unsubscriptions: (() => void)[] = [
+		FormId.subscribe((id) => (Data.formId = id)),
+		Shape.subscribe((shape) => (Data.shape = shape))
+	];
+
+	function Unsubscriptions_add(func: () => void) {
+		Unsubscriptions.push(func);
+	}
+
+	function Unsubscriptions_unsubscribe() {
+		Unsubscriptions.forEach((unsub) => unsub());
+	}
 
 	const Context = {
 		taintedMessage: options.taintedMessage,
@@ -248,7 +256,7 @@ export function superForm<
 
 	function Context_useEnhanceEnabled() {
 		options.taintedMessage = Context.taintedMessage;
-		if (_formId === undefined) FormId.set(Context_randomId());
+		if (Data.formId === undefined) FormId.set(Context_randomId());
 	}
 
 	function Context_newFormStore(data: (typeof form)['data']) {
@@ -278,19 +286,12 @@ export function superForm<
 		};
 	}
 
-	// TODO: Store subscriptions, to avoid using get
-	const Unsubscriptions: (() => void)[] = [FormId.subscribe((id) => (_formId = id))];
-
-	function Unsubscriptions_add(func: () => void) {
-		Unsubscriptions.push(func);
-	}
-
-	function Unsubscriptions_unsubscribe() {
-		Unsubscriptions.forEach((unsub) => unsub());
-	}
-
 	// Stores for the properties of SuperValidated<T, M>
 	const Form = Context_newFormStore(form.data);
+
+	function Form_set(data: T, options: { taint?: TaintOption } = {}) {
+		return Form.set(data, options);
+	}
 
 	// Check for nested objects, throw if datatype isn't json
 	function Form_checkForNestedData(key: string, value: unknown) {
@@ -366,7 +367,7 @@ export function superForm<
 		}
 
 		for (const newForm of forms) {
-			if (newForm.id !== _formId) continue;
+			if (newForm.id !== Data.formId) continue;
 			await Form_updateFromValidation(
 				newForm as SuperValidated<T, M>,
 				untaint ?? (result.status >= 200 && result.status < 300)
@@ -379,6 +380,7 @@ export function superForm<
 	const Constraints = writable(form.constraints);
 	const Posted = writable(false);
 
+	const _errors = writable(form.errors);
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
@@ -544,8 +546,7 @@ export function superForm<
 
 		// Form data is not tainted when rebinding.
 		// Prevents object errors from being revalidated after rebind.
-		// eslint-disable-next-line dci-lint/private-role-access
-		Form.set(form.data, { taint: 'ignore' });
+		Form_set(form.data, { taint: 'ignore' });
 		Message.set(message);
 		Errors.set(form.errors);
 		FormId.set(form.id);
@@ -607,7 +608,7 @@ export function superForm<
 					const forms = Context_findValidationForms(actionData);
 					for (const newForm of forms) {
 						//console.log('🚀~ ActionData ~ newForm:', newForm.id);
-						if (newForm.id !== _formId || initializedForms.has(newForm)) {
+						if (newForm.id !== Data.formId || initializedForms.has(newForm)) {
 							continue;
 						}
 
@@ -622,7 +623,7 @@ export function superForm<
 					const forms = Context_findValidationForms(pageUpdate.data);
 					for (const newForm of forms) {
 						//console.log('🚀 ~ PageData ~ newForm:', newForm.id);
-						if (newForm.id !== _formId || initializedForms.has(newForm)) {
+						if (newForm.id !== Data.formId || initializedForms.has(newForm)) {
 							continue;
 						}
 
@@ -641,7 +642,7 @@ export function superForm<
 			return clientValidation<T, M>(
 				options.validators,
 				get(Form),
-				_formId,
+				Data.formId,
 				get(Constraints),
 				false
 			);
@@ -679,8 +680,9 @@ export function superForm<
 				data: get(Form),
 				constraints: get(Constraints),
 				message: get(Message),
-				id: _formId,
-				tainted: get(Tainted)
+				id: Data.formId,
+				tainted: get(Tainted),
+				shape: Data.shape
 			};
 		},
 
@@ -742,384 +744,379 @@ export function superForm<
 				if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
 			}
 
-			{
-				// Now we know that we are upgraded, so we can enable the tainted form option.
-				Context_useEnhanceEnabled();
+			// Now we know that we are upgraded, so we can enable the tainted form option.
+			Context_useEnhanceEnabled();
 
-				// Using this type in the function argument causes a type recursion error.
-				const errors = Errors;
+			// Using this type in the function argument causes a type recursion error.
+			const errors = Errors;
 
-				// Called upon an event from a HTML element that affects the form.
-				async function htmlInputChange(
-					change: (string | number | symbol)[],
-					event: 'blur' | 'input',
-					target: HTMLElement | null
-				) {
-					if (options.validationMethod == 'submit-only') return;
+			// Called upon an event from a HTML element that affects the form.
+			async function htmlInputChange(
+				change: (string | number | symbol)[],
+				event: 'blur' | 'input',
+				target: HTMLElement | null
+			) {
+				if (options.validationMethod == 'submit-only') return;
 
-					//console.log('htmlInputChange', change, event, target);
+				//console.log('htmlInputChange', change, event, target);
 
-					const result = await validateField(change, options, Form, errors, Tainted);
+				const result = await validateField(change, options, Form, errors, Tainted);
 
-					// Update data if target exists (immediate is set, refactor please)
-					if (result.data && target) Form.set(result.data);
+				// Update data if target exists (immediate is set, refactor please)
+				if (result.data && target) Form_set(result.data);
 
-					if (options.customValidity) {
-						const name = CSS.escape(mergePath(change));
-						const el = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
-						if (el) updateCustomValidity(el, event, result.errors, options.validationMethod);
+				if (options.customValidity) {
+					const name = CSS.escape(mergePath(change));
+					const el = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+					if (el) updateCustomValidity(el, event, result.errors, options.validationMethod);
+				}
+			}
+
+			async function checkBlur(e: Event) {
+				if (options.validationMethod == 'oninput' || options.validationMethod == 'submit-only') {
+					return;
+				}
+
+				// Wait for changes to update
+				const immediateUpdate = isImmediateInput(e.target);
+				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+
+				const changes = get(LastChanges);
+				if (!changes.length) return;
+
+				const target = e.target instanceof HTMLElement ? e.target : null;
+
+				for (const change of changes) {
+					htmlInputChange(change, 'blur', immediateUpdate ? null : target);
+				}
+
+				// Clear last changes after blur (not after input)
+				LastChanges.set([]);
+			}
+
+			async function checkInput(e: Event) {
+				if (options.validationMethod == 'onblur' || options.validationMethod == 'submit-only') {
+					return;
+				}
+
+				// Wait for changes to update
+				const immediateUpdate = isImmediateInput(e.target);
+				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+
+				const changes = get(LastChanges);
+				if (!changes.length) return;
+
+				const target = e.target instanceof HTMLElement ? e.target : null;
+
+				for (const change of changes) {
+					const hadErrors =
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						immediateUpdate || traversePath(get(errors), change as any);
+					if (
+						immediateUpdate ||
+						(typeof hadErrors == 'object' && hadErrors.key in hadErrors.parent)
+					) {
+						// Problem - store hasn't updated here with new value yet.
+						setTimeout(() => htmlInputChange(change, 'input', immediateUpdate ? target : null), 0);
+					}
+				}
+			}
+
+			formEl.addEventListener('focusout', checkBlur);
+			formEl.addEventListener('input', checkInput);
+
+			onDestroy(() => {
+				formEl.removeEventListener('focusout', checkBlur);
+				formEl.removeEventListener('input', checkInput);
+			});
+
+			///// SvelteKit enhance function //////////////////////////////////
+
+			const htmlForm = HtmlForm(
+				formEl,
+				{ submitting: Submitting, delayed: Delayed, timeout: Timeout },
+				options
+			);
+
+			let currentRequest: AbortController | null;
+
+			return enhance(formEl, async (submit) => {
+				const _submitCancel = submit.cancel;
+
+				let cancelled = false;
+				function cancel(resetTimers = true) {
+					cancelled = true;
+					if (resetTimers && htmlForm.isSubmitting()) {
+						htmlForm.completed(true);
+					}
+					return _submitCancel();
+				}
+				submit.cancel = cancel;
+
+				if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
+					cancel(false);
+				} else {
+					if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
+						if (currentRequest) currentRequest.abort();
+					}
+					htmlForm.submitting();
+					currentRequest = submit.controller;
+
+					for (const event of formEvents.onSubmit) {
+						await event(submit);
 					}
 				}
 
-				async function checkBlur(e: Event) {
-					if (options.validationMethod == 'oninput' || options.validationMethod == 'submit-only') {
-						return;
-					}
+				if (cancelled) {
+					if (options.flashMessage) cancelFlash(options);
+				} else {
+					// Client validation
+					const noValidate =
+						!options.SPA &&
+						(formEl.noValidate ||
+							((submit.submitter instanceof HTMLButtonElement ||
+								submit.submitter instanceof HTMLInputElement) &&
+								submit.submitter.formNoValidate));
 
-					// Wait for changes to update
-					const immediateUpdate = isImmediateInput(e.target);
-					if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+					// TODO: More optimized way to get all this data?
+					const validation = await clientValidation(
+						noValidate ? undefined : options.validators,
+						get(Form),
+						get(FormId),
+						get(Constraints),
+						get(Posted)
+					);
 
-					const changes = get(LastChanges);
-					if (!changes.length) return;
-
-					const target = e.target instanceof HTMLElement ? e.target : null;
-
-					for (const change of changes) {
-						htmlInputChange(change, 'blur', immediateUpdate ? null : target);
-					}
-
-					// Clear last changes after blur (not after input)
-					LastChanges.set([]);
-				}
-
-				async function checkInput(e: Event) {
-					if (options.validationMethod == 'onblur' || options.validationMethod == 'submit-only') {
-						return;
-					}
-
-					// Wait for changes to update
-					const immediateUpdate = isImmediateInput(e.target);
-					if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
-
-					const changes = get(LastChanges);
-					if (!changes.length) return;
-
-					const target = e.target instanceof HTMLElement ? e.target : null;
-
-					for (const change of changes) {
-						const hadErrors =
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							immediateUpdate || traversePath(get(errors), change as any);
-						if (
-							immediateUpdate ||
-							(typeof hadErrors == 'object' && hadErrors.key in hadErrors.parent)
-						) {
-							// Problem - store hasn't updated here with new value yet.
-							setTimeout(
-								() => htmlInputChange(change, 'input', immediateUpdate ? target : null),
-								0
-							);
-						}
-					}
-				}
-
-				formEl.addEventListener('focusout', checkBlur);
-				formEl.addEventListener('input', checkInput);
-
-				onDestroy(() => {
-					formEl.removeEventListener('focusout', checkBlur);
-					formEl.removeEventListener('input', checkInput);
-				});
-
-				///// SvelteKit enhance function //////////////////////////////////
-
-				const htmlForm = HtmlForm(
-					formEl,
-					{ submitting: Submitting, delayed: Delayed, timeout: Timeout },
-					options
-				);
-
-				let currentRequest: AbortController | null;
-
-				return enhance(formEl, async (submit) => {
-					const _submitCancel = submit.cancel;
-
-					let cancelled = false;
-					function cancel(resetTimers = true) {
-						cancelled = true;
-						if (resetTimers && htmlForm.isSubmitting()) {
-							htmlForm.completed(true);
-						}
-						return _submitCancel();
-					}
-					submit.cancel = cancel;
-
-					if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
+					if (!validation.valid) {
 						cancel(false);
-					} else {
-						if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
-							if (currentRequest) currentRequest.abort();
-						}
-						htmlForm.submitting();
-						currentRequest = submit.controller;
 
-						for (const event of formEvents.onSubmit) {
-							await event(submit);
-						}
-					}
-
-					if (cancelled) {
-						if (options.flashMessage) cancelFlash(options);
-					} else {
-						// Client validation
-						const noValidate =
-							!options.SPA &&
-							(formEl.noValidate ||
-								((submit.submitter instanceof HTMLButtonElement ||
-									submit.submitter instanceof HTMLInputElement) &&
-									submit.submitter.formNoValidate));
-
-						// TODO: More optimized way to get all this data?
-						const validation = await clientValidation(
-							noValidate ? undefined : options.validators,
-							get(Form),
-							get(FormId),
-							get(Constraints),
-							get(Posted)
-						);
-
-						if (!validation.valid) {
-							cancel(false);
-
-							const result = {
-								type: 'failure' as const,
-								status:
-									(typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400,
-								data: { form: validation }
-							};
-
-							setTimeout(() => validationResponse({ result }), 0);
-						}
-
-						if (!cancelled) {
-							switch (options.clearOnSubmit) {
-								case 'errors-and-message':
-									errors.clear();
-									Message.set(undefined);
-									break;
-
-								case 'errors':
-									errors.clear();
-									break;
-
-								case 'message':
-									Message.set(undefined);
-									break;
-							}
-
-							if (
-								options.flashMessage &&
-								(options.clearOnSubmit == 'errors-and-message' ||
-									options.clearOnSubmit == 'message') &&
-								shouldSyncFlash(options)
-							) {
-								options.flashMessage.module.getFlash(page).set(undefined);
-							}
-
-							// Deprecation fix
-							const submitData =
-								'formData' in submit ? submit.formData : (submit as { data: FormData }).data;
-
-							if (options.SPA) {
-								cancel(false);
-
-								const validationResult = { ...validation, posted: true };
-
-								const result = {
-									type: validationResult.valid ? 'success' : 'failure',
-									status: validationResult.valid
-										? 200
-										: typeof options.SPA == 'object'
-											? options.SPA?.failStatus
-											: 400 ?? 400,
-									data: { form: validationResult }
-								} as ActionResult;
-
-								setTimeout(() => validationResponse({ result }), 0);
-							} else if (options.dataType === 'json') {
-								const postData = validation.data;
-								const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
-
-								for (const chunk of chunks) {
-									submitData.append('__superform_json', chunk);
-								}
-
-								// Clear post data to reduce transfer size,
-								// since $form should be serialized and sent as json.
-								Object.keys(postData).forEach((key) => {
-									// Files should be kept though, even if same key.
-									if (typeof submitData.get(key) === 'string') {
-										submitData.delete(key);
-									}
-								});
-							}
-
-							if (!options.SPA && !submitData.has('__superform_id')) {
-								// Add formId
-								const id = get(FormId);
-								if (id !== undefined) submitData.set('__superform_id', id);
-							}
-						}
-					}
-
-					// Thanks to https://stackoverflow.com/a/29202760/70894
-					function chunkSubstr(str: string, size: number) {
-						const numChunks = Math.ceil(str.length / size);
-						const chunks = new Array(numChunks);
-
-						for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-							chunks[i] = str.substring(o, o + size);
-						}
-
-						return chunks;
-					}
-
-					async function validationResponse(event: ValidationResponse) {
-						// Check if an error was thrown in hooks, in which case it has no type.
-						const result: ActionResult = event.result.type
-							? event.result
-							: {
-									type: 'error',
-									status: 500,
-									error: event.result
-								};
-
-						currentRequest = null;
-						let cancelled = false;
-
-						const data = {
-							result,
-							formEl,
-							cancel: () => (cancelled = true)
+						const result = {
+							type: 'failure' as const,
+							status:
+								(typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400,
+							data: { form: validation }
 						};
 
-						for (const event of formEvents.onResult) {
-							await event(data);
+						setTimeout(() => validationResponse({ result }), 0);
+					}
+
+					if (!cancelled) {
+						switch (options.clearOnSubmit) {
+							case 'errors-and-message':
+								errors.clear();
+								Message.set(undefined);
+								break;
+
+							case 'errors':
+								errors.clear();
+								break;
+
+							case 'message':
+								Message.set(undefined);
+								break;
+						}
+
+						if (
+							options.flashMessage &&
+							(options.clearOnSubmit == 'errors-and-message' ||
+								options.clearOnSubmit == 'message') &&
+							shouldSyncFlash(options)
+						) {
+							options.flashMessage.module.getFlash(page).set(undefined);
+						}
+
+						// Deprecation fix
+						const submitData =
+							'formData' in submit ? submit.formData : (submit as { data: FormData }).data;
+
+						if (options.SPA) {
+							cancel(false);
+
+							const validationResult = { ...validation, posted: true };
+
+							const result = {
+								type: validationResult.valid ? 'success' : 'failure',
+								status: validationResult.valid
+									? 200
+									: typeof options.SPA == 'object'
+										? options.SPA?.failStatus
+										: 400 ?? 400,
+								data: { form: validationResult }
+							} as ActionResult;
+
+							setTimeout(() => validationResponse({ result }), 0);
+						} else if (options.dataType === 'json') {
+							const postData = validation.data;
+							const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
+
+							for (const chunk of chunks) {
+								submitData.append('__superform_json', chunk);
+							}
+
+							// Clear post data to reduce transfer size,
+							// since $form should be serialized and sent as json.
+							Object.keys(postData).forEach((key) => {
+								// Files should be kept though, even if same key.
+								if (typeof submitData.get(key) === 'string') {
+									submitData.delete(key);
+								}
+							});
+						}
+
+						if (!options.SPA && !submitData.has('__superform_id')) {
+							// Add formId
+							const id = get(FormId);
+							if (id !== undefined) submitData.set('__superform_id', id);
+						}
+					}
+				}
+
+				// Thanks to https://stackoverflow.com/a/29202760/70894
+				function chunkSubstr(str: string, size: number) {
+					const numChunks = Math.ceil(str.length / size);
+					const chunks = new Array(numChunks);
+
+					for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+						chunks[i] = str.substring(o, o + size);
+					}
+
+					return chunks;
+				}
+
+				async function validationResponse(event: ValidationResponse) {
+					// Check if an error was thrown in hooks, in which case it has no type.
+					const result: ActionResult = event.result.type
+						? event.result
+						: {
+								type: 'error',
+								status: 500,
+								error: event.result
+							};
+
+					currentRequest = null;
+					let cancelled = false;
+
+					const data = {
+						result,
+						formEl,
+						cancel: () => (cancelled = true)
+					};
+
+					for (const event of formEvents.onResult) {
+						await event(data);
+					}
+
+					if (!cancelled) {
+						if ((result.type === 'success' || result.type == 'failure') && result.data) {
+							const forms = Context_findValidationForms(result.data);
+							if (!forms.length) {
+								throw new SuperFormError(
+									'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
+								);
+							}
+
+							for (const newForm of forms) {
+								if (newForm.id !== get(FormId)) continue;
+
+								const data = {
+									form: newForm as SuperValidated<T>,
+									formEl,
+									cancel: () => (cancelled = true)
+								};
+
+								for (const event of formEvents.onUpdate) {
+									await event(data);
+								}
+
+								if (!cancelled && options.customValidity) {
+									setCustomValidityForm(formEl, data.form.errors);
+								}
+							}
 						}
 
 						if (!cancelled) {
-							if ((result.type === 'success' || result.type == 'failure') && result.data) {
-								const forms = Context_findValidationForms(result.data);
-								if (!forms.length) {
-									throw new SuperFormError(
-										'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
-									);
+							if (result.type !== 'error') {
+								if (result.type === 'success' && options.invalidateAll) {
+									await invalidateAll();
 								}
 
-								for (const newForm of forms) {
-									if (newForm.id !== get(FormId)) continue;
-
-									const data = {
-										form: newForm as SuperValidated<T>,
-										formEl,
-										cancel: () => (cancelled = true)
-									};
-
-									for (const event of formEvents.onUpdate) {
-										await event(data);
-									}
-
-									if (!cancelled && options.customValidity) {
-										setCustomValidityForm(formEl, data.form.errors);
-									}
+								if (options.applyAction) {
+									// This will trigger the page subscription in superForm,
+									// which will in turn call Data_update.
+									await applyAction(result);
+								} else {
+									// Call Data_update directly to trigger events
+									await Form_updateFromActionResult(result);
 								}
-							}
-
-							if (!cancelled) {
-								if (result.type !== 'error') {
-									if (result.type === 'success' && options.invalidateAll) {
-										await invalidateAll();
-									}
-
-									if (options.applyAction) {
-										// This will trigger the page subscription in superForm,
-										// which will in turn call Data_update.
+							} else {
+								// Error result
+								if (options.applyAction) {
+									if (options.onError == 'apply') {
 										await applyAction(result);
 									} else {
-										// Call Data_update directly to trigger events
-										await Form_updateFromActionResult(result);
-									}
-								} else {
-									// Error result
-									if (options.applyAction) {
-										if (options.onError == 'apply') {
-											await applyAction(result);
-										} else {
-											// Transform to failure, to avoid data loss
-											// Set the data to the error result, so it will be
-											// picked up in page.subscribe in superForm.
-											const failResult = {
-												type: 'failure',
-												status: Math.floor(result.status || 500),
-												data: result
-											} as const;
-											await applyAction(failResult);
-										}
-									}
-
-									// Check if the error message should be replaced
-									if (options.onError !== 'apply') {
-										const data = { result, message: Message };
-
-										for (const onErrorEvent of formEvents.onError) {
-											if (
-												onErrorEvent !== 'apply' &&
-												(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
-											) {
-												await onErrorEvent(data);
-											}
-										}
+										// Transform to failure, to avoid data loss
+										// Set the data to the error result, so it will be
+										// picked up in page.subscribe in superForm.
+										const failResult = {
+											type: 'failure',
+											status: Math.floor(result.status || 500),
+											data: result
+										} as const;
+										await applyAction(failResult);
 									}
 								}
 
-								// Trigger flash message event if there was an error
-								if (options.flashMessage) {
-									if (result.type == 'error' && options.flashMessage.onError) {
-										await options.flashMessage.onError({
-											result,
-											message: options.flashMessage.module.getFlash(page)
-										});
+								// Check if the error message should be replaced
+								if (options.onError !== 'apply') {
+									const data = { result, message: Message };
+
+									for (const onErrorEvent of formEvents.onError) {
+										if (
+											onErrorEvent !== 'apply' &&
+											(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
+										) {
+											await onErrorEvent(data);
+										}
 									}
 								}
 							}
-						}
 
-						if (cancelled && options.flashMessage) {
-							cancelFlash(options);
-						}
-
-						// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
-						// Also fixing an edge case when timers weren't resetted when redirecting to the same route.
-						if (cancelled || result.type != 'redirect') {
-							htmlForm.completed(cancelled);
-						} else if (
-							result.type == 'redirect' &&
-							new URL(
-								result.location,
-								/^https?:\/\//.test(result.location) ? undefined : document.location.origin
-							).pathname == document.location.pathname
-						) {
-							// Checks if beforeNavigate have been called in client/form.ts.
-							setTimeout(() => {
-								htmlForm.completed(true, true);
-							}, 0);
+							// Trigger flash message event if there was an error
+							if (options.flashMessage) {
+								if (result.type == 'error' && options.flashMessage.onError) {
+									await options.flashMessage.onError({
+										result,
+										message: options.flashMessage.module.getFlash(page)
+									});
+								}
+							}
 						}
 					}
 
-					return validationResponse;
-				});
-			}
+					if (cancelled && options.flashMessage) {
+						cancelFlash(options);
+					}
+
+					// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
+					// Also fixing an edge case when timers weren't resetted when redirecting to the same route.
+					if (cancelled || result.type != 'redirect') {
+						htmlForm.completed(cancelled);
+					} else if (
+						result.type == 'redirect' &&
+						new URL(
+							result.location,
+							/^https?:\/\//.test(result.location) ? undefined : document.location.origin
+						).pathname == document.location.pathname
+					) {
+						// Checks if beforeNavigate have been called in client/form.ts.
+						setTimeout(() => {
+							htmlForm.completed(true, true);
+						}, 0);
+					}
+				}
+
+				return validationResponse;
+			});
 		}
 	};
 }

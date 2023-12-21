@@ -173,11 +173,13 @@ export function superForm<
 	}
 
 	// Detect if a form is posted without JavaScript.
-	const postedData = _currentPage.form;
+	if (!browser && _currentPage.form && typeof _currentPage.form === 'object') {
+		const postedData = _currentPage.form;
+		let found = false;
 
-	if (!browser && postedData && typeof postedData === 'object') {
 		for (const postedForm of Context_findValidationForms(postedData).reverse()) {
 			if (postedForm.id == Data.formId && !initializedForms.has(postedForm)) {
+				found = true;
 				// Prevent multiple "posting" that can happen when components are recreated.
 				initializedForms.set(postedData, postedData);
 
@@ -196,14 +198,13 @@ export function superForm<
 				break;
 			}
 		}
+		if (!found) form = clone(initialForm);
 	} else {
 		form = clone(initialForm);
 	}
 
-	const form2 = form as SuperValidated<T, M>;
-
 	// Underlying store for Errors
-	const _errors = writable(form2.errors);
+	const _errors = writable(form.errors);
 
 	///// Roles ///////////////////////////////////////////////////////
 
@@ -250,7 +251,7 @@ export function superForm<
 		if (_formId === undefined) FormId.set(Context_randomId());
 	}
 
-	function Context_newFormStore(data: (typeof form2)['data']) {
+	function Context_newFormStore(data: (typeof form)['data']) {
 		const _formData = writable(data);
 		return {
 			subscribe: _formData.subscribe,
@@ -289,7 +290,7 @@ export function superForm<
 	}
 
 	// Stores for the properties of SuperValidated<T, M>
-	const Form = Context_newFormStore(form2.data);
+	const Form = Context_newFormStore(form.data);
 
 	// Check for nested objects, throw if datatype isn't json
 	function Form_checkForNestedData(key: string, value: unknown) {
@@ -374,8 +375,8 @@ export function superForm<
 	};
 
 	const LastChanges = writable<(string | number | symbol)[][]>([]);
-	const Message = writable<M | undefined>(form2.message);
-	const Constraints = writable(form2.constraints);
+	const Message = writable<M | undefined>(form.message);
+	const Constraints = writable(form.constraints);
 	const Posted = writable(false);
 
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
@@ -529,7 +530,7 @@ export function superForm<
 	});
 
 	if (options.dataType !== 'json') {
-		for (const [key, value] of Object.entries(form2.data)) {
+		for (const [key, value] of Object.entries(form.data)) {
 			Form_checkForNestedData(key, value);
 		}
 	}

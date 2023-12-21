@@ -66,7 +66,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	errorSelector: string;
 	selectErrorText: boolean;
 	stickyNavbar: string;
-	taintedMessage: string | false | null;
+	taintedMessage: string | boolean | null;
 	SPA: true | { failStatus?: number };
 
 	onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
@@ -122,6 +122,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 		duplicateId?: boolean;
 		noValidationAndConstraints?: boolean;
 	};
+	legacy: boolean;
 }>;
 
 export const defaultOnError = (event: { result: { error: unknown } }) => {

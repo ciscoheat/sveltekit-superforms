@@ -57,13 +57,13 @@ export const defaultOnError = (event: { result: { error: unknown } }) => {
 const defaultFormOptions = {
 	applyAction: true,
 	invalidateAll: true,
-	resetForm: false,
+	resetForm: true,
 	autoFocusOnError: 'detect',
 	scrollToError: 'smooth',
 	errorSelector: '[aria-invalid="true"],[data-invalid]',
 	selectErrorText: false,
 	stickyNavbar: undefined,
-	taintedMessage: 'Do you want to leave this page? Changes you made may not be saved.',
+	taintedMessage: false,
 	onSubmit: undefined,
 	onResult: undefined,
 	onUpdate: undefined,
@@ -105,6 +105,11 @@ export function superForm<
 >(form: SuperValidated<T, M> | T, options: FormOptions<T, M> = {}): SuperForm<T, M> {
 	// Option guards
 	{
+		if (options.legacy) {
+			if (options.resetForm === undefined) options.resetForm = false;
+			if (options.taintedMessage === undefined) options.taintedMessage = true;
+		}
+
 		options = {
 			...(defaultFormOptions as FormOptions<T, M>),
 			...options
@@ -402,7 +407,7 @@ export function superForm<
 	const Tainted = writable<TaintedFields<T> | undefined>();
 
 	function Tainted_isTainted(obj: unknown): boolean {
-		if (obj === null) throw new SuperFormError('$tainted store contained null');
+		if (!obj) return false;
 
 		if (typeof obj === 'object') {
 			for (const obj2 of Object.values(obj)) {
@@ -596,10 +601,10 @@ export function superForm<
 	if (browser) {
 		beforeNavigate((nav) => {
 			if (options.taintedMessage && !get(Submitting)) {
+				const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
 				if (
-					Data.tainted &&
 					Tainted_isTainted(Data.tainted) &&
-					!window.confirm(options.taintedMessage)
+					!window.confirm(options.taintedMessage === true ? defaultMessage : options.taintedMessage)
 				) {
 					nav.cancel();
 				}

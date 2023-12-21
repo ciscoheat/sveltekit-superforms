@@ -102,7 +102,7 @@ export function superForm<
 	T extends Record<string, unknown> = Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(form: SuperValidated<T, M>, options: FormOptions<T, M> = {}): SuperForm<T, M> {
+>(form: SuperValidated<T, M> | T, options: FormOptions<T, M> = {}): SuperForm<T, M> {
 	// Option guards
 	{
 		options = {
@@ -118,16 +118,30 @@ export function superForm<
 		}
 	}
 
-	// TODO: Throw error if no form found?
-	if (!form || Context_isValidationObject(form) === false) {
+	if (!form) {
 		throw new SuperFormError(
 			'No form data sent to superForm. ' +
-				'Make sure the output from superValidate is used and not null or undefined.'
+				"Make sure the output from superValidate is used (usually data.form) and that it's not null or undefined. " +
+				'Alternatively, an object with default values for the form can also be used.'
 		);
 	}
 
+	if (!Context_isValidationObject(form)) {
+		form = {
+			id: '',
+			valid: false,
+			posted: false,
+			errors: {},
+			data: form as T,
+			constraints: {},
+			shape: {}
+		} satisfies SuperValidated<T, M>;
+	}
+
+	form = form as SuperValidated<T, M>;
+
 	/**
-	 * Store data, subscribed to to avoid get usage.
+	 * Store data, subscribed to to avoid "get" usage.
 	 */
 	const Data = {
 		formId: options.id ?? form.id,
@@ -237,17 +251,16 @@ export function superForm<
 	}
 
 	/**
-	 * Return false if object isn't a validation object, otherwise the form id,
-	 * which may be undefined, so a falsy check isn't enough.
+	 * Return false if object isn't a validation object, otherwise the form id.
 	 */
-	function Context_isValidationObject(object: unknown): string | undefined | false {
+	function Context_isValidationObject(object: unknown): string | false {
 		if (!object || typeof object !== 'object') return false;
 
 		if (!('valid' in object && 'errors' in object && typeof object.valid === 'boolean')) {
 			return false;
 		}
 
-		return 'id' in object && typeof object.id === 'string' ? object.id : undefined;
+		return 'id' in object && typeof object.id === 'string' ? object.id : false;
 	}
 
 	function Context_enableEnhance() {
@@ -255,7 +268,7 @@ export function superForm<
 		if (Data.formId === undefined) FormId.set(Context_randomId());
 	}
 
-	function Context_newFormStore(data: (typeof form)['data']) {
+	function Context_newFormStore(data: T) {
 		const _formData = writable(data);
 		return {
 			subscribe: _formData.subscribe,

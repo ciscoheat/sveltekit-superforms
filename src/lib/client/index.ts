@@ -6,6 +6,8 @@ import type { MaybePromise } from '../index.js';
 import type { FormPathLeaves, FormPathType } from '../stringPath.js';
 import type { Schema } from '@decs/typeschema';
 
+export { superForm } from './superForm.js';
+
 export {
 	intProxy,
 	numberProxy,

@@ -5,7 +5,7 @@ import type { Inferred } from '$lib/index.js';
 function _arktype<T extends Type>(
 	schema: T,
 	options: { defaults: Inferred<T>; schemaOptions?: SchemaOptions }
-): ValidationAdapter<Inferred<T>> {
+): ValidationAdapter<Inferred<T>, 'no-constraints'> {
 	return {
 		superFormValidationLibrary: 'arktype',
 		validator: schema,

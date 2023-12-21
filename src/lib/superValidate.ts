@@ -1,6 +1,6 @@
 import { validate } from '@decs/typeschema';
 import { traversePath } from './traversal.js';
-import { ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
+import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
 import type { SuperValidated, ValidationErrors } from './index.js';
@@ -8,14 +8,12 @@ import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors } from './errors.js';
+
+/*
 import { customAlphabet } from 'nanoid';
-
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz123456789', 6);
-
-// TODO: Where and when to generate id?
-function formId() {
-	return nanoid();
-}
+function formId() {	return nanoid(); }
+*/
 
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 //type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
@@ -42,18 +40,23 @@ export type SuperValidateOptions<T extends object> = Partial<{
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(adapter: ValidationAdapter<T>, options?: SuperValidateOptions<T>): Promise<SuperValidated<T, M>>;
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
+>(
+	adapter: ValidationAdapter<T, C>,
+	options?: SuperValidateOptions<T>
+): Promise<SuperValidated<T, M, C>>;
 
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
 >(
 	data: SuperValidateData<T>,
-	adapter: ValidationAdapter<T>,
+	adapter: ValidationAdapter<T, C>,
 	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M>>;
+): Promise<SuperValidated<T, M, C>>;
 
 /**
  * Validates a schema for data validation and usage in superForm.
@@ -63,32 +66,32 @@ export async function superValidate<
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
 >(
-	data: ValidationAdapter<T> | SuperValidateData<T>,
-	adapter?: ValidationAdapter<T> | SuperValidateData<T> | SuperValidateOptions<T>,
+	data: ValidationAdapter<T, C> | SuperValidateData<T>,
+	adapter?: ValidationAdapter<T, C> | SuperValidateData<T> | SuperValidateOptions<T>,
 	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M>> {
+): Promise<SuperValidated<T, M, C>> {
 	if (data && 'superFormValidationLibrary' in data) {
 		options = adapter as SuperValidateOptions<T>;
 		adapter = data;
 		data = undefined;
 	}
 
-	const validation = mapAdapter(adapter as ValidationAdapter<T>);
+	const validation = mapAdapter(adapter as ValidationAdapter<T, C>);
 
 	const defaults = options?.defaults ?? validation.defaults;
 	const jsonSchema = options?.jsonSchema ?? validation.jsonSchema;
-	const addErrors = options?.errors ?? (options?.strict ? true : !!data);
-
 	const parsed = await parseRequest<T>(data, jsonSchema, options);
-	const hasData = !!parsed.data;
+
+	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
 
 	// Merge with defaults in non-strict mode.
 	parsed.data = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
 
 	const status: ValidationResult<T> =
-		hasData || addErrors
+		!!parsed.data || addErrors
 			? validation.customValidator
 				? await validation.customValidator(parsed.data)
 				: ((await validate(validation.validator, parsed.data)) as ValidationResult<T>)

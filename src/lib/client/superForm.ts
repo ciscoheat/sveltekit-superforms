@@ -37,8 +37,6 @@ import { isImmediateInput } from './elements.js';
 import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 
-///// Formenhance types /////
-
 type ValidationResponse<
 	Success extends Record<string, unknown> | undefined = Record<
 		string,
@@ -48,8 +46,6 @@ type ValidationResponse<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	Invalid extends Record<string, unknown> | undefined = Record<string, any>
 > = { result: ActionResult<Success, Invalid> };
-
-/////////////////////////////
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 const initializedForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
@@ -254,7 +250,7 @@ export function superForm<
 		return 'id' in object && typeof object.id === 'string' ? object.id : undefined;
 	}
 
-	function Context_useEnhanceEnabled() {
+	function Context_enableEnhance() {
 		options.taintedMessage = Context.taintedMessage;
 		if (Data.formId === undefined) FormId.set(Context_randomId());
 	}
@@ -672,7 +668,7 @@ export function superForm<
 
 		options,
 
-		capture: function () {
+		capture() {
 			return {
 				valid: initialForm.valid,
 				posted: get(Posted),
@@ -686,7 +682,7 @@ export function superForm<
 			};
 		},
 
-		restore: function (snapshot: SuperFormSnapshot<T, M>) {
+		restore(snapshot: SuperFormSnapshot<T, M>) {
 			return rebind(snapshot, snapshot.tainted ?? true);
 		},
 
@@ -695,7 +691,7 @@ export function superForm<
 		allErrors: AllErrors,
 		posted: Posted,
 
-		reset: (options?) => {
+		reset(options?) {
 			return Form_reset(
 				options?.keepMessage ? get(Message) : undefined,
 				options?.data,
@@ -703,29 +699,8 @@ export function superForm<
 			);
 		},
 
-		/*
-		return formEnhance(
-		el,
-		Submitting,
-		Delayed,
-		Timeout,
-		Errors,
-		Form_updateFromActionResult,
-		options,
-		Form,
-		Message,
-		Context_useEnhanceEnabled,
-		formEvents,
-		FormId,
-		Constraints,
-		Tainted,
-		LastChanges,
-		Context_findValidationForms,
-		Posted
-		);
-		*/
-
-		enhance: (formEl: HTMLFormElement, events?: SuperFormEvents<T, M>) => {
+		// @DCI-context
+		enhance(FormEl: HTMLFormElement, events?: SuperFormEvents<T, M>) {
 			if (events) {
 				if (events.onError) {
 					if (options.onError === 'apply') {
@@ -745,10 +720,7 @@ export function superForm<
 			}
 
 			// Now we know that we are upgraded, so we can enable the tainted form option.
-			Context_useEnhanceEnabled();
-
-			// Using this type in the function argument causes a type recursion error.
-			const errors = Errors;
+			Context_enableEnhance();
 
 			// Called upon an event from a HTML element that affects the form.
 			async function htmlInputChange(
@@ -760,14 +732,14 @@ export function superForm<
 
 				//console.log('htmlInputChange', change, event, target);
 
-				const result = await validateField(change, options, Form, errors, Tainted);
+				const result = await validateField(change, options, Form, Errors, Tainted);
 
 				// Update data if target exists (immediate is set, refactor please)
 				if (result.data && target) Form_set(result.data);
 
 				if (options.customValidity) {
 					const name = CSS.escape(mergePath(change));
-					const el = formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+					const el = FormEl.querySelector<HTMLElement>(`[name="${name}"]`);
 					if (el) updateCustomValidity(el, event, result.errors, options.validationMethod);
 				}
 			}
@@ -811,7 +783,7 @@ export function superForm<
 				for (const change of changes) {
 					const hadErrors =
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						immediateUpdate || traversePath(get(errors), change as any);
+						immediateUpdate || traversePath(get(Errors), change as any);
 					if (
 						immediateUpdate ||
 						(typeof hadErrors == 'object' && hadErrors.key in hadErrors.parent)
@@ -822,25 +794,25 @@ export function superForm<
 				}
 			}
 
-			formEl.addEventListener('focusout', checkBlur);
-			formEl.addEventListener('input', checkInput);
+			FormEl.addEventListener('focusout', checkBlur);
+			FormEl.addEventListener('input', checkInput);
 
 			onDestroy(() => {
-				formEl.removeEventListener('focusout', checkBlur);
-				formEl.removeEventListener('input', checkInput);
+				FormEl.removeEventListener('focusout', checkBlur);
+				FormEl.removeEventListener('input', checkInput);
 			});
 
 			///// SvelteKit enhance function //////////////////////////////////
 
 			const htmlForm = HtmlForm(
-				formEl,
+				FormEl,
 				{ submitting: Submitting, delayed: Delayed, timeout: Timeout },
 				options
 			);
 
 			let currentRequest: AbortController | null;
 
-			return enhance(formEl, async (submit) => {
+			return enhance(FormEl, async (submit) => {
 				const _submitCancel = submit.cancel;
 
 				let cancelled = false;
@@ -873,7 +845,7 @@ export function superForm<
 					// Client validation
 					const noValidate =
 						!options.SPA &&
-						(formEl.noValidate ||
+						(FormEl.noValidate ||
 							((submit.submitter instanceof HTMLButtonElement ||
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
@@ -882,7 +854,7 @@ export function superForm<
 					const validation = await clientValidation(
 						noValidate ? undefined : options.validators,
 						get(Form),
-						get(FormId),
+						Data.formId,
 						get(Constraints),
 						get(Posted)
 					);
@@ -903,12 +875,12 @@ export function superForm<
 					if (!cancelled) {
 						switch (options.clearOnSubmit) {
 							case 'errors-and-message':
-								errors.clear();
+								Errors.clear();
 								Message.set(undefined);
 								break;
 
 							case 'errors':
-								errors.clear();
+								Errors.clear();
 								break;
 
 							case 'message':
@@ -965,7 +937,7 @@ export function superForm<
 
 						if (!options.SPA && !submitData.has('__superform_id')) {
 							// Add formId
-							const id = get(FormId);
+							const id = Data.formId;
 							if (id !== undefined) submitData.set('__superform_id', id);
 						}
 					}
@@ -998,7 +970,7 @@ export function superForm<
 
 					const data = {
 						result,
-						formEl,
+						formEl: FormEl,
 						cancel: () => (cancelled = true)
 					};
 
@@ -1016,11 +988,11 @@ export function superForm<
 							}
 
 							for (const newForm of forms) {
-								if (newForm.id !== get(FormId)) continue;
+								if (newForm.id !== Data.formId) continue;
 
 								const data = {
 									form: newForm as SuperValidated<T>,
-									formEl,
+									formEl: FormEl,
 									cancel: () => (cancelled = true)
 								};
 
@@ -1029,7 +1001,7 @@ export function superForm<
 								}
 
 								if (!cancelled && options.customValidity) {
-									setCustomValidityForm(formEl, data.form.errors);
+									setCustomValidityForm(FormEl, data.form.errors);
 								}
 							}
 						}

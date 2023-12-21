@@ -32,7 +32,7 @@ function _schemaHash(info: SchemaInfo | undefined, depth: number): string {
 
 	// Objects
 	if (info.properties) {
-		let output: string[] = [];
+		const output: string[] = [];
 		for (const [key, prop] of Object.entries(info.properties)) {
 			const propInfo = schemaInfo(
 				prop,

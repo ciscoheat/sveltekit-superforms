@@ -83,25 +83,25 @@ export async function superValidate<
 
 	const defaults = options?.defaults ?? validation.defaults;
 	const jsonSchema = options?.jsonSchema ?? validation.jsonSchema;
-	const parsed = await parseRequest<T>(data, jsonSchema, options);
 
+	const parsed = await parseRequest<T>(data, jsonSchema, options);
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
 
 	// Merge with defaults in non-strict mode.
-	parsed.data = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
+	const parsedData = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
 
 	const status: ValidationResult<T> =
 		!!parsed.data || addErrors
 			? validation.customValidator
-				? await validation.customValidator(parsed.data)
-				: ((await validate(validation.validator, parsed.data)) as ValidationResult<T>)
+				? await validation.customValidator(parsedData)
+				: ((await validate(validation.validator, parsedData)) as ValidationResult<T>)
 			: { success: false, issues: [] };
 
 	const valid = status.success;
 	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validation.shape);
 
-	const finalData = valid ? status.data : parsed.data;
-	let outputData: typeof finalData;
+	const finalData = valid ? status.data : parsedData;
+	let outputData: Record<string, unknown>;
 
 	if (!jsonSchema.additionalProperties) {
 		// Strip keys not belonging to schema
@@ -119,8 +119,6 @@ export async function superValidate<
 		}
 	}
 
-	// TODO: Form id must be derived on schema as in v1? (can skip undefined)
-	// Depends on how id is updated when load function is invalidated.
 	return {
 		id: parsed.id ?? options?.id ?? validation.id,
 		valid,

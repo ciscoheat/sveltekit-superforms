@@ -7,7 +7,7 @@ import { schemaInfo, type SchemaInfo } from './jsonSchema/index.js';
 type ParsedData = {
 	id: string | undefined;
 	posted: boolean;
-	data: Record<string, unknown> | undefined;
+	data: Record<string, unknown> | null | undefined;
 };
 
 export async function parseRequest<T extends object>(
@@ -34,7 +34,7 @@ export async function parseRequest<T extends object>(
 	} else {
 		parsed = {
 			id: undefined,
-			data: data as Record<string, unknown>,
+			data: data as ParsedData['data'],
 			posted: false
 		};
 	}

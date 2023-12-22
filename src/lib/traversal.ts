@@ -239,7 +239,11 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 export function setPaths(
 	obj: Record<string, unknown>,
 	paths: (string | number | symbol)[][],
-	value: {} | ((path: (string | number | symbol)[], data: PathData) => unknown) | undefined
+	value:
+		| NonNullable<unknown>
+		| ((path: (string | number | symbol)[], data: PathData) => unknown)
+		| null
+		| undefined
 ) {
 	const isFunction = typeof value === 'function';
 

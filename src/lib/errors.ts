@@ -9,6 +9,7 @@ export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	//console.log('===', errors.length, 'errors', shape);
 	const output: Record<string, unknown> = {};
 	for (const error of errors) {
+		// TODO: Empty path = Form-level error?
 		if (!error.path) continue;
 
 		// Path must filter away number indices, since the object shape doesn't contain these.

@@ -1,4 +1,4 @@
-import { klona } from 'klona';
+import { klona } from './klona.js';
 
 // Thanks to: https://dev.to/tylim88/typescript-numeric-range-type-15a5#comment-22mld
 export type NumericRange<

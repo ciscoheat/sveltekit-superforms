@@ -221,7 +221,8 @@ export function superForm<
 		errors: form.errors,
 		lastChanges: [] as (string | number | symbol)[][],
 		message: form.message,
-		tainted: undefined as TaintedFields<T> | undefined
+		tainted: undefined as TaintedFields<T> | undefined,
+		valid: form.valid
 	};
 
 	const FormId = writable<string>(options.id ?? form.id);
@@ -568,6 +569,7 @@ export function superForm<
 		Errors.set(form.errors);
 		FormId.set(form.id);
 		Posted.set(form.posted);
+		Data.valid = form.valid;
 
 		if (options.flashMessage && shouldSyncFlash(options)) {
 			const flash = options.flashMessage.module.getFlash(page);
@@ -690,7 +692,7 @@ export function superForm<
 
 		capture() {
 			return {
-				valid: initialForm.valid,
+				valid: Data.valid,
 				posted: Data.posted,
 				errors: Data.errors,
 				data: Data.form,

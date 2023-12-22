@@ -34,15 +34,14 @@ export class SchemaError extends SuperFormError {
 export type SuperValidated<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = {
 	id: string;
 	valid: boolean;
 	posted: boolean;
 	errors: ValidationErrors<T>;
 	data: T;
-	constraints: C extends 'with-constraints' ? InputConstraints<T> : never;
+	constraints: InputConstraints<T>;
 	shape: SchemaShape;
 	message?: M;
 };

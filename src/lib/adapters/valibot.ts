@@ -5,7 +5,7 @@ import type { Inferred } from '$lib/index.js';
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
 	options: { defaults: Inferred<T>; schemaOptions?: SchemaOptions }
-): ValidationAdapter<Inferred<T>, 'no-constraints'> {
+): ValidationAdapter<Inferred<T>> {
 	return {
 		superFormValidationLibrary: 'valibot',
 		validator: schema,

@@ -56,7 +56,7 @@ const expectedConstraints = {
 };
 
 function schemaTest(
-	adapter: () => ValidationAdapter<Record<string, unknown>, 'with-constraints' | 'no-constraints'>,
+	adapter: () => ValidationAdapter<Record<string, unknown>>,
 	errors: { email: string; tags?: string; tags0?: string },
 	testConstraints: boolean
 ) {

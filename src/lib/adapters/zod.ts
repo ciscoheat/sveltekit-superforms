@@ -35,9 +35,7 @@ type RecursiveZodEffects<T extends AnyZodObject, Depth extends number> = Depth e
 
 type ZodValidation = RecursiveZodEffects<AnyZodObject, 10>;
 
-function _zod<T extends ZodValidation>(
-	schema: T
-): ValidationAdapter<z.infer<T>, 'with-constraints'> {
+function _zod<T extends ZodValidation>(schema: T): ValidationAdapter<z.infer<T>> {
 	return {
 		superFormValidationLibrary: 'zod',
 		validator: schema,

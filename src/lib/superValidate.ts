@@ -40,23 +40,18 @@ export type SuperValidateOptions<T extends object> = Partial<{
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
->(
-	adapter: ValidationAdapter<T, C>,
-	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M, C>>;
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+>(adapter: ValidationAdapter<T>, options?: SuperValidateOptions<T>): Promise<SuperValidated<T, M>>;
 
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
 	data: SuperValidateData<T>,
-	adapter: ValidationAdapter<T, C>,
+	adapter: ValidationAdapter<T>,
 	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M, C>>;
+): Promise<SuperValidated<T, M>>;
 
 /**
  * Validates a schema for data validation and usage in superForm.
@@ -66,20 +61,19 @@ export async function superValidate<
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	C extends 'with-constraints' | 'no-constraints' = 'with-constraints'
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	data: ValidationAdapter<T, C> | SuperValidateData<T>,
-	adapter?: ValidationAdapter<T, C> | SuperValidateData<T> | SuperValidateOptions<T>,
+	data: ValidationAdapter<T> | SuperValidateData<T>,
+	adapter?: ValidationAdapter<T> | SuperValidateData<T> | SuperValidateOptions<T>,
 	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M, C>> {
+): Promise<SuperValidated<T, M>> {
 	if (data && 'superFormValidationLibrary' in data) {
 		options = adapter as SuperValidateOptions<T>;
 		adapter = data;
 		data = undefined;
 	}
 
-	const validation = mapAdapter(adapter as ValidationAdapter<T, C>);
+	const validation = mapAdapter(adapter as ValidationAdapter<T>);
 
 	const defaults = options?.defaults ?? validation.defaults;
 	const jsonSchema = options?.jsonSchema ?? validation.jsonSchema;

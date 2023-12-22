@@ -31,32 +31,26 @@ export type ValidationResult<TOutput = any> =
 			issues: Array<ValidationIssue>;
 	  };
 
-export interface ValidationAdapter<
-	T extends Record<string, unknown>,
-	C extends 'with-constraints' | 'no-constraints'
-> {
+export interface ValidationAdapter<T extends Record<string, unknown>> {
 	superFormValidationLibrary: ValidationLibrary;
 	validator: Schema;
 	jsonSchema: JSONSchema;
 	customValidator?: (data: unknown) => Promise<ValidationResult<T>>;
 	defaults?: T;
-	constraints?: C extends 'with-constraints' ? InputConstraints<T> : never;
+	constraints?: InputConstraints<T>;
 }
 
-export interface MappedValidationAdapter<
-	T extends Record<string, unknown>,
-	C extends 'with-constraints' | 'no-constraints'
-> extends ValidationAdapter<T, C> {
+export interface MappedValidationAdapter<T extends Record<string, unknown>>
+	extends ValidationAdapter<T> {
 	defaults: T;
-	constraints: C extends 'with-constraints' ? InputConstraints<T> : never;
+	constraints: InputConstraints<T>;
 	shape: SchemaShape;
 	id: string;
 }
 
-export function mapAdapter<
-	T extends Record<string, unknown>,
-	C extends 'with-constraints' | 'no-constraints'
->(adapter: ValidationAdapter<T, C>): MappedValidationAdapter<T, C> {
+export function mapAdapter<T extends Record<string, unknown>>(
+	adapter: ValidationAdapter<T>
+): MappedValidationAdapter<T> {
 	if (!adapterCache.has(adapter)) {
 		const jsonSchema = adapter.jsonSchema;
 		const mapped = {
@@ -65,10 +59,10 @@ export function mapAdapter<
 			defaults: adapter.defaults ?? defaultValues(jsonSchema),
 			shape: objectShape(jsonSchema),
 			id: schemaHash(jsonSchema)
-		} satisfies MappedValidationAdapter<T, 'with-constraints' | 'no-constraints'>;
+		} satisfies MappedValidationAdapter<T>;
 		adapterCache.set(adapter, mapped);
 	}
-	return adapterCache.get(adapter) as MappedValidationAdapter<T, C>;
+	return adapterCache.get(adapter) as MappedValidationAdapter<T>;
 }
 
 export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOptions) => {
@@ -80,6 +74,6 @@ export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOpt
 };
 
 const adapterCache = new WeakMap<
-	ValidationAdapter<Record<string, unknown>, 'with-constraints' | 'no-constraints'>,
-	MappedValidationAdapter<Record<string, unknown>, 'with-constraints' | 'no-constraints'>
+	ValidationAdapter<Record<string, unknown>>,
+	MappedValidationAdapter<Record<string, unknown>>
 >();

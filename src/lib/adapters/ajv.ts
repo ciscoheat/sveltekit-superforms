@@ -6,7 +6,7 @@ import { adapter, type ValidationAdapter } from './index.js';
 function _ajv<T extends Record<string, unknown>>(
 	schema: JSONSchema,
 	options?: Ajv.Options
-): ValidationAdapter<T, 'with-constraints'> {
+): ValidationAdapter<T> {
 	const ajv = new Ajv.default({ allErrors: true, ...(options || {}) });
 	// @ts-expect-error No type info exists
 	addFormats(ajv);

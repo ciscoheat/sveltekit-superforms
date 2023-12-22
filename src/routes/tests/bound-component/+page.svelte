@@ -30,6 +30,8 @@
   $: {
     //console.log('current form', $form, 'errors', $errors);
   }
+
+  $: errorOutput = `ERRORS ${JSON.stringify($errors, null)}`;
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />
@@ -48,12 +50,11 @@
 
 {#if $errors}
   <div
-    class="status"
+    class="errors status"
     class:error={$page.status >= 400}
     class:success={$page.status == 200}
   >
-    ERRORS
-    {JSON.stringify($errors, null, 2)}
+    {errorOutput}
   </div>
 {/if}
 <form method="POST" enctype="multipart/form-data" use:enhance>

@@ -1,6 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
 import { superValidate } from '$lib/server';
-import type { z } from 'zod';
 import { schema } from './schemas';
 
 export const load = (async () => {

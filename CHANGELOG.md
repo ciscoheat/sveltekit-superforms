@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `strict` option added to `superValidate`, to ensure that all fields exist when posted. In the default non-strict mode, non-existing fields are automatically using their default value. ([#295](https://github.com/ciscoheat/sveltekit-superforms/pull/295), thanks to [21RISK](https://github.com/21RISK) for the PR)
+- `strict` option added to `superValidate`, to ensure that all schema fields exist. In the default non-strict mode, non-existing fields are automatically using their default value. ([#295](https://github.com/ciscoheat/sveltekit-superforms/pull/295), thanks to [21RISK](https://github.com/21RISK) for the PR)
 
 ### Fixed
 

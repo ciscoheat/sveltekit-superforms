@@ -56,6 +56,7 @@
 		"svelte": "5.0.0-next.26",
 		"svelte-check": "^3.6.2",
 		"sveltekit-flash-message": "^2.3.0",
+		"sveltekit-rate-limiter": "^0.4.2",
 		"to-json-schema": "^0.2.5",
 		"ts-deepmerge": "^6.2.0",
 		"tslib": "^2.6.2",

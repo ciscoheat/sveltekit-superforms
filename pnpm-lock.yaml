@@ -89,6 +89,9 @@ devDependencies:
   sveltekit-flash-message:
     specifier: ^2.3.0
     version: 2.3.0(@sveltejs/kit@2.0.5)(svelte@5.0.0-next.26)
+  sveltekit-rate-limiter:
+    specifier: ^0.4.2
+    version: 0.4.2(@sveltejs/kit@2.0.5)
   to-json-schema:
     specifier: ^0.2.5
     version: 0.2.5
@@ -461,6 +464,11 @@ packages:
 
   /@humanwhocodes/object-schema@2.0.1:
     resolution: {integrity: sha512-dvuCeX5fC9dXgJn9t+X5atfmgQAzUOWqS1254Gh0m6i8wKd10ebXkfNKiRK+1GWi/yTvvLDHpoxLr0xxxeslWw==}
+    dev: true
+
+  /@isaacs/ttlcache@1.4.1:
+    resolution: {integrity: sha512-RQgQ4uQ+pLbqXfOmieB91ejmLwvSgv9nLx6sT6sD83s7umBypgg+OIBOBbEUiJXrfpnp9j0mRhYYdzp9uqq3lA==}
+    engines: {node: '>=12'}
     dev: true
 
   /@jest/schemas@29.6.3:
@@ -2513,6 +2521,15 @@ packages:
     dependencies:
       '@sveltejs/kit': 2.0.5(@sveltejs/vite-plugin-svelte@3.0.1)(svelte@5.0.0-next.26)(vite@5.0.10)
       svelte: 5.0.0-next.26
+    dev: true
+
+  /sveltekit-rate-limiter@0.4.2(@sveltejs/kit@2.0.5):
+    resolution: {integrity: sha512-TzeHtEczD1klE8xQJguCbHVQAZk2eYwUdoynmWL2FGENw+iPCwYx0+8wtM+5itaAqwlJbKrcADdV/P/UZr4VIQ==}
+    peerDependencies:
+      '@sveltejs/kit': 1.x || 2.x
+    dependencies:
+      '@isaacs/ttlcache': 1.4.1
+      '@sveltejs/kit': 2.0.5(@sveltejs/vite-plugin-svelte@3.0.1)(svelte@5.0.0-next.26)(vite@5.0.10)
     dev: true
 
   /text-table@0.2.0:

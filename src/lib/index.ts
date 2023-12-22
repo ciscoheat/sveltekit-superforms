@@ -1,9 +1,12 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
-
 import SuperDebug from './client/SuperDebug.svelte';
+
 export default SuperDebug;
+
+export { superForm } from './client/superForm.js';
+export { superValidate } from './superValidate.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;

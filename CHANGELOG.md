@@ -5,15 +5,15 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.13.0] - 2023-12-22
 
 ### Added
 
-- `strict` mode option added, to ensure that all fields exist when posted. In the default non-strict mode, non-existing fields were automatically using their default value.
+- `strict` option added to `superValidate`, to ensure that all fields exist when posted. In the default non-strict mode, non-existing fields are automatically using their default value. ([#295](https://github.com/ciscoheat/sveltekit-superforms/pull/295), thanks to [21RISK](https://github.com/21RISK) for the PR)
 
 ### Fixed
 
-- Using faster clone library ([klona](https://github.com/lukeed/klona))
+- Upgraded to faster cloning library ([klona](https://github.com/lukeed/klona))
 
 ## [1.12.0] - 2023-12-14
 

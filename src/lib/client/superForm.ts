@@ -250,35 +250,27 @@ export function superForm<
 		return 'id' in object && typeof object.id === 'string' ? object.id : false;
 	}
 
-	function Context_newFormStore(data: T) {
-		const _formData = writable(data);
-		return {
-			subscribe: _formData.subscribe,
-			set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
-				Tainted_update(value, options.taint ?? true);
-
-				Tainted_setTaintedFormState(value);
-				// Need to clone the value, so it won't refer to $page for example.
-				return _formData.set(clone(value));
-			},
-			update: (
-				updater: Parameters<typeof _formData.update>[0],
-				options: { taint?: TaintOption } = {}
-			) => {
-				return _formData.update((value) => {
-					const output = updater(value);
-					Tainted_update(output, options.taint ?? true);
-
-					Tainted_setTaintedFormState(output);
-					// No cloning here, since it's an update
-					return output;
-				});
-			}
-		};
-	}
-
-	// Stores for the properties of SuperValidated<T, M>
-	const Form = Context_newFormStore(form.data);
+	// eslint-disable-next-line dci-lint/grouped-rolemethods
+	const _formData = writable(form.data);
+	const Form = {
+		subscribe: _formData.subscribe,
+		set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
+			Tainted_update(value, options.taint ?? true);
+			// Need to clone the value, so it won't refer to $page for example.
+			return _formData.set(clone(value));
+		},
+		update: (
+			updater: Parameters<typeof _formData.update>[0],
+			options: { taint?: TaintOption } = {}
+		) => {
+			return _formData.update((value) => {
+				const output = updater(value);
+				Tainted_update(output, options.taint ?? true);
+				// No cloning here, since it's an update
+				return output;
+			});
+		}
+	};
 
 	function Form_set(data: T, options: { taint?: TaintOption } = {}) {
 		return Form.set(data, options);
@@ -391,19 +383,19 @@ export function superForm<
 	const Tainted = {
 		data: writable<TaintedFields<T> | undefined>(),
 		message: options.taintedMessage,
-		formState: clone(initialForm.data)
+		state: clone(initialForm.data)
 	};
 
 	function Tainted_enable() {
 		options.taintedMessage = Tainted.message;
 	}
 
-	function Tainted_state() {
+	function Tainted_currentState() {
 		return Tainted.data;
 	}
 
-	function Tainted_setTaintedFormState(data: typeof initialForm.data) {
-		Tainted.formState = clone(data);
+	function Tainted__updateState(data: T) {
+		Tainted.state = clone(data);
 	}
 
 	function Tainted_isTainted(obj: unknown): boolean {
@@ -455,14 +447,13 @@ export function superForm<
 		}
 	}
 
-	async function Tainted_update(newObj: unknown, taintOptions: TaintOption) {
+	async function Tainted_update(newObj: T, taintOptions: TaintOption) {
 		// Ignore is set when returning errors from the server
 		// so status messages and form-level errors won't be
 		// immediately cleared by client-side validation.
 		if (taintOptions == 'ignore') return;
 
-		let paths = comparePaths(newObj, Tainted.formState);
-
+		let paths = comparePaths(newObj, Tainted.state);
 		LastChanges.set(paths);
 
 		if (paths.length) {
@@ -489,6 +480,7 @@ export function superForm<
 			if (!(options.validationMethod == 'onblur' || options.validationMethod == 'submit-only')) {
 				let updated = false;
 
+				// TODO: Factorize Tainted__validate
 				for (const path of paths) {
 					updated = updated || (await Tainted__validate(path, taintOptions));
 				}
@@ -497,11 +489,13 @@ export function superForm<
 				}
 			}
 		}
+
+		Tainted__updateState(newObj);
 	}
 
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newData: T) {
 		Tainted.data.set(tainted);
-		Tainted_setTaintedFormState(newData);
+		Tainted__updateState(newData);
 	}
 
 	// Subscribe to certain stores and store the current
@@ -674,7 +668,7 @@ export function superForm<
 			options,
 			Form,
 			Errors,
-			Tainted_state(),
+			Tainted_currentState(),
 			opts
 		);
 		return result.errors;
@@ -686,7 +680,7 @@ export function superForm<
 		errors: Errors,
 		message: Message,
 		constraints: Constraints,
-		tainted: Tainted_state(),
+		tainted: Tainted_currentState(),
 
 		submitting: readonly(Submitting),
 		delayed: readonly(Delayed),
@@ -758,7 +752,7 @@ export function superForm<
 
 				//console.log('htmlInputChange', change, event, target);
 
-				const result = await validateField(change, options, Form, Errors, Tainted_state());
+				const result = await validateField(change, options, Form, Errors, Tainted_currentState());
 
 				// Update data if target exists (immediate is set, refactor please)
 				if (result.data && target) Form_set(result.data);

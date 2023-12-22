@@ -105,6 +105,7 @@ export function superForm<
 >(form: SuperValidated<T, M> | T, options: FormOptions<T, M> = {}): SuperForm<T, M> {
 	// Option guards
 	{
+		// TODO: Global legacy mode? .env setting?
 		if (options.legacy) {
 			if (options.resetForm === undefined) options.resetForm = false;
 			if (options.taintedMessage === undefined) options.taintedMessage = true;
@@ -226,20 +227,8 @@ export function superForm<
 	const FormId = writable<string>(options.id ?? form.id);
 	const Shape = writable(form.shape);
 
-	const Context = {
-		taintedMessage: options.taintedMessage,
-		taintedFormState: clone(initialForm.data)
-	};
-
-	function Context_randomId(length = 8) {
-		return Math.random()
-			.toString(36)
-			.substring(2, length + 2);
-	}
-
-	function Context_setTaintedFormState(data: typeof initialForm.data) {
-		Context.taintedFormState = clone(data);
-	}
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const Context = {};
 
 	function Context_findValidationForms(data: Record<string, unknown>) {
 		const forms = Object.values(data).filter(
@@ -261,19 +250,14 @@ export function superForm<
 		return 'id' in object && typeof object.id === 'string' ? object.id : false;
 	}
 
-	function Context_enableEnhance() {
-		options.taintedMessage = Context.taintedMessage;
-		if (Data.formId === undefined) FormId.set(Context_randomId());
-	}
-
 	function Context_newFormStore(data: T) {
 		const _formData = writable(data);
 		return {
 			subscribe: _formData.subscribe,
 			set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
-				Tainted_update(value, Context.taintedFormState, options.taint ?? true);
+				Tainted_update(value, options.taint ?? true);
 
-				Context_setTaintedFormState(value);
+				Tainted_setTaintedFormState(value);
 				// Need to clone the value, so it won't refer to $page for example.
 				return _formData.set(clone(value));
 			},
@@ -283,9 +267,9 @@ export function superForm<
 			) => {
 				return _formData.update((value) => {
 					const output = updater(value);
-					Tainted_update(output, Context.taintedFormState, options.taint ?? true);
+					Tainted_update(output, options.taint ?? true);
 
-					Context_setTaintedFormState(output);
+					Tainted_setTaintedFormState(output);
 					// No cloning here, since it's an update
 					return output;
 				});
@@ -404,7 +388,23 @@ export function superForm<
 			})
 	};
 
-	const Tainted = writable<TaintedFields<T> | undefined>();
+	const Tainted = {
+		data: writable<TaintedFields<T> | undefined>(),
+		message: options.taintedMessage,
+		formState: clone(initialForm.data)
+	};
+
+	function Tainted_enable() {
+		options.taintedMessage = Tainted.message;
+	}
+
+	function Tainted_state() {
+		return Tainted.data;
+	}
+
+	function Tainted_setTaintedFormState(data: typeof initialForm.data) {
+		Tainted.formState = clone(data);
+	}
 
 	function Tainted_isTainted(obj: unknown): boolean {
 		if (!obj) return false;
@@ -448,32 +448,28 @@ export function superForm<
 		}
 
 		if (shouldValidate) {
-			await validateField(path, options, Form, Errors, Tainted, { taint });
+			await validateField(path, options, Form, Errors, Tainted.data, { taint });
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	async function Tainted_update(
-		newObj: unknown,
-		compareAgainst: unknown,
-		taintOptions: TaintOption
-	) {
+	async function Tainted_update(newObj: unknown, taintOptions: TaintOption) {
 		// Ignore is set when returning errors from the server
 		// so status messages and form-level errors won't be
 		// immediately cleared by client-side validation.
 		if (taintOptions == 'ignore') return;
 
-		let paths = comparePaths(newObj, compareAgainst);
+		let paths = comparePaths(newObj, Tainted.formState);
 
 		LastChanges.set(paths);
 
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {
-				Tainted.set(undefined);
+				Tainted.data.set(undefined);
 			} else {
-				Tainted.update((tainted) => {
+				Tainted.data.update((tainted) => {
 					if (taintOptions !== true && tainted) {
 						// Check if the paths are tainted already, then set to undefined or skip entirely.
 						const _tainted = tainted;
@@ -504,15 +500,15 @@ export function superForm<
 	}
 
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newData: T) {
-		Tainted.set(tainted);
-		Context_setTaintedFormState(newData);
+		Tainted.data.set(tainted);
+		Tainted_setTaintedFormState(newData);
 	}
 
 	// Subscribe to certain stores and store the current
 	// value in Data, to avoid using get
 	const Unsubscriptions: (() => void)[] = [
 		// eslint-disable-next-line dci-lint/private-role-access
-		Tainted.subscribe((tainted) => (Data.tainted = tainted)),
+		Tainted.data.subscribe((tainted) => (Data.tainted = tainted)),
 		// eslint-disable-next-line dci-lint/private-role-access
 		Form.subscribe((form) => (Data.form = form)),
 		FormId.subscribe((id) => (Data.formId = id)),
@@ -542,9 +538,9 @@ export function superForm<
 		($errors: ValidationErrors<T> | undefined) => ($errors ? flattenErrors($errors) : [])
 	);
 
-	//////////////////////////////////////////////////////////////////////
+	///// End of Roles //////////////////////////////////////////////////////////
 
-	// Need to clear this and set it after use:enhance has run, to avoid showing the
+	// Need to clear this and set it again after use:enhance has run, to avoid showing the
 	// tainted dialog when a form doesn't use it or the browser doesn't use JS.
 	options.taintedMessage = undefined;
 
@@ -678,7 +674,7 @@ export function superForm<
 			options,
 			Form,
 			Errors,
-			Tainted,
+			Tainted_state(),
 			opts
 		);
 		return result.errors;
@@ -690,7 +686,7 @@ export function superForm<
 		errors: Errors,
 		message: Message,
 		constraints: Constraints,
-		tainted: Tainted,
+		tainted: Tainted_state(),
 
 		submitting: readonly(Submitting),
 		delayed: readonly(Delayed),
@@ -750,7 +746,7 @@ export function superForm<
 			}
 
 			// Now we know that we are upgraded, so we can enable the tainted form option.
-			Context_enableEnhance();
+			Tainted_enable();
 
 			// Called upon an event from a HTML element that affects the form.
 			async function htmlInputChange(
@@ -762,7 +758,7 @@ export function superForm<
 
 				//console.log('htmlInputChange', change, event, target);
 
-				const result = await validateField(change, options, Form, Errors, Tainted);
+				const result = await validateField(change, options, Form, Errors, Tainted_state());
 
 				// Update data if target exists (immediate is set, refactor please)
 				if (result.data && target) Form_set(result.data);

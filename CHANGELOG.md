@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `strict` mode option added, to ensure that all fields exist when posted. In the default non-strict mode, non-existing fields were automatically using their default value.
 
+### Fixed
+
+- Using faster clone library ([klona](https://github.com/lukeed/klona))
+
 ## [1.12.0] - 2023-12-14
 
 ### Added

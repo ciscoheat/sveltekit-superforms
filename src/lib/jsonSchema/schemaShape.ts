@@ -11,16 +11,16 @@ export type SchemaShape = {
 	[K in string]: SchemaShape;
 };
 
-export function objectShape(schema: JSONSchema, path: string[] = []): SchemaShape {
+export function schemaShape(schema: JSONSchema, path: string[] = []): SchemaShape {
 	if (schema.type !== 'object') {
 		throw new SchemaError('Only objects can use errorShape', path);
 	}
 
 	// Can be casted since it guaranteed to be an object
-	return _objectShape(schema, path) as SchemaShape;
+	return _schemaShape(schema, path) as SchemaShape;
 }
 
-function _objectShape(schema: JSONSchema7Definition, path: string[]): SchemaShape | undefined {
+function _schemaShape(schema: JSONSchema7Definition, path: string[]): SchemaShape | undefined {
 	if (typeof schema === 'boolean') {
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
@@ -33,7 +33,7 @@ function _objectShape(schema: JSONSchema7Definition, path: string[]): SchemaShap
 		const union = info.union || [];
 		return arr.concat(union).reduce(
 			(shape, next) => {
-				const nextShape = _objectShape(next, path);
+				const nextShape = _schemaShape(next, path);
 				if (nextShape) shape = { ...(shape ?? {}), ...nextShape };
 				return shape;
 			},
@@ -44,11 +44,11 @@ function _objectShape(schema: JSONSchema7Definition, path: string[]): SchemaShap
 	if (info.properties) {
 		const output: SchemaShape = {};
 		for (const [key, prop] of Object.entries(info.properties)) {
-			const shape = _objectShape(prop, [...path, key]);
+			const shape = _schemaShape(prop, [...path, key]);
 			if (shape) output[key] = shape;
 		}
 		return output;
 	}
 
-	return undefined;
+	return info.types.includes('array') || info.types.includes('object') ? {} : undefined;
 }

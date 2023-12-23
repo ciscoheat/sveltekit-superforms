@@ -660,6 +660,7 @@ describe('Default values', () => {
 			},
 			posted: false,
 			shape: {
+				numbers: {},
 				promptMetaData: {}
 			},
 			constraints: {

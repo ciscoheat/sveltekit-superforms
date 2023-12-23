@@ -1,6 +1,6 @@
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { describe, it, expect } from 'vitest';
-import type { ValidationAdapter } from '$lib/adapters/index.js';
+import { toJsonSchema, type ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
@@ -22,6 +22,7 @@ import { type } from 'arktype';
 
 import { typebox } from '$lib/adapters/typebox.js';
 import { Type } from '@sinclair/typebox';
+import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 //import { TypeCompiler } from '@sinclair/typebox/compiler';
 
 ///// Test data /////////////////////////////////////////////////////
@@ -106,7 +107,6 @@ describe('TypeBox', () => {
 
 /////////////////////////////////////////////////////////////////////
 
-/*
 describe('Arktype', () => {
 	const schema = type({
 		name: 'string',
@@ -116,7 +116,8 @@ describe('Arktype', () => {
 
 	const errors = {
 		email: "email must be a valid email (was '')",
-		tags: 'tags must be at least 2 characters (was 1)'
+		//tags: 'tags must be at least 2 characters (was 0)',
+		tags1: 'tags/1 must be at least 2 characters (was 1)'
 	};
 
 	schemaTest(() => arktype(schema, { defaults }), errors, false);
@@ -124,6 +125,7 @@ describe('Arktype', () => {
 
 /////////////////////////////////////////////////////////////////////
 
+/*
 describe('Valibot', () => {
 	const schema = object({
 		name: string(),

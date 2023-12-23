@@ -16,7 +16,7 @@ function _ajv<T extends Record<string, unknown>>(
 		superFormValidationLibrary: 'ajv',
 		validator,
 		jsonSchema: schema,
-		async customValidator(data: unknown) {
+		async process(data: unknown) {
 			if (validator(data)) {
 				return {
 					data: data as T,

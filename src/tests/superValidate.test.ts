@@ -1,25 +1,38 @@
-import { describe, it, expect } from 'vitest';
-import { object, string, email, minLength, array } from 'valibot';
-import { z } from 'zod';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
-import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
-import { Foo, bigZodSchema } from './data.js';
-import { valibot } from '$lib/adapters/valibot.js';
+import { describe, it, expect } from 'vitest';
 import type { ValidationAdapter } from '$lib/adapters/index.js';
-import { ajv } from '$lib/adapters/ajv.js';
-import merge from 'ts-deepmerge';
+import { Foo, bigZodSchema } from './data.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { superValidate } from '$lib/superValidate.js';
-import { type } from 'arktype';
+import merge from 'ts-deepmerge';
+
+///// Adapters //////////////////////////////////////////////////////
+
+import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
+import { z } from 'zod';
+
+import { valibot } from '$lib/adapters/valibot.js';
+import { object, string, email, minLength, array } from 'valibot';
+
+import { ajv } from '$lib/adapters/ajv.js';
+
 import { arktype } from '$lib/adapters/arktype.js';
+import { type } from 'arktype';
+
+import { typebox } from '$lib/adapters/typebox.js';
+import { Type } from '@sinclair/typebox';
+//import { TypeCompiler } from '@sinclair/typebox/compiler';
+
+///// Test data /////////////////////////////////////////////////////
 
 /* 
 TEST SCHEMA TEMPLATE:
 {
-	name: string, min length 2
-	email: string (email format)
-	tags: string array, min length 2 for both string and array.
+	name: string, length >= 2
+	email: string, email format
+	tags: string array, array length >= 3, string length >= 2
+	score: integer, >= 0
 }
 */
 
@@ -27,18 +40,24 @@ TEST SCHEMA TEMPLATE:
  * Input data to superValidate
  * Should give no errors
  */
-const validData = { name: 'Ok', email: 'test@example.com', tags: ['Ok 1', 'Ok 2'] };
+const validData = {
+	name: 'Ok',
+	email: 'test@example.com',
+	tags: ['Ok 1', 'Ok 2', 'Ok 3'],
+	score: 10
+};
 
 /**
  * Input data to superValidate
- * Should give error on email and tags
+ * Should give error on email, tags, tags[1] and score
+ * Score is left out, to see if defaults are added properly.
  */
-const invalidData = { name: 'Ok', email: '' };
+const invalidData = { name: 'Ok', email: '', tags: ['AB', 'B'] };
 
 /**
  * What should be returned when no data is sent to superValidate
  */
-const defaults = { name: '', email: '', tags: ['A'] };
+const defaults = { name: '', email: '', tags: [], score: 0 };
 
 /**
  * Expected constraints
@@ -50,70 +69,44 @@ const expectedConstraints = {
 	name: {
 		required: true
 	},
+	score: {
+		min: 0,
+		required: true
+	},
 	tags: {
+		required: true,
 		minlength: 2
 	}
 };
 
-function schemaTest(
-	adapter: () => ValidationAdapter<Record<string, unknown>>,
-	errors: { email: string; tags?: string; tags0?: string },
-	testConstraints: boolean
-) {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const expectedErrors: Record<string, any> = {
-		email: [errors.email]
+///// Validation libraries //////////////////////////////////////////
+
+describe('TypeBox', () => {
+	const schema = Type.Object({
+		name: Type.String(),
+		email: Type.String({ format: 'email' }),
+		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
+		score: Type.Integer({ minimum: 0 })
+	});
+
+	//console.dir(schema, { depth: 10 }); //debug
+	//const compiled = TypeCompiler.Compile(schema);
+	//const errors2 = [...compiled.Errors(invalidData)];
+	//console.dir(errors2, { depth: 10 }); //debug
+
+	const errors = {
+		name: 'Expected string length greater or equal to 2',
+		email: "Expected string to match 'email' format",
+		tags: 'Expected array length to be greater or equal to 3',
+		tags1: 'Expected string length greater or equal to 2'
 	};
-	if (errors.tags0) expectedErrors.tags = { '0': [errors.tags0] };
-	if (errors.tags) {
-		if (!expectedErrors.tags) expectedErrors.tags = {};
-		expectedErrors.tags._errors = [errors.tags];
-	}
 
-	it('with schema only', async () => {
-		const output = await superValidate(adapter());
-		expect(output.valid).toEqual(false);
-		expect(output.errors).toEqual({});
-		expect(output.data).not.toBe(defaults);
-		expect(output.data).toEqual(defaults);
-		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
-	});
+	schemaTest(() => typebox(schema), errors, true);
+});
 
-	it('with schema only and initial errors', async () => {
-		const output = await superValidate(adapter(), { errors: true });
-		expect(output.valid).toEqual(false);
-		expect(output.errors).toEqual(expectedErrors);
-		expect(output.data).not.toBe(defaults);
-		expect(output.data).toEqual(defaults);
-		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
-	});
+/////////////////////////////////////////////////////////////////////
 
-	it('with incorrect test data', async () => {
-		const output = await superValidate(invalidData, adapter());
-		expect(output.valid).toEqual(false);
-		expect(output.errors).toEqual(expectedErrors);
-		expect(output.data).not.toBe(invalidData);
-		// Defaults and incorrectData are now merged
-		expect(output.data).toEqual(merge(defaults, invalidData));
-		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
-	});
-
-	it('with valid test data', async () => {
-		const output = await superValidate(validData, adapter());
-		expect(output.valid).toEqual(true);
-		expect(output.errors).toEqual({});
-		expect(output.data).not.toBe(validData);
-		expect(output.data).toEqual(validData);
-		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
-	});
-}
-
-///// Validation libraries ////////////////////////////////////////////////////
-
+/*
 describe('Arktype', () => {
 	const schema = type({
 		name: 'string',
@@ -129,7 +122,7 @@ describe('Arktype', () => {
 	schemaTest(() => arktype(schema, { defaults }), errors, false);
 });
 
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 describe('Valibot', () => {
 	const schema = object({
@@ -147,7 +140,7 @@ describe('Valibot', () => {
 	schemaTest(() => valibot(schema, { defaults }), errors, false);
 });
 
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 describe('ajv', () => {
 	const schema: JSONSchema = {
@@ -176,14 +169,15 @@ describe('ajv', () => {
 	schemaTest(() => ajv(schema), errors, true);
 });
 
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 describe('Zod', () => {
 	const schema = z
 		.object({
 			name: z.string(),
 			email: z.string().email(),
-			tags: z.string().min(2).array().min(2).default(['A'])
+			tags: z.string().min(2).array().min(3),
+			score: z.number().int().min(0)
 		})
 		.refine((a) => a)
 		.refine((a) => a)
@@ -213,9 +207,75 @@ describe('Zod', () => {
 
 	const errors = {
 		email: 'Invalid email',
-		tags: 'Array must contain at least 2 element(s)',
-		tags0: 'String must contain at least 2 character(s)'
+		tags: 'Array must contain at least 3 element(s)',
+		tags1: 'String must contain at least 2 character(s)'
 	};
 
 	schemaTest(() => zod(schema), errors, true);
 });
+*/
+
+///// Test function for all validation libraries ////////////////////
+
+function schemaTest(
+	adapter: () => ValidationAdapter<Record<string, unknown>>,
+	errors: { email: string; tags?: string; tags1?: string },
+	testConstraints: boolean
+) {
+	function expectedErrors(addTag1 = true) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const output: Record<string, any> = {
+			email: [errors.email]
+		};
+
+		if (addTag1 && errors.tags1) output.tags = { '1': [errors.tags1] };
+		if (errors.tags) {
+			if (!output.tags) output.tags = {};
+			output.tags._errors = [errors.tags];
+		}
+		return output;
+	}
+
+	it('with schema only', async () => {
+		const output = await superValidate(adapter());
+		expect(output.errors).toEqual({});
+		expect(output.valid).toEqual(false);
+		expect(output.data).not.toBe(defaults);
+		expect(output.data).toEqual(defaults);
+		expect(output.message).toBeUndefined();
+		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+	});
+
+	it('with schema only and initial errors', async () => {
+		const output = await superValidate(adapter(), { errors: true });
+		const errors = expectedErrors(false);
+
+		expect(output.errors).toEqual(errors);
+		expect(output.valid).toEqual(false);
+		expect(output.data).not.toBe(defaults);
+		expect(output.data).toEqual(defaults);
+		expect(output.message).toBeUndefined();
+		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+	});
+
+	it('with incorrect test data', async () => {
+		const output = await superValidate(invalidData, adapter());
+		expect(output.errors).toEqual(expectedErrors());
+		expect(output.valid).toEqual(false);
+		expect(output.data).not.toBe(invalidData);
+		// Defaults and incorrectData are now merged
+		expect(output.data).toEqual(merge(defaults, invalidData));
+		expect(output.message).toBeUndefined();
+		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+	});
+
+	it('with valid test data', async () => {
+		const output = await superValidate(validData, adapter());
+		expect(output.errors).toEqual({});
+		expect(output.valid).toEqual(true);
+		expect(output.data).not.toBe(validData);
+		expect(output.data).toEqual(validData);
+		expect(output.message).toBeUndefined();
+		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+	});
+}

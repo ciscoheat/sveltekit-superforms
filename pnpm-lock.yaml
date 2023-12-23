@@ -7,7 +7,10 @@ settings:
 devDependencies:
   '@decs/typeschema':
     specifier: ^0.12.1
-    version: 0.12.1(ajv@8.12.0)(arktype@1.0.28-alpha)(valibot@0.22.0)(vite@5.0.10)(zod@3.22.4)
+    version: 0.12.1(@sinclair/typebox@0.32.0)(ajv@8.12.0)(arktype@1.0.28-alpha)(valibot@0.22.0)(vite@5.0.10)(zod@3.22.4)
+  '@sinclair/typebox':
+    specifier: ^0.32.0
+    version: 0.32.0
   '@sveltejs/adapter-auto':
     specifier: ^3.0.1
     version: 3.0.1(@sveltejs/kit@2.0.5)
@@ -142,7 +145,7 @@ packages:
       regenerator-runtime: 0.14.1
     dev: true
 
-  /@decs/typeschema@0.12.1(ajv@8.12.0)(arktype@1.0.28-alpha)(valibot@0.22.0)(vite@5.0.10)(zod@3.22.4):
+  /@decs/typeschema@0.12.1(@sinclair/typebox@0.32.0)(ajv@8.12.0)(arktype@1.0.28-alpha)(valibot@0.22.0)(vite@5.0.10)(zod@3.22.4):
     resolution: {integrity: sha512-PhoCbaJ6T+9EfvUkemgYVnNfLmLoP2+Aa5yvQ3sIzH4fmIgDEFPGSRPuaTO04c99sqLeKuhHEY+WLzNubGABOA==}
     peerDependencies:
       '@deepkit/type': ^1.0.1-alpha.97
@@ -195,6 +198,7 @@ packages:
       zod:
         optional: true
     dependencies:
+      '@sinclair/typebox': 0.32.0
       ajv: 8.12.0
       arktype: 1.0.28-alpha
       valibot: 0.22.0
@@ -639,6 +643,10 @@ packages:
 
   /@sinclair/typebox@0.27.8:
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
+    dev: true
+
+  /@sinclair/typebox@0.32.0:
+    resolution: {integrity: sha512-FdBgO+ib0JCSPtq55cDva/5xd55vfAAyTXWVLCaTAFzNjVPaR5lNRKoEzMHTtArELEaHNs4E6WmdNJIY+gUoZw==}
     dev: true
 
   /@sveltejs/adapter-auto@3.0.1(@sveltejs/kit@2.0.5):

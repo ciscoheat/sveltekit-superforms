@@ -1,5 +1,5 @@
-import type { InputConstraints } from '$lib/index.js';
-import type { Schema, ValidationIssue } from '@decs/typeschema';
+import { SuperFormError, type InputConstraints } from '$lib/index.js';
+import type { Schema as TypeSchema, ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
@@ -17,7 +17,7 @@ export { ajv } from './ajv.js';
 export { valibot } from './valibot.js';
 export { arktype } from './arktype.js';
 
-export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'arktype' | 'custom';
+export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'arktype' | 'typebox' | 'custom';
 
 // Lifted from TypeSchema, since they are not exported
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,11 +31,14 @@ export type ValidationResult<TOutput = any> =
 			issues: Array<ValidationIssue>;
 	  };
 
+export type Schema = TypeSchema;
+
 export interface ValidationAdapter<T extends Record<string, unknown>> {
 	superFormValidationLibrary: ValidationLibrary;
-	validator: Schema;
+	validator?: Schema;
 	jsonSchema: JSONSchema;
-	customValidator?: (data: unknown) => Promise<ValidationResult<T>>;
+	process?: (data: unknown) => Promise<ValidationResult<T>>;
+	postProcess?: (result: ValidationResult<Record<string, unknown>>) => Promise<ValidationResult<T>>;
 	defaults?: T;
 	constraints?: InputConstraints<T>;
 }
@@ -60,6 +63,7 @@ export function mapAdapter<T extends Record<string, unknown>>(
 			shape: objectShape(jsonSchema),
 			id: schemaHash(jsonSchema)
 		} satisfies MappedValidationAdapter<T>;
+
 		adapterCache.set(adapter, mapped);
 	}
 	return adapterCache.get(adapter) as MappedValidationAdapter<T>;
@@ -74,6 +78,8 @@ export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOpt
 };
 
 const adapterCache = new WeakMap<
-	ValidationAdapter<Record<string, unknown>>,
-	MappedValidationAdapter<Record<string, unknown>>
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	ValidationAdapter<any>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	MappedValidationAdapter<any>
 >();

@@ -3,7 +3,7 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
-import type { SuperValidated, ValidationErrors } from './index.js';
+import { SuperFormError, type SuperValidated, type ValidationErrors } from './index.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
@@ -73,10 +73,10 @@ export async function superValidate<
 		data = undefined;
 	}
 
-	const validation = mapAdapter(adapter as ValidationAdapter<T>);
+	const validator = mapAdapter(adapter as ValidationAdapter<T>);
 
-	const defaults = options?.defaults ?? validation.defaults;
-	const jsonSchema = options?.jsonSchema ?? validation.jsonSchema;
+	const defaults = options?.defaults ?? validator.defaults;
+	const jsonSchema = options?.jsonSchema ?? validator.jsonSchema;
 
 	const parsed = await parseRequest<T>(data, jsonSchema, options);
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
@@ -84,20 +84,33 @@ export async function superValidate<
 	// Merge with defaults in non-strict mode.
 	const parsedData = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
 
-	const status: ValidationResult<T> =
+	if (!validator.validator && !validator.process)
+		throw new SuperFormError(
+			`Adapter "${validator.superFormValidationLibrary}" must have either a validator or a process function.`
+		);
+
+	if (validator.validator && validator.process)
+		throw new SuperFormError(
+			`Adapter "${validator.superFormValidationLibrary}" cannot have both a validator and a process function.`
+		);
+
+	let status: ValidationResult<T> =
 		!!parsed.data || addErrors
-			? validation.customValidator
-				? await validation.customValidator(parsedData)
-				: ((await validate(validation.validator, parsedData)) as ValidationResult<T>)
+			? validator.process
+				? await validator.process(parsedData)
+				: ((await validate(validator.validator!, parsedData)) as ValidationResult<T>)
 			: { success: false, issues: [] };
 
+	if (validator.postProcess) status = await validator.postProcess(status);
+
 	const valid = status.success;
-	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validation.shape);
+	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validator.shape);
 
-	const finalData = valid ? status.data : parsedData;
+	// Final data should always have defaults, to ensure type safety
+	const finalData = { ...defaults, ...(valid ? status.data : parsedData) };
+
 	let outputData: Record<string, unknown>;
-
-	if (!jsonSchema.additionalProperties) {
+	if (jsonSchema.additionalProperties === false) {
 		// Strip keys not belonging to schema
 		outputData = {};
 		for (const key of Object.keys(jsonSchema.properties ?? {})) {
@@ -114,13 +127,13 @@ export async function superValidate<
 	}
 
 	return {
-		id: parsed.id ?? options?.id ?? validation.id,
+		id: parsed.id ?? options?.id ?? validator.id,
 		valid,
 		posted: parsed.posted,
 		errors: errors as ValidationErrors<T>,
 		data: outputData as T,
-		constraints: validation.constraints,
-		shape: validation.shape
+		constraints: validator.constraints,
+		shape: validator.shape
 	};
 }
 

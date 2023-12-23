@@ -29,6 +29,7 @@
 	},
 	"devDependencies": {
 		"@decs/typeschema": "^0.12.1",
+		"@sinclair/typebox": "^0.32.0",
 		"@sveltejs/adapter-auto": "^3.0.1",
 		"@sveltejs/kit": "^2.0.5",
 		"@sveltejs/package": "^2.2.4",

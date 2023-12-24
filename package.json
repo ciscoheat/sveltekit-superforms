@@ -46,6 +46,8 @@
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-dci-lint": "^0.3.1",
 		"eslint-plugin-svelte": "^2.35.1",
+		"joi": "^17.11.0",
+		"joi-to-json": "^4.2.0",
 		"json-schema-to-ts": "^2.12.0",
 		"klona": "^2.0.6",
 		"memoize-weak": "^1.0.2",

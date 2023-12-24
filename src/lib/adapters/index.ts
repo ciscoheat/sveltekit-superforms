@@ -17,7 +17,14 @@ export { ajv } from './ajv.js';
 export { valibot } from './valibot.js';
 export { arktype } from './arktype.js';
 
-export type ValidationLibrary = 'zod' | 'valibot' | 'ajv' | 'arktype' | 'typebox' | 'custom';
+export type ValidationLibrary =
+	| 'zod'
+	| 'valibot'
+	| 'ajv'
+	| 'arktype'
+	| 'typebox'
+	| 'joi'
+	| 'custom';
 
 // Lifted from TypeSchema, since they are not exported
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

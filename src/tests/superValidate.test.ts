@@ -1,6 +1,6 @@
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { describe, it, expect } from 'vitest';
-import { toJsonSchema, type ValidationAdapter } from '$lib/adapters/index.js';
+import { type ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
@@ -22,7 +22,9 @@ import { type } from 'arktype';
 
 import { typebox } from '$lib/adapters/typebox.js';
 import { Type } from '@sinclair/typebox';
-//import { TypeCompiler } from '@sinclair/typebox/compiler';
+
+import { joi } from '$lib/adapters/joi.js';
+import Joi from 'joi';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -94,6 +96,23 @@ const simpleConstraints = {
 
 ///// Validation libraries //////////////////////////////////////////
 
+describe('Joi', () => {
+	const schema = Joi.object({
+		name: Joi.string().default('Unknown'),
+		email: Joi.string().email().required(),
+		tags: Joi.array().items(Joi.string().min(2)).min(3).required(),
+		score: Joi.number().integer().min(0).required()
+	});
+
+	const errors = {
+		email: '"email" is not allowed to be empty',
+		tags: '"tags" must contain at least 3 items',
+		tags1: '"tags[1]" length must be at least 2 characters'
+	};
+
+	schemaTest(() => joi(schema), errors);
+});
+
 describe('TypeBox', () => {
 	const schema = Type.Object({
 		name: Type.String({ default: 'Unknown' }),
@@ -108,7 +127,6 @@ describe('TypeBox', () => {
 	//console.dir(errors2, { depth: 10 }); //debug
 
 	const errors = {
-		name: 'Expected string length greater or equal to 2',
 		email: "Expected string to match 'email' format",
 		tags: 'Expected array length to be greater or equal to 3',
 		tags1: 'Expected string length greater or equal to 2'

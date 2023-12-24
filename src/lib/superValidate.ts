@@ -3,7 +3,7 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
-import { SuperFormError, type SuperValidated, type ValidationErrors } from './index.js';
+import { type SuperValidated, type ValidationErrors } from './index.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
@@ -84,22 +84,16 @@ export async function superValidate<
 	// Merge with defaults in non-strict mode.
 	const parsedData = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
 
-	if (!validator.validator && !validator.process)
-		throw new SuperFormError(
-			`Adapter "${validator.superFormValidationLibrary}" must have either a validator or a process function.`
-		);
+	let status: ValidationResult<T>;
 
-	if (validator.validator && validator.process)
-		throw new SuperFormError(
-			`Adapter "${validator.superFormValidationLibrary}" cannot have both a validator and a process function.`
-		);
-
-	let status: ValidationResult<T> =
-		!!parsed.data || addErrors
-			? validator.process
+	if (!!parsed.data || addErrors) {
+		status =
+			'process' in validator
 				? await validator.process(parsedData)
-				: ((await validate(validator.validator!, parsedData)) as ValidationResult<T>)
-			: { success: false, issues: [] };
+				: ((await validate(validator.validator, parsedData)) as ValidationResult<T>);
+	} else {
+		status = { success: false, issues: [] };
+	}
 
 	if (validator.postProcess) status = await validator.postProcess(status);
 

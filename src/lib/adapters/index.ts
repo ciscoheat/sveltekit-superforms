@@ -1,4 +1,4 @@
-import { SuperFormError, type InputConstraints } from '$lib/index.js';
+import { type InputConstraints } from '$lib/index.js';
 import type { Schema as TypeSchema, ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
@@ -33,23 +33,28 @@ export type ValidationResult<TOutput = any> =
 
 export type Schema = TypeSchema;
 
-export interface ValidationAdapter<T extends Record<string, unknown>> {
+export type ValidationAdapter<T extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;
-	validator?: Schema;
 	jsonSchema: JSONSchema;
-	process?: (data: unknown) => Promise<ValidationResult<T>>;
-	postProcess?: (result: ValidationResult<Record<string, unknown>>) => Promise<ValidationResult<T>>;
 	defaults?: T;
 	constraints?: InputConstraints<T>;
-}
+	postProcess?: (result: ValidationResult<Record<string, unknown>>) => Promise<ValidationResult<T>>;
+} & (TypeSchemaValidationAdapter | SuperFormValidationAdapter<T>);
 
-export interface MappedValidationAdapter<T extends Record<string, unknown>>
-	extends ValidationAdapter<T> {
+export type TypeSchemaValidationAdapter = {
+	validator: Schema;
+};
+
+export type SuperFormValidationAdapter<T extends Record<string, unknown>> = {
+	process: (data: unknown) => Promise<ValidationResult<T>>;
+};
+
+export type MappedValidationAdapter<T extends Record<string, unknown>> = ValidationAdapter<T> & {
 	defaults: T;
 	constraints: InputConstraints<T>;
 	shape: SchemaShape;
 	id: string;
-}
+};
 
 export function mapAdapter<T extends Record<string, unknown>>(
 	adapter: ValidationAdapter<T>
@@ -71,6 +76,20 @@ export function mapAdapter<T extends Record<string, unknown>>(
 
 export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOptions) => {
 	options = {
+		postProcessFnc(type, schema, value, defaultFunc) {
+			if (schema.properties && options?.required !== false) {
+				schema.required = Object.keys(value).filter((prop) => {
+					if (options?.required === true) return true;
+					if (options?.required === false) return false;
+					const hasProbablyDefault =
+						value[prop] && (!Array.isArray(value[prop]) || value[prop].length > 0);
+					return !hasProbablyDefault;
+				});
+				if (schema.required.length == 0) delete schema.required;
+				return schema;
+			}
+			return defaultFunc(type, schema, value);
+		},
 		objects: { additionalProperties: false, ...(options?.objects ?? {}) },
 		...(options ?? {})
 	};

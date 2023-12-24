@@ -1,8 +1,8 @@
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { describe, it, expect } from 'vitest';
-import { type ValidationAdapter } from '$lib/adapters/index.js';
+import { toJsonSchema, type ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
-import { constraints } from '$lib/jsonSchema/constraints.js';
+import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { superValidate } from '$lib/superValidate.js';
 import merge from 'ts-deepmerge';
@@ -29,7 +29,7 @@ import { Type } from '@sinclair/typebox';
 /* 
 TEST SCHEMA TEMPLATE:
 {
-	name: string, length >= 2
+	name: string, length >= 2, default value "Unknown"
 	email: string, email format
 	tags: string array, array length >= 3, string length >= 2
 	score: integer, >= 0
@@ -58,16 +58,13 @@ const invalidData = { name: 'Ok', email: '', tags: ['AB', 'B'] };
  * What should be returned when no data is sent to superValidate
  * Should give error on email and tags
  */
-const defaults = { name: '', email: '', tags: [], score: 0 };
+const defaults = { name: 'Unknown', email: '', tags: [], score: 0 };
 
 /**
- * Expected constraints
+ * Expected constraints for libraries with introspection
  */
-const expectedConstraints = {
+const fullConstraints = {
 	email: {
-		required: true
-	},
-	name: {
 		required: true
 	},
 	score: {
@@ -80,11 +77,26 @@ const expectedConstraints = {
 	}
 };
 
+/**
+ * Expected constraints for libraries with default values, no introspection
+ */
+const simpleConstraints = {
+	email: {
+		required: true
+	},
+	score: {
+		required: true
+	},
+	tags: {
+		required: true
+	}
+};
+
 ///// Validation libraries //////////////////////////////////////////
 
 describe('TypeBox', () => {
 	const schema = Type.Object({
-		name: Type.String(),
+		name: Type.String({ default: 'Unknown' }),
 		email: Type.String({ format: 'email' }),
 		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
 		score: Type.Integer({ minimum: 0 })
@@ -102,7 +114,7 @@ describe('TypeBox', () => {
 		tags1: 'Expected string length greater or equal to 2'
 	};
 
-	schemaTest(() => typebox(schema), errors, true);
+	schemaTest(() => typebox(schema), errors);
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -121,7 +133,7 @@ describe('Arktype', () => {
 		//tags1: 'tags/1 must be at least 2 characters (was 1)'
 	};
 
-	schemaTest(() => arktype(schema, { defaults }), errors, false);
+	schemaTest(() => arktype(schema, { defaults }), errors, true);
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -140,7 +152,7 @@ describe('Valibot', () => {
 		tags1: 'Invalid length'
 	};
 
-	schemaTest(() => valibot(schema, { defaults }), errors, false);
+	schemaTest(() => valibot(schema, { defaults }), errors, true);
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -149,7 +161,7 @@ describe('ajv', () => {
 	const schema: JSONSchema = {
 		type: 'object',
 		properties: {
-			name: { type: 'string' },
+			name: { type: 'string', default: 'Unknown' },
 			email: { type: 'string', format: 'email' },
 			tags: {
 				type: 'array',
@@ -169,7 +181,7 @@ describe('ajv', () => {
 		tags1: 'must NOT have fewer than 2 characters'
 	};
 
-	schemaTest(() => ajv(schema), errors, true);
+	schemaTest(() => ajv(schema), errors);
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -177,7 +189,7 @@ describe('ajv', () => {
 describe('Zod', () => {
 	const schema = z
 		.object({
-			name: z.string(),
+			name: z.string().default('Unknown'),
 			email: z.string().email(),
 			tags: z.string().min(2).array().min(3),
 			score: z.number().int().min(0)
@@ -214,7 +226,7 @@ describe('Zod', () => {
 		tags1: 'String must contain at least 2 character(s)'
 	};
 
-	schemaTest(() => zod(schema), errors, true);
+	schemaTest(() => zod(schema), errors);
 });
 
 ///// Test function for all validation libraries ////////////////////
@@ -222,10 +234,10 @@ describe('Zod', () => {
 function schemaTest(
 	adapter: () => ValidationAdapter<Record<string, unknown>>,
 	errors: { email: string | RegExp; tags?: string | RegExp; tags1?: string | RegExp },
-	testConstraints: boolean
+	hasSimpleConstraints = false
 ) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errorMessages: Record<string, any>, hasTagContentErrors = true) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		expect(errorMessages.email).toMatch(errors.email);
 
 		if (errors.tags) {
@@ -237,6 +249,11 @@ function schemaTest(
 		}
 	}
 
+	function expectConstraints(constraints: InputConstraints<Record<string, unknown>>) {
+		if (hasSimpleConstraints) expect(constraints).toEqual(simpleConstraints);
+		else expect(constraints).toEqual(fullConstraints);
+	}
+
 	it('with schema only', async () => {
 		const output = await superValidate(adapter());
 		expect(output.errors).toEqual({});
@@ -244,7 +261,7 @@ function schemaTest(
 		expect(output.data).not.toBe(defaults);
 		expect(output.data).toEqual(defaults);
 		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+		expectConstraints(output.constraints);
 	});
 
 	it('with schema only and initial errors', async () => {
@@ -256,7 +273,7 @@ function schemaTest(
 		expect(output.data).not.toBe(defaults);
 		expect(output.data).toEqual(defaults);
 		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+		expectConstraints(output.constraints);
 	});
 
 	it('with invalid test data', async () => {
@@ -267,7 +284,7 @@ function schemaTest(
 		// Defaults and incorrectData are now merged
 		expect(output.data).toEqual(merge(defaults, invalidData));
 		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+		expectConstraints(output.constraints);
 	});
 
 	it('with valid test data', async () => {
@@ -277,6 +294,6 @@ function schemaTest(
 		expect(output.data).not.toBe(validData);
 		expect(output.data).toEqual(validData);
 		expect(output.message).toBeUndefined();
-		if (testConstraints) expect(output.constraints).toEqual(expectedConstraints);
+		expectConstraints(output.constraints);
 	});
 }

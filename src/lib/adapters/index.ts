@@ -74,7 +74,16 @@ export function mapAdapter<T extends Record<string, unknown>>(
 	return adapterCache.get(adapter) as MappedValidationAdapter<T>;
 }
 
-export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOptions) => {
+/**
+ * Version of to-json-schema that checks if the object properties are default
+ * (empty string, 0, empty array, etc) and sets the required property if not.
+ * Also sets additionalProperties to false.
+ * @param object object that should be converted to JSON Schema
+ * @param options customize schema options
+ * @returns JSON Schema for the object
+ * @see https://www.npmjs.com/package/to-json-schema
+ */
+export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOptions) => {
 	options = {
 		postProcessFnc(type, schema, value, defaultFunc) {
 			if (schema.properties && options?.required !== false) {
@@ -93,7 +102,7 @@ export const toJsonSchema = (value: Record<string, unknown>, options?: SchemaOpt
 		objects: { additionalProperties: false, ...(options?.objects ?? {}) },
 		...(options ?? {})
 	};
-	return toSchema(value, options) as JSONSchema;
+	return toSchema(object, options) as JSONSchema;
 };
 
 const adapterCache = new WeakMap<

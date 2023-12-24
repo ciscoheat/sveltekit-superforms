@@ -21,6 +21,7 @@ TODO:
 
 - Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`.
 - Fields with default values don't have `required` in their constraints anymore.
-- Unions must have an explicit default value.
+- Unions must have an explicit default value in the schema.
 - If no data, default values aren't parsed with the default data (no side-effects for default values)
 - Numeric enums cannot be parsed with their string values anymore
+- Form id cannot be `undefined` anymore, must be `string`

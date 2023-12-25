@@ -96,10 +96,9 @@ export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOp
 			if (schema.properties && options?.required !== false) {
 				schema.required = Object.keys(value).filter((prop) => {
 					if (options?.required === true) return true;
-					if (options?.required === false) return false;
-					const hasProbablyDefault =
-						value[prop] && (!Array.isArray(value[prop]) || value[prop].length > 0);
-					return !hasProbablyDefault;
+					const hasValue = value[prop] && (!Array.isArray(value[prop]) || value[prop].length > 0);
+					// If no value, it probably doesn't have a default value and should be required
+					return !hasValue;
 				});
 				if (schema.required.length == 0) delete schema.required;
 				return schema;

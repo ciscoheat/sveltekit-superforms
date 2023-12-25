@@ -382,9 +382,8 @@ export function superForm<
 	};
 
 	const Tainted = {
-		data: writable<TaintedFields<T> | undefined>(),
-		message: options.taintedMessage,
-		state: clone(initialForm.data)
+		state: writable<TaintedFields<T> | undefined>(),
+		message: options.taintedMessage
 	};
 
 	function Tainted_enable() {
@@ -392,11 +391,7 @@ export function superForm<
 	}
 
 	function Tainted_currentState() {
-		return Tainted.data;
-	}
-
-	function Tainted__updateState(data: T) {
-		Tainted.state = clone(data);
+		return Tainted.state;
 	}
 
 	function Tainted_isTainted(obj: unknown): boolean {
@@ -441,7 +436,7 @@ export function superForm<
 		}
 
 		if (shouldValidate) {
-			await validateField(path, options, Form, Errors, Tainted.data, { taint });
+			await validateField(path, options, Form, Errors, Tainted.state, { taint });
 			return true;
 		} else {
 			return false;
@@ -454,25 +449,32 @@ export function superForm<
 		// immediately cleared by client-side validation.
 		if (taintOptions == 'ignore') return;
 
-		let paths = comparePaths(newObj, Tainted.state);
+		let paths = comparePaths(newObj, Data.form);
+		//console.log('🚀 ~ compare paths:', newObj, Data.form, paths);
 		LastChanges.set(paths);
 
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {
-				Tainted.data.set(undefined);
+				Tainted.state.set(undefined);
 			} else {
-				Tainted.data.update((tainted) => {
+				Tainted.state.update((tainted) => {
 					if (taintOptions !== true && tainted) {
 						// Check if the paths are tainted already, then set to undefined or skip entirely.
 						const _tainted = tainted;
 						paths = paths.filter((path) => pathExists(_tainted, path));
 						if (paths.length) {
 							if (!tainted) tainted = {};
-							setPaths(tainted, paths, undefined);
+							setPaths(tainted, paths, (path) => {
+								//console.log('Tainting existing path', path, traversePath(Data.form, path));
+								return undefined;
+							});
 						}
 					} else if (taintOptions === true) {
 						if (!tainted) tainted = {};
-						setPaths(tainted, paths, true);
+						setPaths(tainted, paths, (path) => {
+							//console.log('Tainting path', path, traversePath(Data.form, path));
+							return true;
+						});
 					}
 					return tainted;
 				});
@@ -490,20 +492,17 @@ export function superForm<
 				}
 			}
 		}
-
-		Tainted__updateState(newObj);
 	}
 
-	function Tainted_set(tainted: TaintedFields<T> | undefined, newData: T) {
-		Tainted.data.set(tainted);
-		Tainted__updateState(newData);
+	function Tainted_set(tainted: TaintedFields<T> | undefined) {
+		Tainted.state.set(tainted);
 	}
 
 	// Subscribe to certain stores and store the current
 	// value in Data, to avoid using get
 	const Unsubscriptions: (() => void)[] = [
 		// eslint-disable-next-line dci-lint/private-role-access
-		Tainted.data.subscribe((tainted) => (Data.tainted = tainted)),
+		Tainted.state.subscribe((tainted) => (Data.tainted = tainted)),
 		// eslint-disable-next-line dci-lint/private-role-access
 		Form.subscribe((form) => (Data.form = form)),
 		FormId.subscribe((id) => (Data.formId = id)),
@@ -557,7 +556,7 @@ export function superForm<
 
 	function rebind(form: SuperValidated<T, M>, untaint: TaintedFields<T> | boolean, message?: M) {
 		if (untaint) {
-			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint, form.data);
+			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint);
 		}
 
 		message = message ?? form.message;

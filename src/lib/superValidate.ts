@@ -9,12 +9,6 @@ import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors } from './errors.js';
 
-/*
-import { customAlphabet } from 'nanoid';
-const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz123456789', 6);
-function formId() {	return nanoid(); }
-*/
-
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 //type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
@@ -35,6 +29,7 @@ export type SuperValidateOptions<T extends object> = Partial<{
 	defaults: T;
 	jsonSchema: JSONSchema;
 	strict: boolean;
+	// TODO: allowFiles
 }>;
 
 export async function superValidate<
@@ -101,20 +96,20 @@ export async function superValidate<
 	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validator.shape);
 
 	// Final data should always have defaults, to ensure type safety
-	const finalData = { ...defaults, ...(valid ? status.data : parsedData) };
+	const dataWithDefaults = { ...defaults, ...(valid ? status.data : parsedData) };
 
 	let outputData: Record<string, unknown>;
 	if (jsonSchema.additionalProperties === false) {
 		// Strip keys not belonging to schema
 		outputData = {};
 		for (const key of Object.keys(jsonSchema.properties ?? {})) {
-			if (key in finalData) outputData[key] = finalData[key];
+			if (key in dataWithDefaults) outputData[key] = dataWithDefaults[key];
 			else if (defaults[key] !== undefined) outputData[key] = defaults[key];
 		}
 	} else {
-		outputData = finalData;
+		outputData = dataWithDefaults;
 		for (const key of Object.keys(defaults)) {
-			if (!(key in finalData) && defaults[key] !== undefined) {
+			if (!(key in dataWithDefaults) && defaults[key] !== undefined) {
 				outputData[key] = defaults[key];
 			}
 		}

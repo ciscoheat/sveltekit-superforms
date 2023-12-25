@@ -94,6 +94,10 @@ const simpleConstraints = {
 	}
 };
 
+const schemaShape = {
+	tags: {}
+};
+
 ///// Validation libraries //////////////////////////////////////////
 
 describe('Joi', () => {
@@ -280,6 +284,7 @@ function schemaTest(
 		expect(output.data).toEqual(defaults);
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
+		expect(output.shape).toEqual(schemaShape);
 	});
 
 	it('with schema only and initial errors', async () => {
@@ -292,6 +297,7 @@ function schemaTest(
 		expect(output.data).toEqual(defaults);
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
+		expect(output.shape).toEqual(schemaShape);
 	});
 
 	it('with invalid test data', async () => {
@@ -303,6 +309,7 @@ function schemaTest(
 		expect(output.data).toEqual(merge(defaults, invalidData));
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
+		expect(output.shape).toEqual(schemaShape);
 	});
 
 	it('with valid test data', async () => {
@@ -313,5 +320,6 @@ function schemaTest(
 		expect(output.data).toEqual(validData);
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
+		expect(output.shape).toEqual(schemaShape);
 	});
 }

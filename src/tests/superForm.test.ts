@@ -49,9 +49,14 @@ describe('Tainted', () => {
 
 	it('Should update tainted properly', () => {
 		expect(get(tainted)).toBeUndefined();
+		expect(form.isTainted()).toBe(false);
 
 		checkTaint({ name: 'Test' }, { name: true });
+
 		expect(get(form.form).name).toEqual('Test');
+		expect(form.isTainted()).toBe(true);
+		expect(form.isTainted('name')).toBe(true);
+		expect(form.isTainted('tags')).toBe(false);
 
 		checkTaint(
 			{ tags: ['A'] },
@@ -104,7 +109,9 @@ describe('Tainted', () => {
 			expect(get(tainted)).toBeUndefined();
 
 			checkTaint({ name: 'Test' }, { name: true });
+			expect(form.isTainted('name')).toBe(true);
 			checkTaint({ name: 'Unknown' }, { name: undefined });
+			expect(form.isTainted('name')).toBe(false);
 		});
 	});
 });

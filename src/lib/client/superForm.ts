@@ -725,6 +725,13 @@ export function superForm<
 			);
 		},
 
+		isTainted(path?) {
+			if (!Data.tainted) return false;
+			if (!path) return !!Data.tainted;
+			const field = pathExists(Data.tainted, splitPath(path));
+			return Tainted_isTainted(field?.value);
+		},
+
 		// @DCI-context
 		enhance(FormEl: HTMLFormElement, events?: SuperFormEvents<T, M>) {
 			if (events) {

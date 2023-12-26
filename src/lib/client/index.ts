@@ -3,7 +3,7 @@ import type { Page } from '@sveltejs/kit';
 import type { Readable, Writable, Updater } from 'svelte/store';
 import type { TaintedFields, SuperValidated, Validators } from '../index.js';
 import type { MaybePromise } from '../index.js';
-import type { FormPathLeaves, FormPathType } from '../stringPath.js';
+import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
 import type { Schema } from '@decs/typeschema';
 
 export { superForm } from './superForm.js';
@@ -180,6 +180,7 @@ export type SuperForm<
 	restore: (snapshot: SuperFormSnapshot<T, M>) => void;
 
 	validate: typeof validateForm<T>;
+	isTainted: (path?: FormPath<T>) => boolean;
 };
 
 ///// clientValidation.ts /////

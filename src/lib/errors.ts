@@ -7,10 +7,25 @@ import { mergePath } from './stringPath.js';
 
 export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	//console.log('===', errors.length, 'errors', shape);
-	const output: Record<string, unknown> = {};
+	const output: Record<string, unknown> & { _errors?: string[] } = {};
+
+	function addFormLevelError(error: ValidationIssue) {
+		if (!('_errors' in output)) output._errors = [];
+
+		if (!Array.isArray(output._errors)) {
+			if (typeof output._errors === 'string') output._errors = [output._errors];
+			else throw new SuperFormError('Form-level error was not an array.');
+		}
+
+		output._errors.push(error.message);
+	}
+
 	for (const error of errors) {
-		// TODO: Empty path = Form-level error?
-		if (!error.path) continue;
+		// Form-level error
+		if (!error.path || (error.path.length == 1 && !error.path[0])) {
+			addFormLevelError(error);
+			continue;
+		}
 
 		// Path must filter away number indices, since the object shape doesn't contain these.
 		// Except the last, since otherwise any error in an array will count as an object error.
@@ -31,14 +46,7 @@ export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 		});
 
 		if (!leaf) {
-			// Form-level error
-			if (!('_errors' in output)) output._errors = [];
-
-			if (!Array.isArray(output._errors))
-				throw new SuperFormError('_errors was not an array:' + error.path);
-
-			output._errors.push(error.message);
-
+			addFormLevelError(error);
 			continue;
 		}
 

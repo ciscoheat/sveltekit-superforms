@@ -24,12 +24,7 @@ import { comparePaths, isInvalidPath, pathExists, setPaths, traversePath } from 
 import { splitPath, type FormPathLeaves, type FormPathType, mergePath } from '$lib/stringPath.js';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { clearErrors, flattenErrors } from '$lib/errors.js';
-import {
-	clientValidation,
-	validateField,
-	validateForm,
-	validateObjectErrors
-} from './clientValidation.js';
+import { clientValidation, validateField, validateObjectErrors } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
@@ -48,7 +43,7 @@ type ValidationResponse<
 > = { result: ActionResult<Success, Invalid> };
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
-const initializedForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
+const initialForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
 
 export const defaultOnError = (event: { result: { error: unknown } }) => {
 	console.warn('Unhandled Superform error, use onError event to handle it:', event.result.error);
@@ -103,136 +98,144 @@ export function superForm<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(form: SuperValidated<T, M> | T, options: FormOptions<T, M> = {}): SuperForm<T, M> {
-	// Option guards
+	// Used in reset
+	let initialForm: SuperValidated<T, M>;
+
 	{
-		// TODO: Global legacy mode? .env setting?
-		if (options.legacy) {
-			if (options.resetForm === undefined) options.resetForm = false;
-			if (options.taintedMessage === undefined) options.taintedMessage = true;
-		}
-
-		options = {
-			...(defaultFormOptions as FormOptions<T, M>),
-			...options
-		};
-
-		if (options.SPA && options.validators === undefined) {
-			console.warn(
-				'No validators set for superForm in SPA mode. ' +
-					'Add them to the validators option, or set it to false to disable this warning.'
-			);
-		}
-	}
-
-	if (!form) {
-		throw new SuperFormError(
-			'No form data sent to superForm. ' +
-				"Make sure the output from superValidate is used (usually data.form) and that it's not null or undefined. " +
-				'Alternatively, an object with default values for the form can also be used.'
-		);
-	}
-
-	if (!Context_isValidationObject(form)) {
-		form = {
-			id: '',
-			valid: false,
-			posted: false,
-			errors: {},
-			data: form as T,
-			constraints: {}
-		} satisfies SuperValidated<T, M>;
-	}
-
-	form = form as SuperValidated<T, M>;
-
-	const _initialFormId = options.id ?? form.id;
-	const _currentPage = get(page);
-
-	// Check multiple id's
-	if (options.warnings?.duplicateId !== false) {
-		if (!formIds.has(_currentPage)) {
-			formIds.set(_currentPage, new Set([_initialFormId]));
-		} else {
-			const currentForms = formIds.get(_currentPage);
-			if (currentForms?.has(_initialFormId)) {
-				console.warn(multipleFormIdError(_initialFormId));
-			} else {
-				currentForms?.add(_initialFormId);
+		// Option guards
+		{
+			// TODO: Global legacy mode? .env setting?
+			if (options.legacy) {
+				if (options.resetForm === undefined) options.resetForm = false;
+				if (options.taintedMessage === undefined) options.taintedMessage = true;
 			}
-		}
-	}
 
-	// Need to clone the form data, in case it's used to populate multiple forms and in components
-	// that are mounted and destroyed multiple times.
-	if (!initializedForms.has(form)) {
-		initializedForms.set(form, clone(form));
-	}
-	const initialForm = initializedForms.get(form) as SuperValidated<T, M>;
+			options = {
+				...(defaultFormOptions as FormOptions<T, M>),
+				...options
+			};
 
-	if (typeof initialForm.valid !== 'boolean') {
-		throw new SuperFormError(
-			'A non-validation object was passed to superForm. ' +
-				'It should be an object of type SuperValidated, usually returned from superValidate.'
-		);
-	}
-
-	// Detect if a form is posted without JavaScript.
-	if (!browser && _currentPage.form && typeof _currentPage.form === 'object') {
-		const postedData = _currentPage.form;
-		for (const postedForm of Context_findValidationForms(postedData).reverse()) {
-			if (postedForm.id == _initialFormId && !initializedForms.has(postedForm)) {
-				// Prevent multiple "posting" that can happen when components are recreated.
-				initializedForms.set(postedData, postedData);
-
-				const pageDataForm = form as SuperValidated<T, M>;
-				form = postedForm as SuperValidated<T, M>;
-
-				// Reset the form if option set and form is valid.
-				if (
-					form.valid &&
-					options.resetForm &&
-					(options.resetForm === true || options.resetForm())
-				) {
-					form = clone(pageDataForm);
-					form.message = clone(postedForm.message);
-				}
-				break;
-			}
-		}
-	} else {
-		form = clone(initialForm);
-	}
-
-	///// From here, form is properly initialized /////
-
-	onDestroy(() => {
-		Unsubscriptions_unsubscribe();
-
-		for (const events of Object.values(formEvents)) {
-			events.length = 0;
-		}
-
-		formIds.get(_currentPage)?.delete(_initialFormId);
-	});
-
-	// Check for nested objects, throw if datatype isn't json
-	if (options.dataType !== 'json') {
-		const checkForNestedData = (key: string, value: unknown) => {
-			if (!value || typeof value !== 'object') return;
-
-			if (Array.isArray(value)) {
-				if (value.length > 0) checkForNestedData(key, value[0]);
-			} else if (!(value instanceof Date)) {
-				throw new SuperFormError(
-					`Object found in form field "${key}". ` +
-						`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
-						`More information: https://superforms.rocks/concepts/nested-data`
+			if (options.SPA && options.validators === undefined) {
+				console.warn(
+					'No validators set for superForm in SPA mode. ' +
+						'Add them to the validators option, or set it to false to disable this warning.'
 				);
 			}
-		};
+		}
 
-		for (const [key, value] of Object.entries(form.data)) {
-			checkForNestedData(key, value);
+		if (!form) {
+			throw new SuperFormError(
+				'No form data sent to superForm. ' +
+					"Make sure the output from superValidate is used (usually data.form) and that it's not null or undefined. " +
+					'Alternatively, an object with default values for the form can also be used.'
+			);
+		}
+
+		if (!Context_isValidationObject(form)) {
+			form = {
+				id: '',
+				valid: false,
+				posted: false,
+				errors: {},
+				data: form as T,
+				constraints: {}
+			} satisfies SuperValidated<T, M>;
+		}
+
+		form = form as SuperValidated<T, M>;
+
+		const _initialFormId = options.id ?? form.id;
+		const _currentPage = get(page);
+
+		// Check multiple id's
+		if (options.warnings?.duplicateId !== false) {
+			if (!formIds.has(_currentPage)) {
+				formIds.set(_currentPage, new Set([_initialFormId]));
+			} else {
+				const currentForms = formIds.get(_currentPage);
+				if (currentForms?.has(_initialFormId)) {
+					console.warn(multipleFormIdError(_initialFormId));
+				} else {
+					currentForms?.add(_initialFormId);
+				}
+			}
+		}
+
+		/**
+		 * Need to clone the form data, in case it's used to populate multiple forms
+		 * and in components that are mounted and destroyed multiple times.
+		 * This also means that it needs to be set here, before it's cloned further below.
+		 */
+		if (!initialForms.has(form)) {
+			initialForms.set(form, clone(form));
+		}
+		initialForm = initialForms.get(form) as SuperValidated<T, M>;
+
+		if (typeof initialForm.valid !== 'boolean') {
+			throw new SuperFormError(
+				'A non-validation object was passed to superForm. ' +
+					'It should be an object of type SuperValidated, usually returned from superValidate.'
+			);
+		}
+
+		// Detect if a form is posted without JavaScript.
+		if (!browser && _currentPage.form && typeof _currentPage.form === 'object') {
+			const postedData = _currentPage.form;
+			for (const postedForm of Context_findValidationForms(postedData).reverse()) {
+				if (postedForm.id == _initialFormId && !initialForms.has(postedForm)) {
+					// Prevent multiple "posting" that can happen when components are recreated.
+					initialForms.set(postedData, postedData);
+
+					const pageDataForm = form as SuperValidated<T, M>;
+					form = postedForm as SuperValidated<T, M>;
+
+					// Reset the form if option set and form is valid.
+					if (
+						form.valid &&
+						options.resetForm &&
+						(options.resetForm === true || options.resetForm())
+					) {
+						form = clone(pageDataForm);
+						form.message = clone(postedForm.message);
+					}
+					break;
+				}
+			}
+		} else {
+			form = clone(initialForm);
+		}
+
+		///// From here, form is properly initialized /////
+
+		onDestroy(() => {
+			Unsubscriptions_unsubscribe();
+
+			for (const events of Object.values(formEvents)) {
+				events.length = 0;
+			}
+
+			formIds.get(_currentPage)?.delete(_initialFormId);
+		});
+
+		// Check for nested objects, throw if datatype isn't json
+		if (options.dataType !== 'json') {
+			const checkForNestedData = (key: string, value: unknown) => {
+				if (!value || typeof value !== 'object') return;
+
+				if (Array.isArray(value)) {
+					if (value.length > 0) checkForNestedData(key, value[0]);
+				} else if (!(value instanceof Date)) {
+					throw new SuperFormError(
+						`Object found in form field "${key}". ` +
+							`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
+							`More information: https://superforms.rocks/concepts/nested-data`
+					);
+				}
+			};
+
+			for (const [key, value] of Object.entries(form.data)) {
+				checkForNestedData(key, value);
+			}
 		}
 	}
 
@@ -629,12 +632,12 @@ export function superForm<
 					const forms = Context_findValidationForms(actionData);
 					for (const newForm of forms) {
 						//console.log('🚀~ ActionData ~ newForm:', newForm.id);
-						if (newForm.id !== Data.formId || initializedForms.has(newForm)) {
+						if (newForm.id !== Data.formId || initialForms.has(newForm)) {
 							continue;
 						}
 
 						// Prevent multiple "posting" that can happen when components are recreated.
-						initializedForms.set(newForm, newForm);
+						initialForms.set(newForm, newForm);
 
 						await Form_updateFromValidation(newForm as SuperValidated<T, M>, untaint);
 					}
@@ -644,7 +647,7 @@ export function superForm<
 					const forms = Context_findValidationForms(pageUpdate.data);
 					for (const newForm of forms) {
 						//console.log('🚀 ~ PageData ~ newForm:', newForm.id);
-						if (newForm.id !== Data.formId || initializedForms.has(newForm)) {
+						if (newForm.id !== Data.formId || initialForms.has(newForm)) {
 							continue;
 						}
 
@@ -1122,4 +1125,27 @@ export function superForm<
 			});
 		}
 	};
+}
+
+/**
+ * Validate current form data.
+ */
+function validateForm<T extends Record<string, unknown>>(): Promise<SuperValidated<T>>;
+
+/**
+ * Validate a specific field in the form.
+ */
+function validateForm<T extends Record<string, unknown>>(
+	path: FormPathLeaves<T>,
+	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
+): Promise<string[] | undefined>;
+
+function validateForm<T extends Record<string, unknown>>(
+	path?: FormPathLeaves<T>,
+	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
+) {
+	// See the validate function inside superForm for implementation.
+	throw new SuperFormError('validateForm can only be used as superForm.validate.');
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return { path, opts } as any;
 }

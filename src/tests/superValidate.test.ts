@@ -25,9 +25,9 @@ import { Type } from '@sinclair/typebox';
 
 import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
-import type { Validators } from '$lib/index.js';
 
 import { superform } from '$lib/adapters/superform.js';
+import type { Validators } from '$lib/index.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -144,11 +144,6 @@ describe('TypeBox', () => {
 		score: Type.Integer({ minimum: 0 })
 	});
 
-	//console.dir(schema, { depth: 10 }); //debug
-	//const compiled = TypeCompiler.Compile(schema);
-	//const errors2 = [...compiled.Errors(invalidData)];
-	//console.dir(errors2, { depth: 10 }); //debug
-
 	const errors = {
 		email: "Expected string to match 'email' format",
 		tags: 'Expected array length to be greater or equal to 3',
@@ -259,6 +254,22 @@ describe('Zod', () => {
 		};
 		const values = constraints<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema));
 		expect(values).toEqual(expected);
+	});
+
+	it('with form-level errors', async () => {
+		const schema = z
+			.object({
+				name: z.string()
+			})
+			.refine((a) => a.name == 'OK', {
+				message: 'Name is not OK'
+			});
+
+		const form = await superValidate({ name: 'Test' }, zod(schema));
+
+		expect(form.errors).toEqual({
+			_errors: ['Name is not OK']
+		});
 	});
 
 	const errors = {

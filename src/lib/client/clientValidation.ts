@@ -17,7 +17,6 @@ import {
 } from '../traversal.js';
 import type { FormOptions, SuperForm, TaintOption } from './index.js';
 import { mapErrors, clearErrors } from '../errors.js';
-import type { FormPathLeaves, FormPathType } from '../stringPath.js';
 import { clone } from '../utils.js';
 import { get } from 'svelte/store';
 
@@ -27,29 +26,6 @@ export type ValidateOptions<V> = Partial<{
 	taint: TaintOption;
 	errors: string | string[];
 }>;
-
-/**
- * Validate current form data.
- */
-export function validateForm<T extends Record<string, unknown>>(): Promise<SuperValidated<T>>;
-
-/**
- * Validate a specific field in the form.
- */
-export function validateForm<T extends Record<string, unknown>>(
-	path: FormPathLeaves<T>,
-	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
-): Promise<string[] | undefined>;
-
-export function validateForm<T extends Record<string, unknown>>(
-	path?: FormPathLeaves<T>,
-	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
-) {
-	// See the validate function inside superForm for implementation.
-	throw new SuperFormError('validateForm can only be used as superForm.validate.');
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return { path, opts } as any;
-}
 
 /**
  * Validate form data.

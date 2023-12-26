@@ -5,6 +5,7 @@ import type { TaintedFields, SuperValidated, Validators } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
 import type { Schema } from '@decs/typeschema';
+import { enhance as svelteKitEnhance } from '$app/forms';
 
 export { superForm } from './superForm.js';
 
@@ -29,7 +30,6 @@ export {
 } from '../superValidate.js';
 
 export { defaultValues } from '../jsonSchema/defaultValues.js';
-
 export { actionResult } from '../actionResult.js';
 
 export type FormUpdate = (
@@ -166,7 +166,10 @@ export type SuperForm<
 
 	options: FormOptions<T, M>;
 
-	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof formEnhance>;
+	enhance: (
+		el: HTMLFormElement,
+		events?: SuperFormEvents<T, M>
+	) => ReturnType<typeof svelteKitEnhance>;
 
 	reset: (
 		options?: Partial<{
@@ -198,10 +201,3 @@ export type ValidateOptions<V> = Partial<{
 	taint: TaintOption;
 	errors: string | string[];
 }>;
-
-///// formEnhance.ts /////
-
-// TODO: add formEnhance signature
-const formEnhance = () => {
-	return undefined as any;
-};

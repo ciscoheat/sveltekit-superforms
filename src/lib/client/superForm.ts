@@ -204,7 +204,38 @@ export function superForm<
 		form = clone(initialForm);
 	}
 
-	// From here, form is properly initialized
+	///// From here, form is properly initialized /////
+
+	onDestroy(() => {
+		Unsubscriptions_unsubscribe();
+
+		for (const events of Object.values(formEvents)) {
+			events.length = 0;
+		}
+
+		formIds.get(_currentPage)?.delete(_initialFormId);
+	});
+
+	// Check for nested objects, throw if datatype isn't json
+	if (options.dataType !== 'json') {
+		const checkForNestedData = (key: string, value: unknown) => {
+			if (!value || typeof value !== 'object') return;
+
+			if (Array.isArray(value)) {
+				if (value.length > 0) checkForNestedData(key, value[0]);
+			} else if (!(value instanceof Date)) {
+				throw new SuperFormError(
+					`Object found in form field "${key}". ` +
+						`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
+						`More information: https://superforms.rocks/concepts/nested-data`
+				);
+			}
+		};
+
+		for (const [key, value] of Object.entries(form.data)) {
+			checkForNestedData(key, value);
+		}
+	}
 
 	///// Roles ///////////////////////////////////////////////////////
 
@@ -212,7 +243,7 @@ export function superForm<
 	 * Container for store data, subscribed to with Unsubscriptions
 	 * to avoid "get" usage.
 	 */
-	const Data = {
+	const __data = {
 		formId: form.id,
 		shape: form.shape,
 		form: form.data,
@@ -224,6 +255,8 @@ export function superForm<
 		tainted: undefined as TaintedFields<T> | undefined,
 		valid: form.valid
 	};
+
+	const Data: Readonly<typeof __data> = __data;
 
 	const FormId = writable<string>(options.id ?? form.id);
 	const Shape = writable(form.shape);
@@ -275,21 +308,6 @@ export function superForm<
 
 	function Form_set(data: T, options: { taint?: TaintOption } = {}) {
 		return Form.set(data, options);
-	}
-
-	// Check for nested objects, throw if datatype isn't json
-	function Form_checkForNestedData(key: string, value: unknown) {
-		if (!value || typeof value !== 'object') return;
-
-		if (Array.isArray(value)) {
-			if (value.length > 0) Form_checkForNestedData(key, value[0]);
-		} else if (!(value instanceof Date)) {
-			throw new SuperFormError(
-				`Object found in form field "${key}". ` +
-					`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
-					`More information: https://superforms.rocks/concepts/nested-data`
-			);
-		}
 	}
 
 	async function Form_updateFromValidation(form: SuperValidated<T, M>, untaint: boolean) {
@@ -507,16 +525,16 @@ export function superForm<
 	// value in Data, to avoid using get
 	const Unsubscriptions: (() => void)[] = [
 		// eslint-disable-next-line dci-lint/private-role-access
-		Tainted.state.subscribe((tainted) => (Data.tainted = tainted)),
+		Tainted.state.subscribe((tainted) => (__data.tainted = tainted)),
 		// eslint-disable-next-line dci-lint/private-role-access
-		Form.subscribe((form) => (Data.form = form)),
-		FormId.subscribe((id) => (Data.formId = id)),
-		Shape.subscribe((shape) => (Data.shape = shape)),
-		Constraints.subscribe((constraints) => (Data.constraints = constraints)),
-		Posted.subscribe((posted) => (Data.posted = posted)),
-		Errors.subscribe((errors) => (Data.errors = errors)),
-		LastChanges.subscribe((lastChanges) => (Data.lastChanges = lastChanges)),
-		Message.subscribe((message) => (Data.message = message))
+		Form.subscribe((form) => (__data.form = form)),
+		FormId.subscribe((id) => (__data.formId = id)),
+		Shape.subscribe((shape) => (__data.shape = shape)),
+		Constraints.subscribe((constraints) => (__data.constraints = constraints)),
+		Posted.subscribe((posted) => (__data.posted = posted)),
+		Errors.subscribe((errors) => (__data.errors = errors)),
+		LastChanges.subscribe((lastChanges) => (__data.lastChanges = lastChanges)),
+		Message.subscribe((message) => (__data.message = message))
 	];
 
 	function Unsubscriptions_add(func: () => void) {
@@ -539,26 +557,11 @@ export function superForm<
 
 	///// End of Roles //////////////////////////////////////////////////////////
 
-	// Need to clear this and set it again after use:enhance has run, to avoid showing the
+	// Need to clear this and set it again when use:enhance has run, to avoid showing the
 	// tainted dialog when a form doesn't use it or the browser doesn't use JS.
 	options.taintedMessage = undefined;
 
-	onDestroy(() => {
-		Unsubscriptions_unsubscribe();
-
-		for (const events of Object.values(formEvents)) {
-			events.length = 0;
-		}
-
-		formIds.get(_currentPage)?.delete(_initialFormId);
-	});
-
-	if (options.dataType !== 'json') {
-		for (const [key, value] of Object.entries(form.data)) {
-			Form_checkForNestedData(key, value);
-		}
-	}
-
+	// Role rebinding
 	function rebind(form: SuperValidated<T, M>, untaint: TaintedFields<T> | boolean, message?: M) {
 		if (untaint) {
 			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint, form.data);
@@ -573,7 +576,8 @@ export function superForm<
 		Errors.set(form.errors);
 		FormId.set(form.id);
 		Posted.set(form.posted);
-		Data.valid = form.valid;
+		// Only allowed non-subscribe __data access, in rebind
+		__data.valid = form.valid;
 
 		if (options.flashMessage && shouldSyncFlash(options)) {
 			const flash = options.flashMessage.module.getFlash(page);
@@ -592,9 +596,8 @@ export function superForm<
 		onError: options.onError ? [options.onError] : []
 	};
 
-	///// When use:enhance is enabled ///////////////////////////////////////////
-
 	if (browser) {
+		// Tainted check
 		beforeNavigate((nav) => {
 			if (options.taintedMessage && !get(Submitting)) {
 				const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
@@ -752,7 +755,8 @@ export function superForm<
 				if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
 			}
 
-			// Now we know that we are upgraded, so we can enable the tainted form option.
+			// Now we know that we are enhanced,
+			// so we can enable the tainted form option.
 			Tainted_enable();
 
 			// Called upon an event from a HTML element that affects the form.

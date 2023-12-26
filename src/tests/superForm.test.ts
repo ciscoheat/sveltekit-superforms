@@ -3,7 +3,7 @@ import type { SuperForm, TaintOptions } from '$lib/client/index.js';
 import { superForm, superValidate, type SuperValidated } from '$lib/index.js';
 import { get } from 'svelte/store';
 import merge from 'ts-deepmerge';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -67,6 +67,9 @@ describe('Tainted', () => {
 				}
 			}
 		);
+
+		expect(form.isTainted('tags')).toBe(true);
+		expect(form.isTainted('tags[0]')).toBe(true);
 	});
 
 	describe('When not tainting', () => {
@@ -116,7 +119,9 @@ describe('Tainted', () => {
 	});
 });
 
-///// Mocking ///////////////////////////////////////////////////////
+///// mockSvelte.ts /////
+
+import { vi } from 'vitest';
 
 vi.mock('svelte', async (original) => {
 	const module = (await original()) as Record<string, unknown>;
@@ -128,48 +133,31 @@ vi.mock('svelte', async (original) => {
 
 vi.mock('$app/stores', async () => {
 	const { readable, writable } = await import('svelte/store');
-	/**
-	 * @type {import('$app/stores').getStores}
-	 */
+
 	const getStores = () => ({
 		navigating: readable(null),
 		page: readable({ url: new URL('http://localhost'), params: {} }),
 		session: writable(null),
 		updated: readable(false)
 	});
-	/** @type {typeof import('$app/stores').page} */
-	const page = {
+
+	const page: typeof import('$app/stores').page = {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		subscribe(fn: any) {
 			return getStores().page.subscribe(fn);
 		}
 	};
-	/** @type {typeof import('$app/stores').navigating} */
-	const navigating = {
+
+	const navigating: typeof import('$app/stores').navigating = {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		subscribe(fn: any) {
 			return getStores().navigating.subscribe(fn);
 		}
 	};
-	/** @type {typeof import('$app/stores').session} */
-	const session = {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		subscribe(fn: any) {
-			return getStores().session.subscribe(fn);
-		}
-	};
-	/** @type {typeof import('$app/stores').updated} */
-	const updated = {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		subscribe(fn: any) {
-			return getStores().updated.subscribe(fn);
-		}
-	};
+
 	return {
 		getStores,
 		navigating,
-		page,
-		session,
-		updated
+		page
 	};
 });

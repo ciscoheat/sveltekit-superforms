@@ -3,7 +3,7 @@ import type { SuperForm, TaintOptions } from '$lib/client/index.js';
 import { superForm, superValidate, type SuperValidated } from '$lib/index.js';
 import { get } from 'svelte/store';
 import merge from 'ts-deepmerge';
-import { describe, it, expect, assert, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -64,19 +64,48 @@ describe('Tainted', () => {
 		);
 	});
 
-	it("Should not set tainted to undefined if field doesn't exist", () => {
-		expect(get(tainted)).toBeUndefined();
+	describe('When not tainting', () => {
+		it("Should not set field to undefined if field isn't tainted", () => {
+			expect(get(tainted)).toBeUndefined();
 
-		checkTaint({ name: 'Test' }, { name: true });
-		expect(get(form.form).name).toEqual('Test');
+			checkTaint({ name: 'Test' }, { name: true });
+			checkTaint(
+				{ tags: ['A'] },
+				{
+					name: true
+				},
+				false
+			);
+		});
+	});
 
-		checkTaint(
-			{ tags: ['A'] },
-			{
-				name: true
-			},
-			false
-		);
+	describe('Untainting', () => {
+		it('Should set untainted field to undefined if field is tainted already', () => {
+			expect(get(tainted)).toBeUndefined();
+
+			checkTaint({ name: 'Test' }, { name: true });
+			checkTaint(
+				{ name: 'Test 2' },
+				{
+					name: true
+				},
+				false
+			);
+			checkTaint(
+				{ name: 'Test 3' },
+				{
+					name: undefined
+				},
+				'untaint'
+			);
+		});
+
+		it('should set the tainted field to undefined if it gets the same value as its original state', () => {
+			expect(get(tainted)).toBeUndefined();
+
+			checkTaint({ name: 'Test' }, { name: true });
+			checkTaint({ name: 'Unknown' }, { name: undefined });
+		});
 	});
 });
 
@@ -103,25 +132,29 @@ vi.mock('$app/stores', async () => {
 	});
 	/** @type {typeof import('$app/stores').page} */
 	const page = {
-		subscribe(fn) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		subscribe(fn: any) {
 			return getStores().page.subscribe(fn);
 		}
 	};
 	/** @type {typeof import('$app/stores').navigating} */
 	const navigating = {
-		subscribe(fn) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		subscribe(fn: any) {
 			return getStores().navigating.subscribe(fn);
 		}
 	};
 	/** @type {typeof import('$app/stores').session} */
 	const session = {
-		subscribe(fn) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		subscribe(fn: any) {
 			return getStores().session.subscribe(fn);
 		}
 	};
 	/** @type {typeof import('$app/stores').updated} */
 	const updated = {
-		subscribe(fn) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		subscribe(fn: any) {
 			return getStores().updated.subscribe(fn);
 		}
 	};

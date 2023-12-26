@@ -383,7 +383,8 @@ export function superForm<
 
 	const Tainted = {
 		state: writable<TaintedFields<T> | undefined>(),
-		message: options.taintedMessage
+		message: options.taintedMessage,
+		clean: form.data
 	};
 
 	function Tainted_enable() {
@@ -450,7 +451,6 @@ export function superForm<
 		if (taintOptions == 'ignore') return;
 
 		let paths = comparePaths(newObj, Data.form);
-		//console.log('🚀 ~ compare paths:', newObj, Data.form, paths);
 		LastChanges.set(paths);
 
 		if (paths.length) {
@@ -464,16 +464,20 @@ export function superForm<
 						paths = paths.filter((path) => pathExists(_tainted, path));
 						if (paths.length) {
 							if (!tainted) tainted = {};
-							setPaths(tainted, paths, (path) => {
-								//console.log('Tainting existing path', path, traversePath(Data.form, path));
-								return undefined;
+							setPaths(tainted, paths, (_, data) => {
+								if (taintOptions == 'untaint') return undefined;
+								return data.value;
 							});
 						}
 					} else if (taintOptions === true) {
 						if (!tainted) tainted = {};
 						setPaths(tainted, paths, (path) => {
-							//console.log('Tainting path', path, traversePath(Data.form, path));
-							return true;
+							// If value goes back to the clean value, untaint the path
+							const currentValue = traversePath(newObj, path);
+							const cleanPath = traversePath(Tainted.clean, path);
+							return currentValue && cleanPath && currentValue.value === cleanPath.value
+								? undefined
+								: true;
 						});
 					}
 					return tainted;
@@ -494,8 +498,9 @@ export function superForm<
 		}
 	}
 
-	function Tainted_set(tainted: TaintedFields<T> | undefined) {
+	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
 		Tainted.state.set(tainted);
+		if (newClean) Tainted.clean = newClean;
 	}
 
 	// Subscribe to certain stores and store the current
@@ -556,7 +561,7 @@ export function superForm<
 
 	function rebind(form: SuperValidated<T, M>, untaint: TaintedFields<T> | boolean, message?: M) {
 		if (untaint) {
-			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint);
+			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint, form.data);
 		}
 
 		message = message ?? form.message;

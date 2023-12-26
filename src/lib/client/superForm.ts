@@ -241,6 +241,8 @@ export function superForm<
 
 	///// Roles ///////////////////////////////////////////////////////
 
+	//#region Data
+
 	/**
 	 * Container for store data, subscribed to with Unsubscriptions
 	 * to avoid "get" usage.
@@ -259,7 +261,15 @@ export function superForm<
 
 	const Data: Readonly<typeof __data> = __data;
 
+	//#endregion
+
+	//#region FormId
+
 	const FormId = writable<string>(options.id ?? form.id);
+
+	//#endregion
+
+	//#region Context
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const Context = {};
@@ -283,6 +293,10 @@ export function superForm<
 
 		return 'id' in object && typeof object.id === 'string' ? object.id : false;
 	}
+
+	//#endregion
+
+	//#region Form
 
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const _formData = writable(form.data);
@@ -377,10 +391,14 @@ export function superForm<
 		}
 	};
 
+	//#endregion
+
 	const LastChanges = writable<(string | number | symbol)[][]>([]);
 	const Message = writable<M | undefined>(form.message);
 	const Constraints = writable(form.constraints);
 	const Posted = writable(false);
+
+	//#region Errors
 
 	const _errors = writable(form.errors);
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
@@ -398,6 +416,10 @@ export function superForm<
 				clearFormLevelErrors: true
 			})
 	};
+
+	//#endregion
+
+	//#region Tainted
 
 	const Tainted = {
 		state: writable<TaintedFields<T> | undefined>(),
@@ -521,6 +543,10 @@ export function superForm<
 		if (newClean) Tainted.clean = newClean;
 	}
 
+	//#endregion
+
+	//#region Unsubscriptions
+
 	// Subscribe to certain stores and store the current
 	// value in Data, to avoid using get
 	const Unsubscriptions: (() => void)[] = [
@@ -544,10 +570,15 @@ export function superForm<
 		Unsubscriptions.forEach((unsub) => unsub());
 	}
 
-	// Timers
+	//#endregion
+
+	//#region Timers
+
 	const Submitting = writable(false);
 	const Delayed = writable(false);
 	const Timeout = writable(false);
+
+	//#endregion
 
 	const AllErrors: Readable<ReturnType<typeof flattenErrors>> = derived(
 		Errors,

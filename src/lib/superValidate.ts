@@ -121,8 +121,7 @@ export async function superValidate<
 		posted: parsed.posted,
 		errors: errors as ValidationErrors<T>,
 		data: outputData as T,
-		constraints: validator.constraints,
-		shape: validator.shape
+		constraints: validator.constraints
 	};
 }
 

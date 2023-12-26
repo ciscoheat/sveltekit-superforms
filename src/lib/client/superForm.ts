@@ -139,8 +139,7 @@ export function superForm<
 			posted: false,
 			errors: {},
 			data: form as T,
-			constraints: {},
-			shape: {}
+			constraints: {}
 		} satisfies SuperValidated<T, M>;
 	}
 
@@ -245,7 +244,6 @@ export function superForm<
 	 */
 	const __data = {
 		formId: form.id,
-		shape: form.shape,
 		form: form.data,
 		constraints: form.constraints,
 		posted: form.posted,
@@ -259,7 +257,6 @@ export function superForm<
 	const Data: Readonly<typeof __data> = __data;
 
 	const FormId = writable<string>(options.id ?? form.id);
-	const Shape = writable(form.shape);
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const Context = {};
@@ -529,7 +526,6 @@ export function superForm<
 		// eslint-disable-next-line dci-lint/private-role-access
 		Form.subscribe((form) => (__data.form = form)),
 		FormId.subscribe((id) => (__data.formId = id)),
-		Shape.subscribe((shape) => (__data.shape = shape)),
 		Constraints.subscribe((constraints) => (__data.constraints = constraints)),
 		Posted.subscribe((posted) => (__data.posted = posted)),
 		Errors.subscribe((errors) => (__data.errors = errors)),
@@ -706,8 +702,7 @@ export function superForm<
 				constraints: Data.constraints,
 				message: Data.message,
 				id: Data.formId,
-				tainted: Data.tainted,
-				shape: Data.shape
+				tainted: Data.tainted
 			};
 		},
 

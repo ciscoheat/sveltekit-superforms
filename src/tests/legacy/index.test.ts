@@ -12,6 +12,7 @@ import { zod } from '$lib/adapters/index.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { stringify } from 'devalue';
+import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 
 const testDate = new Date();
 
@@ -355,10 +356,6 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				fruitsstring: { required: true }
-			},
-			shape: {
-				fruit: {},
-				fruitsstring: {}
 			}
 		});
 	});
@@ -371,7 +368,13 @@ describe('Default values', () => {
 		data.append('fruitsstring', 'Banana');
 		data.set('color', 'GRAY');
 
-		const form = await superValidate(data, zod(enumschema));
+		const adapter = zod(enumschema);
+		const form = await superValidate(data, adapter);
+
+		expect(schemaShape(adapter.jsonSchema)).toEqual({
+			fruit: {},
+			fruitsstring: {}
+		});
 
 		expect(form).toStrictEqual({
 			id: '1j8sq2z',
@@ -387,10 +390,6 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				fruitsstring: { required: true }
-			},
-			shape: {
-				fruit: {},
-				fruitsstring: {}
 			}
 		});
 	});
@@ -413,8 +412,7 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				number: { min: Number.MIN_VALUE }
-			},
-			shape: {}
+			}
 		});
 	});
 
@@ -616,8 +614,7 @@ describe('Default values', () => {
 			errors: {},
 			data: { name: '', id: 0 },
 			posted: false,
-			constraints: { name: { required: true }, id: { required: true } },
-			shape: {}
+			constraints: { name: { required: true }, id: { required: true } }
 		});
 
 		const form2 = await superValidate(zod(schema.refine(() => false, 'Some error')), {
@@ -630,8 +627,7 @@ describe('Default values', () => {
 			errors: {},
 			data: { name: '', id: 0 },
 			posted: false,
-			constraints: { name: { required: true }, id: { required: true } },
-			shape: {}
+			constraints: { name: { required: true }, id: { required: true } }
 		});
 	});
 
@@ -647,7 +643,13 @@ describe('Default values', () => {
 			numbers: z.record(z.number())
 		});
 
-		const form = await superValidate(zod(imageCreationFormSchema));
+		const adapter = zod(imageCreationFormSchema);
+		const form = await superValidate(adapter);
+
+		expect(schemaShape(adapter.jsonSchema)).toEqual({
+			numbers: {},
+			promptMetaData: {}
+		});
 
 		expect(form).toStrictEqual({
 			id: '1tomocp',
@@ -659,10 +661,6 @@ describe('Default values', () => {
 				numbers: {}
 			},
 			posted: false,
-			shape: {
-				numbers: {},
-				promptMetaData: {}
-			},
 			constraints: {
 				textresource: { required: true },
 				numbers: { required: true }

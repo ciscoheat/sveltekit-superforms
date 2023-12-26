@@ -1,6 +1,5 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
-import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import SuperDebug from './client/SuperDebug.svelte';
 
 export default SuperDebug;
@@ -42,7 +41,6 @@ export type SuperValidated<
 	errors: ValidationErrors<T>;
 	data: T;
 	constraints: InputConstraints<T>;
-	shape: SchemaShape;
 	message?: M;
 };
 

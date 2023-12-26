@@ -25,6 +25,9 @@ import { Type } from '@sinclair/typebox';
 
 import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
+import type { Validators } from '$lib/index.js';
+
+import { superform } from '$lib/adapters/superform.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -60,7 +63,7 @@ const invalidData = { name: 'Ok', email: '', tags: ['AB', 'B'] };
  * What should be returned when no data is sent to superValidate
  * Should give error on email and tags
  */
-const defaults = { name: 'Unknown', email: '', tags: [], score: 0 };
+const defaults = { name: 'Unknown', email: '', tags: [] as string[], score: 0 };
 
 /**
  * Expected constraints for libraries with introspection
@@ -99,6 +102,26 @@ const schemaShape = {
 };
 
 ///// Validation libraries //////////////////////////////////////////
+
+describe('Superform', () => {
+	const schema: Validators<typeof validData> = {
+		name: (name) => (!name || name.length < 2 ? '"name" is too short' : null),
+		email: (email) => (!email || !email.includes('@') ? 'Email is invalid' : null),
+		tags: (tag) => {
+			if (!tag || tag.length < 2) return 'Tag must contain at least 2 characters';
+		},
+		score: (score) => {
+			if (isNaN(parseInt(String(score)))) return '"score" must be an integer above or equal to 0';
+		}
+	};
+
+	const errors = {
+		email: 'Email is invalid',
+		tags1: 'Tag must contain at least 2 characters'
+	};
+
+	schemaTest(() => superform(schema, { defaults }), errors, 'none');
+});
 
 describe('Joi', () => {
 	const schema = Joi.object({
@@ -155,7 +178,7 @@ describe('Arktype', () => {
 		//tags1: 'tags/1 must be at least 2 characters (was 1)'
 	};
 
-	schemaTest(() => arktype(schema, { defaults }), errors, true);
+	schemaTest(() => arktype(schema, { defaults }), errors, 'simple');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -174,7 +197,7 @@ describe('Valibot', () => {
 		tags1: 'Invalid length'
 	};
 
-	schemaTest(() => valibot(schema, { defaults }), errors, true);
+	schemaTest(() => valibot(schema, { defaults }), errors, 'simple');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -256,7 +279,7 @@ describe('Zod', () => {
 function schemaTest(
 	adapter: () => ValidationAdapter<Record<string, unknown>>,
 	errors: { email: string | RegExp; tags?: string | RegExp; tags1?: string | RegExp },
-	hasSimpleConstraints = false
+	constraints: 'full' | 'simple' | 'none' = 'full'
 ) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errorMessages: Record<string, any>, hasTagContentErrors = true) {
@@ -271,9 +294,15 @@ function schemaTest(
 		}
 	}
 
-	function expectConstraints(constraints: InputConstraints<Record<string, unknown>>) {
-		if (hasSimpleConstraints) expect(constraints).toEqual(simpleConstraints);
-		else expect(constraints).toEqual(fullConstraints);
+	function expectConstraints(inputConstraints: InputConstraints<Record<string, unknown>>) {
+		switch (constraints) {
+			case 'simple':
+				expect(inputConstraints).toEqual(simpleConstraints);
+				break;
+			case 'full':
+				expect(inputConstraints).toEqual(fullConstraints);
+				break;
+		}
 	}
 
 	it('with schema only', async () => {

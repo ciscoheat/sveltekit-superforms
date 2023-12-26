@@ -24,6 +24,7 @@ export type ValidationLibrary =
 	| 'arktype'
 	| 'typebox'
 	| 'joi'
+	| 'superform'
 	| 'custom';
 
 // Lifted from TypeSchema, since they are not exported

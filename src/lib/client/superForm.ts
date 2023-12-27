@@ -13,18 +13,19 @@ import type {
 	SuperFormEvents,
 	SuperFormSnapshot,
 	TaintOption,
-	ValidateOptions
+	ValidateOptions,
+	validateForm
 } from './index.js';
 import { derived, get, readonly, writable, type Readable } from 'svelte/store';
 import { page } from '$app/stores';
 import { clone } from '$lib/utils.js';
 import { browser } from '$app/environment';
 import { onDestroy, tick } from 'svelte';
-import { comparePaths, isInvalidPath, pathExists, setPaths, traversePath } from '$lib/traversal.js';
+import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '$lib/traversal.js';
 import { splitPath, type FormPathLeaves, type FormPathType, mergePath } from '$lib/stringPath.js';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
-import { clearErrors, flattenErrors } from '$lib/errors.js';
-import { clientValidation, validateField, validateObjectErrors } from './clientValidation.js';
+import { flattenErrors, updateErrors } from '$lib/errors.js';
+import { clientValidation, validateField } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
@@ -103,24 +104,23 @@ export function superForm<
 
 	{
 		// Option guards
-		{
-			// TODO: Global legacy mode? .env setting?
-			if (options.legacy) {
-				if (options.resetForm === undefined) options.resetForm = false;
-				if (options.taintedMessage === undefined) options.taintedMessage = true;
-			}
 
-			options = {
-				...(defaultFormOptions as FormOptions<T, M>),
-				...options
-			};
+		// TODO: Global legacy mode? .env setting?
+		if (options.legacy) {
+			if (options.resetForm === undefined) options.resetForm = false;
+			if (options.taintedMessage === undefined) options.taintedMessage = true;
+		}
 
-			if (options.SPA && options.validators === undefined) {
-				console.warn(
-					'No validators set for superForm in SPA mode. ' +
-						'Add them to the validators option, or set it to false to disable this warning.'
-				);
-			}
+		options = {
+			...(defaultFormOptions as FormOptions<T, M>),
+			...options
+		};
+
+		if (options.SPA && options.validators === undefined) {
+			console.warn(
+				'No validators set for superForm in SPA mode. ' +
+					'Add them to the validators option, or set it to false to disable this warning.'
+			);
 		}
 
 		if (!form) {
@@ -144,10 +144,10 @@ export function superForm<
 
 		form = form as SuperValidated<T, M>;
 
+		// Check multiple id's
 		const _initialFormId = options.id ?? form.id;
 		const _currentPage = get(page);
 
-		// Check multiple id's
 		if (options.warnings?.duplicateId !== false) {
 			if (!formIds.has(_currentPage)) {
 				formIds.set(_currentPage, new Set([_initialFormId]));
@@ -249,10 +249,10 @@ export function superForm<
 	 */
 	const __data = {
 		formId: form.id,
-		form: form.data,
+		form: clone(form.data),
 		constraints: form.constraints,
 		posted: form.posted,
-		errors: form.errors,
+		errors: clone(form.errors),
 		lastChanges: [] as (string | number | symbol)[][],
 		message: form.message,
 		tainted: undefined as TaintedFields<T> | undefined,
@@ -303,22 +303,58 @@ export function superForm<
 	const Form = {
 		subscribe: _formData.subscribe,
 		set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
-			Tainted_update(value, options.taint ?? true);
+			const changes = Tainted_update(value, options.taint ?? true);
+			if (changes.length) Form_clientValidation('input', value, changes);
 			// Need to clone the value, so it won't refer to $page for example.
-			return _formData.set(clone(value));
+			return _formData.set(value);
 		},
 		update: (
 			updater: Parameters<typeof _formData.update>[0],
 			options: { taint?: TaintOption } = {}
 		) => {
 			return _formData.update((value) => {
-				const output = updater(value);
-				Tainted_update(output, options.taint ?? true);
+				const newData = updater(value);
+				const changes = Tainted_update(newData, options.taint ?? true);
+				if (changes.length) Form_clientValidation('input', newData, changes);
 				// No cloning here, since it's an update
-				return output;
+				return newData;
 			});
 		}
 	};
+
+	async function Form_clientValidation(
+		event: 'input' | 'blur' | 'submit',
+		formData: T,
+		changes?: (string | number | symbol)[][]
+	) {
+		console.log('Form_clientValidation', changes);
+
+		if (!options.validators) return;
+		if (options.validationMethod == 'submit-only' && event != 'submit') return;
+		if (options.validationMethod == 'onblur' && event == 'input') return;
+
+		const result = await clientValidation(
+			options.validators,
+			formData,
+			Data.formId,
+			Data.constraints,
+			false
+		);
+
+		Errors.set(result.errors);
+
+		/*
+		let updated = false;
+
+		// TODO: Factorize Tainted__validate
+		for (const path of paths) {
+			updated = updated || (await Tainted__validate(path, taintOptions));
+		}
+		if (!updated) {
+			await validateObjectErrors(options, Form, Errors, Data.tainted);
+		}
+		*/
+	}
 
 	function Form_set(data: T, options: { taint?: TaintOption } = {}) {
 		return Form.set(data, options);
@@ -404,17 +440,20 @@ export function superForm<
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
-		set: _errors.set,
-		update: _errors.update,
+		set(value: Parameters<typeof _errors.set>[0]) {
+			return _errors.set(updateErrors(value, Data.errors, options.validationMethod));
+		},
+		update(updater: Parameters<typeof _errors.update>[0]) {
+			return _errors.update((value) => {
+				const output = updater(value);
+				return updateErrors(output, Data.errors, options.validationMethod);
+			});
+		},
 		/**
 		 * To work with client-side validation, errors cannot be deleted but must
 		 * be set to undefined, to know where they existed before (tainted+error check in oninput)
 		 */
-		clear: () =>
-			clearErrors(_errors, {
-				undefinePath: null,
-				clearFormLevelErrors: true
-			})
+		clear: () => undefined
 	};
 
 	//#endregion
@@ -424,7 +463,7 @@ export function superForm<
 	const Tainted = {
 		state: writable<TaintedFields<T> | undefined>(),
 		message: options.taintedMessage,
-		clean: form.data
+		clean: clone(form.data) // Important to clone form.data, so it's not comparing the same object
 	};
 
 	function Tainted_enable() {
@@ -446,6 +485,7 @@ export function superForm<
 		return obj === true;
 	}
 
+	/*
 	async function Tainted__validate(path: (string | number | symbol)[], taint: TaintOption) {
 		let shouldValidate = options.validationMethod === 'oninput';
 
@@ -483,15 +523,15 @@ export function superForm<
 			return false;
 		}
 	}
+	*/
 
-	async function Tainted_update(newObj: T, taintOptions: TaintOption) {
+	function Tainted_update(newData: T, taintOptions: TaintOption) {
 		// Ignore is set when returning errors from the server
 		// so status messages and form-level errors won't be
 		// immediately cleared by client-side validation.
-		if (taintOptions == 'ignore') return;
+		if (taintOptions == 'ignore') return [];
 
-		let paths = comparePaths(newObj, Data.form);
-		LastChanges.set(paths);
+		let paths = comparePaths(newData, Data.form);
 
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {
@@ -513,7 +553,7 @@ export function superForm<
 						if (!tainted) tainted = {};
 						setPaths(tainted, paths, (path) => {
 							// If value goes back to the clean value, untaint the path
-							const currentValue = traversePath(newObj, path);
+							const currentValue = traversePath(newData, path);
 							const cleanPath = traversePath(Tainted.clean, path);
 							return currentValue && cleanPath && currentValue.value === cleanPath.value
 								? undefined
@@ -523,19 +563,9 @@ export function superForm<
 					return tainted;
 				});
 			}
-
-			if (!(options.validationMethod == 'onblur' || options.validationMethod == 'submit-only')) {
-				let updated = false;
-
-				// TODO: Factorize Tainted__validate
-				for (const path of paths) {
-					updated = updated || (await Tainted__validate(path, taintOptions));
-				}
-				if (!updated) {
-					await validateObjectErrors(options, Form, Errors, Data.tainted);
-				}
-			}
 		}
+
+		return paths;
 	}
 
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
@@ -547,17 +577,21 @@ export function superForm<
 
 	//#region Unsubscriptions
 
-	// Subscribe to certain stores and store the current
-	// value in Data, to avoid using get
+	/**
+	 * Subscribe to certain stores and store the current value in Data, to avoid using get.
+	 * Need to clone the form data, so it won't refer to the same object and prevent change detection
+	 */
 	const Unsubscriptions: (() => void)[] = [
 		// eslint-disable-next-line dci-lint/private-role-access
-		Tainted.state.subscribe((tainted) => (__data.tainted = tainted)),
+		Tainted.state.subscribe((tainted) => (__data.tainted = clone(tainted))),
 		// eslint-disable-next-line dci-lint/private-role-access
-		Form.subscribe((form) => (__data.form = form)),
+		Form.subscribe((form) => (__data.form = clone(form))),
+		// eslint-disable-next-line dci-lint/private-role-access
+		Errors.subscribe((errors) => (__data.errors = clone(errors))),
+
 		FormId.subscribe((id) => (__data.formId = id)),
 		Constraints.subscribe((constraints) => (__data.constraints = constraints)),
 		Posted.subscribe((posted) => (__data.posted = posted)),
-		Errors.subscribe((errors) => (__data.errors = errors)),
 		LastChanges.subscribe((lastChanges) => (__data.lastChanges = lastChanges)),
 		Message.subscribe((message) => (__data.message = message))
 	];
@@ -1156,27 +1190,4 @@ export function superForm<
 			});
 		}
 	};
-}
-
-/**
- * Validate current form data.
- */
-function validateForm<T extends Record<string, unknown>>(): Promise<SuperValidated<T>>;
-
-/**
- * Validate a specific field in the form.
- */
-function validateForm<T extends Record<string, unknown>>(
-	path: FormPathLeaves<T>,
-	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
-): Promise<string[] | undefined>;
-
-function validateForm<T extends Record<string, unknown>>(
-	path?: FormPathLeaves<T>,
-	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
-) {
-	// See the validate function inside superForm for implementation.
-	throw new SuperFormError('validateForm can only be used as superForm.validate.');
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return { path, opts } as any;
 }

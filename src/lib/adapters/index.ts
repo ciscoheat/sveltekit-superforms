@@ -4,18 +4,22 @@ import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
+import toSchema from 'to-json-schema';
+import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
+import type { Options as SchemaOptions } from 'to-json-schema';
 
+// Must be exported before the adapters:
 export { memoize as adapter } from '$lib/memoize.js';
 
-import toSchema from 'to-json-schema';
-import type { Options as SchemaOptions } from 'to-json-schema';
-import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
-export type { Options as SchemaOptions } from 'to-json-schema';
-
-export { zod } from './zod.js';
 export { ajv } from './ajv.js';
-export { valibot } from './valibot.js';
 export { arktype } from './arktype.js';
+export { joi } from './joi.js';
+export { superform } from './superform.js';
+export { typebox } from './typebox.js';
+export { valibot } from './valibot.js';
+export { zod } from './zod.js';
+
+export type { Options as SchemaOptions } from 'to-json-schema';
 
 export type ValidationLibrary =
 	| 'zod'

@@ -1,4 +1,4 @@
-import type { MaybePromise, FieldPath } from './index.js';
+import type { FieldPath } from './index.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -152,35 +152,6 @@ export function traversePaths<T extends object, Path extends FieldPath<T>>(
 
 		if (status === 'abort') return status;
 		else if (status === 'skip') continue;
-		else if (!isLeaf) {
-			const status = traversePaths(value, modifier, pathData.path as any);
-			if (status === 'abort') return status;
-		}
-	}
-}
-
-export async function traversePathsAsync<T extends object, Path extends FieldPath<T>>(
-	parent: T,
-	modifier: (data: PathData) => MaybePromise<TraverseStatus>,
-	path: Path | [] = []
-): Promise<TraverseStatus> {
-	for (const key in parent) {
-		const value = parent[key] as any;
-		const isLeaf = value === null || typeof value !== 'object';
-
-		const pathData: PathData = {
-			parent,
-			key,
-			value,
-			path: path.map(String).concat([key]),
-			isLeaf,
-			set: (v) => setPath(parent, key, v)
-		};
-
-		const status = await modifier(pathData);
-
-		if (status === 'abort') return status;
-		else if (status === 'skip') break;
 		else if (!isLeaf) {
 			const status = traversePaths(value, modifier, pathData.path as any);
 			if (status === 'abort') return status;

@@ -1,24 +1,17 @@
 import {
 	type SuperValidated,
 	type ValidationErrors,
-	type Validator,
-	type Validators,
 	type FieldPath,
 	SuperFormError,
 	type TaintedFields
 } from '../index.js';
-import type { z, AnyZodObject, ZodError, ZodTypeAny } from 'zod';
-import {
-	isInvalidPath,
-	setPaths,
-	traversePath,
-	traversePaths,
-	traversePathsAsync
-} from '../traversal.js';
+import { isInvalidPath, setPaths, traversePath, traversePaths } from '../traversal.js';
 import type { FormOptions, SuperForm, TaintOption } from './index.js';
-import { mapErrors, clearErrors } from '../errors.js';
+import { mapErrors } from '../errors.js';
 import { clone } from '../utils.js';
 import { get } from 'svelte/store';
+import { validate } from '@decs/typeschema';
+import { mapAdapter, type ValidationResult } from '$lib/adapters/index.js';
 
 export type ValidateOptions<V> = Partial<{
 	value: V;
@@ -32,208 +25,57 @@ export type ValidateOptions<V> = Partial<{
  */
 export async function clientValidation<T extends Record<string, unknown>, M = unknown>(
 	validators: FormOptions<T, M>['validators'],
-	checkData: T,
-	formId: string | undefined,
+	data: T,
+	formId: string,
 	constraints: SuperValidated<T>['constraints'],
 	posted: boolean
 ) {
-	return _clientValidation(validators, checkData, formId, constraints, posted);
+	return _clientValidation(validators, data, formId, constraints, posted);
 }
 
 async function _clientValidation<T extends Record<string, unknown>, M = unknown>(
-	validators: FormOptions<T, M>['validators'],
-	checkData: T,
-	formId: string | undefined,
+	validator: FormOptions<T, M>['validators'],
+	data: T,
+	formId: string,
 	constraints: SuperValidated<T>['constraints'],
 	posted: boolean
 ): Promise<SuperValidated<T>> {
-	let valid = true;
-	let clientErrors: ValidationErrors<T> = {};
+	let errors: ValidationErrors<T> = {};
+	let status: ValidationResult<T> = { success: true, data };
 
-	if (validators) {
-		// TODO: Remove Zod dependency, make generic
-		if ('safeParseAsync' in validators) {
-			// Zod validator
-			const validator = validators as AnyZodObject;
-			const result = await validator.safeParseAsync(checkData);
+	if (validator) {
+		const adapter = mapAdapter(validator);
+		// Taken from superValidate validator/validate
+		status =
+			'process' in adapter
+				? await adapter.process(data)
+				: // TODO: Factorize away typeschema?
+					((await validate(adapter.validator, data)) as ValidationResult<T>);
 
-			valid = result.success;
+		if (adapter.postProcess) status = await adapter.postProcess(status);
 
-			if (!result.success) {
-				clientErrors = mapErrors(
-					result.error.format(),
-					errorShape(validator)
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				) as any;
-			} else {
-				checkData = result.data;
-			}
-		} else {
-			// SuperForms validator
-			checkData = { ...checkData };
-			// Add top-level validator fields to non-existing checkData fields
-			// so they will be validated even if the field doesn't exist
-			for (const [key, value] of Object.entries(validators)) {
-				if (typeof value === 'function' && !(key in checkData)) {
-					// @ts-expect-error Setting undefined fields so they will be validated based on field existance.
-					checkData[key] = undefined;
-				}
-			}
-
-			const validator = validators as Validators<T>;
-			const newErrors: {
-				path: string[];
-				errors: string[] | undefined;
-			}[] = [];
-
-			await traversePathsAsync(checkData, async ({ value, path }) => {
-				// Filter out array indices, the validator structure doesn't contain these.
-				const validationPath = path.filter((p) => /\D/.test(String(p)));
-				const maybeValidator = traversePath(
-					validator,
-					validationPath as FieldPath<typeof validator>
-				);
-
-				if (typeof maybeValidator?.value === 'function') {
-					const check = maybeValidator.value as Validator<unknown>;
-
-					let errors: string | string[] | null | undefined;
-
-					if (Array.isArray(value)) {
-						for (const key in value) {
-							try {
-								errors = await check(value[key]);
-								if (errors) {
-									valid = false;
-									newErrors.push({
-										path: path.concat([key]),
-										errors: typeof errors === 'string' ? [errors] : errors ?? undefined
-									});
-								}
-							} catch (e) {
-								valid = false;
-								console.error(`Error in form validators for field "${path}":`, e);
-							}
-						}
-					} else {
-						try {
-							errors = await check(value);
-							if (errors) {
-								valid = false;
-								newErrors.push({
-									path,
-									errors: typeof errors === 'string' ? [errors] : errors ?? undefined
-								});
-							}
-						} catch (e) {
-							valid = false;
-							console.error(`Error in form validators for field "${path}":`, e);
-						}
-					}
-				}
-			});
-
-			for (const { path, errors } of newErrors) {
-				const errorPath = traversePath(
-					clientErrors,
-					path as FieldPath<typeof clientErrors>,
-					({ parent, key, value }) => {
-						if (value === undefined) parent[key] = {};
-						return parent[key];
-					}
-				);
-
-				if (errorPath) {
-					const { parent, key } = errorPath;
-					parent[key] = errors;
-				}
-			}
+		if (!status.success) {
+			errors = mapErrors(status.issues, adapter.shape) as ValidationErrors<T>;
 		}
 	}
 
 	return {
-		valid,
+		valid: status.success,
 		posted,
-		errors: clientErrors,
-		data: checkData,
+		errors,
+		data: status.success ? status.data : data,
 		constraints,
 		message: undefined,
 		id: formId
 	};
 }
 
-/**
- * Validate and set/clear object level errors.
- */
-export async function validateObjectErrors<T extends Record<string, unknown>, M>(
-	formOptions: FormOptions<T, M>,
-	Form: SuperForm<T, M>['form'],
-	Errors: SuperForm<T, M>['errors'],
-	tainted: TaintedFields<UnwrapEffects<T>> | undefined
-) {
-	// TODO: Remove
-	if (typeof formOptions.validators !== 'object' || !('safeParseAsync' in formOptions.validators)) {
-		return;
-	}
-
-	const validators = formOptions.validators as AnyZodObject;
-	const result = await validators.safeParseAsync(get(Form));
-
-	if (!result.success) {
-		const newErrors = mapErrors(result.error.format(), errorShape(validators as AnyZodObject));
-
-		Errors.update((currentErrors) => {
-			// Clear current object-level errors
-			traversePaths(currentErrors, (pathData) => {
-				if (pathData.key == '_errors') {
-					return pathData.set(undefined);
-				}
-			});
-
-			// Add new object-level errors and tainted field errors
-			traversePaths(newErrors, (pathData) => {
-				if (pathData.key == '_errors') {
-					// Check if the parent path (the actual array) is tainted
-					// Form-level errors are always "tainted"
-					const taintedPath =
-						pathData.path.length == 1
-							? { value: true }
-							: tainted && traversePath(tainted, pathData.path.slice(0, -1) as any);
-
-					if (taintedPath && taintedPath.value) {
-						return setPaths(currentErrors, [pathData.path], pathData.value);
-					}
-				}
-			});
-
-			return currentErrors;
-		});
-	} else {
-		Errors.update((currentErrors) => {
-			// Clear current object-level errors
-			traversePaths(currentErrors, (pathData) => {
-				if (pathData.key == '_errors') {
-					return pathData.set(undefined);
-				}
-			});
-			return currentErrors;
-		});
-
-		// Disable if form values shouldn't be updated immediately:
-		//if (result.data) Form.set(result.data);
-	}
-}
-
-export type ValidationResult<T extends Record<string, unknown>> = {
+export type ClientValidationResult<T extends Record<string, unknown>> = {
 	validated: boolean | 'all';
 	errors: string[] | undefined;
 	data: T | undefined;
 };
 
-/**
- * Validate a specific form field.
- * @DCI-context
- */
 export async function validateField<T extends Record<string, unknown>, M>(
 	path: (string | number | symbol)[],
 	formOptions: FormOptions<T, M>,
@@ -241,9 +83,9 @@ export async function validateField<T extends Record<string, unknown>, M>(
 	Errors: SuperForm<T, M>['errors'],
 	Tainted: SuperForm<T, M>['tainted'],
 	options: ValidateOptions<unknown> = {}
-): Promise<ValidationResult<T>> {
+): Promise<ClientValidationResult<T>> {
 	function Errors_clear() {
-		clearErrors(Errors, { undefinePath: path, clearFormLevelErrors: true });
+		//clearErrors(Errors, { undefinePath: path, clearFormLevelErrors: true });
 	}
 
 	function Errors_update(errorMsgs: null | undefined | string | string[]) {
@@ -300,7 +142,7 @@ async function _validateField<T extends Record<string, unknown>, M>(
 	Errors: SuperForm<T, M>['errors'],
 	Tainted: SuperForm<T, M>['tainted'],
 	options: ValidateOptions<unknown> = {}
-): Promise<ValidationResult<T>> {
+): Promise<ClientValidationResult<T>> {
 	if (options.update === undefined) options.update = true;
 	if (options.taint === undefined) options.taint = false;
 	if (typeof options.errors == 'string') options.errors = [options.errors];

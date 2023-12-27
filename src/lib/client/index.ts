@@ -1,10 +1,10 @@
 import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
 import type { Page } from '@sveltejs/kit';
 import type { Readable, Writable, Updater } from 'svelte/store';
-import type { TaintedFields, SuperValidated, Validators } from '../index.js';
+import { type TaintedFields, type SuperValidated, SuperFormError } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
-import type { Schema } from '@decs/typeschema';
+import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
 
 export { superForm } from './superForm.js';
@@ -93,7 +93,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 		  }) => MaybePromise<unknown | void>);
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: false | Validators<T> | Schema;
+	validators: ValidationAdapter<T> | false;
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
 	defaultValidator: 'keep' | 'clear';
 	customValidity: boolean;
@@ -186,13 +186,27 @@ export type SuperForm<
 	isTainted: (path?: FormPath<T>) => boolean;
 };
 
-///// clientValidation.ts /////
+/**
+ * Validate current form data.
+ */
+export function validateForm<T extends Record<string, unknown>>(): Promise<SuperValidated<T>>;
 
-export async function validateForm<T extends Record<string, unknown>>(
+/**
+ * Validate a specific field in the form.
+ */
+export function validateForm<T extends Record<string, unknown>>(
 	path: FormPathLeaves<T>,
 	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
-): Promise<string[] | undefined> {
-	return undefined;
+): Promise<string[] | undefined>;
+
+export function validateForm<T extends Record<string, unknown>>(
+	path?: FormPathLeaves<T>,
+	opts?: ValidateOptions<FormPathType<T, FormPathLeaves<T>>>
+) {
+	// See the validate function inside superForm for implementation.
+	throw new SuperFormError('validateForm can only be used as superForm.validate.');
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return { path, opts } as any;
 }
 
 export type ValidateOptions<V> = Partial<{

@@ -1,9 +1,9 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import type { ValidationIssue } from '@decs/typeschema';
-import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
+import { pathExists, traversePath, traversePaths } from './traversal.js';
 import { SuperFormError, type ValidationErrors } from './index.js';
-import type { Writable } from 'svelte/store';
 import { mergePath } from './stringPath.js';
+import type { FormOptions } from './client/index.js';
 
 export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	//console.log('===', errors.length, 'errors', shape);
@@ -64,6 +64,32 @@ export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	return output;
 }
 
+/**
+ * Filter errors based on validation method.
+ * auto = Requires the existence of errors and tainted (field in store) to show
+ * oninput = Set directly
+ */
+export function updateErrors<T extends Record<string, unknown>>(
+	newErrors: ValidationErrors<T>,
+	previous: ValidationErrors<T>,
+	method: FormOptions<T, unknown>['validationMethod']
+) {
+	console.log('Previous', previous);
+
+	traversePaths(newErrors, (data) => {
+		if (!Array.isArray(data.value)) return;
+		const path = traversePath(previous, data.path, (data) => {
+			if (data.value === undefined) {
+				return (data.parent[data.key] = {});
+			}
+		});
+		path?.set(data.value);
+	});
+
+	return newErrors;
+}
+
+/*
 export function clearErrors<T extends Record<string, unknown>>(
 	Errors: Writable<ValidationErrors<T>>,
 	options: {
@@ -90,6 +116,7 @@ export function clearErrors<T extends Record<string, unknown>>(
 		return $errors;
 	});
 }
+*/
 
 export function flattenErrors(errors: ValidationErrors<Record<string, unknown>>) {
 	return _flattenErrors(errors, []);

@@ -253,7 +253,6 @@ export function superForm<
 		constraints: form.constraints,
 		posted: form.posted,
 		errors: clone(form.errors),
-		lastChanges: [] as (string | number | symbol)[][],
 		message: form.message,
 		tainted: undefined as TaintedFields<T> | undefined,
 		valid: form.valid
@@ -303,31 +302,29 @@ export function superForm<
 	const Form = {
 		subscribe: _formData.subscribe,
 		set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
-			const changes = Tainted_update(value, options.taint ?? true);
-			if (changes.length) Form_clientValidation('input', value, changes);
 			// Need to clone the value, so it won't refer to $page for example.
-			return _formData.set(value);
+			return _formData.set(Form_update(clone(value), options.taint));
 		},
 		update: (
 			updater: Parameters<typeof _formData.update>[0],
 			options: { taint?: TaintOption } = {}
 		) => {
 			return _formData.update((value) => {
-				const newData = updater(value);
-				const changes = Tainted_update(newData, options.taint ?? true);
-				if (changes.length) Form_clientValidation('input', newData, changes);
 				// No cloning here, since it's an update
-				return newData;
+				return Form_update(updater(value), options.taint);
 			});
 		}
 	};
 
-	async function Form_clientValidation(
-		event: 'input' | 'blur' | 'submit',
-		formData: T,
-		changes?: (string | number | symbol)[][]
-	) {
-		console.log('Form_clientValidation', changes);
+	function Form_update(newData: T, taint?: TaintOption) {
+		const changes = Tainted_update(newData, taint ?? true);
+		if (changes.length) Form_clientValidation('input', newData);
+		// No cloning here, since it's an update
+		return newData;
+	}
+
+	async function Form_clientValidation(event: 'input' | 'blur' | 'submit', newData?: T) {
+		//console.log('Form_clientValidation', changes);
 
 		if (!options.validators) return;
 		if (options.validationMethod == 'submit-only' && event != 'submit') return;
@@ -335,13 +332,15 @@ export function superForm<
 
 		const result = await clientValidation(
 			options.validators,
-			formData,
+			newData ?? Data.form,
 			Data.formId,
 			Data.constraints,
 			false
 		);
 
-		Errors.set(result.errors);
+		Errors.set(result.errors, { event });
+
+		if (event == 'blur') Tainted_clearChanges();
 
 		/*
 		let updated = false;
@@ -429,7 +428,6 @@ export function superForm<
 
 	//#endregion
 
-	const LastChanges = writable<(string | number | symbol)[][]>([]);
 	const Message = writable<M | undefined>(form.message);
 	const Constraints = writable(form.constraints);
 	const Posted = writable(false);
@@ -440,13 +438,30 @@ export function superForm<
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
-		set(value: Parameters<typeof _errors.set>[0]) {
-			return _errors.set(updateErrors(value, Data.errors, options.validationMethod));
+		set(value: Parameters<typeof _errors.set>[0], opts?: { event?: 'input' | 'blur' | 'submit' }) {
+			return _errors.set(
+				updateErrors(
+					value,
+					Data.errors,
+					Tainted_lastChanges(),
+					options.validationMethod,
+					opts?.event
+				)
+			);
 		},
-		update(updater: Parameters<typeof _errors.update>[0]) {
+		update(
+			updater: Parameters<typeof _errors.update>[0],
+			opts?: { event?: 'input' | 'blur' | 'submit' }
+		) {
 			return _errors.update((value) => {
 				const output = updater(value);
-				return updateErrors(output, Data.errors, options.validationMethod);
+				return updateErrors(
+					output,
+					Data.errors,
+					Tainted_lastChanges(),
+					options.validationMethod,
+					opts?.event
+				);
 			});
 		},
 		/**
@@ -463,7 +478,8 @@ export function superForm<
 	const Tainted = {
 		state: writable<TaintedFields<T> | undefined>(),
 		message: options.taintedMessage,
-		clean: clone(form.data) // Important to clone form.data, so it's not comparing the same object
+		clean: clone(form.data), // Important to clone form.data, so it's not comparing the same object,
+		lastChanges: [] as (string | number | symbol)[][]
 	};
 
 	function Tainted_enable() {
@@ -472,6 +488,14 @@ export function superForm<
 
 	function Tainted_currentState() {
 		return Tainted.state;
+	}
+
+	function Tainted_lastChanges() {
+		return Tainted.lastChanges;
+	}
+
+	function Tainted_clearChanges() {
+		Tainted.lastChanges = [];
 	}
 
 	function Tainted_isTainted(obj: unknown): boolean {
@@ -565,7 +589,7 @@ export function superForm<
 			}
 		}
 
-		return paths;
+		return (Tainted.lastChanges = paths);
 	}
 
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
@@ -592,7 +616,6 @@ export function superForm<
 		FormId.subscribe((id) => (__data.formId = id)),
 		Constraints.subscribe((constraints) => (__data.constraints = constraints)),
 		Posted.subscribe((posted) => (__data.posted = posted)),
-		LastChanges.subscribe((lastChanges) => (__data.lastChanges = lastChanges)),
 		Message.subscribe((message) => (__data.message = message))
 	];
 
@@ -832,16 +855,17 @@ export function superForm<
 
 				//console.log('htmlInputChange', change, event, target);
 
-				const result = await validateField(change, options, Form, Errors, Tainted_currentState());
-
+				//const result = await validateField(change, options, Form, Errors, Tainted_currentState());
 				// Update data if target exists (immediate is set, refactor please)
-				if (result.data && target) Form_set(result.data);
+				//if (result.data && target) Form_set(result.data);
 
+				/*
 				if (options.customValidity) {
 					const name = CSS.escape(mergePath(change));
 					const el = FormEl.querySelector<HTMLElement>(`[name="${name}"]`);
 					if (el) updateCustomValidity(el, event, result.errors, options.validationMethod);
 				}
+				*/
 			}
 
 			async function checkBlur(e: Event) {
@@ -853,7 +877,7 @@ export function superForm<
 				const immediateUpdate = isImmediateInput(e.target);
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-				const changes = Data.lastChanges;
+				const changes = Tainted_lastChanges();
 				if (!changes.length) return;
 
 				const target = e.target instanceof HTMLElement ? e.target : null;
@@ -862,8 +886,7 @@ export function superForm<
 					htmlInputChange(change, 'blur', immediateUpdate ? null : target);
 				}
 
-				// Clear last changes after blur (not after input)
-				LastChanges.set([]);
+				await Form_clientValidation('blur');
 			}
 
 			async function checkInput(e: Event) {
@@ -875,7 +898,7 @@ export function superForm<
 				const immediateUpdate = isImmediateInput(e.target);
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-				const changes = Data.lastChanges;
+				const changes = Tainted_lastChanges();
 				if (!changes.length) return;
 
 				const target = e.target instanceof HTMLElement ? e.target : null;

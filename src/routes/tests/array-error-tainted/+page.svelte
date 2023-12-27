@@ -18,7 +18,7 @@
 	$: status = get(page).status;
 </script>
 
-<SuperDebug data={{ $form, $tainted }} />
+<SuperDebug data={{ $form, $errors, $tainted }} />
 
 <h3>Superforms testing ground</h3>
 

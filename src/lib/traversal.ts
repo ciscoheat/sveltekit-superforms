@@ -2,7 +2,7 @@ import type { FieldPath } from './index.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-type PathData = {
+export type PathData = {
 	parent: any;
 	key: string;
 	value: any;

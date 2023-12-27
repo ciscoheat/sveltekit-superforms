@@ -1,6 +1,6 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import type { ValidationIssue } from '@decs/typeschema';
-import { pathExists, traversePath, traversePaths } from './traversal.js';
+import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
 import { SuperFormError, type ValidationErrors } from './index.js';
 import { mergePath } from './stringPath.js';
 import type { FormOptions } from './client/index.js';
@@ -68,25 +68,76 @@ export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
  * Filter errors based on validation method.
  * auto = Requires the existence of errors and tainted (field in store) to show
  * oninput = Set directly
+ * @DCI-context
  */
 export function updateErrors<T extends Record<string, unknown>>(
-	newErrors: ValidationErrors<T>,
-	previous: ValidationErrors<T>,
-	method: FormOptions<T, unknown>['validationMethod']
+	New: ValidationErrors<T>,
+	Previous: ValidationErrors<T>,
+	LastChanges: (string | number | symbol)[][],
+	method: FormOptions<T, unknown>['validationMethod'],
+	event?: 'input' | 'blur' | 'submit'
 ) {
-	console.log('Previous', previous);
+	//console.log('Previous', Previous);
 
-	traversePaths(newErrors, (data) => {
-		if (!Array.isArray(data.value)) return;
-		const path = traversePath(previous, data.path, (data) => {
-			if (data.value === undefined) {
-				return (data.parent[data.key] = {});
-			}
+	/*
+	if (event === 'blur' && LastChanges.length) {
+		console.log('Setting blur fields', LastChanges);
+		setPaths(Previous, LastChanges, (_, data) => {
+			data.set(data.value ?? undefined);
 		});
-		path?.set(data.value);
+	}
+	*/
+
+	traversePaths(Previous, (errors) => {
+		if (!Array.isArray(errors.value)) return;
+		console.log('Clearing previous error', errors.path);
+		errors.set(undefined);
 	});
 
-	return newErrors;
+	traversePaths(New, (errors) => {
+		if (!Array.isArray(errors.value)) return;
+		const path = traversePath(Previous, errors.path, (data) => {
+			if (data.value === undefined) {
+				return (data.parent[data.key] = {});
+			} else {
+				return data.value;
+			}
+		});
+
+		const previousError = path as NonNullable<typeof path>;
+		console.log('=== Update errors ===', previousError);
+
+		switch (method) {
+			case undefined:
+			case 'auto':
+				if (previousError.key in previousError.parent) {
+					console.log('Error key existed, setting', previousError.path);
+					previousError.set(errors.value);
+					break;
+				} else if (event != 'input' && errors.value) {
+					previousError.set(errors.value);
+				}
+
+				break;
+
+			/*
+			case 'onblur':
+				if (event == 'blur') previousError.set(data.value);
+				break;
+
+			case 'oninput':
+				if (event == 'input') previousError.set(data.value);
+				break;
+
+			case 'submit-only':
+				if (event == 'submit') previousError.set(data.value);
+				break;
+			*/
+		}
+		//path?.set(data.value);
+	});
+
+	return Previous;
 }
 
 /*

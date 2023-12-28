@@ -445,7 +445,7 @@ export function superForm<
 					Data.errors,
 					Tainted_lastChanges(),
 					options.validationMethod,
-					opts?.event
+					opts?.event ?? 'input'
 				)
 			);
 		},
@@ -460,7 +460,7 @@ export function superForm<
 					Data.errors,
 					Tainted_lastChanges(),
 					options.validationMethod,
-					opts?.event
+					opts?.event ?? 'input'
 				);
 			});
 		},
@@ -556,6 +556,7 @@ export function superForm<
 		if (taintOptions == 'ignore') return [];
 
 		let paths = comparePaths(newData, Data.form);
+		console.log('🚀 ~ file: superForm.ts:559 ~ Tainted_update ~ paths:', paths);
 
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {

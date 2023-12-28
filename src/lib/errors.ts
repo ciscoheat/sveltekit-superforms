@@ -75,47 +75,52 @@ export function updateErrors<T extends Record<string, unknown>>(
 	Previous: ValidationErrors<T>,
 	LastChanges: (string | number | symbol)[][],
 	method: FormOptions<T, unknown>['validationMethod'],
-	event?: 'input' | 'blur' | 'submit'
+	event: 'input' | 'blur' | 'submit'
 ) {
-	//console.log('Previous', Previous);
+	console.log('=== updateErrors:', event, LastChanges);
 
-	/*
-	if (event === 'blur' && LastChanges.length) {
-		console.log('Setting blur fields', LastChanges);
-		setPaths(Previous, LastChanges, (_, data) => {
-			data.set(data.value ?? undefined);
-		});
-	}
-	*/
-
+	// Set previous errors to undefined,
+	// which signifies that an error can be displayed there again.
 	traversePaths(Previous, (errors) => {
 		if (!Array.isArray(errors.value)) return;
-		console.log('Clearing previous error', errors.path);
 		errors.set(undefined);
 	});
 
-	traversePaths(New, (errors) => {
-		if (!Array.isArray(errors.value)) return;
-		const path = traversePath(Previous, errors.path, (data) => {
-			if (data.value === undefined) {
-				return (data.parent[data.key] = {});
-			} else {
-				return data.value;
-			}
-		});
+	traversePaths(New, (error) => {
+		if (!Array.isArray(error.value)) return;
 
-		const previousError = path as NonNullable<typeof path>;
-		console.log('=== Update errors ===', previousError);
+		if (event == 'submit') {
+			setPaths(Previous, [error.path], error.value);
+			return;
+		}
+
+		console.log('Checking new error', error.path, error.value);
+
+		const isObjectError = error.path[error.path.length - 1] == '_errors';
+		const previousError = pathExists(Previous, error.path);
+
+		if (!previousError) {
+			if (!isObjectError) return;
+			// An object error should be displayed on blur if no error exists,
+			if (event == 'blur') {
+				setPaths(Previous, [error.path], error.value);
+			}
+			return;
+		}
 
 		switch (method) {
 			case undefined:
 			case 'auto':
 				if (previousError.key in previousError.parent) {
 					console.log('Error key existed, setting', previousError.path);
-					previousError.set(errors.value);
+					previousError.set(error.value);
 					break;
-				} else if (event != 'input' && errors.value) {
-					previousError.set(errors.value);
+				} else if (
+					event == 'blur' &&
+					error.value &&
+					LastChanges.map((c) => c.join()).includes(error.path.join())
+				) {
+					previousError.set(error.value);
 				}
 
 				break;

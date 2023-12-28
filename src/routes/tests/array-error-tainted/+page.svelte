@@ -20,8 +20,7 @@
 	];
 
 	const { form, errors, message, tainted, enhance } = superForm(data.form, {
-		validators: zod(schema),
-		taintedMessage: null
+		validators: zod(schema)
 	});
 
 	$: status = get(page).status;

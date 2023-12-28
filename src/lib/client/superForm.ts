@@ -87,7 +87,7 @@ const defaultFormOptions = {
 	multipleSubmits: 'prevent',
 	validation: undefined,
 	SPA: undefined,
-	validateMethod: 'auto'
+	validationMethod: 'auto'
 };
 
 function multipleFormIdError(id: string | undefined) {
@@ -335,30 +335,33 @@ export function superForm<
 		return newData;
 	}
 
-	async function Form_clientValidation(event: ChangeEvent) {
-		if (event.type == 'blur' && event.immediate) {
-			console.log('Immediate event, skipping blur validation');
-			return;
-		}
-
-		// TODO: Debounce?
-		console.log(
-			'Form_clientValidation:',
-			event.immediate ? 'immediate' : '',
-			event.type,
-			event.paths.join('.')
-		);
-
-		const result = await clientValidation(
+	async function Form_validate() {
+		return await clientValidation(
 			options.validators,
 			Data.form,
 			Data.formId,
 			Data.constraints,
 			false
 		);
+	}
 
+	async function Form_clientValidation(event: ChangeEvent) {
 		if (!options.validators) return;
+
 		if (options.validationMethod == 'submit-only' && event.type != 'submit') return;
+		if (options.validationMethod == 'onblur' && event.type == 'input') return;
+		if (options.validationMethod == 'oninput' && event.type == 'blur') return;
+
+		if (event.type == 'blur' && event.immediate) {
+			console.log('Immediate event, skipping blur validation');
+			return;
+		}
+
+		const result = await Form_validate();
+
+		if (options.validationMethod != 'auto') {
+			return Errors.set(result.errors);
+		}
 
 		Form__displayNewErrors(result.errors, event);
 	}
@@ -560,15 +563,15 @@ export function superForm<
 		if (!Data.tainted) return false;
 		if (!path) return !!Data.tainted;
 		const field = pathExists(Data.tainted, splitPath(path));
-		return !!field?.value;
+		return Tainted__isObjectTainted(field?.value);
 	}
 
-	function Tainted_currentlyTainted(obj: unknown): boolean {
+	function Tainted__isObjectTainted(obj: unknown): boolean {
 		if (!obj) return false;
 
 		if (typeof obj === 'object') {
 			for (const obj2 of Object.values(obj)) {
-				if (Tainted_currentlyTainted(obj2)) return true;
+				if (Tainted__isObjectTainted(obj2)) return true;
 			}
 		}
 		return obj === true;
@@ -712,10 +715,11 @@ export function superForm<
 	if (browser) {
 		// Tainted check
 		beforeNavigate((nav) => {
+			console.log('🚀 ~ file: superForm.ts:715 ~ beforeNavigate ~ nav:', nav);
 			if (options.taintedMessage && !get(Submitting)) {
 				const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
 				if (
-					Tainted_currentlyTainted(Data.tainted) &&
+					Tainted_isTainted() &&
 					!window.confirm(options.taintedMessage === true ? defaultMessage : options.taintedMessage)
 				) {
 					nav.cancel();
@@ -892,12 +896,6 @@ export function superForm<
 			}
 
 			async function onInput(e: Event) {
-				/*
-				if (options.validationMethod == 'onblur' || options.validationMethod == 'submit-only') {
-					return;
-				}
-				*/
-
 				const immediateUpdate = isImmediateInput(e.target);
 				// Need to wait for immediate update (not sure why)
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
@@ -927,12 +925,6 @@ export function superForm<
 			}
 
 			async function onBlur(e: Event) {
-				/*
-				if (options.validationMethod == 'oninput' || options.validationMethod == 'submit-only') {
-					return;
-				}
-				*/
-
 				if (NextChange_paths() != lastInputChange) {
 					console.log(
 						'Different change paths, no blur triggered',
@@ -1018,6 +1010,10 @@ export function superForm<
 							((submit.submitter instanceof HTMLButtonElement ||
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
+
+					if (!noValidate) {
+						await Form_clientValidation();
+					}
 
 					const validation = await clientValidation(
 						noValidate ? undefined : options.validators,

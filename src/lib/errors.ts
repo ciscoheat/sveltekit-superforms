@@ -75,9 +75,10 @@ export function updateErrors<T extends Record<string, unknown>>(
 	Previous: ValidationErrors<T>,
 	LastChanges: (string | number | symbol)[][],
 	method: FormOptions<T, unknown>['validationMethod'],
-	event: 'input' | 'blur' | 'submit'
+	event: 'input' | 'blur' | 'submit',
+	immediate: boolean
 ) {
-	console.log('=== updateErrors:', event, LastChanges);
+	console.log('=== updateErrors:', immediate ? 'immediate' : '', event, LastChanges);
 
 	// Set previous errors to undefined,
 	// which signifies that an error can be displayed there again.
@@ -97,15 +98,19 @@ export function updateErrors<T extends Record<string, unknown>>(
 		console.log('Checking new error', error.path, error.value);
 
 		const isObjectError = error.path[error.path.length - 1] == '_errors';
-		const previousError = pathExists(Previous, error.path);
+		let previousError = pathExists(Previous, error.path);
 
 		if (!previousError) {
-			if (!isObjectError) return;
-			// An object error should be displayed on blur if no error exists,
-			if (event == 'blur') {
+			// An object error should be displayed on blur if no error exists
+			if (event != 'blur') return;
+
+			if (isObjectError) {
 				setPaths(Previous, [error.path], error.value);
+				return;
 			}
-			return;
+
+			setPaths(Previous, [error.path], undefined);
+			previousError = pathExists(Previous, error.path)!;
 		}
 
 		switch (method) {
@@ -116,9 +121,10 @@ export function updateErrors<T extends Record<string, unknown>>(
 					previousError.set(error.value);
 					break;
 				} else if (
-					event == 'blur' &&
-					error.value &&
-					LastChanges.map((c) => c.join()).includes(error.path.join())
+					isObjectError ||
+					(event == 'blur' &&
+						error.value &&
+						LastChanges.map((c) => c.join()).includes(error.path.join()))
 				) {
 					previousError.set(error.value);
 				}

@@ -8,7 +8,16 @@
 
 	export let data;
 
-	const Days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+	const Days = [
+		'Saturday',
+		'Sunday',
+		'Monday',
+		'Tuesday',
+		'Wednesday',
+		'Thursday',
+		'Friday',
+		'Nowayday'
+	];
 
 	const { form, errors, message, tainted, enhance } = superForm(data.form, {
 		validators: zod(schema),
@@ -48,11 +57,16 @@
 					bind:group={$form.days}
 					class="w-4 h-4 text-skin-accent bg-skin-fg rounded focus:ring-skin-accent focus:ring-2 cursor-pointer"
 				/>
-				<label for="wday-{i}" class="ml-2 text-sm font-medium cursor-pointer">{day}</label>
+				<label for="wday-{i}" class="ml-2 text-sm font-medium cursor-pointer">
+					{day}
+				</label>
 			</div>
 		{/each}
 	</div>
 	<p class="invalid">{$errors.days?._errors || 'No error'}</p>
+	<p class="values">
+		{#if $errors.days?.[0]}{$errors.days[0]}{/if}
+	</p>
 	<button>Submit</button>
 </form>
 

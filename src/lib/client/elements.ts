@@ -27,7 +27,7 @@ const immediateInputTypes = ['checkbox', 'radio', 'range'];
 
 export function isImmediateInput(el: EventTarget | null) {
 	return (
-		el &&
+		!!el &&
 		(el instanceof HTMLSelectElement ||
 			(el instanceof HTMLInputElement && immediateInputTypes.includes(el.type)))
 	);

@@ -43,6 +43,12 @@ type ValidationResponse<
 	Invalid extends Record<string, unknown> | undefined = Record<string, any>
 > = { result: ActionResult<Success, Invalid> };
 
+type ChangeEvent = {
+	paths: (string | number | symbol)[][];
+	immediate?: boolean;
+	type?: 'input' | 'blur' | 'submit';
+};
+
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 const initialForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
 
@@ -317,18 +323,14 @@ export function superForm<
 	};
 
 	function Form_update(newData: T, taint?: TaintOption) {
-		const changes = Tainted_update(newData, taint ?? true);
-		if (changes.length) Form_clientValidation('input', newData);
+		Tainted_update(newData, taint ?? true);
+		//if (changes.length) Form_clientValidation('input', immediate, newData);
 		// No cloning here, since it's an update
 		return newData;
 	}
 
-	async function Form_clientValidation(event: 'input' | 'blur' | 'submit', newData?: T) {
-		//console.log('Form_clientValidation', changes);
-
-		if (!options.validators) return;
-		if (options.validationMethod == 'submit-only' && event != 'submit') return;
-		if (options.validationMethod == 'onblur' && event == 'input') return;
+	async function Form_clientValidation(event: ChangeEvent, newData?: T) {
+		console.log('Form_clientValidation', event.paths.join('.'), event);
 
 		const result = await clientValidation(
 			options.validators,
@@ -338,20 +340,15 @@ export function superForm<
 			false
 		);
 
-		Errors.set(result.errors, { event });
-
-		if (event == 'blur') Tainted_clearChanges();
-
 		/*
-		let updated = false;
+		if (!options.validators) return result;
+		if (options.validationMethod == 'submit-only' && event != 'submit') return result;
+		if (options.validationMethod == 'onblur' && event == 'input') return result;
 
-		// TODO: Factorize Tainted__validate
-		for (const path of paths) {
-			updated = updated || (await Tainted__validate(path, taintOptions));
-		}
-		if (!updated) {
-			await validateObjectErrors(options, Form, Errors, Data.tainted);
-		}
+		Errors.set(result.errors, { event, immediate });
+		if (event != 'input') Tainted_clearChanges();
+
+		return result;
 		*/
 	}
 
@@ -438,20 +435,24 @@ export function superForm<
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
-		set(value: Parameters<typeof _errors.set>[0], opts?: { event?: 'input' | 'blur' | 'submit' }) {
+		set(
+			value: Parameters<typeof _errors.set>[0],
+			opts?: { event: 'input' | 'blur' | 'submit'; immediate: boolean }
+		) {
 			return _errors.set(
 				updateErrors(
 					value,
 					Data.errors,
 					Tainted_lastChanges(),
 					options.validationMethod,
-					opts?.event ?? 'input'
+					opts?.event ?? 'input',
+					opts?.immediate ?? true
 				)
 			);
 		},
 		update(
 			updater: Parameters<typeof _errors.update>[0],
-			opts?: { event?: 'input' | 'blur' | 'submit' }
+			opts?: { event: 'input' | 'blur' | 'submit'; immediate: boolean }
 		) {
 			return _errors.update((value) => {
 				const output = updater(value);
@@ -460,7 +461,8 @@ export function superForm<
 					Data.errors,
 					Tainted_lastChanges(),
 					options.validationMethod,
-					opts?.event ?? 'input'
+					opts?.event ?? 'input',
+					opts?.immediate ?? true
 				);
 			});
 		},
@@ -473,13 +475,41 @@ export function superForm<
 
 	//#endregion
 
+	//#region NextChange /////
+
+	const NextChange: ChangeEvent = {
+		paths: []
+	};
+
+	function NextChange_prepareEvent(event: ChangeEvent) {
+		NextChange.paths = event.paths;
+		NextChange.type = event.type;
+		NextChange.immediate = event.immediate;
+
+		// Wait for on:input to provide additional information
+		setTimeout(() => Form_clientValidation(NextChange), 0);
+	}
+
+	function NextChange_additionalEventInformation(
+		event: NonNullable<ChangeEvent['type']>,
+		immediate: boolean
+	) {
+		NextChange.type = event;
+		NextChange.immediate = immediate;
+	}
+
+	function NextChange_paths() {
+		return NextChange.paths;
+	}
+
+	//#endregion
+
 	//#region Tainted
 
 	const Tainted = {
 		state: writable<TaintedFields<T> | undefined>(),
 		message: options.taintedMessage,
-		clean: clone(form.data), // Important to clone form.data, so it's not comparing the same object,
-		lastChanges: [] as (string | number | symbol)[][]
+		clean: clone(form.data) // Important to clone form.data, so it's not comparing the same object,
 	};
 
 	function Tainted_enable() {
@@ -488,14 +518,6 @@ export function superForm<
 
 	function Tainted_currentState() {
 		return Tainted.state;
-	}
-
-	function Tainted_lastChanges() {
-		return Tainted.lastChanges;
-	}
-
-	function Tainted_clearChanges() {
-		Tainted.lastChanges = [];
 	}
 
 	function Tainted_isTainted(obj: unknown): boolean {
@@ -556,7 +578,7 @@ export function superForm<
 		if (taintOptions == 'ignore') return [];
 
 		let paths = comparePaths(newData, Data.form);
-		console.log('🚀 ~ file: superForm.ts:559 ~ Tainted_update ~ paths:', paths);
+		//console.log("🚀 ~ file: superForm.ts:581 ~ Tainted_update ~ paths:", paths)
 
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {
@@ -590,7 +612,8 @@ export function superForm<
 			}
 		}
 
-		return (Tainted.lastChanges = paths);
+		// TODO: What to do with more than one path (programmically updated)
+		NextChange_prepareEvent({ paths });
 	}
 
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
@@ -846,6 +869,8 @@ export function superForm<
 			// so we can enable the tainted form option.
 			Tainted_enable();
 
+			let lastInputChange: ChangeEvent['paths'];
+
 			// Called upon an event from a HTML element that affects the form.
 			async function htmlInputChange(
 				change: (string | number | symbol)[],
@@ -869,41 +894,26 @@ export function superForm<
 				*/
 			}
 
-			async function checkBlur(e: Event) {
-				if (options.validationMethod == 'oninput' || options.validationMethod == 'submit-only') {
-					return;
-				}
-
-				// Wait for changes to update
-				const immediateUpdate = isImmediateInput(e.target);
-				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
-
-				const changes = Tainted_lastChanges();
-				if (!changes.length) return;
-
-				const target = e.target instanceof HTMLElement ? e.target : null;
-
-				for (const change of changes) {
-					htmlInputChange(change, 'blur', immediateUpdate ? null : target);
-				}
-
-				await Form_clientValidation('blur');
-			}
-
-			async function checkInput(e: Event) {
+			async function onInput(e: Event) {
+				/*
 				if (options.validationMethod == 'onblur' || options.validationMethod == 'submit-only') {
 					return;
 				}
+				*/
 
-				// Wait for changes to update
 				const immediateUpdate = isImmediateInput(e.target);
+				// Need to wait for immediate update (not sure why)
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-				const changes = Tainted_lastChanges();
-				if (!changes.length) return;
+				lastInputChange = NextChange_paths();
+				NextChange_additionalEventInformation('input', immediateUpdate);
 
-				const target = e.target instanceof HTMLElement ? e.target : null;
+				//await Form_clientValidation('input', immediateUpdate);
 
+				//const target = e.target instanceof HTMLElement ? e.target : null;
+				//setTimeout(() => htmlInputChange(change, 'input', immediateUpdate ? target : null), 0);
+
+				/*
 				for (const change of changes) {
 					const hadErrors =
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -916,14 +926,52 @@ export function superForm<
 						setTimeout(() => htmlInputChange(change, 'input', immediateUpdate ? target : null), 0);
 					}
 				}
+				*/
 			}
 
-			FormEl.addEventListener('focusout', checkBlur);
-			FormEl.addEventListener('input', checkInput);
+			async function onBlur(e: Event) {
+				/*
+				if (options.validationMethod == 'oninput' || options.validationMethod == 'submit-only') {
+					return;
+				}
+				*/
+
+				if (NextChange_paths() != lastInputChange) {
+					console.log(
+						'Different change paths, no blur triggered',
+						NextChange_paths().join(),
+						lastInputChange.join()
+					);
+					return;
+				}
+
+				// Wait for changes to update
+				const immediateUpdate = isImmediateInput(e.target);
+				// Need to wait for immediate update (not sure why)
+				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+
+				Form_clientValidation({ paths: lastInputChange, immediate: immediateUpdate, type: 'blur' });
+
+				/*
+
+				const changes = Tainted_lastChanges();
+				if (!changes.length) return;
+
+				const target = e.target instanceof HTMLElement ? e.target : null;
+
+				for (const change of changes) {
+					htmlInputChange(change, 'blur', immediateUpdate ? null : target);
+				}
+				await Form_clientValidation('blur');
+				*/
+			}
+
+			FormEl.addEventListener('focusout', onBlur);
+			FormEl.addEventListener('input', onInput);
 
 			onDestroy(() => {
-				FormEl.removeEventListener('focusout', checkBlur);
-				FormEl.removeEventListener('input', checkInput);
+				FormEl.removeEventListener('focusout', onBlur);
+				FormEl.removeEventListener('input', onInput);
 			});
 
 			///// SvelteKit enhance function //////////////////////////////////

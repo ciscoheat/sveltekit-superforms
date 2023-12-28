@@ -1,4 +1,4 @@
-import { type InputConstraints } from '$lib/index.js';
+import { SuperFormError, type InputConstraints } from '$lib/index.js';
 import type { Schema as TypeSchema, ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
@@ -72,6 +72,11 @@ export function mapAdapter<T extends Record<string, unknown>>(
 	adapter: ValidationAdapter<T>
 ): MappedValidationAdapter<T> {
 	if (!adapterCache.has(adapter)) {
+		if (!adapter || !('superFormValidationLibrary' in adapter)) {
+			throw new SuperFormError(
+				'Superforms v2 requires a validation adapter for the schema. Import one of your choice from "sveltekit-superforms/adapters".'
+			);
+		}
 		const jsonSchema = adapter.jsonSchema;
 		const mapped = {
 			...adapter,

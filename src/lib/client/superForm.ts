@@ -714,10 +714,9 @@ export function superForm<
 
 	if (browser) {
 		// Tainted check
+		const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
 		beforeNavigate((nav) => {
-			console.log('🚀 ~ file: superForm.ts:715 ~ beforeNavigate ~ nav:', nav);
 			if (options.taintedMessage && !get(Submitting)) {
-				const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
 				if (
 					Tainted_isTainted() &&
 					!window.confirm(options.taintedMessage === true ? defaultMessage : options.taintedMessage)
@@ -875,24 +874,14 @@ export function superForm<
 			// Called upon an event from a HTML element that affects the form.
 			async function htmlInputChange(
 				change: (string | number | symbol)[],
-				event: 'blur' | 'input',
-				target: HTMLElement | null
+				errors: string[] | undefined,
+				event: 'blur' | 'input'
 			) {
-				if (options.validationMethod == 'submit-only') return;
-
-				//console.log('htmlInputChange', change, event, target);
-
-				//const result = await validateField(change, options, Form, Errors, Tainted_currentState());
-				// Update data if target exists (immediate is set, refactor please)
-				//if (result.data && target) Form_set(result.data);
-
-				/*
 				if (options.customValidity) {
 					const name = CSS.escape(mergePath(change));
 					const el = FormEl.querySelector<HTMLElement>(`[name="${name}"]`);
-					if (el) updateCustomValidity(el, event, result.errors, options.validationMethod);
+					if (el) updateCustomValidity(el, event, errors, options.validationMethod);
 				}
-				*/
 			}
 
 			async function onInput(e: Event) {
@@ -903,9 +892,7 @@ export function superForm<
 				lastInputChange = NextChange_paths();
 				NextChange_additionalEventInformation('input', immediateUpdate);
 
-				//await Form_clientValidation('input', immediateUpdate);
-
-				//const target = e.target instanceof HTMLElement ? e.target : null;
+				const target = e.target instanceof HTMLElement ? e.target : null;
 				//setTimeout(() => htmlInputChange(change, 'input', immediateUpdate ? target : null), 0);
 
 				/*
@@ -929,12 +916,11 @@ export function superForm<
 					console.log(
 						'Different change paths, no blur triggered',
 						NextChange_paths().join(),
-						lastInputChange.join()
+						lastInputChange?.join()
 					);
 					return;
 				}
 
-				// Wait for changes to update
 				const immediateUpdate = isImmediateInput(e.target);
 				// Need to wait for immediate update (not sure why)
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
@@ -1012,28 +998,20 @@ export function superForm<
 								submit.submitter.formNoValidate));
 
 					if (!noValidate) {
-						await Form_clientValidation();
-					}
+						const validation = await Form_validate();
 
-					const validation = await clientValidation(
-						noValidate ? undefined : options.validators,
-						Data.form,
-						Data.formId,
-						Data.constraints,
-						Data.posted
-					);
+						if (!validation.valid) {
+							cancel(false);
 
-					if (!validation.valid) {
-						cancel(false);
+							const result = {
+								type: 'failure' as const,
+								status:
+									(typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400,
+								data: { form: validation }
+							};
 
-						const result = {
-							type: 'failure' as const,
-							status:
-								(typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400,
-							data: { form: validation }
-						};
-
-						setTimeout(() => validationResponse({ result }), 0);
+							setTimeout(() => validationResponse({ result }), 0);
+						}
 					}
 
 					if (!cancelled) {

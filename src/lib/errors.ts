@@ -72,13 +72,9 @@ export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
  */
 export function updateErrors<T extends Record<string, unknown>>(
 	New: ValidationErrors<T>,
-	Previous: ValidationErrors<T>,
-	LastChanges: (string | number | symbol)[][],
-	method: FormOptions<T, unknown>['validationMethod'],
-	event: 'input' | 'blur' | 'submit',
-	immediate: boolean
+	Previous: ValidationErrors<T>
 ) {
-	console.log('=== updateErrors:', immediate ? 'immediate' : '', event, LastChanges);
+	//console.log('updateErrors:', New, Previous);
 
 	// Set previous errors to undefined,
 	// which signifies that an error can be displayed there again.
@@ -89,11 +85,13 @@ export function updateErrors<T extends Record<string, unknown>>(
 
 	traversePaths(New, (error) => {
 		if (!Array.isArray(error.value)) return;
+		setPaths(Previous, [error.path], error.value);
+	});
 
-		if (event == 'submit') {
-			setPaths(Previous, [error.path], error.value);
-			return;
-		}
+	return Previous;
+}
+
+/*
 
 		console.log('Checking new error', error.path, error.value);
 
@@ -144,12 +142,7 @@ export function updateErrors<T extends Record<string, unknown>>(
 				if (event == 'submit') previousError.set(data.value);
 				break;
 			*/
-		}
-		//path?.set(data.value);
-	});
-
-	return Previous;
-}
+//path?.set(data.value);
 
 /*
 export function clearErrors<T extends Record<string, unknown>>(

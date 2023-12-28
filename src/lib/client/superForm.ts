@@ -22,7 +22,13 @@ import { clone } from '$lib/utils.js';
 import { browser } from '$app/environment';
 import { onDestroy, tick } from 'svelte';
 import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '$lib/traversal.js';
-import { splitPath, type FormPathLeaves, type FormPathType, mergePath } from '$lib/stringPath.js';
+import {
+	splitPath,
+	type FormPathLeaves,
+	type FormPathType,
+	mergePath,
+	type FormPath
+} from '$lib/stringPath.js';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { flattenErrors, updateErrors } from '$lib/errors.js';
 import { clientValidation, validateField } from './clientValidation.js';
@@ -329,27 +335,78 @@ export function superForm<
 		return newData;
 	}
 
-	async function Form_clientValidation(event: ChangeEvent, newData?: T) {
-		console.log('Form_clientValidation', event.paths.join('.'), event);
+	async function Form_clientValidation(event: ChangeEvent) {
+		if (event.type == 'blur' && event.immediate) {
+			console.log('Immediate event, skipping blur validation');
+			return;
+		}
+
+		// TODO: Debounce?
+		console.log(
+			'Form_clientValidation:',
+			event.immediate ? 'immediate' : '',
+			event.type,
+			event.paths.join('.')
+		);
 
 		const result = await clientValidation(
 			options.validators,
-			newData ?? Data.form,
+			Data.form,
 			Data.formId,
 			Data.constraints,
 			false
 		);
 
-		/*
-		if (!options.validators) return result;
-		if (options.validationMethod == 'submit-only' && event != 'submit') return result;
-		if (options.validationMethod == 'onblur' && event == 'input') return result;
+		if (!options.validators) return;
+		if (options.validationMethod == 'submit-only' && event.type != 'submit') return;
 
-		Errors.set(result.errors, { event, immediate });
-		if (event != 'input') Tainted_clearChanges();
+		Form__displayNewErrors(result.errors, event);
+	}
 
-		return result;
-		*/
+	function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
+		const { type, immediate, paths } = event;
+		const previous = Data.errors;
+		const output: Record<string, unknown> = {};
+
+		traversePaths(errors, (error) => {
+			if (!Array.isArray(error.value)) return;
+
+			function addError() {
+				console.log('Adding error', `[${error.path.join('.')}]`, error.value);
+				setPaths(output, [error.path], error.value);
+			}
+
+			const previousError = pathExists(previous, error.path);
+
+			// TODO: What to do if path doesn't exist?
+
+			// If previous error exist, always display
+			if (previousError && previousError.key in previousError.parent) {
+				return addError();
+			}
+
+			const isObjectError = error.path[error.path.length - 1] == '_errors';
+			if (isObjectError) {
+				// Form-level errors should always be displayed
+				if (error.path.length == 1) return addError();
+
+				// New object errors should be displayed if the (parent) path is tainted
+				if (Tainted_isTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)) {
+					return addError();
+				}
+				return;
+			}
+
+			if (
+				type == 'blur' &&
+				error.value &&
+				paths.map((path) => path.join()).includes(error.path.join())
+			) {
+				return addError();
+			}
+		});
+
+		Errors.set(output as ValidationErrors<T>);
 	}
 
 	function Form_set(data: T, options: { taint?: TaintOption } = {}) {
@@ -435,35 +492,12 @@ export function superForm<
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
-		set(
-			value: Parameters<typeof _errors.set>[0],
-			opts?: { event: 'input' | 'blur' | 'submit'; immediate: boolean }
-		) {
-			return _errors.set(
-				updateErrors(
-					value,
-					Data.errors,
-					Tainted_lastChanges(),
-					options.validationMethod,
-					opts?.event ?? 'input',
-					opts?.immediate ?? true
-				)
-			);
+		set(value: Parameters<typeof _errors.set>[0]) {
+			return _errors.set(updateErrors(value, Data.errors));
 		},
-		update(
-			updater: Parameters<typeof _errors.update>[0],
-			opts?: { event: 'input' | 'blur' | 'submit'; immediate: boolean }
-		) {
+		update(updater: Parameters<typeof _errors.update>[0]) {
 			return _errors.update((value) => {
-				const output = updater(value);
-				return updateErrors(
-					output,
-					Data.errors,
-					Tainted_lastChanges(),
-					options.validationMethod,
-					opts?.event ?? 'input',
-					opts?.immediate ?? true
-				);
+				return updateErrors(updater(value), Data.errors);
 			});
 		},
 		/**
@@ -481,7 +515,9 @@ export function superForm<
 		paths: []
 	};
 
-	function NextChange_prepareEvent(event: ChangeEvent) {
+	function NextChange_addValidationEvent(event: ChangeEvent) {
+		// TODO: What to do with more than one path (programmically updated)
+
 		NextChange.paths = event.paths;
 		NextChange.type = event.type;
 		NextChange.immediate = event.immediate;
@@ -520,56 +556,23 @@ export function superForm<
 		return Tainted.state;
 	}
 
-	function Tainted_isTainted(obj: unknown): boolean {
+	function Tainted_isTainted(path?: FormPath<T>): boolean {
+		if (!Data.tainted) return false;
+		if (!path) return !!Data.tainted;
+		const field = pathExists(Data.tainted, splitPath(path));
+		return !!field?.value;
+	}
+
+	function Tainted_currentlyTainted(obj: unknown): boolean {
 		if (!obj) return false;
 
 		if (typeof obj === 'object') {
 			for (const obj2 of Object.values(obj)) {
-				if (Tainted_isTainted(obj2)) return true;
+				if (Tainted_currentlyTainted(obj2)) return true;
 			}
 		}
 		return obj === true;
 	}
-
-	/*
-	async function Tainted__validate(path: (string | number | symbol)[], taint: TaintOption) {
-		let shouldValidate = options.validationMethod === 'oninput';
-
-		if (!shouldValidate) {
-			const errorContent = Data.errors;
-
-			const errorNode = errorContent
-				? pathExists(errorContent, path, {
-						modifier: (pathData) => {
-							// Check if we have found a string in an error array.
-							if (isInvalidPath(path, pathData)) {
-								throw new SuperFormError(
-									'Errors can only be added to form fields, not to arrays or objects in the schema. Path: ' +
-										pathData.path.slice(0, -1)
-								);
-							}
-
-							return pathData.value;
-						}
-					})
-				: undefined;
-
-			// Need a special check here, since if the error has never existed,
-			// there won't be a key for the error. But if it existed and was cleared,
-			// the key exists with the value undefined.
-			const hasError = errorNode && errorNode.key in errorNode.parent;
-
-			shouldValidate = !!hasError;
-		}
-
-		if (shouldValidate) {
-			await validateField(path, options, Form, Errors, Tainted.state, { taint });
-			return true;
-		} else {
-			return false;
-		}
-	}
-	*/
 
 	function Tainted_update(newData: T, taintOptions: TaintOption) {
 		// Ignore is set when returning errors from the server
@@ -612,8 +615,7 @@ export function superForm<
 			}
 		}
 
-		// TODO: What to do with more than one path (programmically updated)
-		NextChange_prepareEvent({ paths });
+		NextChange_addValidationEvent({ paths });
 	}
 
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
@@ -713,7 +715,7 @@ export function superForm<
 			if (options.taintedMessage && !get(Submitting)) {
 				const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
 				if (
-					Tainted_isTainted(Data.tainted) &&
+					Tainted_currentlyTainted(Data.tainted) &&
 					!window.confirm(options.taintedMessage === true ? defaultMessage : options.taintedMessage)
 				) {
 					nav.cancel();
@@ -838,12 +840,7 @@ export function superForm<
 			);
 		},
 
-		isTainted(path?) {
-			if (!Data.tainted) return false;
-			if (!path) return !!Data.tainted;
-			const field = pathExists(Data.tainted, splitPath(path));
-			return Tainted_isTainted(field?.value);
-		},
+		isTainted: Tainted_isTainted,
 
 		// @DCI-context
 		enhance(FormEl: HTMLFormElement, events?: SuperFormEvents<T, M>) {

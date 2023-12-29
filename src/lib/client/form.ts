@@ -172,7 +172,7 @@ export function Form<T extends Record<string, unknown>, M>(
 
 		const completed = (cancelled: boolean, clearIfNotNavigating = false) => {
 			Timers_clear();
-			if (!cancelled) setTimeout(Form_scrollToFirstError);
+			if (!cancelled) setTimeout(Form_scrollToFirstError, 1);
 
 			// clearifNotNavigating is set when redirecting, to see if the navigation events
 			// have been triggered. In rare cases they aren't, in which case we need to clear
@@ -210,7 +210,7 @@ export function Form<T extends Record<string, unknown>, M>(
 			completed,
 
 			scrollToFirstError: () => {
-				setTimeout(Form_scrollToFirstError);
+				setTimeout(Form_scrollToFirstError, 1);
 			},
 
 			isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed

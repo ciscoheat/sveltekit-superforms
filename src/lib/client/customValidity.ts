@@ -1,24 +1,14 @@
 import type { SuperValidated } from '$lib/index.js';
 import { splitPath } from '$lib/stringPath.js';
 import { traversePath } from '$lib/traversal.js';
-import type { FormOptions } from './index.js';
 
 const noCustomValidityDataAttribute = 'noCustomValidity';
 
-export async function updateCustomValidity(
-	validityEl: HTMLElement,
-	event: 'blur' | 'input',
-	errors: string[] | undefined,
-	validationMethod: FormOptions<Record<string, unknown>, unknown>['validationMethod']
-) {
-	if (validationMethod == 'submit-only') return;
-
+export async function updateCustomValidity(validityEl: HTMLElement, errors: string[] | undefined) {
 	// Always reset validity, in case it has been validated on the server.
 	if ('setCustomValidity' in validityEl) {
 		(validityEl as HTMLInputElement).setCustomValidity('');
 	}
-
-	if (event == 'input' && validationMethod == 'onblur') return;
 
 	// If event is input but element shouldn't use custom validity,
 	// return immediately since validateField don't have to be called

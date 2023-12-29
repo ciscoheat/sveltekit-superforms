@@ -53,6 +53,7 @@ type ChangeEvent = {
 	paths: (string | number | symbol)[][];
 	immediate?: boolean;
 	type?: 'input' | 'blur' | 'submit';
+	formEl?: HTMLFormElement;
 };
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
@@ -221,6 +222,7 @@ export function superForm<
 
 		onDestroy(() => {
 			Unsubscriptions_unsubscribe();
+			NextChange_clear();
 
 			for (const events of Object.values(formEvents)) {
 				events.length = 0;
@@ -345,8 +347,8 @@ export function superForm<
 		);
 	}
 
-	async function Form_clientValidation(event: ChangeEvent) {
-		if (!options.validators) return;
+	async function Form_clientValidation(event: ChangeEvent | null) {
+		if (!event || !options.validators) return;
 
 		if (options.validationMethod == 'submit-only' && event.type != 'submit') return;
 		if (options.validationMethod == 'onblur' && event.type == 'input') return;
@@ -371,12 +373,38 @@ export function superForm<
 		const previous = Data.errors;
 		const output: Record<string, unknown> = {};
 
+		const validity = new Map<string, { el: HTMLElement; message: string }>();
+
+		if (options.customValidity && event.formEl) {
+			for (const path of event.paths) {
+				const name = CSS.escape(mergePath(path));
+				const el = event.formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+				if (el) {
+					const message = 'validationMessage' in el ? String(el.validationMessage) : '';
+					validity.set(path.join(), { el, message });
+					updateCustomValidity(el, undefined);
+				}
+			}
+		}
+
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
+
+			const joinedPath = error.path.join();
+			const isEventError = error.value && paths.map((path) => path.join()).includes(joinedPath);
 
 			function addError() {
 				console.log('Adding error', `[${error.path.join('.')}]`, error.value);
 				setPaths(output, [error.path], error.value);
+
+				if (options.customValidity && isEventError && validity.has(joinedPath)) {
+					const { el, message } = validity.get(joinedPath)!;
+
+					if (message != error.value) {
+						updateCustomValidity(el, error.value);
+						validity.clear();
+					}
+				}
 			}
 
 			const previousError = pathExists(previous, error.path);
@@ -400,11 +428,7 @@ export function superForm<
 				return;
 			}
 
-			if (
-				type == 'blur' &&
-				error.value &&
-				paths.map((path) => path.join()).includes(error.path.join())
-			) {
+			if (type == 'blur' && isEventError) {
 				return addError();
 			}
 		});
@@ -514,31 +538,36 @@ export function superForm<
 
 	//#region NextChange /////
 
-	const NextChange: ChangeEvent = {
-		paths: []
-	};
+	let NextChange: ChangeEvent | null = null;
 
 	function NextChange_addValidationEvent(event: ChangeEvent) {
 		// TODO: What to do with more than one path (programmically updated)
 
-		NextChange.paths = event.paths;
-		NextChange.type = event.type;
-		NextChange.immediate = event.immediate;
-
+		NextChange = event;
 		// Wait for on:input to provide additional information
 		setTimeout(() => Form_clientValidation(NextChange), 0);
 	}
 
 	function NextChange_additionalEventInformation(
 		event: NonNullable<ChangeEvent['type']>,
-		immediate: boolean
+		immediate: boolean,
+		formEl: HTMLFormElement
 	) {
+		if (NextChange === null) {
+			throw new SuperFormError('NextChange is null');
+		}
+
 		NextChange.type = event;
 		NextChange.immediate = immediate;
+		NextChange.formEl = formEl;
 	}
 
 	function NextChange_paths() {
-		return NextChange.paths;
+		return NextChange?.paths ?? [];
+	}
+
+	function NextChange_clear() {
+		NextChange = null;
 	}
 
 	//#endregion
@@ -871,44 +900,14 @@ export function superForm<
 
 			let lastInputChange: ChangeEvent['paths'];
 
-			// Called upon an event from a HTML element that affects the form.
-			async function htmlInputChange(
-				change: (string | number | symbol)[],
-				errors: string[] | undefined,
-				event: 'blur' | 'input'
-			) {
-				if (options.customValidity) {
-					const name = CSS.escape(mergePath(change));
-					const el = FormEl.querySelector<HTMLElement>(`[name="${name}"]`);
-					if (el) updateCustomValidity(el, event, errors, options.validationMethod);
-				}
-			}
-
+			// TODO: Debounce?
 			async function onInput(e: Event) {
 				const immediateUpdate = isImmediateInput(e.target);
 				// Need to wait for immediate update (not sure why)
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
 				lastInputChange = NextChange_paths();
-				NextChange_additionalEventInformation('input', immediateUpdate);
-
-				const target = e.target instanceof HTMLElement ? e.target : null;
-				//setTimeout(() => htmlInputChange(change, 'input', immediateUpdate ? target : null), 0);
-
-				/*
-				for (const change of changes) {
-					const hadErrors =
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						immediateUpdate || traversePath(Data.errors, change as any);
-					if (
-						immediateUpdate ||
-						(typeof hadErrors == 'object' && hadErrors.key in hadErrors.parent)
-					) {
-						// Problem - store hasn't updated here with new value yet.
-						setTimeout(() => htmlInputChange(change, 'input', immediateUpdate ? target : null), 0);
-					}
-				}
-				*/
+				NextChange_additionalEventInformation('input', immediateUpdate, FormEl);
 			}
 
 			async function onBlur(e: Event) {
@@ -925,20 +924,12 @@ export function superForm<
 				// Need to wait for immediate update (not sure why)
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
-				Form_clientValidation({ paths: lastInputChange, immediate: immediateUpdate, type: 'blur' });
-
-				/*
-
-				const changes = Tainted_lastChanges();
-				if (!changes.length) return;
-
-				const target = e.target instanceof HTMLElement ? e.target : null;
-
-				for (const change of changes) {
-					htmlInputChange(change, 'blur', immediateUpdate ? null : target);
-				}
-				await Form_clientValidation('blur');
-				*/
+				Form_clientValidation({
+					paths: lastInputChange,
+					immediate: immediateUpdate,
+					type: 'blur',
+					formEl: FormEl
+				});
 			}
 
 			FormEl.addEventListener('focusout', onBlur);
@@ -997,8 +988,10 @@ export function superForm<
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
 
+					let validation: SuperValidated<T> | undefined = undefined;
+
 					if (!noValidate) {
-						const validation = await Form_validate();
+						validation = await Form_validate();
 
 						if (!validation.valid) {
 							cancel(false);
@@ -1045,6 +1038,7 @@ export function superForm<
 
 						if (options.SPA) {
 							cancel(false);
+							if (!validation) validation = await Form_validate();
 
 							const validationResult = { ...validation, posted: true };
 
@@ -1060,6 +1054,8 @@ export function superForm<
 
 							setTimeout(() => validationResponse({ result }), 0);
 						} else if (options.dataType === 'json') {
+							if (!validation) validation = await Form_validate();
+
 							const postData = validation.data;
 							const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
 

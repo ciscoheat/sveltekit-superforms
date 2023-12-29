@@ -25,6 +25,7 @@ TODO:
 - If no data, default values aren't parsed with the default data (no side-effects for default values)
 - Numeric enums cannot be parsed with their string values anymore
 - Form id cannot be `undefined` anymore, must be `string`
+- Superform validator functions, the data parameter can now be `undefined` as well.
 
 ### Added
 

@@ -10,11 +10,7 @@ export async function updateCustomValidity(validityEl: HTMLElement, errors: stri
 		(validityEl as HTMLInputElement).setCustomValidity('');
 	}
 
-	// If event is input but element shouldn't use custom validity,
-	// return immediately since validateField don't have to be called
-	// in this case, validation is happening elsewhere.
 	if (noCustomValidityDataAttribute in validityEl.dataset) return;
-
 	setCustomValidity(validityEl as HTMLInputElement, errors);
 }
 

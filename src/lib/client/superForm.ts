@@ -22,16 +22,10 @@ import { clone } from '$lib/utils.js';
 import { browser } from '$app/environment';
 import { onDestroy, tick } from 'svelte';
 import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '$lib/traversal.js';
-import {
-	splitPath,
-	type FormPathLeaves,
-	type FormPathType,
-	mergePath,
-	type FormPath
-} from '$lib/stringPath.js';
+import { splitPath, type FormPathType, mergePath, type FormPath } from '$lib/stringPath.js';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { flattenErrors, updateErrors } from '$lib/errors.js';
-import { clientValidation, validateField } from './clientValidation.js';
+import { clientValidation } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
@@ -806,28 +800,37 @@ export function superForm<
 		);
 	}
 
-	async function validate<Path extends FormPathLeaves<T>>(
+	async function validate<Path extends FormPath<T>>(
 		path?: Path,
-		opts?: ValidateOptions<FormPathType<T, Path>>
+		opts: ValidateOptions<FormPathType<T, Path>> = {}
 	) {
-		if (path === undefined) {
-			return clientValidation<T, M>(
-				options.validators,
-				Data.form,
-				Data.formId,
-				Data.constraints,
-				false
-			);
+		if (path === undefined) return Form_validate();
+
+		if (opts.update === undefined) opts.update = true;
+		if (opts.taint === undefined) opts.taint = false;
+		if (typeof opts.errors == 'string') opts.errors = [opts.errors];
+
+		const data = Data.form;
+		const splittedPath = splitPath(path);
+
+		if ('value' in opts) {
+			if (opts.update === true || opts.update === 'value') {
+				setPaths(data, [splittedPath], opts.value);
+			}
 		}
-		const result = await validateField<T, M>(
-			splitPath(path) as string[],
-			options,
-			Form,
-			Errors,
-			Tainted_currentState(),
-			opts
+
+		const result = await clientValidation(
+			options.validators,
+			data,
+			Data.formId,
+			Data.constraints,
+			false
 		);
-		return result.errors;
+
+		const error = pathExists(result.errors, splittedPath);
+		console.log('🚀 ~ file: superForm.ts:830 ~ error:', error);
+
+		return error?.value;
 	}
 
 	return {

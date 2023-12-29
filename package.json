@@ -29,7 +29,7 @@
 	},
 	"devDependencies": {
 		"@decs/typeschema": "^0.12.1",
-		"@sinclair/typebox": "^0.32.3",
+		"@sinclair/typebox": "^0.32.4",
 		"@sveltejs/adapter-auto": "^3.0.1",
 		"@sveltejs/kit": "^2.0.6",
 		"@sveltejs/package": "^2.2.5",
@@ -55,7 +55,7 @@
 		"prettier": "^3.1.1",
 		"prettier-plugin-svelte": "^3.1.2",
 		"publint": "^0.1.16",
-		"sass": "^1.69.5",
+		"sass": "^1.69.6",
 		"svelte": "^4.2.8",
 		"svelte-check": "^3.6.2",
 		"sveltekit-flash-message": "^2.3.0",

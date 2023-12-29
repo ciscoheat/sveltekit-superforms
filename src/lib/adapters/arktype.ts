@@ -1,5 +1,11 @@
 import type { Type } from 'arktype';
-import { toJsonSchema, type SchemaOptions, type ValidationAdapter, adapter } from './index.js';
+import {
+	toJsonSchema,
+	type SchemaOptions,
+	type ValidationAdapter,
+	adapter,
+	process
+} from './index.js';
 import type { Inferred } from '$lib/index.js';
 
 function _arktype<T extends Type>(
@@ -8,7 +14,7 @@ function _arktype<T extends Type>(
 ): ValidationAdapter<Inferred<T>> {
 	return {
 		superFormValidationLibrary: 'arktype',
-		validator: schema,
+		process: process(schema),
 		jsonSchema: toJsonSchema(options.defaults, options.schemaOptions),
 		defaults: options.defaults
 	};

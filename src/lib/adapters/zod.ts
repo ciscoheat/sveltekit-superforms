@@ -1,6 +1,6 @@
 import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import { adapter, type ValidationAdapter } from './index.js';
+import { adapter, process, type ValidationAdapter } from './index.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
 import type { z } from 'zod';
 
@@ -13,14 +13,6 @@ export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
 	params[1] = typeof params[1] == 'object' ? { ...defaultOptions, ...params[1] } : defaultOptions;
 	return zodToJson(...params) as JSONSchema7;
 };
-
-/*
-type UnwrapZodEffects<T> = T extends ZodEffects<infer U> ? UnwrapZodEffects<U> : T;
-
-type DeepUnwrapZodEffects<T> = {
-	[K in keyof T]: T[K] extends AnyZodObject ? UnwrapZodEffects<T[K]> : T[K];
-};
-*/
 
 type Arr<N extends number, T extends unknown[] = []> = T['length'] extends N
 	? T
@@ -38,7 +30,7 @@ type ZodValidation = RecursiveZodEffects<AnyZodObject, 10>;
 function _zod<T extends ZodValidation>(schema: T): ValidationAdapter<z.infer<T>> {
 	return {
 		superFormValidationLibrary: 'zod',
-		validator: schema,
+		process: process(schema),
 		jsonSchema: zodToJsonSchema(schema)
 	};
 }

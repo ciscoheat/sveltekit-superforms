@@ -10,7 +10,6 @@ import type { FormOptions, SuperForm, TaintOption } from './index.js';
 import { mapErrors } from '../errors.js';
 import { clone } from '../utils.js';
 import { get } from 'svelte/store';
-import { validate } from '@decs/typeschema';
 import { mapAdapter, type ValidationResult } from '$lib/adapters/index.js';
 
 export type ValidateOptions<V> = Partial<{
@@ -45,14 +44,7 @@ async function _clientValidation<T extends Record<string, unknown>, M = unknown>
 
 	if (validator) {
 		const adapter = mapAdapter(validator);
-		// Taken from superValidate validator/validate
-		status =
-			'process' in adapter
-				? await adapter.process(data)
-				: // TODO: Factorize away typeschema?
-					((await validate(adapter.validator, data)) as ValidationResult<T>);
-
-		if (adapter.postProcess) status = await adapter.postProcess(status);
+		status = await adapter.process(data);
 
 		if (!status.success) {
 			errors = mapErrors(status.issues, adapter.shape) as ValidationErrors<T>;

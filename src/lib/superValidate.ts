@@ -1,4 +1,3 @@
-import { validate } from '@decs/typeschema';
 import { traversePath } from './traversal.js';
 import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
@@ -82,15 +81,10 @@ export async function superValidate<
 	let status: ValidationResult<T>;
 
 	if (!!parsed.data || addErrors) {
-		status =
-			'process' in validator
-				? await validator.process(parsedData)
-				: ((await validate(validator.validator, parsedData)) as ValidationResult<T>);
+		status = await validator.process(parsedData);
 	} else {
 		status = { success: false, issues: [] };
 	}
-
-	if (validator.postProcess) status = await validator.postProcess(status);
 
 	const valid = status.success;
 	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validator.shape);

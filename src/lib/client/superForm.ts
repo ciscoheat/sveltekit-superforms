@@ -118,7 +118,9 @@ export function superForm<
 	{
 		// Option guards
 
-		// TODO: Global legacy mode? .env setting?
+		// TODO: Global legacy mode? .env setting? For now, reset is always false
+		if (options.resetForm === undefined) options.resetForm = false;
+
 		if (options.legacy) {
 			if (options.resetForm === undefined) options.resetForm = false;
 			if (options.taintedMessage === undefined) options.taintedMessage = true;

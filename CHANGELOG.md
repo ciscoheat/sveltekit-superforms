@@ -22,10 +22,10 @@ TODO:
 - Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`. If type parameters are used, it must now be wrapped with `z.infer`.
 - Fields with default values don't have `required` in their constraints anymore.
 - Unions must have an explicit default value in the schema.
-- If no data, default values aren't parsed with the default data (no side-effects for default values)
+- If no data, the default values aren't parsed with the schema (i.e. no side-effects for default values)
 - Numeric enums cannot be parsed with their string values anymore
-- Form id cannot be `undefined` anymore, must be `string`
-- Superform validator functions, the data parameter can now be `undefined` as well.
+- Form id cannot be `undefined` anymore, must be `string`. (Set automatically by default)
+- Superform validator functions requires the `superform` adapter, and the input parameter can now be `undefined`.
 
 ### Added
 

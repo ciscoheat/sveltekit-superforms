@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { formFieldProxy, superForm, type SuperForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import type { schema } from './utils';
+	import type { schema } from './utils.js';
 
 	export let data;
 

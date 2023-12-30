@@ -3,12 +3,13 @@ import { message, superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
 import type { Actions, PageServerLoad } from './$types.js';
-import { schema, type Message } from './utils';
+import { schema, type Message } from './utils.js';
+import { z } from 'zod';
 
 ///// Load function /////
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate<typeof schema, Message>(schema);
+	const form = await superValidate<z.infer<typeof schema>, Message>(zod(schema));
 	return { form };
 };
 
@@ -16,7 +17,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate<typeof schema, Message>(request, schema);
+		const form = await superValidate<z.infer<typeof schema>, Message>(request, zod(schema));
 
 		console.log('POST', form);
 

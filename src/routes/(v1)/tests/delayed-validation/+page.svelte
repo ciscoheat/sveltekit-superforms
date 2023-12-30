@@ -6,6 +6,7 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { debounce } from 'throttle-debounce';
 	import spinner from './tadpole.svg?raw';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -29,7 +30,7 @@
 
 	const { form, errors, message, enhance, tainted } = superForm(data.form, {
 		dataType: 'json',
-		validators: basicSchema
+		validators: zod(basicSchema)
 	});
 </script>
 

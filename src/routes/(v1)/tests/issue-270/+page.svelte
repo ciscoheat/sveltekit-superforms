@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
 	import { z } from 'zod';
 
@@ -8,14 +9,16 @@
 	const { form, errors, message, enhance, allErrors } = superForm(data.form, {
 		taintedMessage: null,
 		validationMethod: 'submit-only',
-		validators: z.object({
-			myString: z.string().min(10),
-			myArray: z
-				.number()
-				.array()
-				.default([-1])
-				.refine((arg) => arg.every((n) => n >= 0), 'All numbers must >= 0')
-		})
+		validators: zod(
+			z.object({
+				myString: z.string().min(10),
+				myArray: z
+					.number()
+					.array()
+					.default([-1])
+					.refine((arg) => arg.every((n) => n >= 0), 'All numbers must >= 0')
+			})
+		)
 	});
 </script>
 

@@ -6,6 +6,7 @@
 	import { schema } from './schema.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import type { ZodValidation } from '$lib/index.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -34,7 +35,7 @@
 		onUpdate(event) {
 			if ($page.url.searchParams.has('cancel')) event.cancel();
 		},
-		validators: schema
+		validators: zod(schema)
 	});
 </script>
 

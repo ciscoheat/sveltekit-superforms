@@ -9,7 +9,7 @@ import { exampleSchema } from './schema.js';
 ///// Load function /////
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(exampleSchema);
+	const form = await superValidate(zod(exampleSchema));
 	return { form };
 };
 
@@ -17,7 +17,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, exampleSchema);
+		const form = await superValidate(request, zod(exampleSchema));
 
 		console.log('POST', form);
 

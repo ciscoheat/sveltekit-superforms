@@ -4,12 +4,13 @@
 	import type { PageData } from './$types.js';
 	import { schemaDto } from './schema.js';
 	import Input from './Input.svelte';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 	const { form, fields, enhance, delayed } = superForm(data.form, {
 		dataType: 'json',
 		multipleSubmits: 'prevent'
-		//validators: schemaDto
+		//validators: zod(schemaDto)
 	});
 </script>
 

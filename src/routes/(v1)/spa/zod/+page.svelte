@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { superForm, superValidateSync } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
@@ -31,7 +32,7 @@
 		onUpdated({ form }) {
 			console.log('onUpdated, valid:', form.valid);
 		},
-		validators: schema
+		validators: zod(schema)
 	});
 
 	// <SuperDebug data={{ $form, $errors }} />

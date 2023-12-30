@@ -3,11 +3,12 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 	import type { PageData } from './$types.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const { form, errors, tainted, enhance } = superForm(data.form, {
-		validators: schema
+		validators: zod(schema)
 	});
 </script>
 

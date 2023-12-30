@@ -2,11 +2,12 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import { schema1 } from './schema.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const { form, enhance } = superForm(data.form1, {
-		validators: schema1
+		validators: zod(schema1)
 	});
 </script>
 

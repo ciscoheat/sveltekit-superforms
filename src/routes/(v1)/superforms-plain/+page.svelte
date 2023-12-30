@@ -3,12 +3,13 @@
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { onMount } from 'svelte';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
 		//dataType: 'json',
-		//validators: schema
+		//validators: zod(schema)
 	});
 
 	onMount(() => {

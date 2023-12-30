@@ -1,6 +1,7 @@
 import type { Infer, Schema } from '@decs/typeschema';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import SuperDebug from './client/SuperDebug.svelte';
+import type { AnyZodObject, ZodEffects, z } from 'zod';
 
 export default SuperDebug;
 
@@ -11,6 +12,13 @@ export type MaybePromise<T> = T | Promise<T>;
 export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
 export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
 export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';
+
+export {
+	type FormPath,
+	type FormPathLeaves,
+	type FormPathArrays,
+	type FormPathType
+} from './stringPath.js';
 
 export class SuperFormError extends Error {
 	constructor(message?: string) {
@@ -106,3 +114,15 @@ export type SuperStruct<T extends Record<string, unknown>, Data> = Partial<{
 				: Data
 		: never;
 }>;
+
+/**
+ * @deprecated Use z.infer\<T\> instead, where T is the schema.
+ */
+export type ZodValidation<T extends AnyZodObject> = z.infer<
+	| T
+	| ZodEffects<T>
+	| ZodEffects<ZodEffects<T>>
+	| ZodEffects<ZodEffects<ZodEffects<T>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>
+>;

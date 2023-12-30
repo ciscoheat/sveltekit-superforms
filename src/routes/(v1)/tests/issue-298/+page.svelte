@@ -33,7 +33,7 @@
 	const superForm = _superForm(superValidateSync(schema), {
 		SPA: true,
 		dataType: 'json',
-		validators: schema,
+		validators: zod(schema),
 		taintedMessage: null
 	});
 

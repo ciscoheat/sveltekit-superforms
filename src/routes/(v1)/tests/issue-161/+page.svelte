@@ -4,12 +4,13 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { page } from '$app/stores';
 	import { schema } from './schema.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
 		dataType: 'json',
-		validators: schema
+		validators: zod(schema)
 	});
 
 	function addPerson() {

@@ -4,6 +4,7 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import AutoComplete from './AutoComplete.svelte';
 	import { schema } from './schema.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -11,7 +12,7 @@
 
 	const pageForm = superForm(data.form, {
 		dataType: 'json',
-		validators: schema
+		validators: zod(schema)
 	});
 	const { form, errors, message, enhance, tainted } = pageForm;
 

@@ -9,9 +9,9 @@ export const load = async () => {
 				age: '42',
 				value: '50000'
 			},
-			schema1
+			zod(schema1)
 		),
-		superValidate(schema2)
+		superValidate(zod(schema2))
 	]);
 
 	return { form1, form2 };

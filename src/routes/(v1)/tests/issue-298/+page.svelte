@@ -2,6 +2,7 @@
 	import { z } from 'zod';
 	import { superForm as _superForm } from '$lib/client/index.js';
 	import { superValidateSync } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/index.js';
 
 	function ruleSet<T extends readonly [string, ...string[]]>(options: T) {
 		let prev: string | undefined = undefined;

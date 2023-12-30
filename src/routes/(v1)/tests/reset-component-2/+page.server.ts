@@ -1,4 +1,6 @@
 import { superValidate, message } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { registerSchema, profileSchema } from './schema';
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types.js';

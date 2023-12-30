@@ -1,5 +1,7 @@
 <script>
 	import { superForm, superValidateSync } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/index.js';
+
 	import { z } from 'zod';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { page } from '$app/stores';

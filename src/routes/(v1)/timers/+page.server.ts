@@ -1,4 +1,6 @@
 import { message, superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { schema } from './schema';
 import { fail } from '@sveltejs/kit';
 

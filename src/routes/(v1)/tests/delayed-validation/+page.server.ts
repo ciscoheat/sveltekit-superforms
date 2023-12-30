@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types.js';
 import { basicSchema } from './schema';
 import { message, superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
 
 export const load = async () => {
 	const form = await superValidate(basicSchema);

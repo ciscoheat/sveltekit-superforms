@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { RequestHandler } from './$types.js';
 import { superValidate } from '$lib/superValidate';
+import { zod } from '$lib/adapters/index.js';
 
 const usernameCheck = z
 	.object({

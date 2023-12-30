@@ -1,5 +1,7 @@
 import type { Actions, PageServerLoad } from './$types.js';
 import { message, superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { UserType, NumberType } from './UserType';

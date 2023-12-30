@@ -7,6 +7,8 @@
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import { onMount } from 'svelte';
 	import type { SuperValidated } from '$lib/index.js';
+	import { zod } from '$lib/adapters/index.js';
+
 	import type { z } from 'zod';
 	import { zod } from '$lib/adapters/zod.js';
 	import { superform } from '$lib/adapters/superform.js';

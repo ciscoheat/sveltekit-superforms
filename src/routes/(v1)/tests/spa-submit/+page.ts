@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { superValidate } from '$lib/client/index.js';
+import { zod } from '$lib/adapters/index.js';
 
 const Schema = z.object({
 	title: z.string().min(3)

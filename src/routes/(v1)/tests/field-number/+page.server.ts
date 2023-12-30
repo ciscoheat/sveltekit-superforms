@@ -4,6 +4,8 @@
 
 import type { PageServerLoad } from './$types.js';
 import { superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { schemaDto } from './schema';
 
 export const load = (async () => {

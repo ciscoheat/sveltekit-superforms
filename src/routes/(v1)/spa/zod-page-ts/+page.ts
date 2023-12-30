@@ -1,5 +1,6 @@
 import { schema } from './schema';
 import { superValidate } from '$lib/client/index.js';
+import { zod } from '$lib/adapters/index.js';
 
 const defaultData = {
 	tags: [

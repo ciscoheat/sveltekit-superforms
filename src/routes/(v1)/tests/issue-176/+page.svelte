@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { setError, setMessage, superForm, superValidateSync } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/index.js';
+
 	import { page } from '$app/stores';
 	import { z } from 'zod';
 

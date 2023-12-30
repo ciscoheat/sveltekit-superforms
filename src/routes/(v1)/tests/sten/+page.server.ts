@@ -1,5 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { z } from 'zod';
 
 const postSchema = z.object({

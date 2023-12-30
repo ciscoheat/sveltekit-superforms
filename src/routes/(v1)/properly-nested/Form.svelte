@@ -6,8 +6,9 @@
 	import TextField from './TextField.svelte';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { fieldProxy, formFieldProxy } from '$lib/client/index.js';
+	import type { z } from 'zod';
 
-	export let data: SuperValidated<Schema>;
+	export let data: SuperValidated<z.infer<Schema>>;
 
 	const form = superForm(data, {
 		dataType: 'json',

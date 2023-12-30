@@ -4,12 +4,13 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import type { schema } from './schemas.js';
 	import { page } from '$app/stores';
+	import type { z } from 'zod';
 
 	export let data: PageData;
 
 	let resets = 0;
 
-	const superF: SuperForm<typeof schema> = superForm(data.form, {
+	const superF: SuperForm<z.infer<typeof schema>> = superForm(data.form, {
 		resetForm: $page.url.searchParams.has('function')
 			? () => {
 					console.log('Reset...');

@@ -21,7 +21,7 @@
 		data.form,
 		{
 			taintedMessage: null,
-			onUpdated(event) {
+			onUpdated() {
 				console.log($page.status);
 			}
 		}

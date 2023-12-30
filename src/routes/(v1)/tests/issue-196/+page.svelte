@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { superForm, superValidateSync } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/index.js';
+
 	import { z } from 'zod';
 
 	const childSchema = z.object({

@@ -1,6 +1,8 @@
 import type { Actions, PageServerLoad } from './$types.js';
 import { schema } from './schema';
 import { superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { fail } from '@sveltejs/kit';
 
 const defaultData = {

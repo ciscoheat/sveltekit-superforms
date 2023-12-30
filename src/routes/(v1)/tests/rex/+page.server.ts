@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
 import { basicSchema, refined } from './schema';
 import { message, superValidate } from '$lib/server/index.js';
+import { zod } from '$lib/adapters/index.js';
 
 export const load = (async ({ url }) => {
 	// Server API:

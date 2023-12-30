@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { superForm, superValidateSync, arrayProxy } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/index.js';
+
 	import * as zod from 'zod';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 

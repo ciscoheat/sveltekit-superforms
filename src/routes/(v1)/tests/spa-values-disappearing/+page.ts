@@ -1,4 +1,6 @@
 import { superValidate } from '$lib/client/index.js';
+import { zod } from '$lib/adapters/index.js';
+
 import { z } from 'zod';
 
 export const _schema = z.object({

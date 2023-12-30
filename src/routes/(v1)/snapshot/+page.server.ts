@@ -1,8 +1,10 @@
 import { message, superValidate } from '$lib/server/index.js';
-import { error, fail } from '@sveltejs/kit';
+import { zod } from '$lib/adapters/index.js';
+
+import { error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
 
-import { users, userSchema } from '../users';
+import { users, userSchema } from '../users.js';
 
 const schema = userSchema.extend({
 	id: userSchema.shape.id.optional()

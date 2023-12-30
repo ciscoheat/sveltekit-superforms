@@ -13,8 +13,7 @@ import type {
 	SuperFormEvents,
 	SuperFormSnapshot,
 	TaintOption,
-	ValidateOptions,
-	validateForm
+	ValidateOptions
 } from './index.js';
 import { derived, get, readonly, writable, type Readable } from 'svelte/store';
 import { page } from '$app/stores';
@@ -22,7 +21,13 @@ import { clone } from '$lib/utils.js';
 import { browser } from '$app/environment';
 import { onDestroy, tick } from 'svelte';
 import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '$lib/traversal.js';
-import { splitPath, type FormPathType, mergePath, type FormPath } from '$lib/stringPath.js';
+import {
+	splitPath,
+	type FormPathType,
+	mergePath,
+	type FormPath,
+	type FormPathLeaves
+} from '$lib/stringPath.js';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
 import { flattenErrors, updateErrors } from '$lib/errors.js';
 import { clientValidation } from './clientValidation.js';
@@ -313,7 +318,9 @@ export function superForm<
 		subscribe: _formData.subscribe,
 		set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
 			// Need to clone the value, so it won't refer to $page for example.
-			return _formData.set(Form_update(clone(value), options.taint));
+			const newData = clone(value);
+			Tainted_update(newData, options.taint ?? true);
+			return _formData.set(newData);
 		},
 		update: (
 			updater: Parameters<typeof _formData.update>[0],
@@ -321,17 +328,12 @@ export function superForm<
 		) => {
 			return _formData.update((value) => {
 				// No cloning here, since it's an update
-				return Form_update(updater(value), options.taint);
+				const newData = updater(value);
+				Tainted_update(newData, options.taint ?? true);
+				return newData;
 			});
 		}
 	};
-
-	function Form_update(newData: T, taint?: TaintOption) {
-		Tainted_update(newData, taint ?? true);
-		//if (changes.length) Form_clientValidation('input', immediate, newData);
-		// No cloning here, since it's an update
-		return newData;
-	}
 
 	async function Form_validate() {
 		return await clientValidation(
@@ -390,7 +392,7 @@ export function superForm<
 			const isEventError = error.value && paths.map((path) => path.join()).includes(joinedPath);
 
 			function addError() {
-				console.log('Adding error', `[${error.path.join('.')}]`, error.value);
+				//console.log('Adding error', `[${error.path.join('.')}]`, error.value);
 				setPaths(output, [error.path], error.value);
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
@@ -800,7 +802,7 @@ export function superForm<
 		);
 	}
 
-	async function validate<Path extends FormPath<T>>(
+	async function validate<Path extends FormPathLeaves<T>>(
 		path?: Path,
 		opts: ValidateOptions<FormPathType<T, Path>> = {}
 	) {
@@ -810,13 +812,26 @@ export function superForm<
 		if (opts.taint === undefined) opts.taint = false;
 		if (typeof opts.errors == 'string') opts.errors = [opts.errors];
 
-		const data = Data.form;
+		let data: T;
 		const splittedPath = splitPath(path);
 
 		if ('value' in opts) {
 			if (opts.update === true || opts.update === 'value') {
+				// eslint-disable-next-line dci-lint/private-role-access
+				Form.update(
+					($form) => {
+						setPaths($form, [splittedPath], opts.value);
+						return $form;
+					},
+					{ taint: opts.taint }
+				);
+				data = Data.form;
+			} else {
+				data = clone(Data.form);
 				setPaths(data, [splittedPath], opts.value);
 			}
+		} else {
+			data = Data.form;
 		}
 
 		const result = await clientValidation(
@@ -828,7 +843,18 @@ export function superForm<
 		);
 
 		const error = pathExists(result.errors, splittedPath);
-		console.log('🚀 ~ file: superForm.ts:830 ~ error:', error);
+
+		// Replace with custom error, if it exist
+		if (error && error.value && opts.errors) {
+			error.value = opts.errors;
+		}
+
+		if (opts.update === true || opts.update == 'errors') {
+			Errors.update(($errors) => {
+				setPaths($errors, [splittedPath], error?.value);
+				return $errors;
+			});
+		}
 
 		return error?.value;
 	}
@@ -864,7 +890,7 @@ export function superForm<
 			return rebind(snapshot, snapshot.tainted ?? true);
 		},
 
-		validate: validate as typeof validateForm<T>,
+		validate: validate,
 
 		allErrors: AllErrors,
 		posted: Posted,

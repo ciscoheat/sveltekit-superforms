@@ -3,7 +3,7 @@ import type { SuperForm, TaintOptions } from '$lib/client/index.js';
 import { superForm, superValidate, type SuperValidated } from '$lib/index.js';
 import { get } from 'svelte/store';
 import merge from 'ts-deepmerge';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, test } from 'vitest';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -15,9 +15,6 @@ const schema = z.object({
 
 type Schema = z.infer<typeof schema>;
 
-let validated: SuperValidated<Schema>;
-let form: SuperForm<Schema>;
-
 function updateForm(data: Partial<Schema>, taint?: TaintOptions) {
 	form.form.update(
 		($form) => {
@@ -28,6 +25,14 @@ function updateForm(data: Partial<Schema>, taint?: TaintOptions) {
 		{ taint }
 	);
 }
+
+let validated: SuperValidated<Schema>;
+let form: SuperForm<Schema>;
+
+beforeEach(async () => {
+	validated = await superValidate(zod(schema));
+	form = superForm(validated, { validators: zod(schema) });
+});
 
 describe('Tainted', () => {
 	let tainted: SuperForm<Schema>['tainted'];
@@ -42,8 +47,6 @@ describe('Tainted', () => {
 	}
 
 	beforeEach(async () => {
-		validated = await superValidate(zod(schema));
-		form = superForm(validated);
 		tainted = form.tainted;
 	});
 
@@ -119,7 +122,111 @@ describe('Tainted', () => {
 	});
 });
 
-///// mockSvelte.ts /////
+describe('Validate', () => {
+	test('default options should update errors but not taint the form', async () => {
+		form.form.update(
+			($form) => {
+				$form.score = -1;
+				return $form;
+			},
+			{ taint: false }
+		);
+		expect(form.isTainted()).toBe(false);
+
+		expect(await form.validate('score')).toEqual(['Number must be greater than or equal to 0']);
+
+		expect(get(form.errors).score).toEqual(['Number must be greater than or equal to 0']);
+		expect(get(form.form).score).toBe(-1);
+		expect(form.isTainted()).toBe(false);
+	});
+
+	test('testing a value should update errors but not taint the form', async () => {
+		expect(form.isTainted()).toBe(false);
+
+		expect(await form.validate('score', { value: -10 })).toEqual([
+			'Number must be greater than or equal to 0'
+		]);
+
+		expect(get(form.errors).score).toEqual(['Number must be greater than or equal to 0']);
+		expect(get(form.form).score).toBe(-10);
+		expect(form.isTainted()).toBe(false);
+	});
+
+	test('using a custom error should update form errors', async () => {
+		expect(await form.validate('score', { errors: 'Score cannot be negative.' })).toBeUndefined();
+
+		form.form.update(
+			($form) => {
+				$form.score = -1;
+				return $form;
+			},
+			{ taint: false }
+		);
+
+		const scoreError = 'Score cannot be negative.';
+
+		expect(await form.validate('score', { errors: scoreError })).toEqual([scoreError]);
+		expect(get(form.errors).score).toEqual([scoreError]);
+	});
+
+	test('if setting a value, the field can be tainted', async () => {
+		expect(await form.validate('score', { value: 10, taint: true })).toBeUndefined();
+		expect(get(form.errors).score).toBeUndefined();
+		expect(get(form.form).score).toBe(10);
+		expect(form.isTainted('score')).toBe(true);
+	});
+
+	test('if setting a value, the field can be tainted', async () => {
+		expect(await form.validate('score', { value: 10, taint: true })).toBeUndefined();
+		expect(get(form.errors).score).toBeUndefined();
+		expect(get(form.form).score).toBe(10);
+		expect(form.isTainted('score')).toBe(true);
+	});
+
+	test('setting an invalid value, only updating the value, not the errors', async () => {
+		expect(await form.validate('score', { value: -10, update: 'value' })).toEqual([
+			'Number must be greater than or equal to 0'
+		]);
+		expect(get(form.errors).score).toBeUndefined();
+		expect(get(form.form).score).toBe(-10);
+		expect(form.isTainted('score')).toBe(false);
+	});
+
+	test('setting an invalid value, only updating the errors, not the value', async () => {
+		expect(await form.validate('score', { value: -10, update: 'errors' })).toEqual([
+			'Number must be greater than or equal to 0'
+		]);
+		expect(get(form.errors).score).toEqual(['Number must be greater than or equal to 0']);
+		expect(get(form.form).score).toBe(0);
+		expect(form.isTainted('score')).toBe(false);
+	});
+
+	test('should return the errors for a form field', async () => {
+		form.form.update(($form) => {
+			$form.score = -1;
+			return $form;
+		});
+
+		expect(await form.validate('name')).toBeUndefined();
+		expect(get(form.errors).score).toBeUndefined();
+		expect(await form.validate('score')).toEqual(['Number must be greater than or equal to 0']);
+		expect(get(form.errors).score).toEqual(['Number must be greater than or equal to 0']);
+
+		expect(
+			await form.validate('score', {
+				value:
+					"unfortunately passing a string won't cause a type error due to no partial type inference," +
+					"but it will produce an error so that's fine."
+			})
+		).toEqual(['Expected number, received string']);
+
+		expect(await form.validate('score', { value: 1 })).toBeUndefined();
+
+		expect((await form.validate()).data).toEqual(get(form.form));
+	});
+});
+
+///// mockSvelte.ts (must be copy/pasted here) ////////////////////////////////
 
 import { vi } from 'vitest';
 

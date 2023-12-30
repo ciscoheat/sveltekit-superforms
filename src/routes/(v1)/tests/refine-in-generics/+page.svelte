@@ -5,7 +5,7 @@
 
 	export let data: PageData;
 
-	const { form, errors, enhance } = superForm(data.form, {
+	const { form, enhance } = superForm(data.form, {
 		//dataType: 'json',
 	});
 </script>

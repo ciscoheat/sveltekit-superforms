@@ -20,13 +20,13 @@ const limiter = new RateLimiter({
 });
 
 export const load = async (event) => {
-	const form = await superValidate(event, contactSchema);
+	const form = await superValidate(event, zod(contactSchema));
 	return { form };
 };
 
 export const actions: Actions = {
 	contact: async (event) => {
-		const form = await superValidate(event, contactSchema);
+		const form = await superValidate(event, zod(contactSchema));
 
 		if (await limiter.isLimited(event)) {
 			setFlash(

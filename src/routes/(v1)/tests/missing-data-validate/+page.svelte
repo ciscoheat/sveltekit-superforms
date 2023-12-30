@@ -14,7 +14,7 @@
 		//dataType: 'json',
 		validators: superform({
 			age: (age) => (isNaN(age) || age < 30 ? 'At least 30 years, please!' : null),
-			name: (name) => (name.length < 2 ? 'At least two characters, please!' : null)
+			name: (name) => (!name || name.length < 2 ? 'At least two characters, please!' : null)
 		}),
 		taintedMessage: null
 	});

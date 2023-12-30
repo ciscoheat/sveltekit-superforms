@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 
 	export let data;
 
-	const { form, errors, message, constraints, enhance, tainted } = superForm(data.form, {
+	const { form, errors, message, enhance, tainted } = superForm(data.form, {
 		validators: zod(schema),
 		taintedMessage: null
 	});

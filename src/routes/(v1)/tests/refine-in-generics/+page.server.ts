@@ -3,9 +3,10 @@ import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
 import { RegisterSchema } from './schemas.js';
+import { z } from 'zod';
 
 export const load = (async (event) => {
-	const form = await superValidate(event, RegisterSchema);
+	const form = await superValidate(event, zod(RegisterSchema));
 	return { form };
 }) satisfies PageServerLoad;
 
@@ -17,9 +18,9 @@ type FormSubmitResultMessage = {
 export const actions = {
 	default: async ({ request }) => {
 		const data = await request.formData();
-		const form = await superValidate<typeof RegisterSchema, FormSubmitResultMessage>(
+		const form = await superValidate<z.infer<typeof RegisterSchema>, FormSubmitResultMessage>(
 			data,
-			RegisterSchema
+			zod(RegisterSchema)
 		);
 		console.log('POST', form);
 

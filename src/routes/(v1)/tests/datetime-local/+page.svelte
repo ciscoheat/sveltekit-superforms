@@ -7,7 +7,7 @@
 		superValidateSync
 	} from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 
 	const { errors, enhance, form, tainted } = superForm(superValidateSync(schema), {
 		SPA: true,

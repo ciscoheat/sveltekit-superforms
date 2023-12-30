@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 
 	export let data;
 

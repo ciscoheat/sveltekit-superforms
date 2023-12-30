@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { registerSchema } from './schema';
+	import { registerSchema } from './schema.js';
 
 	import SuperForm from './Form.svelte';
 	import TextField from './TextField.svelte';

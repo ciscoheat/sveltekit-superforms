@@ -3,7 +3,7 @@ import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
 import type { z } from 'zod';
-import { schema, schemaToStr } from './schema';
+import { schema, schemaToStr } from './schema.js';
 
 export const load = (async ({ url }) => {
 	//console.log('GET /dates', new Date());

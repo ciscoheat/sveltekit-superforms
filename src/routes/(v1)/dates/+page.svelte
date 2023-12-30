@@ -3,7 +3,7 @@
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import DateInput from './DateInput.svelte';
-	import { schemaToStr, type schema } from './schema';
+	import { schemaToStr, type schema } from './schema.js';
 	import { type Writable, writable, derived, get } from 'svelte/store';
 
 	export let data: PageData;

@@ -8,12 +8,12 @@ type Errors = string | string[] | undefined | null;
 
 function _superform<T extends Record<string, unknown>>(
 	schema: Validators<T>,
-	options: { defaults: T }
+	options?: { defaults: T }
 ): ValidationAdapter<T> {
 	return {
 		superFormValidationLibrary: 'superform',
-		jsonSchema: simpleSchema(options.defaults),
-		defaults: options.defaults,
+		jsonSchema: simpleSchema(options?.defaults ?? {}),
+		defaults: options?.defaults ?? ({} as T),
 		async process(data: unknown) {
 			// Add top-level validator fields to non-existing data fields
 			// so they will be validated even if the field doesn't exist

@@ -2,7 +2,7 @@ import type { Actions, PageServerLoad } from './$types.js';
 import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
-import { schema } from './schema';
+import { schema } from './schema.js';
 import { error } from '@sveltejs/kit';
 
 export const load = (async () => {

@@ -4,7 +4,6 @@ import { zod } from '$lib/adapters/index.js';
 import { z } from 'zod';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
-import { zod } from '$lib/adapters/index.js';
 
 enum Fruits {
 	Apple,

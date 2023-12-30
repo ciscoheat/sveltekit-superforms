@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick, afterUpdate } from 'svelte';
+	import { tick } from 'svelte';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import type { PageData } from './$types.js';

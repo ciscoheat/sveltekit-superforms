@@ -19,7 +19,7 @@ TODO:
 
 ### Changed
 
-- Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`.
+- Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`. If type parameters are used, it must now be wrapped with `z.infer`.
 - Fields with default values don't have `required` in their constraints anymore.
 - Unions must have an explicit default value in the schema.
 - If no data, default values aren't parsed with the default data (no side-effects for default values)

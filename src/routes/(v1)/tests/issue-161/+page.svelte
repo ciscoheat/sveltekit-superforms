@@ -3,7 +3,7 @@
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { page } from '$app/stores';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 
 	export let data: PageData;
 

@@ -1,7 +1,7 @@
 import { message, superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
-import { schema } from './schema';
+import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = async () => {

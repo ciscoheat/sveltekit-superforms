@@ -2,7 +2,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 
 	export let data: PageData;
 

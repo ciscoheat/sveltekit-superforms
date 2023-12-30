@@ -2,7 +2,7 @@ import type { Actions, PageServerLoad } from './$types.js';
 import { message, superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
-import { schema } from './schema';
+import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 ///// Load //////////////////////////////////////////////////////////

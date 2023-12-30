@@ -3,7 +3,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { AnyZodObject } from 'zod';
 	import type { PageData } from './$types.js';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import type { ZodValidation } from '$lib/index.js';
 

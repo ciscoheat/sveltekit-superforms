@@ -3,7 +3,7 @@
 	import type { PageData } from './$types.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 	import { page } from '$app/stores';
 
 	export let data: PageData;

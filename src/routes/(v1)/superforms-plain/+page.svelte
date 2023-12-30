@@ -2,7 +2,6 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema';
 	import { onMount } from 'svelte';
 
 	export let data: PageData;

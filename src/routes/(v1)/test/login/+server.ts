@@ -3,7 +3,6 @@ import { zod } from '$lib/adapters/index.js';
 
 import { z } from 'zod';
 import type { RequestHandler } from './$types.js';
-import { zod } from '$lib/adapters/zod.js';
 
 const loginSchema = z.object({
 	email: z

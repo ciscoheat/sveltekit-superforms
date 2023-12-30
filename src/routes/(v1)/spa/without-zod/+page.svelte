@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import type { Schema } from './schema';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { z } from 'zod';
+	import type { Schema } from './schema.js';
+	import { superform } from '$lib/adapters/superform.js';
 
 	const defaultData = {
 		tags: [
@@ -17,8 +19,7 @@
 
 	console.log('Page loaded');
 
-	// @ts-expect-error Testing backwards compatibility of sending arbitrary data.
-	const { form, errors, enhance, message } = superForm<Schema>(defaultData, {
+	const { form, errors, enhance, message } = superForm<z.infer<Schema>>(defaultData, {
 		SPA: { failStatus: 401 },
 		dataType: 'json',
 		onUpdate({ form, cancel }) {
@@ -31,12 +32,12 @@
 		onUpdated({ form }) {
 			console.log('onUpdated, valid:', form.valid, form);
 		},
-		validators: {
+		validators: superform({
 			tags: {
 				id: (id) => (isNaN(id) || id < 3 ? 'Id must be larger than 2' : null),
 				name: (name) => (!name || name.length < 2 ? 'Tags must be at least two characters' : null)
 			}
-		}
+		})
 	});
 
 	// <SuperDebug data={{ $form, $errors }} />

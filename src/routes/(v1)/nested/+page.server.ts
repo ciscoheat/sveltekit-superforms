@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types.js';
-import { schema } from './schema';
+import { schema } from './schema.js';
 import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
 	import { superForm } from '$lib/client/index.js';
-	import { basicSchema, refined } from './schema';
+	import { basicSchema, refined } from './schema.js';
 	import { page } from '$app/stores';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 

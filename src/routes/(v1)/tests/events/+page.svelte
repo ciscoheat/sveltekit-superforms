@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import { schema } from './schema';
+	import { schema } from './schema.js';
 	import { page } from '$app/stores';
 
 	export let data: PageData;

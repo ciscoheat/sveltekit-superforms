@@ -3,7 +3,7 @@ import { zod } from '$lib/adapters/index.js';
 
 import { fail } from '@sveltejs/kit';
 
-import { schema } from './schema';
+import { schema } from './schema.js';
 
 ///// Load function /////
 

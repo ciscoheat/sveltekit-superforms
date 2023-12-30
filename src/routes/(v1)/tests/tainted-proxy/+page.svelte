@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { formFieldProxy, superForm } from '$lib/client';
-  import type { PageData } from './$types';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { formFieldProxy, superForm } from '$lib/client/index.js';
+	import type { PageData } from './$types.js';
+	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
-  export let data: PageData;
+	export let data: PageData;
 
-  const form = superForm(data.form, {
-    dataType: 'json'
-  });
+	const form = superForm(data.form, {
+		dataType: 'json'
+	});
 
-  const { message, tainted: formTainted, enhance } = form;
-  const { value, errors, tainted } = formFieldProxy(form, 'user.name');
+	const { message, tainted: formTainted, enhance } = form;
+	const { value, errors, tainted } = formFieldProxy(form, 'user.name');
 </script>
 
 <SuperDebug data={$formTainted} />
@@ -20,30 +20,30 @@
 <p>Proxy: {$tainted} - Form: {$formTainted?.user?.name}</p>
 
 <p>
-  <br />
-  <button on:click={() => ($tainted = false)}>Untaint user.name</button>
+	<br />
+	<button on:click={() => ($tainted = false)}>Untaint user.name</button>
 </p>
 
 <form method="POST" use:enhance>
-  <label>
-    Name: <input name="name" bind:value={$value} />
-    {#if $errors}<span class="invalid">{$errors}</span>{/if}
-  </label>
-  <div>
-    <button>Submit</button>
-  </div>
+	<label>
+		Name: <input name="name" bind:value={$value} />
+		{#if $errors}<span class="invalid">{$errors}</span>{/if}
+	</label>
+	<div>
+		<button>Submit</button>
+	</div>
 </form>
 
 <style lang="scss">
-  form {
-    margin: 2rem 0;
+	form {
+		margin: 2rem 0;
 
-    input {
-      background-color: #dedede;
-    }
+		input {
+			background-color: #dedede;
+		}
 
-    .invalid {
-      color: crimson;
-    }
-  }
+		.invalid {
+			color: crimson;
+		}
+	}
 </style>

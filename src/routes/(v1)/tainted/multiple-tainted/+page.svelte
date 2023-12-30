@@ -1,45 +1,45 @@
 <script lang="ts">
-  import { onMount, tick, afterUpdate } from 'svelte';
-  import { superForm } from '$lib/client';
-  import SuperDebug from '$lib/client/SuperDebug.svelte';
-  import type { PageData } from './$types';
-  import { page } from '$app/stores';
-  import { afterNavigate } from '$app/navigation';
+	import { onMount, tick, afterUpdate } from 'svelte';
+	import { superForm } from '$lib/client/index.js';
+	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import type { PageData } from './$types.js';
+	import { page } from '$app/stores';
+	import { afterNavigate } from '$app/navigation';
 
-  export let data: PageData;
+	export let data: PageData;
 
-  let message = '';
+	let message = '';
 
-  const { form, tainted, enhance } = superForm(data.form);
+	const { form, tainted, enhance } = superForm(data.form);
 
-  function untaint() {
-    if ($tainted) {
-      $tainted.name = undefined;
-      $tainted.city = false;
-      delete $tainted.age;
-    }
-  }
+	function untaint() {
+		if ($tainted) {
+			$tainted.name = undefined;
+			$tainted.city = false;
+			delete $tainted.age;
+		}
+	}
 
-  async function resetTainted() {
-    if ($page.url.searchParams.has('timeout')) {
-      setTimeout(untaint);
-      message = 'timeout';
-    } else {
-      await tick();
-      await tick();
-      untaint();
-      message = 'tick';
-    }
-  }
+	async function resetTainted() {
+		if ($page.url.searchParams.has('timeout')) {
+			setTimeout(untaint);
+			message = 'timeout';
+		} else {
+			await tick();
+			await tick();
+			untaint();
+			message = 'tick';
+		}
+	}
 
-  afterNavigate((nav) => {
-    console.log(nav);
-    $form.name = 'Fred';
-    $form.city = 'Berlin';
-    $form.age = 28;
+	afterNavigate((nav) => {
+		console.log(nav);
+		$form.name = 'Fred';
+		$form.city = 'Berlin';
+		$form.age = 28;
 
-    resetTainted();
-  });
+		resetTainted();
+	});
 </script>
 
 <a href="?">Use tick</a> |
@@ -50,24 +50,24 @@
 <h4>{message}</h4>
 
 <form method="POST" use:enhance>
-  <div>
-    Name:
-    <input type="text" name="name" bind:value={$form.name} />
-  </div>
+	<div>
+		Name:
+		<input type="text" name="name" bind:value={$form.name} />
+	</div>
 
-  <div>
-    city:
-    <input type="text" name="city" bind:value={$form.city} />
-  </div>
+	<div>
+		city:
+		<input type="text" name="city" bind:value={$form.city} />
+	</div>
 
-  <div>
-    Age:
-    <input type="number" name="age" bind:value={$form.age} />
-  </div>
+	<div>
+		Age:
+		<input type="number" name="age" bind:value={$form.age} />
+	</div>
 
-  <div>
-    <button type="submit">Submit</button>
-  </div>
+	<div>
+		<button type="submit">Submit</button>
+	</div>
 </form>
 
 <h4>form</h4>

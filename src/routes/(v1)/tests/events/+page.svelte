@@ -1,45 +1,45 @@
 <script lang="ts">
-  import { superForm } from '$lib/client';
-  import type { PageData } from './$types';
-  import { schema } from './schema';
-  import { page } from '$app/stores';
+	import { superForm } from '$lib/client/index.js';
+	import type { PageData } from './$types.js';
+	import { schema } from './schema';
+	import { page } from '$app/stores';
 
-  export let data: PageData;
+	export let data: PageData;
 
-  let _log: string[] = [];
-  let _cancel = false;
+	let _log: string[] = [];
+	let _cancel = false;
 
-  function log(msg: string) {
-    _log = [..._log, msg];
-  }
+	function log(msg: string) {
+		_log = [..._log, msg];
+	}
 
-  let SPA = false;
-  $: options.SPA = SPA || undefined;
+	let SPA = false;
+	$: options.SPA = SPA || undefined;
 
-  const { form, errors, message, enhance, options } = superForm(data.form, {
-    taintedMessage: null,
-    validators: schema,
-    onSubmit: ({ cancel }) => {
-      _log = ['onSubmit'];
-      if (_cancel) {
-        log('Cancelled');
-        cancel();
-      }
-    },
-    onError: () => {
-      log('onError');
-    },
-    onResult: () => {
-      log('onResult');
-    },
-    onUpdate: ({ form }) => {
-      log('onUpdate');
-      if (form.valid && SPA) form.message = 'SPA form OK!';
-    },
-    onUpdated: () => {
-      log('onUpdated');
-    }
-  });
+	const { form, errors, message, enhance, options } = superForm(data.form, {
+		taintedMessage: null,
+		validators: schema,
+		onSubmit: ({ cancel }) => {
+			_log = ['onSubmit'];
+			if (_cancel) {
+				log('Cancelled');
+				cancel();
+			}
+		},
+		onError: () => {
+			log('onError');
+		},
+		onResult: () => {
+			log('onResult');
+		},
+		onUpdate: ({ form }) => {
+			log('onUpdate');
+			if (form.valid && SPA) form.message = 'SPA form OK!';
+		},
+		onUpdated: () => {
+			log('onUpdated');
+		}
+	});
 </script>
 
 <pre>{_log.join('\n')}</pre>
@@ -50,25 +50,25 @@
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
-  <label>
-    Name: <input name="name" bind:value={$form.name} />
-    {#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
-  </label>
-  <div>
-    <button>Submit</button>
-  </div>
+	<label>
+		Name: <input name="name" bind:value={$form.name} />
+		{#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+	</label>
+	<div>
+		<button>Submit</button>
+	</div>
 </form>
 
 <style lang="scss">
-  form {
-    margin: 2rem 0;
+	form {
+		margin: 2rem 0;
 
-    input {
-      background-color: #dedede;
-    }
+		input {
+			background-color: #dedede;
+		}
 
-    .invalid {
-      color: crimson;
-    }
-  }
+		.invalid {
+			color: crimson;
+		}
+	}
 </style>

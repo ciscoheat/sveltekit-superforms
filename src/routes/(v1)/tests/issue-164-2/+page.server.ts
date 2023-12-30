@@ -1,14 +1,14 @@
-import { superValidate } from '$lib/server';
+import { superValidate } from '$lib/server/index.js';
 import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
 const barSchema = z.object({
 	name: z.string(),
-	color: z.string(), // not used, just here to make the schemas different and thus diff IDs
+	color: z.string() // not used, just here to make the schemas different and thus diff IDs
 });
 
 const fooSchema = z.object({
-	name: z.string(),
+	name: z.string()
 });
 
 export const load = async () => {
@@ -36,7 +36,7 @@ export const actions = {
 
 		return { form };
 	},
-	barAction: async ({request}) => {
+	barAction: async ({ request }) => {
 		const form = await superValidate(request, barSchema);
 		console.log('POST', form);
 

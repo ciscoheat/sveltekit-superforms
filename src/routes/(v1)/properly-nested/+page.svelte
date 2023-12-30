@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import Form from './Form.svelte';
+	import type { PageData } from './$types.js';
+	import Form from './Form.svelte';
 
-  export let data: PageData;
+	export let data: PageData;
 </script>
 
 <h2>Super-nested form</h2>

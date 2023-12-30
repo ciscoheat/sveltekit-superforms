@@ -1,31 +1,31 @@
-import { superValidate, message } from '$lib/server';
+import { superValidate, message } from '$lib/server/index.js';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types.js';
 
 const schema = z.object({
-  name: z.string().min(1),
-  email: z.string().email()
+	name: z.string().min(1),
+	email: z.string().email()
 });
 
 ///// Load function /////
 
 export const load: PageServerLoad = async () => {
-  const form = await superValidate(schema);
-  return { form };
+	const form = await superValidate(schema);
+	return { form };
 };
 
 ///// Form actions /////
 
 export const actions: Actions = {
-  default: async ({ request }) => {
-    const form = await superValidate(request, schema);
+	default: async ({ request }) => {
+		const form = await superValidate(request, schema);
 
-    console.log('POST', form);
+		console.log('POST', form);
 
-    if (!form.valid) return fail(400, { form });
+		if (!form.valid) return fail(400, { form });
 
-    return message(form, 'Form posted successfully!');
-  }
+		return message(form, 'Form posted successfully!');
+	}
 };

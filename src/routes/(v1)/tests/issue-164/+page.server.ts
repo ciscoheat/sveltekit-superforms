@@ -1,20 +1,20 @@
-import { superValidate } from '$lib/server';
+import { superValidate } from '$lib/server/index.js';
 import { z } from 'zod';
 
 const schema = z.object({
-  name: z.string(),
-  email: z.string().email()
+	name: z.string(),
+	email: z.string().email()
 });
 
 export const load = async () => {
-  const form = await superValidate(
-    {
-      name: 'Bob',
-      email: 'test@example.com'
-    },
-    schema
-  );
-  return {
-    form
-  };
+	const form = await superValidate(
+		{
+			name: 'Bob',
+			email: 'test@example.com'
+		},
+		schema
+	);
+	return {
+		form
+	};
 };

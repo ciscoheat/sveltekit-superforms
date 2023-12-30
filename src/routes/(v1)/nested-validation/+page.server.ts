@@ -3,7 +3,7 @@ import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
 import { fail } from '@sveltejs/kit';
-import { zod } from '$lib/adapters/index.js';
+import type { Actions } from './$types.js';
 
 const defaultData = {
 	tags: [
@@ -15,11 +15,11 @@ const defaultData = {
 };
 
 export const load = async () => {
-	const form = await superValidate(defaultData, zod(zod(schema)), {
+	const form = await superValidate(defaultData, zod(schema), {
 		errors: false,
 		id: 'zod'
 	});
-	const form2 = await superValidate(defaultData, zod(zod(schema)), {
+	const form2 = await superValidate(defaultData, zod(schema), {
 		errors: false,
 		id: 'superforms'
 	});
@@ -30,7 +30,7 @@ export const load = async () => {
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const form = await superValidate(formData, zod(zod(schema)));
+		const form = await superValidate(formData, zod(schema));
 		form.id = formData.get('id')?.toString() ?? form.id;
 
 		console.log('POST', form);
@@ -40,4 +40,4 @@ export const actions = {
 
 		return { form };
 	}
-};
+} satisfies Actions;

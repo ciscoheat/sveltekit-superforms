@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { zod } from '$lib/adapters/zod.js';
 	import {
 		dateProxy,
 		intProxy,
@@ -9,7 +10,7 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 
-	const { errors, enhance, form, tainted } = superForm(superValidateSync(schema), {
+	const { errors, enhance, form, tainted } = superForm(superValidateSync(zod(schema)), {
 		SPA: true,
 		taintedMessage: null,
 		validators: zod(schema),

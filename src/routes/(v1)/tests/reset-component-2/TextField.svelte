@@ -8,7 +8,7 @@
 	export let field: string;
 	export let form;
 
-	const { value, errors, constraints } = formFieldProxy(form, field);
+	const { value, errors } = formFieldProxy(form, field);
 </script>
 
 {#if label !== undefined}

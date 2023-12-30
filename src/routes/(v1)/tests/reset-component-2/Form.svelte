@@ -24,7 +24,7 @@
 		}
 	});
 
-	const { form, message, tainted, delayed, errors, allErrors, enhance } = _form;
+	const { form, message, delayed, errors, allErrors, enhance } = _form;
 </script>
 
 <form method="POST" use:enhance {...$$restProps}>

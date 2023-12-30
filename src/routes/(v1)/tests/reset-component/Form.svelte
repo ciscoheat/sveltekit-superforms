@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { superForm, superValidateSync } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/index.js';
 
@@ -15,9 +15,9 @@
 			.default('')
 	});
 
-	const data = superValidateSync(schema);
+	const data = superValidateSync(zod(schema));
 
-	const { form, errors, enhance, constraints, reset } = superForm(data, {
+	const { form, errors, enhance, constraints } = superForm(data, {
 		SPA: true,
 		validators: zod(schema),
 		taintedMessage: null,

@@ -3,10 +3,10 @@
 	import { superForm, superValidateSync } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/zod.js';
 
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 
-	const defaultData = {
+	const partialData = {
 		tags: [
 			{ id: 1, name: 'A' },
 			{ id: 2, name: 'Bb' },
@@ -19,21 +19,24 @@
 
 	console.log('Page loaded');
 
-	const { form, errors, enhance, message } = superForm(superValidateSync(defaultData, schema), {
-		SPA: true,
-		dataType: 'json',
-		onUpdate({ form, cancel }) {
-			if ($page.url.searchParams.has('cancel')) cancel();
-			else if (form.valid) {
-				form.message = 'Successful!';
-				form.data.random = String(Math.random()).slice(2);
-			}
-		},
-		onUpdated({ form }) {
-			console.log('onUpdated, valid:', form.valid);
-		},
-		validators: zod(schema)
-	});
+	const { form, errors, enhance, message } = superForm(
+		superValidateSync(partialData, zod(schema)),
+		{
+			SPA: true,
+			dataType: 'json',
+			onUpdate({ form, cancel }) {
+				if ($page.url.searchParams.has('cancel')) cancel();
+				else if (form.valid) {
+					form.message = 'Successful!';
+					form.data.random = String(Math.random()).slice(2);
+				}
+			},
+			onUpdated({ form }) {
+				console.log('onUpdated, valid:', form.valid);
+			},
+			validators: zod(schema)
+		}
+	);
 
 	// <SuperDebug data={{ $form, $errors }} />
 </script>

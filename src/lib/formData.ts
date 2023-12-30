@@ -11,7 +11,7 @@ type ParsedData = {
 	data: Record<string, unknown> | null | undefined;
 };
 
-export async function parseRequest<T extends object>(
+export async function parseRequest<T extends Record<string, unknown>>(
 	data: unknown,
 	schemaData: JSONSchema7,
 	options?: SuperValidateOptions<T>
@@ -43,7 +43,7 @@ export async function parseRequest<T extends object>(
 	return parsed;
 }
 
-async function tryParseFormData<T extends object>(
+async function tryParseFormData<T extends Record<string, unknown>>(
 	request: Request,
 	schemaData: JSONSchema7,
 	options?: SuperValidateOptions<T>
@@ -63,7 +63,7 @@ async function tryParseFormData<T extends object>(
 	return parseFormData(formData, schemaData, options?.preprocessed);
 }
 
-export function parseSearchParams<T extends object>(
+export function parseSearchParams<T extends Record<string, unknown>>(
 	data: URL | URLSearchParams,
 	schemaData: JSONSchema7,
 	options?: SuperValidateOptions<T>
@@ -82,7 +82,7 @@ export function parseSearchParams<T extends object>(
 	return output;
 }
 
-export function parseFormData<T extends object>(
+export function parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
 	schemaData: JSONSchema7,
 	preprocessed?: SuperValidateOptions<T>['preprocessed']
@@ -119,9 +119,10 @@ function _parseFormData<T extends object>(
 	preprocessed?: (keyof T)[]
 ) {
 	const output: Record<string, unknown> = {};
-	const schemaKeys = schema.additionalProperties
-		? formData.keys()
-		: Object.keys(schema.properties ?? {});
+	const schemaKeys = [
+		...Object.keys(schema.properties ?? {}),
+		...(schema.additionalProperties ? formData.keys() : [])
+	];
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
 		if (preprocessed && preprocessed.includes(key as keyof T)) {
@@ -138,8 +139,6 @@ function _parseFormData<T extends object>(
 	}
 
 	for (const key of schemaKeys) {
-		if (!schema.additionalProperties && !formData.has(key)) continue;
-
 		const property: JSONSchema7Definition = schema.properties
 			? schema.properties[key]
 			: { type: 'string' }; // TODO: Option for setting type of extra posted values?
@@ -150,6 +149,10 @@ function _parseFormData<T extends object>(
 
 		const info = schemaInfo(property, !schema.required?.includes(key), [key]);
 		if (!info) continue;
+
+		if (!info.types.includes('boolean') && !schema.additionalProperties && !formData.has(key)) {
+			continue;
+		}
 
 		const entries = formData.getAll(key);
 
@@ -200,12 +203,10 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 
 	const [type] = info.types;
 
-	if (key == 'coercedDate') console.log(`Parsing FormData "${key}": ${value}`, info);
-
 	if (!value) {
-		const defaultValue = defaultValues(info, info.isOptional, [key]);
+		const defaultValue = defaultValues(info.schema, info.isOptional, [key]);
 
-		//console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`);
+		//console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`, info.schema);
 
 		// defaultValue can be returned immediately unless it's boolean, which
 		// means it could have been posted as a checkbox.
@@ -213,7 +214,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 			return defaultValue;
 		}
 		if (info.isNullable) return null;
-		if (info.isOptional) return undefined;
+		if (info.isOptional && type != 'boolean') return undefined;
 	}
 
 	/*

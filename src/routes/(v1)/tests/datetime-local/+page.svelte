@@ -39,7 +39,7 @@
 	});
 </script>
 
-<SuperDebug data={{ $form, $tainted }} />
+<SuperDebug data={{ $form, $tainted, $errors }} />
 
 <form method="POST" use:enhance>
 	<label>

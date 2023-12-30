@@ -4,6 +4,7 @@
 	import SuperForm from './Form.svelte';
 	import TextField from './TextField.svelte';
 	import type { PageData } from './$types.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -21,7 +22,7 @@
 	<!-- SuperForm with dataType 'form' -->
 	<SuperForm
 		action="?/register"
-		schema={registerSchema}
+		schema={zod(registerSchema)}
 		data={data.regForm}
 		invalidateAll={false}
 		let:form

@@ -43,50 +43,6 @@ export function pathExists<T extends object>(
 	return options.value(exists.value) ? exists : undefined;
 }
 
-/*
-export async function traversePathAsync<T extends object>(
-	obj: T,
-	realPath: FieldPath<T>,
-	modifier?: (data: PathData) => MaybePromise<undefined | unknown | void>
-): Promise<PathData | undefined> {
-	if (!realPath.length) return undefined;
-	const path: FieldPath<T> = [realPath[0]];
-
-	let parent = obj;
-
-	while (path.length < realPath.length) {
-		const key = path[path.length - 1] as keyof typeof parent;
-
-		const value = modifier
-			? await modifier({
-					parent,
-					key: String(key),
-					value: parent[key],
-					path: path.map((p) => String(p)),
-					isLeaf: false,
-					set: (v) => setPath(parent, key, v)
-			  })
-			: parent[key];
-
-		if (value === undefined) return undefined;
-		else parent = value as T; // TODO: Handle non-object values
-
-		path.push(realPath[path.length]);
-	}
-
-	const key = realPath[realPath.length - 1];
-
-	return {
-		parent,
-		key: String(key),
-		value: parent[key as keyof typeof parent],
-		path: realPath.map((p) => String(p)),
-		isLeaf: true,
-		set: (v) => setPath(parent, key as keyof typeof parent, v)
-	};
-}
-*/
-
 export function traversePath<T extends object>(
 	obj: T,
 	realPath: (string | number | symbol)[],
@@ -185,15 +141,17 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 			}
 		} else if (exists) {
 			if (
-				data.value instanceof Date &&
-				exists.value instanceof Date &&
-				data.value.getTime() != exists.value.getTime()
+				!!data.value != !!exists.value ||
+				(data.value instanceof Date &&
+					exists.value instanceof Date &&
+					data.value.getTime() != exists.value.getTime())
 			) {
 				addDiff();
 			} else if (
-				data.value instanceof Set &&
-				exists.value instanceof Set &&
-				!eqSet(data.value, exists.value)
+				!!data.value != !!exists.value ||
+				(data.value instanceof Set &&
+					exists.value instanceof Set &&
+					!eqSet(data.value, exists.value))
 			) {
 				addDiff();
 			}

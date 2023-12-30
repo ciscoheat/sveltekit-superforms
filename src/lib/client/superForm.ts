@@ -270,7 +270,8 @@ export function superForm<
 		errors: clone(form.errors),
 		message: form.message,
 		tainted: undefined as TaintedFields<T> | undefined,
-		valid: form.valid
+		valid: form.valid,
+		submitting: false
 	};
 
 	const Data: Readonly<typeof __data> = __data;
@@ -359,14 +360,25 @@ export function superForm<
 
 		const result = await Form_validate();
 
+		if (result.valid) {
+			console.log(
+				'🚀 ~ file: superForm.ts:372 ~ Form_clientValidation ~ updating data:',
+				result.data
+			);
+			Form.set(result.data, { taint: 'ignore' });
+		}
+
 		if (options.validationMethod != 'auto') {
 			return Errors.set(result.errors);
 		}
 
+		// Wait for tainted, so object errors can be displayed
+		await tick();
+
 		Form__displayNewErrors(result.errors, event);
 	}
 
-	function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
+	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
 		const { type, immediate, paths } = event;
 		const previous = Data.errors;
 		const output: Record<string, unknown> = {};
@@ -392,7 +404,7 @@ export function superForm<
 			const isEventError = error.value && paths.map((path) => path.join()).includes(joinedPath);
 
 			function addError() {
-				//console.log('Adding error', `[${error.path.join('.')}]`, error.value);
+				console.log('Adding error', `[${error.path.join('.')}]`, error.value);
 				setPaths(output, [error.path], error.value);
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
@@ -419,8 +431,8 @@ export function superForm<
 				// Form-level errors should always be displayed
 				if (error.path.length == 1) return addError();
 
-				// New object errors should be displayed if the (parent) path is tainted
-				if (Tainted_isTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)) {
+				// New object errors should be displayed if the (parent) path is or has been tainted
+				if (Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)) {
 					return addError();
 				}
 				return;
@@ -586,6 +598,13 @@ export function superForm<
 		return Tainted.state;
 	}
 
+	function Tainted_hasBeenTainted(path?: FormPath<T>): boolean {
+		if (!Data.tainted) return false;
+		if (!path) return !!Data.tainted;
+		const field = pathExists(Data.tainted, splitPath(path));
+		return !!field && field.key in field.parent;
+	}
+
 	function Tainted_isTainted(path?: FormPath<T>): boolean {
 		if (!Data.tainted) return false;
 		if (!path) return !!Data.tainted;
@@ -655,6 +674,15 @@ export function superForm<
 
 	//#endregion
 
+	//#region Timers
+
+	const Submitting = writable(false);
+	const Delayed = writable(false);
+	// eslint-disable-next-line dci-lint/grouped-rolemethods
+	const Timeout = writable(false);
+
+	//#endregion
+
 	//#region Unsubscriptions
 
 	/**
@@ -672,7 +700,8 @@ export function superForm<
 		FormId.subscribe((id) => (__data.formId = id)),
 		Constraints.subscribe((constraints) => (__data.constraints = constraints)),
 		Posted.subscribe((posted) => (__data.posted = posted)),
-		Message.subscribe((message) => (__data.message = message))
+		Message.subscribe((message) => (__data.message = message)),
+		Submitting.subscribe((submitting) => (__data.submitting = submitting))
 	];
 
 	function Unsubscriptions_add(func: () => void) {
@@ -682,14 +711,6 @@ export function superForm<
 	function Unsubscriptions_unsubscribe() {
 		Unsubscriptions.forEach((unsub) => unsub());
 	}
-
-	//#endregion
-
-	//#region Timers
-
-	const Submitting = writable(false);
-	const Delayed = writable(false);
-	const Timeout = writable(false);
 
 	//#endregion
 
@@ -706,6 +727,8 @@ export function superForm<
 
 	// Role rebinding
 	function rebind(form: SuperValidated<T, M>, untaint: TaintedFields<T> | boolean, message?: M) {
+		console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data);
+
 		if (untaint) {
 			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint, form.data);
 		}
@@ -743,7 +766,7 @@ export function superForm<
 		// Tainted check
 		const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
 		beforeNavigate((nav) => {
-			if (options.taintedMessage && !get(Submitting)) {
+			if (options.taintedMessage && !Data.submitting) {
 				if (
 					Tainted_isTainted() &&
 					!window.confirm(options.taintedMessage === true ? defaultMessage : options.taintedMessage)
@@ -929,12 +952,12 @@ export function superForm<
 			// so we can enable the tainted form option.
 			Tainted_enable();
 
-			let lastInputChange: ChangeEvent['paths'];
+			let lastInputChange: ChangeEvent['paths'] | undefined;
 
 			// TODO: Debounce?
 			async function onInput(e: Event) {
 				const immediateUpdate = isImmediateInput(e.target);
-				// Need to wait for immediate update (not sure why)
+				// Need to wait for immediate updates due to some timing issue
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
 				lastInputChange = NextChange_paths();
@@ -942,17 +965,15 @@ export function superForm<
 			}
 
 			async function onBlur(e: Event) {
-				if (NextChange_paths() != lastInputChange) {
-					console.log(
-						'Different change paths, no blur triggered',
-						NextChange_paths().join(),
-						lastInputChange?.join()
-					);
+				// Avoid triggering client-side validation while submitting
+				if (Data.submitting) return;
+
+				if (!lastInputChange || NextChange_paths() != lastInputChange) {
 					return;
 				}
 
 				const immediateUpdate = isImmediateInput(e.target);
-				// Need to wait for immediate update (not sure why)
+				// Need to wait for immediate updates due to some timing issue
 				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
 
 				Form_clientValidation({
@@ -961,6 +982,8 @@ export function superForm<
 					type: 'blur',
 					formEl: FormEl
 				});
+
+				lastInputChange == null;
 			}
 
 			FormEl.addEventListener('focusout', onBlur);

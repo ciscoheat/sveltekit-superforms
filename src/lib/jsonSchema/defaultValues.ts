@@ -1,5 +1,6 @@
 import { SchemaError } from '$lib/index.js';
-import { schemaInfo, type JSONSchema, type SchemaType } from './index.js';
+import { schemaInfo, type JSONSchema } from './index.js';
+import type { SchemaType } from './schemaInfo.js';
 
 export function defaultValues<T extends Record<string, unknown> = Record<string, unknown>>(
 	schema: JSONSchema,
@@ -81,7 +82,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	if (info.types.length > 1) {
 		throw new SchemaError('Default values cannot have more than one type.', path);
 	} else if (info.types.length == 0) {
-		console.log('No type or format for property:', path);
+		console.warn('No type or format for property:', path);
 		//console.dir(schema, { depth: 10 });
 		return undefined;
 	}

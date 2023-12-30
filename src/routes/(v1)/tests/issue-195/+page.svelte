@@ -2,12 +2,10 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
-	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+	const { form, errors, tainted, message } = superForm(data.form, {
 		//dataType: 'json',
 		//validators: zod(schema)
 	});

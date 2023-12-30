@@ -3,6 +3,7 @@
 	import { superForm as _superForm } from '$lib/client/index.js';
 	import { superValidateSync } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/index.js';
+	import SuperDebug from '$lib/index.js';
 
 	function ruleSet<T extends readonly [string, ...string[]]>(options: T) {
 		let prev: string | undefined = undefined;
@@ -39,6 +40,8 @@
 
 	$: ({ form } = superForm);
 </script>
+
+<SuperDebug data={$form} />
 
 <h4>
 	{$form.r1.options}-{$form.r1.prev} / {$form.r2.options}-{$form.r2.prev}

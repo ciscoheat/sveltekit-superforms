@@ -25,6 +25,8 @@ export const actions: Actions = {
 
 		form.data.email = 'posted@example.com';
 
+		console.log('🚀 ~ file: +page.server.ts:27 ~ default: ~ form:', form);
+
 		return message(form, 'Form posted successfully!');
 	}
 };

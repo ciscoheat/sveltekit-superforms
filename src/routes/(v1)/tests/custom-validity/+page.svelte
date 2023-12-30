@@ -39,9 +39,9 @@
 	<label>
 		<select name="menu" bind:value={$form.menu}>
 			<option value="">Select an option</option>
-			<option value="first">First</option>
-			<option value="second">Second</option>
-			<option value="third">Third</option>
+			<option value="first">first</option>
+			<option value="second">second</option>
+			<option value="third">third</option>
 		</select>
 		{#if $errors.menu}<span class="invalid">{$errors.menu}</span>{/if}
 	</label>

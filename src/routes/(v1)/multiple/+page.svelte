@@ -6,7 +6,7 @@
 
 	export let data: PageData;
 
-	const { form, errors, constraints, message, formId } = superForm(data.first);
+	const { form, errors, message, formId } = superForm(data.first);
 
 	const {
 		form: secondform,

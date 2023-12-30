@@ -3,6 +3,7 @@ import { zod } from '$lib/adapters/index.js';
 
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
+import type { Actions } from './$types.js';
 
 const loginSchema = z.object({
 	name: z.string().min(1)
@@ -14,7 +15,7 @@ const registerSchema = z.object({
 
 export const load = async () => {
 	const loginForm = await superValidate(zod(loginSchema));
-	const registerForm = await superValidate(registerSchema, {
+	const registerForm = await superValidate(zod(registerSchema), {
 		id: 'register-form'
 	});
 
@@ -34,4 +35,4 @@ export const actions = {
 		if (!registerForm.valid) return fail(400, { registerForm });
 		return message(registerForm, 'Register form submitted');
 	}
-};
+} satisfies Actions;

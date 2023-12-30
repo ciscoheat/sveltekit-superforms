@@ -11,17 +11,25 @@ import { mapErrors } from './errors.js';
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 //type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-type SuperValidateSyncData<T extends object> =
-	| FormData
-	| URLSearchParams
-	| URL
+export type SuperValidateSyncData<T extends Record<string, unknown>> =
 	| Partial<T>
 	| null
 	| undefined;
 
-type SuperValidateData<T extends object> = RequestEvent | Request | SuperValidateSyncData<T>;
+export type SuperValidateSyncOptions<T extends Record<string, unknown>> = Pick<
+	SuperValidateOptions<T>,
+	'id' | 'defaults' | 'jsonSchema'
+>;
 
-export type SuperValidateOptions<T extends object> = Partial<{
+type SuperValidateData<T extends Record<string, unknown>> =
+	| RequestEvent
+	| Request
+	| FormData
+	| URLSearchParams
+	| URL
+	| SuperValidateSyncData<T>;
+
+export type SuperValidateOptions<T extends Record<string, unknown>> = Partial<{
 	errors: boolean;
 	id: string;
 	preprocessed: (keyof T)[];
@@ -67,10 +75,10 @@ export async function superValidate<
 		data = undefined;
 	}
 
-	const validator = mapAdapter(adapter as ValidationAdapter<T>);
+	const validator = mapAdapter(adapter as ValidationAdapter<T>, options?.jsonSchema);
 
 	const defaults = options?.defaults ?? validator.defaults;
-	const jsonSchema = options?.jsonSchema ?? validator.jsonSchema;
+	const jsonSchema = validator.jsonSchema;
 
 	const parsed = await parseRequest<T>(data, jsonSchema, options);
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);

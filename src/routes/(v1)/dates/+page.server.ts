@@ -19,9 +19,9 @@ export const load = (async ({ url }) => {
 		proxyCoerce: date
 	};
 
-	const form = await superValidate<typeof schema>(
+	const form = await superValidate<z.infer<typeof schema>>(
 		url.searchParams.has('empty') ? null : data,
-		schema
+		zod(schema)
 	);
 	//console.log('load:', form.data);
 

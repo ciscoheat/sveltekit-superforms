@@ -8,6 +8,10 @@ import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
 
 export { superForm } from './superForm.js';
+export { superValidate, message, setMessage, setError } from '../superValidate.js';
+export { superValidateSync } from '../superValidateSync.js';
+export { defaultValues } from '../jsonSchema/defaultValues.js';
+export { actionResult } from '../actionResult.js';
 
 export {
 	intProxy,
@@ -20,17 +24,6 @@ export {
 	arrayProxy,
 	type TaintOptions
 } from './proxies.js';
-
-export {
-	superValidate,
-	//superValidateSync,
-	message,
-	setMessage,
-	setError
-} from '../superValidate.js';
-
-export { defaultValues } from '../jsonSchema/defaultValues.js';
-export { actionResult } from '../actionResult.js';
 
 export type FormUpdate = (
 	result: Exclude<ActionResult, { type: 'error' }>,

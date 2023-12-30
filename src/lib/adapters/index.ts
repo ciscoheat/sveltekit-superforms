@@ -65,15 +65,19 @@ export function process<T extends Record<string, unknown>>(schema: TypeSchema) {
 }
 
 export function mapAdapter<T extends Record<string, unknown>>(
-	adapter: ValidationAdapter<T>
+	adapter: ValidationAdapter<T>,
+	jsonSchema?: JSONSchema
 ): MappedValidationAdapter<T> {
 	if (!adapterCache.has(adapter)) {
 		if (!adapter || !('superFormValidationLibrary' in adapter)) {
 			throw new SuperFormError(
-				'Superforms v2 requires a validation adapter for the schema. Import one of your choice from "sveltekit-superforms/adapters".'
+				'Superforms v2 requires a validation adapter for the schema.' +
+					'Import one of your choice from "sveltekit-superforms/adapters" and wrap the schema with it.'
 			);
 		}
-		const jsonSchema = adapter.jsonSchema;
+
+		if (!jsonSchema) jsonSchema = adapter.jsonSchema;
+
 		const mapped = {
 			...adapter,
 			constraints: adapter.constraints ?? schemaConstraints(jsonSchema),

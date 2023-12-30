@@ -2,9 +2,8 @@
 	import { superForm, dateProxy } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import DateInput from './DateInput.svelte';
-	import { schemaToStr, type schema } from './schema.js';
-	import { type Writable, writable, derived, get } from 'svelte/store';
+	import { schemaToStr } from './schema.js';
+	import { type Writable, writable, derived } from 'svelte/store';
 
 	export let data: PageData;
 
@@ -30,7 +29,7 @@
 	log(data.form.data);
 	log(data.log);
 
-	const { form, errors, enhance, fields } = superForm(data.form, {
+	const { form, enhance } = superForm(data.form, {
 		//dataType: 'json',
 		onResult({ result }) {
 			if (result.type == 'success') {

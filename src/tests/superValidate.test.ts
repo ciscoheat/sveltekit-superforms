@@ -28,6 +28,7 @@ import Joi from 'joi';
 
 import { superform } from '$lib/adapters/superform.js';
 import type { Validators } from '$lib/index.js';
+import { superValidateSync } from '$lib/superValidateSync.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -353,5 +354,26 @@ function schemaTest(
 		expect(output.data).toEqual(validData);
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
+	});
+
+	describe('superValidateSync', () => {
+		it('should return default values with schema only', () => {
+			const output = superValidateSync(adapter());
+			expect(output.errors).toEqual({});
+			expect(output.valid).toEqual(false);
+			expect(output.data).not.toBe(defaults);
+			expect(output.data).toEqual(defaults);
+			expect(output.message).toBeUndefined();
+			expectConstraints(output.constraints);
+		});
+
+		it('should return partial values with defaults', () => {
+			const output = superValidateSync({ name: 'Sync' }, adapter());
+			expect(output.errors).toEqual({});
+			expect(output.valid).toEqual(false);
+			expect(output.data).toEqual({ ...defaults, name: 'Sync' });
+			expect(output.message).toBeUndefined();
+			expectConstraints(output.constraints);
+		});
 	});
 }

@@ -11,7 +11,7 @@
 		email: z.string().email()
 	});
 
-	const { form, errors, message, enhance } = superForm(superValidateSync(schema));
+	const { form, errors, message, enhance } = superForm(superValidateSync(zod(schema)));
 </script>
 
 <div style="border: 3px solid red; padding: 10px;">

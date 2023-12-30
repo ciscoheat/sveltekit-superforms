@@ -30,7 +30,7 @@
 		r2: ruleSet(r2)
 	});
 
-	const superForm = _superForm(superValidateSync(schema), {
+	const superForm = _superForm(superValidateSync(zod(schema)), {
 		SPA: true,
 		dataType: 'json',
 		validators: zod(schema),

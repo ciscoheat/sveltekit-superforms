@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import { page } from '$app/stores';
 

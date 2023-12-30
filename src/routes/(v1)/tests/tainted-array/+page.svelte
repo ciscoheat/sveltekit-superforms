@@ -14,7 +14,7 @@
 			.array()
 	});
 
-	const pageForm = superForm(superValidateSync(schema), {
+	const pageForm = superForm(superValidateSync(adapter(schema)), {
 		SPA: true,
 		validators: adapter(schema),
 		taintedMessage: null

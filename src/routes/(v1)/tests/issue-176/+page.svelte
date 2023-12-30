@@ -11,7 +11,7 @@
 	});
 
 	const { form, errors, message, constraints, enhance } = superForm(
-		superValidateSync(loginSchema),
+		superValidateSync(zod(loginSchema)),
 		{
 			SPA: true,
 			validators: zod(loginSchema),

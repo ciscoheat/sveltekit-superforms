@@ -18,7 +18,7 @@
 	};
 
 	const { enhance, form, errors, allErrors } = superForm(
-		superValidateSync(initialValues, parentSchema),
+		superValidateSync(initialValues, zod(parentSchema)),
 		{
 			SPA: true,
 			dataType: 'json',

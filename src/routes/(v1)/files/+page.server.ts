@@ -11,7 +11,7 @@ const userSchema = z.object({
 });
 
 export const load = (async () => {
-	const form = await superValidate(userSchema);
+	const form = await superValidate(zod(userSchema));
 	return { form };
 }) satisfies PageServerLoad;
 

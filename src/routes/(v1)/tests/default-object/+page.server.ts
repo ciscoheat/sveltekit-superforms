@@ -6,7 +6,7 @@ import { postSchema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {
-	const form = await superValidate(postSchema);
+	const form = await superValidate(zod(postSchema));
 	return { form };
 }) satisfies PageServerLoad;
 

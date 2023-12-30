@@ -1,6 +1,5 @@
 <script lang="ts">
-	import type { PageData, Snapshot } from './$types.js';
-	import { page } from '$app/stores';
+	import type { PageData } from './$types.js';
 	import { goto } from '$app/navigation';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';

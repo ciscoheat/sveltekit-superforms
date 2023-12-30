@@ -5,7 +5,7 @@ import { message, superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
 export const load = async () => {
-	const form = await superValidate(basicSchema);
+	const form = await superValidate(zod(basicSchema));
 
 	// Always return { form } in load and form actions.
 	return { form };
@@ -13,7 +13,7 @@ export const load = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, basicSchema);
+		const form = await superValidate(request, zod(basicSchema));
 		console.log('POST', form);
 
 		// Convenient validation check:

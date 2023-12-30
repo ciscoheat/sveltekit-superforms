@@ -13,7 +13,7 @@ const registerSchema = z.object({
 });
 
 export const load = async () => {
-	const loginForm = await superValidate(loginSchema);
+	const loginForm = await superValidate(zod(loginSchema));
 	const registerForm = await superValidate(registerSchema, {
 		id: 'register-form'
 	});
@@ -23,13 +23,13 @@ export const load = async () => {
 
 export const actions = {
 	login: async ({ request }) => {
-		const loginForm = await superValidate(request, loginSchema);
+		const loginForm = await superValidate(request, zod(loginSchema));
 
 		if (!loginForm.valid) return fail(400, { loginForm });
 		return message(loginForm, 'Login form submitted');
 	},
 	register: async ({ request }) => {
-		const registerForm = await superValidate(request, registerSchema);
+		const registerForm = await superValidate(request, zod(registerSchema));
 
 		if (!registerForm.valid) return fail(400, { registerForm });
 		return message(registerForm, 'Register form submitted');

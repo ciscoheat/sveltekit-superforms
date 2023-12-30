@@ -36,8 +36,8 @@ const complexSchema = simpleSchema.extend({
 
 export const load = (async ({ request }) => {
 	const [simpleForm, complexForm] = await Promise.all([
-		superValidate(request, simpleSchema),
-		superValidate(request, complexSchema)
+		superValidate(request, zod(simpleSchema)),
+		superValidate(request, zod(complexSchema))
 	]);
 
 	return {
@@ -53,7 +53,7 @@ export const load = (async ({ request }) => {
 
 export const actions = {
 	simple: async ({ request }) => {
-		const form = await superValidate(request, simpleSchema);
+		const form = await superValidate(request, zod(simpleSchema));
 		if (!form.valid) {
 			return fail(400, { form });
 		}

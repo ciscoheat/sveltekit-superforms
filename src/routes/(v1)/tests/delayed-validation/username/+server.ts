@@ -17,7 +17,7 @@ const usernameCheck = z
 
 export const POST: RequestHandler = async ({ request }) => {
 	//await new Promise(r => setTimeout(r, 500))
-	const form = await superValidate(request, usernameCheck);
+	const form = await superValidate(request, zod(usernameCheck));
 	console.log('🚀 ~ file: +server.ts:20 ~ constPOST:RequestHandler= ~ form:', form);
 	return new Response(null, { status: form.valid ? 200 : 400 });
 };

@@ -8,7 +8,7 @@ import { fail } from '@sveltejs/kit';
 ///// Load //////////////////////////////////////////////////////////
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(editPageSchema);
+	const form = await superValidate(zod(editPageSchema));
 	return { form };
 };
 
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, editPageSchema);
+		const form = await superValidate(request, zod(editPageSchema));
 
 		console.log('POST', form);
 

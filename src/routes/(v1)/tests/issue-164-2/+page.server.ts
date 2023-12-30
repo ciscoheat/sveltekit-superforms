@@ -14,8 +14,8 @@ const fooSchema = z.object({
 });
 
 export const load = async () => {
-	const fooForm = await superValidate(fooSchema);
-	const barForm = await superValidate(barSchema);
+	const fooForm = await superValidate(zod(fooSchema));
+	const barForm = await superValidate(zod(barSchema));
 
 	return {
 		fooForm,
@@ -25,7 +25,7 @@ export const load = async () => {
 
 export const actions = {
 	fooAction: async ({ request }) => {
-		const form = await superValidate(request, fooSchema);
+		const form = await superValidate(request, zod(fooSchema));
 		console.log('POST', form);
 
 		if (!form.valid) {
@@ -39,7 +39,7 @@ export const actions = {
 		return { form };
 	},
 	barAction: async ({ request }) => {
-		const form = await superValidate(request, barSchema);
+		const form = await superValidate(request, zod(barSchema));
 		console.log('POST', form);
 
 		if (!form.valid) {

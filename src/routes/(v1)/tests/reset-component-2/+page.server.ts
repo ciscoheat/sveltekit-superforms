@@ -7,15 +7,15 @@ import type { Actions } from './$types.js';
 
 export const load = async () => {
 	// Server API:
-	const regForm = await superValidate(registerSchema);
-	const profileForm = await superValidate(profileSchema);
+	const regForm = await superValidate(zod(registerSchema));
+	const profileForm = await superValidate(zod(profileSchema));
 
 	return { regForm, profileForm };
 };
 
 export const actions = {
 	register: async ({ request }) => {
-		const regForm = await superValidate(request, registerSchema);
+		const regForm = await superValidate(request, zod(registerSchema));
 
 		console.log('register', regForm);
 
@@ -27,7 +27,7 @@ export const actions = {
 	},
 
 	edit: async ({ request }) => {
-		const profileForm = await superValidate(request, profileSchema);
+		const profileForm = await superValidate(request, zod(profileSchema));
 
 		console.log('edit', profileForm);
 

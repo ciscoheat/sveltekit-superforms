@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm, superValidateSync, arrayProxy } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/index.js';
+	import { zod as adapter } from '$lib/adapters/index.js';
 
 	import * as zod from 'zod';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
@@ -16,7 +16,7 @@
 
 	const pageForm = superForm(superValidateSync(schema), {
 		SPA: true,
-		validators: zod(schema),
+		validators: adapter(schema),
 		taintedMessage: null
 	});
 

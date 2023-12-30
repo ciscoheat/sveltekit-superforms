@@ -9,7 +9,7 @@ import type { Actions, PageServerLoad } from './$types.js';
 ///// Load function /////
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(userSchema);
+	const form = await superValidate(zod(userSchema));
 	return { form };
 };
 
@@ -17,7 +17,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, userSchema);
+		const form = await superValidate(request, zod(userSchema));
 
 		console.log('POST', form);
 

@@ -4,13 +4,10 @@
 
 	export let data: PageData;
 
-	const { form, errors, tainted, message, enhance, submitting, delayed, timeout } = superForm(
-		data.form,
-		{
-			delayMs: 4000,
-			timeoutMs: 8000
-		}
-	);
+	const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
+		delayMs: 4000,
+		timeoutMs: 8000
+	});
 </script>
 
 {#if $message}<h4>{$message}</h4>{/if}

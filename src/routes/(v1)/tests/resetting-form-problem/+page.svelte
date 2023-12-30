@@ -12,7 +12,7 @@
 	let lockPassword: boolean = true;
 
 	// Client API:
-	const { form, errors, enhance, tainted, restore, capture, message } = superForm(data.form, {
+	const { form, errors, enhance, restore, capture, message } = superForm(data.form, {
 		scrollToError: 'smooth',
 		autoFocusOnError: true,
 		errorSelector: '[data-invalid]',
@@ -23,7 +23,7 @@
 	});
 	export const snapshot = { capture, restore };
 	form.subscribe((form) => {
-		if (form.email && /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(form.email)) {
+		if (form.email && /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(form.email)) {
 			lockEmail = false;
 		} else lockEmail = true;
 		if (form.name) {

@@ -23,7 +23,7 @@ const bigSchema = z.object({
 });
 
 export const load = (async ({ request }) => {
-	const form = await superValidate(request, schema);
+	const form = await superValidate(request, zod(schema));
 	const bigForm = await superValidate(request, bigSchema);
 
 	return {
@@ -35,7 +35,7 @@ export const load = (async ({ request }) => {
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const form = await superValidate(formData, schema);
+		const form = await superValidate(formData, zod(schema));
 		if (!form.valid) return fail(400, { form });
 
 		return { form };

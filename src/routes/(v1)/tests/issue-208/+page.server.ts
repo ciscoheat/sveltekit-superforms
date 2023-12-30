@@ -12,7 +12,7 @@ const schema = z.object({
 ///// Load //////////////////////////////////////////////////////////
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 	return { form };
 };
 
@@ -22,7 +22,7 @@ export const actions: Actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 		console.log('🚀 ~ file: +page.server.ts:25 ~ default: ~ formData:', formData);
-		const form = await superValidate(formData, schema);
+		const form = await superValidate(formData, zod(schema));
 
 		console.log('POST', form);
 

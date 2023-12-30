@@ -32,7 +32,7 @@ export const actions = {
 		const data = await request.formData();
 		console.log(data);
 
-		const form = await superValidate(data, schema);
+		const form = await superValidate(data, zod(schema));
 
 		console.log(form.data);
 

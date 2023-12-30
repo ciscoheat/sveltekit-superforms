@@ -13,11 +13,11 @@ const defaultData = {
 };
 
 export const load = async () => {
-	const form = await superValidate(defaultData, zod(schema), {
+	const form = await superValidate(defaultData, zod(zod(schema)), {
 		errors: false,
 		id: 'zod'
 	});
-	const form2 = await superValidate(defaultData, zod(schema), {
+	const form2 = await superValidate(defaultData, zod(zod(schema)), {
 		errors: false,
 		id: 'superforms'
 	});
@@ -28,7 +28,7 @@ export const load = async () => {
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const form = await superValidate(formData, zod(schema));
+		const form = await superValidate(formData, zod(zod(schema)));
 		form.id = formData.get('id')?.toString() ?? form.id;
 
 		console.log('POST', form);

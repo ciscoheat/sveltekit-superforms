@@ -4,7 +4,7 @@ import { schema } from './schema';
 import { fail } from '@sveltejs/kit';
 
 export const load = (async () => {
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 	return { form };
 }) satisfies PageServerLoad;
 
@@ -12,7 +12,7 @@ export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 		console.log('🚀 ~ file: +page.server.ts:14 ~ default: ~ formData:', formData);
-		const form = await superValidate(formData, schema);
+		const form = await superValidate(formData, zod(schema));
 
 		console.log('POST', form);
 

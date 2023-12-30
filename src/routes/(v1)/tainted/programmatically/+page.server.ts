@@ -19,7 +19,7 @@ const schema = z
 ///// Load //////////////////////////////////////////////////////////
 
 export const load = async () => {
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 	return { form };
 };
 
@@ -32,7 +32,7 @@ function join(flavours: string[]) {
 
 export const actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, schema);
+		const form = await superValidate(request, zod(schema));
 
 		console.log('POST', form);
 

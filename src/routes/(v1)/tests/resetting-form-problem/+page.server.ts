@@ -4,7 +4,7 @@ import { fail } from '@sveltejs/kit';
 import { schema } from './schemas.js';
 
 export const load = (async () => {
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 
 	// Always return { form } in load and form actions.
 	return { form };
@@ -12,7 +12,7 @@ export const load = (async () => {
 
 export const actions = {
 	default: async (event) => {
-		const form = await superValidate(event, schema);
+		const form = await superValidate(event, zod(schema));
 		console.log('POST', form);
 
 		// Convenient validation check:

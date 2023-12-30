@@ -4,14 +4,14 @@ import { schema } from './schemas.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = (async (event) => {
-	const form = await superValidate(event, schema);
+	const form = await superValidate(event, zod(schema));
 	return { form };
 }) satisfies PageServerLoad;
 
 export const actions = {
 	default: async (event) => {
 		const formData = await event.request.formData();
-		const form = await superValidate(formData, schema);
+		const form = await superValidate(formData, zod(schema));
 		console.log('POST', form);
 
 		return form.valid ? { form } : fail(400, { form });

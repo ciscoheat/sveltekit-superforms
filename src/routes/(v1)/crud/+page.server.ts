@@ -18,7 +18,7 @@ export const load = (async ({ url }) => {
 
 	if (id && !user) throw error(404, 'User not found.');
 
-	const form = await superValidate(user, schema);
+	const form = await superValidate(user, zod(schema));
 	return { form, users };
 }) satisfies PageServerLoad;
 
@@ -28,7 +28,7 @@ export const actions = {
 	default: async (event) => {
 		const data = await event.request.formData();
 
-		const form = await superValidate(data, schema);
+		const form = await superValidate(data, zod(schema));
 		if (!form.valid) return message(form, 'Invalid form');
 
 		if (!form.data.id) {

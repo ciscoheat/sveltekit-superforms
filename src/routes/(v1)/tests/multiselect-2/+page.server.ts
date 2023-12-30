@@ -30,7 +30,7 @@ export const load: PageServerLoad = async () => {
 
 	if (!account) throw error(404);
 
-	const form = await superValidate(account, schema);
+	const form = await superValidate(account, zod(schema));
 
 	return { form, groups };
 };

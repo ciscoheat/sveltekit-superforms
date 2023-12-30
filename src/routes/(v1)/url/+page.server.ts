@@ -10,7 +10,7 @@ const schema = z.object({
 ///// Load //////////////////////////////////////////////////////////
 
 export const load = (async ({ url }) => {
-	const form = await superValidate(url, schema);
+	const form = await superValidate(url, zod(schema));
 	console.log('load', form);
 	return { form };
 }) satisfies PageServerLoad;
@@ -19,7 +19,7 @@ export const load = (async ({ url }) => {
 
 export const actions = {
 	default: async (event) => {
-		const form = await superValidate(event, schema);
+		const form = await superValidate(event, zod(schema));
 		console.log('post', form.data.id);
 		return form.valid ? { form } : fail(400, { form });
 	}

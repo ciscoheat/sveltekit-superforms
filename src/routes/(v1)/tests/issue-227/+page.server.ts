@@ -8,7 +8,7 @@ const schema = z.object({
 
 export const load = async () => {
 	// Server API:
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 
 	// Always return { form } in load and form actions.
 	return { form };

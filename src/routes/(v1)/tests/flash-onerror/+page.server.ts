@@ -4,7 +4,7 @@ import { schema } from './schema';
 import { error } from '@sveltejs/kit';
 
 export const load = (async () => {
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 	return { form };
 }) satisfies PageServerLoad;
 

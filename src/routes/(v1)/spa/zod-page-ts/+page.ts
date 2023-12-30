@@ -14,7 +14,7 @@ const defaultData = {
 
 export const load = async (event) => {
 	console.log('SPA load');
-	const form = await superValidate(defaultData, schema, { errors: false });
+	const form = await superValidate(defaultData, zod(schema), { errors: false });
 
 	return {
 		form,

@@ -4,7 +4,7 @@ import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = async () => {
-	const form = await superValidate(zod(schema));
+	const form = await superValidate(zod(zod(schema)));
 	return { form };
 };
 
@@ -13,7 +13,7 @@ export const actions = {
 		const formData = await request.formData();
 		console.log(formData);
 
-		const form = await superValidate(formData, zod(schema));
+		const form = await superValidate(formData, zod(zod(schema)));
 		console.log('POST', form);
 
 		if (!form.valid) return fail(400, { form });

@@ -14,7 +14,7 @@ const defaultData = {
 };
 
 export const load = (async () => {
-	const form = await superValidate(defaultData, schema, {
+	const form = await superValidate(defaultData, zod(schema), {
 		errors: false
 	});
 	return { form };
@@ -22,7 +22,7 @@ export const load = (async () => {
 
 export const actions = {
 	default: async (event) => {
-		const form = await superValidate(event, schema);
+		const form = await superValidate(event, zod(schema));
 
 		if (!form.valid) return fail(400, { form });
 		form.message = 'It works';

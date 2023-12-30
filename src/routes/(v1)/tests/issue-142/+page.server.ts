@@ -4,7 +4,7 @@ import { fail } from '@sveltejs/kit';
 import { schema } from './schema';
 
 export const load = async () => {
-	const form = await superValidate(schema);
+	const form = await superValidate(zod(schema));
 	return { form };
 };
 
@@ -20,7 +20,7 @@ function stripPassword(form: SuperValidated<typeof schema>) {
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const form = await superValidate(formData, schema);
+		const form = await superValidate(formData, zod(schema));
 		console.log('🚀 ~ file: +page.server.ts:24 ~ default: ~ form:', form);
 
 		if (!form.valid) return fail(400, { form: stripPassword(form) });

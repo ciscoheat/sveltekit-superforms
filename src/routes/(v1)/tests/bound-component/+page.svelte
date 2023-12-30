@@ -5,13 +5,14 @@
 	import { schema } from './schemas.js';
 	import { page } from '$app/stores';
 	import InputField from './input-field.svelte';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const { form, errors, message, tainted, enhance } = superForm(data.form, {
 		dataType: 'json',
 		defaultValidator: 'keep',
-		validators: schema,
+		validators: zod(schema),
 		onError: (event) => {
 			console.log('onError', event);
 		},

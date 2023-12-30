@@ -19,7 +19,7 @@
 
 	const { form, errors, enhance, constraints, reset } = superForm(data, {
 		SPA: true,
-		validators: schema,
+		validators: zod(schema),
 		taintedMessage: null,
 
 		onUpdate({ form }) {

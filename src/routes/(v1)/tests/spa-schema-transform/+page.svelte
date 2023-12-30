@@ -3,6 +3,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data;
 
@@ -11,7 +12,7 @@
 	const { form, errors, message, enhance, validate } = superForm(data.form, {
 		SPA,
 		taintedMessage: null,
-		validators: schema,
+		validators: zod(schema),
 		onUpdate({ form }) {
 			if (SPA && form.valid) form.message = 'SPA form posted OK';
 		}

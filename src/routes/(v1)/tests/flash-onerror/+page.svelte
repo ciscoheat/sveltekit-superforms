@@ -10,7 +10,7 @@
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
 		taintedMessage: null,
-		validators: schema,
+		validators: zod(schema),
 		flashMessage: {
 			module: flashModule,
 			onError: ({ result, message }) => {

@@ -4,11 +4,12 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schemas.js';
 	import Checkbox from './Checkbox.svelte';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const { form, errors, tainted, enhance } = superForm(data.form, {
-		validators: schema,
+		validators: zod(schema),
 		validationMethod: 'oninput'
 	});
 </script>

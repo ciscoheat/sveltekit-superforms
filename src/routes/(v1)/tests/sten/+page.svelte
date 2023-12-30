@@ -2,6 +2,7 @@
 	import { z } from 'zod';
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	const postSchema = z.object({
 		questions: z
@@ -19,7 +20,7 @@
 		$page.data.form,
 		{
 			taintedMessage: 'Are you sure you want to leave?',
-			validators: postSchema,
+			validators: zod(postSchema),
 			resetForm: true
 			//dataType: 'json'
 		}

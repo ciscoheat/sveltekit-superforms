@@ -7,7 +7,7 @@
 
 	const Days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-	const { form, errors, message, constraints, enhance } = superForm(data.form);
+	const { form, errors, message, enhance } = superForm(data.form);
 </script>
 
 <SuperDebug data={$form} />

@@ -3,13 +3,14 @@
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { _schema } from './+page';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 	let isLoading = false;
 
 	const { form, errors, enhance, message } = superForm(data.form, {
 		SPA: true,
-		validators: _schema,
+		validators: zod(_schema),
 		dataType: 'json',
 		applyAction: false,
 		async onUpdate({ form }) {

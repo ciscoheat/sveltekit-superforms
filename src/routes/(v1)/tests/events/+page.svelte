@@ -2,7 +2,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import { schema } from './schema.js';
-	import { page } from '$app/stores';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -18,7 +18,7 @@
 
 	const { form, errors, message, enhance, options } = superForm(data.form, {
 		taintedMessage: null,
-		validators: schema,
+		validators: zod(schema),
 		onSubmit: ({ cancel }) => {
 			_log = ['onSubmit'];
 			if (_cancel) {

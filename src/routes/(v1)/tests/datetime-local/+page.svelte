@@ -12,7 +12,7 @@
 	const { errors, enhance, form, tainted } = superForm(superValidateSync(schema), {
 		SPA: true,
 		taintedMessage: null,
-		validators: schema,
+		validators: zod(schema),
 		dataType: 'json',
 		onSubmit({ cancel }) {
 			if (!$tainted) cancel();

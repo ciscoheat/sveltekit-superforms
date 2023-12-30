@@ -22,7 +22,7 @@
 		{
 			SPA: true,
 			dataType: 'json',
-			validators: parentSchema,
+			validators: zod(parentSchema),
 			taintedMessage: null
 		}
 	);

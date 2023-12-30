@@ -16,7 +16,7 @@
 
 	const pageForm = superForm(superValidateSync(schema), {
 		SPA: true,
-		validators: schema,
+		validators: zod(schema),
 		taintedMessage: null
 	});
 

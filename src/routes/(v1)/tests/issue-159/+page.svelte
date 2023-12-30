@@ -4,11 +4,12 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { editPageSchema } from './schemas.js';
 	import { page } from '$app/stores';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
-		validators: editPageSchema,
+	const { form, errors, message, enhance } = superForm(data.form, {
+		validators: zod(editPageSchema),
 		onError: (event) => {
 			console.log('onError', event);
 		},

@@ -4,13 +4,14 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 	import type { z } from 'zod';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	type Group = z.infer<typeof schema>['group'] extends (infer U)[] ? U : never;
 
-	const { form, enhance, message, errors } = superForm(data.form, {
-		validators: schema,
+	const { form, enhance, message } = superForm(data.form, {
+		validators: zod(schema),
 		dataType: 'json'
 	});
 

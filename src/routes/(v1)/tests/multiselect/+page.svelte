@@ -7,7 +7,7 @@
 
 	const { form, enhance, message, errors, allErrors, tainted } = superForm(data.form, {
 		dataType: 'json',
-		validators: formSchema,
+		validators: zod(formSchema),
 		validationMethod: 'onblur',
 		defaultValidator: 'clear'
 	});

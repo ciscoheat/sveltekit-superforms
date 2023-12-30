@@ -4,15 +4,16 @@
 	import { basicSchema, refined } from './schema.js';
 	import { page } from '$app/stores';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	const validators = $page.url.searchParams.has('refined') ? refined : basicSchema;
 
 	// Client API:
-	const { form, errors, message, enhance, tainted } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
-		validators: validators,
+		validators: zod(validators),
 		validationMethod: ($page.url.searchParams.get('method') ?? undefined) as any
 	});
 </script>

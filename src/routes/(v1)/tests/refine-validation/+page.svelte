@@ -7,7 +7,7 @@
 	export let data;
 
 	const { form, errors, message, constraints, enhance, tainted } = superForm(data.form, {
-		validators: schema,
+		validators: zod(schema),
 		taintedMessage: null
 	});
 </script>

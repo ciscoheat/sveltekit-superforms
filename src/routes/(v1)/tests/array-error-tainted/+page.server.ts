@@ -4,12 +4,11 @@ import { zod } from '$lib/adapters/index.js';
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';
 import type { Actions, PageServerLoad } from './$types.js';
-import { zod } from '$lib/adapters/zod.js';
 
 ///// Load function /////
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(zod(zod(schema)));
+	const form = await superValidate(zod(schema));
 	return { form };
 };
 
@@ -17,7 +16,7 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, zod(zod(schema)));
+		const form = await superValidate(request, zod(schema));
 
 		const data = form.data;
 

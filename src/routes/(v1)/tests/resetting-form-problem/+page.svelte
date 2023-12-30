@@ -3,6 +3,7 @@
 	import type { PageData } from './$types.js';
 	import { superForm } from '$lib/client/index.js';
 	import { schema } from './schemas.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -15,7 +16,7 @@
 		scrollToError: 'smooth',
 		autoFocusOnError: true,
 		errorSelector: '[data-invalid]',
-		validators: schema,
+		validators: zod(schema),
 		defaultValidator: 'clear',
 		//resetForm: true,
 		clearOnSubmit: 'none'

@@ -14,7 +14,7 @@
 		superValidateSync(loginSchema),
 		{
 			SPA: true,
-			validators: loginSchema,
+			validators: zod(loginSchema),
 			onUpdate({ form }) {
 				if (form.data.email.includes('spam')) {
 					setError(form, 'email', 'Suspicious email address.');

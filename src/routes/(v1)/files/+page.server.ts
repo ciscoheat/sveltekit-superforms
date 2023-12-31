@@ -19,7 +19,7 @@ export const actions = {
 	default: async (event) => {
 		const data = await event.request.formData();
 		console.log('Formdata', data);
-		const form = await superValidate(data, userSchema);
+		const form = await superValidate(data, zod(userSchema));
 		console.log('Form', form);
 		if (!form.valid) return fail(400, { form });
 

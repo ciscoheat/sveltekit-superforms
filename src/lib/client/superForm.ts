@@ -117,8 +117,9 @@ export function superForm<
 	{
 		// Option guards
 
-		// TODO: Global legacy mode? .env setting? For now, reset is always false
+		// TODO: Global legacy mode
 		if (options.resetForm === undefined) options.resetForm = false;
+		if (options.taintedMessage === undefined) options.taintedMessage = true;
 
 		if (options.legacy) {
 			if (options.resetForm === undefined) options.resetForm = false;
@@ -607,7 +608,8 @@ export function superForm<
 
 	function Tainted_isTainted(path?: FormPath<T>): boolean {
 		if (!Data.tainted) return false;
-		if (!path) return !!Data.tainted;
+		if (!path) return Tainted__isObjectTainted(Data.tainted);
+
 		const field = pathExists(Data.tainted, splitPath(path));
 		return Tainted__isObjectTainted(field?.value);
 	}

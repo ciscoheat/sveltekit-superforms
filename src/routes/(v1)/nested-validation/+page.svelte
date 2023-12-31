@@ -29,22 +29,22 @@
 	/>
 </div>
 
-<pre style="margin-top:3rem;">
+<pre style="margin-top:3rem;" id="zod">
 Zod validate:
 {#if output}{output.join('\n')}{/if}
 </pre>
 
-<pre style="margin-top:3rem;">
+<pre style="margin-top:3rem;" id="superforms">
 Superforms validate:
 {#if output2}{output2.join('\n')}{/if}
 </pre>
 
-<pre style="margin-top:3rem;">
+<pre style="margin-top:3rem;" id="zod-full">
 Zod full validation:
 {#if validated}{JSON.stringify(validated, null, 2)}{/if}
 </pre>
 
-<pre style="margin-top:3rem;">
+<pre style="margin-top:3rem;" id="superforms-full">
 Superforms full validation:
 {#if validated2}{JSON.stringify(validated2, null, 2)}{/if}
 </pre>

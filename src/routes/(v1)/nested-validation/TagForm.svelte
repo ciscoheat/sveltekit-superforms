@@ -19,6 +19,7 @@
 	export let validated: SuperValidated<z.infer<typeof schema>> | undefined = undefined;
 
 	$: testMode = $page.url.searchParams.has('test');
+	$: custom = $page.url.searchParams.has('custom');
 
 	const superFormValidator: FormOptions<z.infer<typeof schema>, unknown>['validators'] = superform(
 		{
@@ -66,6 +67,8 @@
 			update: 'errors',
 			errors: 'Custom error'
 		});
+
+		if (custom) return;
 
 		output = [...output, await validate('name')];
 

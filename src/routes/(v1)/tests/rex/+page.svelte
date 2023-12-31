@@ -11,14 +11,14 @@
 	const validators = $page.url.searchParams.has('refined') ? refined : basicSchema;
 
 	// Client API:
-	const { form, errors, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance, tainted } = superForm(data.form, {
 		dataType: 'json',
 		validators: zod(validators),
 		validationMethod: ($page.url.searchParams.get('method') ?? undefined) as any
 	});
 </script>
 
-<!--SuperDebug data={{ $errors, $tainted }} /-->
+<SuperDebug data={{ $errors, $tainted }} />
 
 <h4>Validation method: {$page.url.searchParams.get('method') ?? 'auto'}</h4>
 <h4>

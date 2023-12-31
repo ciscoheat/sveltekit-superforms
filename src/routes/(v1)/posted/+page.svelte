@@ -2,19 +2,24 @@
 	import type { PageData } from './$types.js';
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
-	import { userSchema } from '../users';
+	import { userSchema } from '../users.js';
+	import { zod } from '$lib/adapters/zod.js';
+	import { superform } from '$lib/adapters/superform.js';
 
 	export let data: PageData;
 
-	const { form, errors, enhance, delayed, message, constraints, posted } = superForm(data.form, {
+	const { form, errors, enhance, delayed, message, posted } = superForm(data.form, {
 		validators: $page.url.searchParams.has('zod')
-			? userSchema.extend({
-					id: userSchema.shape.id.optional()
+			? zod(
+					userSchema.extend({
+						id: userSchema.shape.id.optional()
+					})
+				)
+			: superform({
+					name: (name?: string) => (!name || name.length < 2 ? 'Your name is too short' : null),
+					email: (email?: string) =>
+						!email || !email.includes('@') ? 'Enter a valid email address' : null
 				})
-			: {
-					name: (name: string) => (name.length < 2 ? 'Your name is too short' : null),
-					email: (email: string) => (!email.includes('@') ? 'Enter a valid email address' : null)
-				}
 	});
 </script>
 

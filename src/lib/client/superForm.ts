@@ -368,7 +368,7 @@ export function superForm<
 			Form.set(result.data, { taint: 'ignore' });
 		}
 
-		if (options.validationMethod != 'auto') {
+		if (options.validationMethod != 'auto' && options.validationMethod) {
 			return Errors.set(result.errors);
 		}
 

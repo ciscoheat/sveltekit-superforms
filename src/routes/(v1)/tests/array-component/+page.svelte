@@ -14,7 +14,8 @@
 		dataType: 'json',
 		validators: zod(schema)
 	});
-	const { form, errors, message, enhance, tainted } = pageForm;
+	const { form, errors, message, enhance, tainted, isTainted } = pageForm;
+	$: taintedForm = isTainted();
 
 	const options = [
 		{ value: 'A', label: 'Aldebaran' },
@@ -24,7 +25,7 @@
 	];
 </script>
 
-{#if $tainted?.sub?.tags?.[0]}<h3>FORM IS TAINTED</h3>{/if}
+{#if taintedForm}<h3>FORM IS TAINTED</h3>{/if}
 
 {#if $message}<h4>{$message}</h4>{/if}
 

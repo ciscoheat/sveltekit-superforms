@@ -25,10 +25,16 @@ export const scrollToAndCenter = (
 
 const immediateInputTypes = ['checkbox', 'radio', 'range'];
 
-export function isImmediateInput(el: EventTarget | null) {
-	return (
+export function isImmediateInput(el: EventTarget | null): {
+	immediate: boolean;
+	multiple: boolean;
+} {
+	const immediate =
 		!!el &&
 		(el instanceof HTMLSelectElement ||
-			(el instanceof HTMLInputElement && immediateInputTypes.includes(el.type)))
-	);
+			(el instanceof HTMLInputElement && immediateInputTypes.includes(el.type)));
+
+	const multiple = !!el && el instanceof HTMLSelectElement && el.multiple;
+
+	return { immediate, multiple };
 }

@@ -34,7 +34,7 @@ import { clientValidation } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
-import { isImmediateInput } from './elements.js';
+import { isImmediateInput as inputInfo } from './elements.js';
 import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 
@@ -51,6 +51,7 @@ type ValidationResponse<
 type ChangeEvent = {
 	paths: (string | number | symbol)[][];
 	immediate?: boolean;
+	multiple?: boolean;
 	type?: 'input' | 'blur' | 'submit';
 	formEl?: HTMLFormElement;
 };
@@ -350,9 +351,13 @@ export function superForm<
 	async function Form_clientValidation(event: ChangeEvent | null) {
 		if (!event || !options.validators) return;
 
+		console.log('🚀 ~ file: superForm.ts:352 ~ Form_clientValidation ~ event:', event);
+
 		if (options.validationMethod == 'submit-only' && event.type != 'submit') return;
 		if (options.validationMethod == 'onblur' && event.type == 'input') return;
 		if (options.validationMethod == 'oninput' && event.type == 'blur') return;
+
+		// TODO: What to do with a programmatic change event?
 
 		/*
 		if (event.type == 'blur' && event.immediate) {
@@ -378,7 +383,9 @@ export function superForm<
 	}
 
 	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
-		const { type, immediate, paths } = event;
+		console.log('🚀 ~ file: superForm.ts:386 ~ Form__displayNewErrors ~ errors:', errors);
+
+		const { type, immediate, multiple, paths } = event;
 		const previous = Data.errors;
 		const output: Record<string, unknown> = {};
 
@@ -416,11 +423,14 @@ export function superForm<
 				}
 			}
 
-			const previousError = pathExists(previous, error.path);
-
-			// TODO: What to do if path doesn't exist?
+			// Immediate, non-multiple input should display the errors
+			if (immediate && !multiple) {
+				return addError();
+			}
 
 			// If previous error exist, always display
+			// TODO: What to do if path doesn't exist?
+			const previousError = pathExists(previous, error.path);
 			if (previousError && previousError.key in previousError.parent) {
 				return addError();
 			}
@@ -436,16 +446,21 @@ export function superForm<
 				// New object errors should be displayed on blur events,
 				// or the (parent) path is or has been tainted.
 				if (
-					type == 'blur' ||
+					type == 'blur' &&
 					Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)
 				) {
 					return addError();
 				}
-				return;
-			}
-
-			if (type == 'blur' && (isEventError || isErrorInArray)) {
-				return addError();
+			} else {
+				// Display text errors on blur, if the event matches the error path
+				// Also, display errors if the error is in an array an it has been tainted.
+				if (
+					(type == 'blur' && isEventError) ||
+					(isErrorInArray &&
+						Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>))
+				) {
+					return addError();
+				}
 			}
 		});
 
@@ -567,6 +582,7 @@ export function superForm<
 	function NextChange_additionalEventInformation(
 		event: NonNullable<ChangeEvent['type']>,
 		immediate: boolean,
+		multiple: boolean,
 		formEl: HTMLFormElement
 	) {
 		if (NextChange === null) {
@@ -575,6 +591,7 @@ export function superForm<
 
 		NextChange.type = event;
 		NextChange.immediate = immediate;
+		NextChange.multiple = multiple;
 		NextChange.formEl = formEl;
 	}
 
@@ -964,12 +981,12 @@ export function superForm<
 
 			// TODO: Debounce?
 			async function onInput(e: Event) {
-				const immediateUpdate = isImmediateInput(e.target);
+				const info = inputInfo(e.target);
 				// Need to wait for immediate updates due to some timing issue
-				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+				if (info.immediate) await new Promise((r) => setTimeout(r, 0));
 
 				lastInputChange = NextChange_paths();
-				NextChange_additionalEventInformation('input', immediateUpdate, FormEl);
+				NextChange_additionalEventInformation('input', info.immediate, info.multiple, FormEl);
 			}
 
 			async function onBlur(e: Event) {
@@ -980,18 +997,20 @@ export function superForm<
 					return;
 				}
 
-				const immediateUpdate = isImmediateInput(e.target);
+				const info = inputInfo(e.target);
 				// Need to wait for immediate updates due to some timing issue
-				if (immediateUpdate) await new Promise((r) => setTimeout(r, 0));
+				if (info.immediate) await new Promise((r) => setTimeout(r, 0));
 
 				Form_clientValidation({
 					paths: lastInputChange,
-					immediate: immediateUpdate,
+					immediate: info.multiple,
+					multiple: info.multiple,
 					type: 'blur',
 					formEl: FormEl
 				});
 
-				lastInputChange == null;
+				// TODO: Can probably not be set to null for multiple inputs
+				//lastInputChange == null;
 			}
 
 			FormEl.addEventListener('focusout', onBlur);

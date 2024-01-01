@@ -141,17 +141,13 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 			}
 		} else if (exists) {
 			if (
-				!!data.value != !!exists.value ||
-				(data.value instanceof Date &&
-					exists.value instanceof Date &&
-					data.value.getTime() != exists.value.getTime())
+				(data.value instanceof Date || exists.value instanceof Date) &&
+				(!!data.value != !!exists.value || data.value.getTime() != exists.value.getTime())
 			) {
 				addDiff();
 			} else if (
-				!!data.value != !!exists.value ||
-				(data.value instanceof Set &&
-					exists.value instanceof Set &&
-					!eqSet(data.value, exists.value))
+				(data.value instanceof Set || exists.value instanceof Set) &&
+				(!!data.value != !!exists.value || !eqSet(data.value, exists.value))
 			) {
 				addDiff();
 			}
@@ -159,7 +155,6 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 	}
 
 	traversePaths(newObj as object, (data) => checkPath(data, oldObj as object));
-
 	traversePaths(oldObj as object, (data) => checkPath(data, newObj as object));
 
 	return Array.from(diffPaths.values());

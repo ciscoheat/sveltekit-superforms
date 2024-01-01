@@ -18,7 +18,9 @@
 
 	const options = [
 		{ value: 'A', label: 'Aldebaran' },
-		{ value: 'B', label: 'Betelgeuse' }
+		{ value: 'B', label: 'Betelgeuse' },
+		{ value: 'CA', label: 'Capella' },
+		{ value: 'DI', label: 'Diadem' }
 	];
 </script>
 

@@ -354,18 +354,16 @@ export function superForm<
 		if (options.validationMethod == 'onblur' && event.type == 'input') return;
 		if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 
+		/*
 		if (event.type == 'blur' && event.immediate) {
-			console.log('Immediate event, skipping blur validation');
+			console.log('Immediate event, skipping blur validation'); //debug
 			return;
 		}
+		*/
 
 		const result = await Form_validate();
 
 		if (result.valid) {
-			console.log(
-				'🚀 ~ file: superForm.ts:372 ~ Form_clientValidation ~ updating data:',
-				result.data
-			);
 			Form.set(result.data, { taint: 'ignore' });
 		}
 
@@ -427,19 +425,26 @@ export function superForm<
 				return addError();
 			}
 
-			const isObjectError = error.path[error.path.length - 1] == '_errors';
-			if (isObjectError) {
-				// Form-level errors should always be displayed
-				if (error.path.length == 1) return addError();
+			const lastPath = error.path[error.path.length - 1];
+			const isObjectError = lastPath == '_errors';
+			const isErrorInArray = /^\d+$/.test(String(lastPath));
 
-				// New object errors should be displayed if the (parent) path is or has been tainted
-				if (Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)) {
+			if (isObjectError) {
+				// TODO: Form-level errors should always be displayed?
+				//if (error.path.length == 1) return addError();
+
+				// New object errors should be displayed on blur events,
+				// or the (parent) path is or has been tainted.
+				if (
+					type == 'blur' ||
+					Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)
+				) {
 					return addError();
 				}
 				return;
 			}
 
-			if (type == 'blur' && isEventError) {
+			if (type == 'blur' && (isEventError || isErrorInArray)) {
 				return addError();
 			}
 		});
@@ -625,42 +630,38 @@ export function superForm<
 		return obj === true;
 	}
 
+	/**
+	 * Updates the tainted state. Use most of the time, except when submitting.
+	 */
 	function Tainted_update(newData: T, taintOptions: TaintOption) {
 		// Ignore is set when returning errors from the server
 		// so status messages and form-level errors won't be
 		// immediately cleared by client-side validation.
 		if (taintOptions == 'ignore') return [];
 
-		let paths = comparePaths(newData, Data.form);
-		//console.log("🚀 ~ file: superForm.ts:581 ~ Tainted_update ~ paths:", paths)
+		const paths = comparePaths(newData, Data.form);
+		//console.log("🚀 ~ Tainted_update:", paths) //debug
 
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {
 				Tainted.state.set(undefined);
 			} else {
 				Tainted.state.update((tainted) => {
-					if (taintOptions !== true && tainted) {
-						// Check if the paths are tainted already, then set to undefined or skip entirely.
-						const _tainted = tainted;
-						paths = paths.filter((path) => pathExists(_tainted, path));
-						if (paths.length) {
-							if (!tainted) tainted = {};
-							setPaths(tainted, paths, (_, data) => {
-								if (taintOptions == 'untaint') return undefined;
-								return data.value;
-							});
-						}
-					} else if (taintOptions === true) {
-						if (!tainted) tainted = {};
-						setPaths(tainted, paths, (path) => {
-							// If value goes back to the clean value, untaint the path
-							const currentValue = traversePath(newData, path);
-							const cleanPath = traversePath(Tainted.clean, path);
-							return currentValue && cleanPath && currentValue.value === cleanPath.value
-								? undefined
-								: true;
-						});
-					}
+					if (!tainted) tainted = {};
+
+					setPaths(tainted, paths, (path, data) => {
+						// If value goes back to the clean value, untaint the path
+						const currentValue = traversePath(newData, path);
+						const cleanPath = traversePath(Tainted.clean, path);
+						return currentValue && cleanPath && currentValue.value === cleanPath.value
+							? undefined
+							: taintOptions === true
+								? true
+								: taintOptions === 'untaint'
+									? undefined
+									: data.value;
+					});
+
 					return tainted;
 				});
 			}
@@ -669,6 +670,11 @@ export function superForm<
 		NextChange_addValidationEvent({ paths });
 	}
 
+	/**
+	 * Overwrites the current tainted state and setting a new clean state for the form data.
+	 * @param tainted
+	 * @param newClean
+	 */
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
 		Tainted.state.set(tainted);
 		if (newClean) Tainted.clean = newClean;

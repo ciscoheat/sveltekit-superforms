@@ -29,20 +29,18 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return formatDefaultValue(type, schema.default);
 	}
 
-	// Check unions first
+	// Check unions first, so default values can take precedence over nullable and optional
 	if (info.union) {
 		const singleDefault = info.union.filter(
 			(s) => typeof s !== 'boolean' && s.default !== undefined
 		);
-		if (singleDefault.length == 0) {
-			//throw new SchemaError('No default value found for union.', path);
+		if (singleDefault.length == 1) {
+			return _defaultValues(singleDefault[0], isOptional, path);
 		} else if (singleDefault.length > 1) {
 			throw new SchemaError(
 				'Only one default value can exist in a union, or set a default value for the whole union.',
 				path
 			);
-		} else {
-			return _defaultValues(singleDefault[0], isOptional, path);
 		}
 	}
 

@@ -83,7 +83,10 @@ describe('Tainted', () => {
 			checkTaint(
 				{ tags: ['A'] },
 				{
-					name: true
+					name: true,
+					tags: {
+						'0': undefined
+					}
 				},
 				false
 			);

@@ -207,6 +207,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	options?: { taint?: TaintOptions }
 ): {
 	path: Path;
+	// TODO: Check if values can always be merged with & unknown[], or if values can be null or undefined.
 	values: Writable<FormPathType<T, Path>>;
 	errors: Writable<string[] | undefined>;
 	fieldErrors: Writable<ArrayFieldErrors>;

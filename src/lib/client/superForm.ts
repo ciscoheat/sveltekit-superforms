@@ -52,7 +52,7 @@ type ChangeEvent = {
 	paths: (string | number | symbol)[][];
 	immediate?: boolean;
 	multiple?: boolean;
-	type?: 'input' | 'blur' | 'submit';
+	type?: 'input' | 'blur';
 	formEl?: HTMLFormElement;
 };
 
@@ -351,20 +351,13 @@ export function superForm<
 	async function Form_clientValidation(event: ChangeEvent | null) {
 		if (!event || !options.validators) return;
 
-		console.log('🚀 ~ file: superForm.ts:352 ~ Form_clientValidation ~ event:', event);
+		//console.log('🚀 ~ file: superForm.ts:352 ~ Form_clientValidation ~ event:', event);
 
-		if (options.validationMethod == 'submit-only' && event.type != 'submit') return;
+		if (options.validationMethod == 'submit-only') return;
 		if (options.validationMethod == 'onblur' && event.type == 'input') return;
 		if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 
 		// TODO: What to do with a programmatic change event?
-
-		/*
-		if (event.type == 'blur' && event.immediate) {
-			console.log('Immediate event, skipping blur validation'); //debug
-			return;
-		}
-		*/
 
 		const result = await Form_validate();
 
@@ -383,7 +376,7 @@ export function superForm<
 	}
 
 	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
-		console.log('🚀 ~ file: superForm.ts:386 ~ Form__displayNewErrors ~ errors:', errors);
+		//console.log('🚀 ~ file: superForm.ts:386 ~ Form__displayNewErrors ~ errors:', errors);
 
 		const { type, immediate, multiple, paths } = event;
 		const previous = Data.errors;

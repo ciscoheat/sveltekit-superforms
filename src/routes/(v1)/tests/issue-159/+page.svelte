@@ -8,8 +8,17 @@
 
 	export let data: PageData;
 
-	const { form, errors, message, enhance } = superForm(data.form, {
+	const validationMethod = $page.url.searchParams.has('oninput')
+		? 'oninput'
+		: $page.url.searchParams.has('onblur')
+			? 'onblur'
+			: $page.url.searchParams.has('submit-only')
+				? 'submit-only'
+				: 'auto';
+
+	const { form, errors, message, enhance, tainted } = superForm(data.form, {
 		validators: zod(editPageSchema),
+		validationMethod,
 		onError: (event) => {
 			console.log('onError', event);
 		},
@@ -23,6 +32,8 @@
 </script>
 
 <h3>Superforms testing ground</h3>
+
+<SuperDebug data={{ $errors, $tainted }} />
 
 {#if $message}
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
@@ -51,9 +62,7 @@
 </form>
 
 <hr />
-<p>
-	<a target="_blank" href="https://superforms.rocks/api">API Reference</a>
-</p>
+<p>{validationMethod}</p>
 
 <style>
 	.invalid {

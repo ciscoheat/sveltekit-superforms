@@ -14,11 +14,11 @@
 				prev: z.string().optional()
 			})
 			.transform((value) => {
-				const output = { ...value, prev: prev };
 				if (value.options != current) {
 					prev = current;
 					current = value.options as string;
 				}
+				const output = { ...value, prev: prev };
 				return output;
 			});
 	}

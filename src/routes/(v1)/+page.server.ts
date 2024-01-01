@@ -1,11 +1,9 @@
 import { superValidate } from '$lib/index.js';
 import { zod } from '$lib/adapters/index.js';
-
 import { z } from 'zod';
 import { error, fail } from '@sveltejs/kit';
 import { redirect } from 'sveltekit-flash-message/server';
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
-import { zod } from '$lib/adapters/zod.js';
 
 const limiter = new RateLimiter({
 	rates: {

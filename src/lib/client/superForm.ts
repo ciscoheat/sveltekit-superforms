@@ -405,7 +405,7 @@ export function superForm<
 			const isEventError = error.value && paths.map((path) => path.join()).includes(joinedPath);
 
 			function addError() {
-				console.log('Adding error', `[${error.path.join('.')}]`, error.value);
+				//console.log('Adding error', `[${error.path.join('.')}]`, error.value);
 				setPaths(output, [error.path], error.value);
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {

@@ -5,7 +5,7 @@ import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
-import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 
 const schema = {
@@ -282,6 +282,15 @@ describe('Default values', () => {
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		expect(defaultValues<any>(defaultTestSchema).gender).toEqual('female');
+	});
+
+	it.only('should work with nullable', () => {
+		const userSchema = z.object({
+			gender: z.enum(['male', 'female', 'other']).default('male').nullish()
+		});
+
+		const adapter = zod(userSchema);
+		expect(defaultValues(adapter.jsonSchema).gender).toBe('male');
 	});
 });
 

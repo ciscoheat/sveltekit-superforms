@@ -18,8 +18,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	const info = schemaInfo(schema, isOptional);
 	if (!info) return undefined;
 
-	//if (schema.type == 'object') console.log('--- OBJECT ---');
-	//else console.log(path, schema, { isOptional });
+	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
+	//else console.log(path, schema, { isOptional }); //debug
 
 	// Default takes (early) priority.
 	if ('default' in schema) {
@@ -29,35 +29,26 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return formatDefaultValue(type, schema.default);
 	}
 
+	// Check unions first
+	if (info.union) {
+		const singleDefault = info.union.filter(
+			(s) => typeof s !== 'boolean' && s.default !== undefined
+		);
+		if (singleDefault.length == 0) {
+			//throw new SchemaError('No default value found for union.', path);
+		} else if (singleDefault.length > 1) {
+			throw new SchemaError(
+				'Only one default value can exist in a union, or set a default value for the whole union.',
+				path
+			);
+		} else {
+			return _defaultValues(singleDefault[0], isOptional, path);
+		}
+	}
+
 	// Null takes priority over undefined
 	if (info.isNullable) return null;
 	if (info.isOptional) return undefined;
-
-	// Unions
-	/*
-	if (info.union) {
-		throw new SchemaError('A default value must exist for a non-optional union.', path);
-	}
-	*/
-	if (info.union) {
-		if (info.union.length > 1) {
-			const singleDefault = info.union.filter(
-				(s) => typeof s !== 'boolean' && s.default !== undefined
-			);
-			if (singleDefault.length == 0) {
-				throw new SchemaError('No default value found for union.', path);
-			} else if (singleDefault.length > 1) {
-				throw new SchemaError(
-					'Only one default value can exist in a union, or set a default value for the whole union.',
-					path
-				);
-			}
-
-			return _defaultValues(singleDefault[0], isOptional, path);
-		} else {
-			return _defaultValues(info.union[0], isOptional, path);
-		}
-	}
 
 	// Objects
 	if (info.properties) {

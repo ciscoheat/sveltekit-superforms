@@ -7,6 +7,7 @@ import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
+import { constraints } from '$lib/jsonSchema/constraints.js';
 
 const schema = {
 	type: 'object',
@@ -364,5 +365,33 @@ describe('Schema hash function', () => {
 	it('should return a hash for a schema based on types and properties', () => {
 		expect(schemaHash(schema)).toBe('1ipmquz');
 		expect(schemaHash(defaultTestSchema)).toBe('1k62ygs');
+	});
+});
+
+describe.only('Constraints', () => {
+	it('should merge the constraints for unions', () => {
+		const adapter = zod(
+			z.object({
+				mixed: z.union([
+					z
+						.string()
+						.min(5)
+						.max(10)
+						.regex(/^[A-Z]/),
+					z.number().int().positive().max(100)
+				])
+			})
+		);
+
+		expect(constraints(adapter.jsonSchema)).toEqual({
+			mixed: {
+				pattern: '^[A-Z]',
+				minlength: 5,
+				maxlength: 10,
+				required: true,
+				min: 1,
+				max: 100
+			}
+		});
 	});
 });

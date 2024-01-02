@@ -1,7 +1,6 @@
 import { SchemaError } from '$lib/index.js';
 import type { SuperStruct } from '$lib/superStruct.js';
 import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
-import merge from 'ts-deepmerge';
 
 export type InputConstraint = Partial<{
 	pattern: string; // RegExp
@@ -25,6 +24,17 @@ export function constraints<T extends Record<string, unknown>>(
 	return _constraints(schemaInfo(schema, false), []) as InputConstraints<T>;
 }
 
+function merge<T extends Record<string, unknown>>(
+	constraints: (InputConstraints<T> | InputConstraint | undefined)[]
+): ReturnType<typeof _constraints> {
+	let output = {};
+	for (const constraint of constraints) {
+		if (!constraint) continue;
+		output = { ...output, ...constraint };
+	}
+	return output;
+}
+
 function _constraints<T extends Record<string, unknown>>(
 	info: SchemaInfo | undefined,
 	path: string[]
@@ -33,10 +43,9 @@ function _constraints<T extends Record<string, unknown>>(
 
 	// Union
 	if (info.union) {
-		// TODO: Simpler merge of constraints?
 		const infos = info.union.map((s) => schemaInfo(s, info.isOptional, path));
-		const merged = infos.map((i) => _constraints(i, path)).filter((s) => s !== undefined);
-		const output = merged.length > 1 ? merge(...merged) : merged[0];
+		const merged = infos.map((i) => _constraints(i, path));
+		const output = merge(merged);
 		// Delete required if any part of the union is optional
 		if (
 			output &&
@@ -54,7 +63,7 @@ function _constraints<T extends Record<string, unknown>>(
 			return _constraints(schemaInfo(info.array[0], info.isOptional), path);
 		}
 
-		return merge(...info.array.map((i) => _constraints(schemaInfo(i, info.isOptional), path)));
+		return merge(info.array.map((i) => _constraints(schemaInfo(i, info.isOptional), path)));
 	}
 
 	// Objects
@@ -74,10 +83,10 @@ function _constraints<T extends Record<string, unknown>>(
 		return output;
 	}
 
-	return constraint(info, path);
+	return constraint(info);
 }
 
-function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefined {
+function constraint(info: SchemaInfo): InputConstraint | undefined {
 	const output: InputConstraint = {};
 	const schema = info.schema;
 

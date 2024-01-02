@@ -8,6 +8,7 @@
 	export let field: string;
 	export let form;
 
+	// @ts-expect-error Purposefully untyped
 	const { value, errors } = formFieldProxy(form, field);
 </script>
 

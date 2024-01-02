@@ -207,8 +207,19 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	options?: { taint?: TaintOptions }
 ): {
 	path: Path;
-	// TODO: Check if values can always be merged with & unknown[], or if values can be null or undefined.
-	values: Writable<FormPathType<T, Path>>;
+	values: Writable<
+		FormPathType<T, Path> &
+			(
+				| unknown[]
+				| (undefined extends FormPathType<T, Path>
+						? null extends FormPathType<T, Path>
+							? null | undefined
+							: null extends FormPathType<T, Path>
+								? null
+								: undefined
+						: never)
+			)
+	>;
 	errors: Writable<string[] | undefined>;
 	fieldErrors: Writable<ArrayFieldErrors>;
 } {
@@ -256,7 +267,8 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 
 	return {
 		path,
-		values: superFieldProxy(superForm, path, options),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		values: superFieldProxy(superForm, path, options) as any,
 		errors: fieldProxy(
 			superForm.errors,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -23,6 +23,9 @@
 		{ value: 'CA', label: 'Capella' },
 		{ value: 'DI', label: 'Diadem' }
 	];
+
+	//const { values } = arrayProxy(pageForm, 'sub.tags');
+	//$values.push('test');
 </script>
 
 {#if taintedForm}<h3>FORM IS TAINTED</h3>{/if}

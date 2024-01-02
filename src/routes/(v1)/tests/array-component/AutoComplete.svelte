@@ -21,7 +21,9 @@
 <!-- Note that the selected attribute is required for this to work without JS -->
 <select multiple name={field} bind:value={$values}>
 	{#each options as option}
-		<option value={option.value} selected={$values.includes(option.value)}>{option.label}</option>
+		<option value={option.value} selected={$values && $values.includes(option.value)}
+			>{option.label}</option
+		>
 	{/each}
 </select>
 
@@ -35,7 +37,7 @@
 {#if $errors}<p class="invalid">{$errors}</p>{/if}
 
 {#each $fieldErrors as $err, i}
-	{#if $err}
+	{#if $err && $values}
 		<p class="invalid">Item {$values[i]}: {$err}</p>
 	{/if}
 {/each}

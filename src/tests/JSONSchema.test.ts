@@ -373,6 +373,7 @@ describe.only('Constraints', () => {
 		const adapter = zod(
 			z.object({
 				mixed: z.union([
+					z.date().min(new Date('2024-01-01')),
 					z
 						.string()
 						.min(5)

@@ -202,7 +202,7 @@
 	const storeReturnedByPromise = writable(0);
 
 	function createPromiseOfStore() {
-		return new Promise((resolve, reject) => {
+		return new Promise<typeof storeReturnedByPromise>((resolve) => {
 			setTimeout(() => {
 				$storeReturnedByPromise++;
 				resolve(storeReturnedByPromise);
@@ -234,15 +234,6 @@
 
 	/** @type {Promise<import('svelte/store').Readable<unknown>>} */
 	let promiseOfStore: Promise<import('svelte/store').Readable<unknown>>;
-	/** @type {Promise<any>[]} */
-	let promiseValues: Promise<any>[];
-	/** @type {Rotation}*/
-	const promiseRotation = {
-		index: 0,
-		values: undefined,
-		value: undefined,
-		enabled: false
-	};
 
 	/** @type {TestCases} */
 	const edgecaseValues = [
@@ -271,7 +262,7 @@
 		{ label: 'empty anonymous async function', data: async () => {} },
 		{ label: 'empty async class', data: class {} }
 	];
-	/** @type {Rotation}*/
+
 	const edgecaseRotation = {
 		index: 0,
 		values: edgecaseValues,
@@ -279,8 +270,8 @@
 		enabled: false
 	};
 
-	/** @param {Rotation} rotation*/
-	function nextValue(rotation) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	function nextValue(rotation: any) {
 		if (rotation.index >= rotation.values.length - 1) {
 			rotation.index = 0;
 		} else {
@@ -550,7 +541,7 @@
 			{#if testType.promise}
 				{#key config.functions}
 					<ul class="flex flex-col gap-4">
-						{#each [{ label: 'promise of store', data: createPromiseOfStore() }, { label: 'promise that resolves', data: new Promise( (resolve, reject) => {
+						{#each [{ label: 'promise of store', data: createPromiseOfStore() }, { label: 'promise that resolves', data: new Promise( (resolve) => {
 										setTimeout(() => {
 											resolve('resolved');
 										}, 3000);

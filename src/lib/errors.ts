@@ -1,8 +1,26 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import type { ValidationIssue } from '@decs/typeschema';
 import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
-import { SuperFormError, type ValidationErrors } from './index.js';
 import { mergePath } from './stringPath.js';
+import type { ValidationErrors } from './superValidate.js';
+
+export class SuperFormError extends Error {
+	constructor(message?: string) {
+		super(message);
+		Object.setPrototypeOf(this, SuperFormError.prototype);
+	}
+}
+
+export class SchemaError extends SuperFormError {
+	readonly path: string | undefined;
+	constructor(message: string, path?: string | string[]) {
+		super(
+			(path && path.length ? `[${Array.isArray(path) ? path.join('.') : path}] ` : '') + message
+		);
+		this.path = Array.isArray(path) ? path.join('.') : path;
+		Object.setPrototypeOf(this, SchemaError.prototype);
+	}
+}
 
 export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	//console.log('===', errors.length, 'errors', shape);

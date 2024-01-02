@@ -1,7 +1,7 @@
 import { type ValidationAdapter, adapter } from './index.js';
 import type { Inferred } from '$lib/index.js';
 import { type TSchema, FormatRegistry } from '@sinclair/typebox';
-import { TypeCheck, TypeCompiler } from '@sinclair/typebox/compiler';
+import { type TypeCheck, TypeCompiler } from '@sinclair/typebox/compiler';
 
 // From https://github.com/sinclairzx81/typebox/tree/ca4d771b87ee1f8e953036c95a21da7150786d3e/example/formats
 const Email =

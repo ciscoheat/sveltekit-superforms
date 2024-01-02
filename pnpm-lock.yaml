@@ -26,6 +26,9 @@ devDependencies:
   '@types/json-schema':
     specifier: ^7.0.15
     version: 7.0.15
+  '@types/throttle-debounce':
+    specifier: ^5.0.2
+    version: 5.0.2
   '@types/to-json-schema':
     specifier: ^0.2.4
     version: 0.2.4
@@ -66,8 +69,8 @@ devDependencies:
     specifier: ^4.2.0
     version: 4.2.0
   json-schema-to-ts:
-    specifier: ^2.12.0
-    version: 2.12.0
+    specifier: ^3.0.0
+    version: 3.0.0
   klona:
     specifier: ^2.0.6
     version: 2.0.6
@@ -84,8 +87,8 @@ devDependencies:
     specifier: ^3.1.2
     version: 3.1.2(prettier@3.1.1)(svelte@4.2.8)
   publint:
-    specifier: ^0.1.16
-    version: 0.1.16
+    specifier: ^0.2.7
+    version: 0.2.7
   sass:
     specifier: ^1.69.6
     version: 1.69.6
@@ -101,6 +104,9 @@ devDependencies:
   sveltekit-rate-limiter:
     specifier: ^0.4.2
     version: 0.4.2(@sveltejs/kit@2.0.6)
+  throttle-debounce:
+    specifier: ^5.0.0
+    version: 5.0.0
   to-json-schema:
     specifier: ^0.2.5
     version: 0.2.5
@@ -786,6 +792,10 @@ packages:
 
   /@types/semver@7.5.6:
     resolution: {integrity: sha512-dn1l8LaMea/IjDoHNd9J52uBbInB796CDffS6VdIxvqYCPSG0V0DzHp76GpaWnlhg88uYyPbXCDIowa86ybd5A==}
+    dev: true
+
+  /@types/throttle-debounce@5.0.2:
+    resolution: {integrity: sha512-pDzSNulqooSKvSNcksnV72nk8p7gRqN8As71Sp28nov1IgmPKWbOEIwAWvBME5pPTtaXJAvG3O4oc76HlQ4kqQ==}
     dev: true
 
   /@types/to-json-schema@0.2.4:
@@ -1774,8 +1784,8 @@ packages:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
     dev: true
 
-  /json-schema-to-ts@2.12.0:
-    resolution: {integrity: sha512-uTde38yBm5lzJSRPWRaasxZo72pb+JGE4iUksNdNfAkFaLhV4N9akeBxPPUpZy5onINt9Zo0oTLrAoEXyZESiQ==}
+  /json-schema-to-ts@3.0.0:
+    resolution: {integrity: sha512-2adDesYifYEXYxNySx3gG0RR69rDWIjqAFzK/JPXdOvjHLZ/UP6d2rkpy6a+AxyhtRp2SvFPZ4+EW36jBinUbA==}
     engines: {node: '>=16'}
     dependencies:
       '@babel/runtime': 7.23.7
@@ -2252,8 +2262,8 @@ packages:
       react-is: 18.2.0
     dev: true
 
-  /publint@0.1.16:
-    resolution: {integrity: sha512-wJgk7HnXDT5Ap0DjFYbGz78kPkN44iQvDiaq8P63IEEyNU9mYXvaMd2cAyIM6OgqXM/IA3CK6XWIsRq+wjNpgw==}
+  /publint@0.2.7:
+    resolution: {integrity: sha512-tLU4ee3110BxWfAmCZggJmCUnYWgPTr0QLnx08sqpLYa8JHRiOudd+CgzdpfU5x5eOaW2WMkpmOrFshRFYK7Mw==}
     engines: {node: '>=16'}
     hasBin: true
     dependencies:
@@ -2633,6 +2643,11 @@ packages:
 
   /text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
+    dev: true
+
+  /throttle-debounce@5.0.0:
+    resolution: {integrity: sha512-2iQTSgkkc1Zyk0MeVrt/3BvuOXYPl/R8Z0U2xxo9rjwNciaHDG3R+Lm6dh4EeUci49DanvBnuqI6jshoQQRGEg==}
+    engines: {node: '>=12.22'}
     dev: true
 
   /tiny-glob@0.2.9:

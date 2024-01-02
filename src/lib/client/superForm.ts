@@ -1,9 +1,4 @@
-import {
-	SuperFormError,
-	type SuperValidated,
-	type TaintedFields,
-	type ValidationErrors
-} from '$lib/index.js';
+import { type SuperValidated, type TaintedFields } from '$lib/superValidate.js';
 import type { ActionResult, Page } from '@sveltejs/kit';
 import type {
 	FormOptions,
@@ -29,7 +24,7 @@ import {
 	type FormPathLeaves
 } from '$lib/stringPath.js';
 import { beforeNavigate, invalidateAll } from '$app/navigation';
-import { flattenErrors, updateErrors } from '$lib/errors.js';
+import { SuperFormError, flattenErrors, updateErrors } from '$lib/errors.js';
 import { clientValidation } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
@@ -37,6 +32,7 @@ import { setCustomValidityForm, updateCustomValidity } from './customValidity.js
 import { isImmediateInput as inputInfo } from './elements.js';
 import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
+import type { ValidationErrors } from '$lib/superValidate.js';
 
 type ValidationResponse<
 	Success extends Record<string, unknown> | undefined = Record<

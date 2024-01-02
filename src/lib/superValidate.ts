@@ -2,14 +2,33 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
-import { type SuperValidated, type ValidationErrors } from './index.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors } from './errors.js';
+import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import type { SuperStructArray } from './superStruct.js';
 
 //type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
 //type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
+export type SuperValidated<
+	T extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+> = {
+	id: string;
+	valid: boolean;
+	posted: boolean;
+	errors: ValidationErrors<T>;
+	data: T;
+	constraints: InputConstraints<T>;
+	message?: M;
+};
+
+export type ValidationErrors<T extends Record<string, unknown>> = {
+	_errors?: string[];
+} & SuperStructArray<T, string[], { _errors?: string[] }>;
 
 export type SuperValidateSyncData<T extends Record<string, unknown>> =
 	| Partial<T>
@@ -38,6 +57,10 @@ export type SuperValidateOptions<T extends Record<string, unknown>> = Partial<{
 	strict: boolean;
 	// TODO: allowFiles
 }>;
+
+export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<T, boolean>;
+
+/////////////////////////////////////////////////////////////////////
 
 export async function superValidate<
 	T extends Record<string, unknown>,

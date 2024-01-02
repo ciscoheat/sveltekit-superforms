@@ -26,8 +26,7 @@ import { Type } from '@sinclair/typebox';
 import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
 
-import { superform } from '$lib/adapters/superform.js';
-import type { Validators } from '$lib/index.js';
+import { superform, type Validators } from '$lib/adapters/superform.js';
 import { superValidateSync } from '$lib/superValidateSync.js';
 
 ///// Test data /////////////////////////////////////////////////////

@@ -1,4 +1,4 @@
-import { superValidate } from '$lib/server';
+import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
 
 import { z } from 'zod';
@@ -7,7 +7,7 @@ const schema = z.object({
 	name: z.string().min(1, 'Cannot be empty')
 });
 
-export const load = async ({ request, params }) => {
+export const load = async () => {
 	const initialData = {
 		name: 'Testing'
 	};

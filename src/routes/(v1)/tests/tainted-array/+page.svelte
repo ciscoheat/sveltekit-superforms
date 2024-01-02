@@ -37,16 +37,16 @@
 	{#each $form.people as _, i}
 		<div>
 			<div>
-				<label>First Name</label>
-				<input bind:value={$form.people[i].firstName} />
+				<label for="firstName">First Name</label>
+				<input name="firstName" bind:value={$form.people[i].firstName} />
 				{#if $errors.people?.[i]?.firstName}
 					<p>{$errors.people[i].firstName}</p>
 				{/if}
 			</div>
 
 			<div>
-				<label>Last Name</label>
-				<input bind:value={$form.people[i].lastName} />
+				<label for="lastName">Last Name</label>
+				<input name="lastName" bind:value={$form.people[i].lastName} />
 				{#if $errors.people?.[i]?.lastName}
 					<p>{$errors.people[i].lastName}</p>
 				{/if}

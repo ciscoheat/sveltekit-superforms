@@ -3,7 +3,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import { basicSchema } from './schema.js';
 	import { page } from '$app/stores';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { debounce } from 'throttle-debounce';
 	import spinner from './tadpole.svg?raw';
 	import { zod } from '$lib/adapters/zod.js';
@@ -28,7 +28,7 @@
 
 	const throttledUsername = debounce(300, checkUsername);
 
-	const { form, errors, message, enhance, tainted } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
 		validators: zod(basicSchema)
 	});

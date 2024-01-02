@@ -1,8 +1,8 @@
-<script>
+<script lang="ts">
 	import { page } from '$app/stores';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 
 	export let data;
 

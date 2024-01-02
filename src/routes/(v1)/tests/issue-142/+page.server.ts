@@ -1,11 +1,10 @@
 import { setError, superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/index.js';
-
-import type { SuperValidated } from '$lib/index';
-import { zod } from '$lib/adapters/index.js';
+import type { SuperValidated } from '$lib/index.js';
 
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';
+import { z } from 'zod';
 
 export const load = async () => {
 	const form = await superValidate(zod(schema));
@@ -14,7 +13,7 @@ export const load = async () => {
 
 ///// Form actions //////////////////////////////////////////////////
 
-function stripPassword(form: SuperValidated<typeof schema>) {
+function stripPassword(form: SuperValidated<z.infer<typeof schema>>) {
 	// comment out password clearing and form error works again
 	form.data.password = '';
 	form.data.confirmedPassword = '';
@@ -30,12 +29,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form: stripPassword(form) });
 
 		if (form.data.name === 'form') {
-			return setError(
-				stripPassword(form),
-				// @ts-expect-error Backwards compatibility for testing
-				null,
-				'This is not a sticky form error'
-			);
+			return setError(stripPassword(form), 'This is not a sticky form error');
 		}
 
 		return { form: stripPassword(form) };

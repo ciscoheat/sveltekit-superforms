@@ -1,4 +1,4 @@
-import { superValidate } from '$lib/index.js';
+import { superValidate } from '$lib/superValidate.js';
 import { zod } from '$lib/adapters/index.js';
 import { z } from 'zod';
 import { error, fail } from '@sveltejs/kit';

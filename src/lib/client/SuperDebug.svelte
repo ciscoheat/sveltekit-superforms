@@ -171,8 +171,10 @@
 				if (typeof this === 'object' && this[key] instanceof Date) {
 					return '#}D#' + (isNaN(this[key]) ? 'Invalid Date' : value);
 				}
-				if (typeof value === 'number' && isNaN(value)) {
-					return '#}#NaN';
+				if (typeof value === 'number') {
+					if (value == Number.POSITIVE_INFINITY) return '#}#Inf';
+					if (value == Number.NEGATIVE_INFINITY) return '#}#-Inf';
+					if (isNaN(value)) return '#}#NaN';
 				}
 				if (typeof value === 'bigint') {
 					return '#}BI#' + value;
@@ -208,15 +210,21 @@
 									match.slice(-stringTruncate / 2)
 								: match;
 
-						if (match == '"#}#NaN"') {
-							cls = 'nan';
-							match = 'NaN';
-						} else if (match == '"#}#undefined"') {
+						if (match == '"#}#undefined"') {
 							cls = 'undefined';
 							match = 'undefined';
 						} else if (match.startsWith('"#}D#')) {
 							cls = 'date';
 							match = match.slice(5, -1);
+						} else if (match == '"#}#NaN"') {
+							cls = 'nan';
+							match = 'NaN';
+						} else if (match == '"#}#Inf"') {
+							cls = 'nan';
+							match = 'Infinity';
+						} else if (match == '"#}#-Inf"') {
+							cls = 'nan';
+							match = '-Infinity';
 						} else if (match.startsWith('"#}BI#')) {
 							cls = 'bigint';
 							match = match.slice(6, -1) + 'n';

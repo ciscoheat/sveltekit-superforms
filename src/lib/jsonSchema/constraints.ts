@@ -1,4 +1,5 @@
-import { SchemaError, type SuperStruct } from '$lib/index.js';
+import { SchemaError } from '$lib/index.js';
+import type { SuperStruct } from '$lib/superStruct.js';
 import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
 import merge from 'ts-deepmerge';
 
@@ -82,12 +83,6 @@ function constraint(info: SchemaInfo, path: string[]): InputConstraint | undefin
 
 	const type = schema.type;
 	const format = schema.format;
-
-	/*
-	if (path[0] == 'nullableString') {
-		console.log(path, schema, info.isOptional, info.isNullable);
-	}
-	*/
 
 	// Must be before type check
 	if (

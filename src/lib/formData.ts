@@ -265,20 +265,4 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 		default:
 			throw new SuperFormError('Unsupported schema type for FormData: ' + type);
 	}
-
-	// TODO: Enum parsing
-	/*
-	} else if (type == 'NativeEnum') {
-		const zodEnum = zodType as ZodNativeEnum<EnumLike>;
-
-		if (value !== null && value in zodEnum.enum) {
-			const enumValue = zodEnum.enum[value];
-			if (typeof enumValue === 'number') return enumValue;
-			else if (enumValue in zodEnum.enum) return zodEnum.enum[enumValue];
-		} else if (value !== null && Object.values(zodEnum.enum).includes(value)) {
-			return value;
-		}
-		return undefined;
-	} 
-	*/
 }

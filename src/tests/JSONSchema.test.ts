@@ -117,7 +117,6 @@ describe('Default values', () => {
 		} satisfies JSONSchema7;
 
 		expect(defaultValues(schema)).toEqual({
-			// TODO: Default value for an array with an item that has a default value?
 			numberArray: []
 		});
 	});

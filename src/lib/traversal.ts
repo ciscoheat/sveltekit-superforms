@@ -16,7 +16,7 @@ function setPath<T extends object>(parent: T, key: keyof T, value: any) {
 	return 'skip' as const;
 }
 
-export function isInvalidPath(originalPath: (string | number | symbol)[], pathData: PathData) {
+function isInvalidPath(originalPath: (string | number | symbol)[], pathData: PathData) {
 	return (
 		pathData.value !== undefined &&
 		typeof pathData.value !== 'object' &&
@@ -68,7 +68,7 @@ export function traversePath<T extends object>(
 			: parent[key];
 
 		if (value === undefined) return undefined;
-		else parent = value as T; // TODO: Handle non-object values
+		else parent = value as T;
 
 		path.push(realPath[path.length]);
 	}

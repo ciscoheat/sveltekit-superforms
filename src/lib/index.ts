@@ -71,7 +71,6 @@ export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<
 
 // Cannot be a SuperStruct due to Property having to be passed on.
 // Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
-// TODO: Parameter for validator function must be optional
 export type Validators<T extends Record<string, unknown>> = Partial<{
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[Property in keyof T]: T extends any

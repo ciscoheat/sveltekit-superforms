@@ -3,7 +3,6 @@ import type { ValidationIssue } from '@decs/typeschema';
 import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
 import { SuperFormError, type ValidationErrors } from './index.js';
 import { mergePath } from './stringPath.js';
-import type { FormOptions } from './client/index.js';
 
 export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
 	//console.log('===', errors.length, 'errors', shape);
@@ -90,88 +89,6 @@ export function updateErrors<T extends Record<string, unknown>>(
 
 	return Previous;
 }
-
-/*
-
-		console.log('Checking new error', error.path, error.value);
-
-		const isObjectError = error.path[error.path.length - 1] == '_errors';
-		let previousError = pathExists(Previous, error.path);
-
-		if (!previousError) {
-			// An object error should be displayed on blur if no error exists
-			if (event != 'blur') return;
-
-			if (isObjectError) {
-				setPaths(Previous, [error.path], error.value);
-				return;
-			}
-
-			setPaths(Previous, [error.path], undefined);
-			previousError = pathExists(Previous, error.path)!;
-		}
-
-		switch (method) {
-			case undefined:
-			case 'auto':
-				if (previousError.key in previousError.parent) {
-					console.log('Error key existed, setting', previousError.path);
-					previousError.set(error.value);
-					break;
-				} else if (
-					isObjectError ||
-					(event == 'blur' &&
-						error.value &&
-						LastChanges.map((c) => c.join()).includes(error.path.join()))
-				) {
-					previousError.set(error.value);
-				}
-
-				break;
-
-			/*
-			case 'onblur':
-				if (event == 'blur') previousError.set(data.value);
-				break;
-
-			case 'oninput':
-				if (event == 'input') previousError.set(data.value);
-				break;
-
-			case 'submit-only':
-				if (event == 'submit') previousError.set(data.value);
-				break;
-			*/
-//path?.set(data.value);
-
-/*
-export function clearErrors<T extends Record<string, unknown>>(
-	Errors: Writable<ValidationErrors<T>>,
-	options: {
-		undefinePath: (string | number | symbol)[] | null;
-		clearFormLevelErrors: boolean;
-	}
-) {
-	Errors.update(($errors) => {
-		traversePaths($errors, (pathData) => {
-			if (
-				pathData.path.length == 1 &&
-				pathData.path[0] == '_errors' &&
-				!options.clearFormLevelErrors
-			) {
-				return;
-			}
-			if (Array.isArray(pathData.value)) {
-				return pathData.set(undefined);
-			}
-		});
-
-		if (options.undefinePath) setPaths($errors, [options.undefinePath], undefined);
-
-		return $errors;
-	});
-}
-*/
 
 export function flattenErrors(errors: ValidationErrors<Record<string, unknown>>) {
 	return _flattenErrors(errors, []);

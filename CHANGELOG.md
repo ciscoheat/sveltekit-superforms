@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 TODO:
 
-- superValidateSync cannot use superValidate anymore since TypeSchema is async.
-- Remove fields options for setting tainted
 - Default options should follow SvelteKit: resetForm: true and taintedMessage: false (only error behavior is kept)
 
 ## [Unreleased]
@@ -16,6 +14,7 @@ TODO:
 ### Removed
 
 - superForm.fields
+- `fields` options for setting tainted.
 
 ### Changed
 

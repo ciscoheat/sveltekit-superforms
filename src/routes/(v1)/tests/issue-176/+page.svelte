@@ -20,7 +20,6 @@
 					setError(form, 'email', 'Suspicious email address.');
 				} else if (form.valid) {
 					setMessage(form, 'Valid data!');
-					// TODO: Do something with the validated data
 				}
 			},
 			onError({ result, message }) {

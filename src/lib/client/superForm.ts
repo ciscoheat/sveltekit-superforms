@@ -357,8 +357,6 @@ export function superForm<
 		if (options.validationMethod == 'onblur' && event.type == 'input') return;
 		if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 
-		// TODO: What to do with a programmatic change event?
-
 		const result = await Form_validate();
 
 		if (result.valid) {
@@ -379,8 +377,10 @@ export function superForm<
 		//console.log('Form__displayNewErrors', errors); //debug
 
 		const { type, immediate, multiple, paths } = event;
-		//const isProgrammaticEvent = !type;
 		const previous = Data.errors;
+
+		// TODO: What to do with a programmatic change event?
+		//const isProgrammaticEvent = !type;
 
 		const output: Record<string, unknown> = {};
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
@@ -563,9 +563,7 @@ export function superForm<
 
 	let NextChange: ChangeEvent | null = null;
 
-	function NextChange_addValidationEvent(event: ChangeEvent) {
-		// TODO: What to do with more than one path (programmically updated)
-
+	function NextChange_setHtmlEvent(event: ChangeEvent) {
 		NextChange = event;
 		// Wait for on:input to provide additional information
 		setTimeout(() => Form_clientValidation(NextChange), 0);
@@ -676,7 +674,7 @@ export function superForm<
 			}
 		}
 
-		NextChange_addValidationEvent({ paths });
+		NextChange_setHtmlEvent({ paths });
 	}
 
 	/**
@@ -685,6 +683,7 @@ export function superForm<
 	 * @param newClean
 	 */
 	function Tainted_set(tainted: TaintedFields<T> | undefined, newClean: T | undefined) {
+		// TODO: Is it better to set tainted values to undefined instead of just overwriting?
 		Tainted.state.set(tainted);
 		if (newClean) Tainted.clean = newClean;
 	}
@@ -971,7 +970,7 @@ export function superForm<
 
 			let lastInputChange: ChangeEvent['paths'] | undefined;
 
-			// TODO: Debounce?
+			// TODO: Debounce option?
 			async function onInput(e: Event) {
 				const info = inputInfo(e.target);
 				// Need to wait for immediate updates due to some timing issue

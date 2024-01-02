@@ -25,7 +25,6 @@
 		onUpdate({ form }) {
 			if (form.valid) {
 				console.log('form is valid', form.data);
-				// TODO: Do something with the validated form.data
 			}
 		}
 	});

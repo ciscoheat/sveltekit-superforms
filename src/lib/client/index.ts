@@ -4,7 +4,7 @@ import type { Readable, Writable, Updater } from 'svelte/store';
 import { type SuperValidated, SuperFormError } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
-import type { SuperFormAdapter, ValidationAdapter } from '$lib/adapters/index.js';
+import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
 import type { TaintedFields } from '../superValidate.js';
 

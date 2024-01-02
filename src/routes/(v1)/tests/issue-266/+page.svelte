@@ -9,7 +9,7 @@
 	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
 		taintedMessage: null,
-		validators: superform<typeof data.form.data>({
+		validators: superform({
 			business_id: (input) => (input ? undefined : 'Please fill business name first')
 			/*
       // Uncomment for testing purposes, but will fail browser test

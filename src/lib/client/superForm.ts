@@ -351,7 +351,7 @@ export function superForm<
 	async function Form_clientValidation(event: ChangeEvent | null) {
 		if (!event || !options.validators) return;
 
-		//console.log('🚀 ~ file: superForm.ts:352 ~ Form_clientValidation ~ event:', event);
+		//console.log('Form_clientValidation', event); //debug
 
 		if (options.validationMethod == 'submit-only') return;
 		if (options.validationMethod == 'onblur' && event.type == 'input') return;
@@ -376,12 +376,13 @@ export function superForm<
 	}
 
 	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
-		//console.log('🚀 ~ file: superForm.ts:386 ~ Form__displayNewErrors ~ errors:', errors);
+		//console.log('Form__displayNewErrors', errors); //debug
 
 		const { type, immediate, multiple, paths } = event;
+		//const isProgrammaticEvent = !type;
 		const previous = Data.errors;
-		const output: Record<string, unknown> = {};
 
+		const output: Record<string, unknown> = {};
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
 
 		if (options.customValidity && event.formEl) {
@@ -403,7 +404,7 @@ export function superForm<
 			const isEventError = error.value && paths.map((path) => path.join()).includes(joinedPath);
 
 			function addError() {
-				//console.log('Adding error', `[${error.path.join('.')}]`, error.value);
+				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
 				setPaths(output, [error.path], error.value);
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
@@ -417,9 +418,7 @@ export function superForm<
 			}
 
 			// Immediate, non-multiple input should display the errors
-			if (immediate && !multiple) {
-				return addError();
-			}
+			if (immediate && !multiple) return addError();
 
 			// If previous error exist, always display
 			// TODO: What to do if path doesn't exist?
@@ -430,7 +429,7 @@ export function superForm<
 
 			const lastPath = error.path[error.path.length - 1];
 			const isObjectError = lastPath == '_errors';
-			const isErrorInArray = /^\d+$/.test(String(lastPath));
+			const isErrorInArray = error.path.some((p) => /^\d+$/.test(String(p)));
 
 			if (isObjectError) {
 				// TODO: Form-level errors should always be displayed?

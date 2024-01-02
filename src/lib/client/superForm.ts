@@ -97,6 +97,18 @@ function multipleFormIdError(id: string | undefined) {
 }
 
 /**
+ * V1 compatibilty. resetForm = false and taintedMessage = true
+ */
+let legacyMode = false;
+
+try {
+	// @ts-expect-error Vite define check
+	if (SUPERFORMS_LEGACY) legacyMode = true;
+} catch {
+	// No legacy mode defined
+}
+
+/**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
  * @param {SuperValidated} form Usually data.form from PageData.
  * @param {FormOptions} options Configuration for the form.
@@ -112,13 +124,7 @@ export function superForm<
 	let initialForm: SuperValidated<T, M>;
 
 	{
-		// Option guards
-
-		// TODO: Global legacy mode
-		if (options.resetForm === undefined) options.resetForm = false;
-		if (options.taintedMessage === undefined) options.taintedMessage = true;
-
-		if (options.legacy) {
+		if (options.legacy ?? legacyMode) {
 			if (options.resetForm === undefined) options.resetForm = false;
 			if (options.taintedMessage === undefined) options.taintedMessage = true;
 		}
@@ -739,7 +745,7 @@ export function superForm<
 
 	// Role rebinding
 	function rebind(form: SuperValidated<T, M>, untaint: TaintedFields<T> | boolean, message?: M) {
-		console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data);
+		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
 
 		if (untaint) {
 			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint, form.data);

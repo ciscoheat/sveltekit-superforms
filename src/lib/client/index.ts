@@ -1,11 +1,12 @@
 import type { ActionResult, SubmitFunction } from '@sveltejs/kit';
 import type { Page } from '@sveltejs/kit';
 import type { Readable, Writable, Updater } from 'svelte/store';
-import { type TaintedFields, type SuperValidated, SuperFormError } from '../index.js';
+import { type SuperValidated, SuperFormError } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
 import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
+import type { TaintedFields } from '../superValidate.js';
 
 export { superForm } from './superForm.js';
 export { superValidate, message, setMessage, setError } from '../superValidate.js';
@@ -115,6 +116,11 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 		duplicateId?: boolean;
 		noValidationAndConstraints?: boolean;
 	};
+
+	/**
+	 * V1 compatibilty. Sets resetForm = false and taintedMessage = true
+	 * Add define: { SUPERFORMS_LEGACY: true } to vite.config.ts to enable globally.
+	 */
 	legacy: boolean;
 }>;
 

@@ -11,7 +11,7 @@
 		SPA: true,
 		resetForm: true,
 		validators: superform({
-			title: (value) =>
+			title: (value?) =>
 				!value || value.trim().length >= 3 ? null : 'Bitte geben Sie mindestens 3 Zeichen ein'
 		}),
 		onUpdate: ({ form }) => {

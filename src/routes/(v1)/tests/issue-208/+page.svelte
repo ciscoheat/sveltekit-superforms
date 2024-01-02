@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { page } from '$app/stores';
-	import { UserType, NumberType } from './UserType';
+	import { UserType, NumberType } from './UserType.js';
 
 	export let data: PageData;
 
-	const { form, errors, message, enhance } = superForm(data.form);
+	const { form, message, enhance } = superForm(data.form);
 </script>
 
 <h3>Native string enums</h3>

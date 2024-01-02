@@ -6,9 +6,9 @@ import { adapter, type ValidationAdapter } from './index.js';
 
 // Cannot be a SuperStruct due to Property having to be passed on.
 // Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
-export type Validators<T extends Record<string, unknown>> = Partial<{
+export type Validators<T extends Record<string, unknown>> = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[Property in keyof T]: T extends any
+	[Property in keyof T]?: T extends any
 		? T[Property] extends Record<string, unknown>
 			? Validators<T[Property]>
 			: T[Property] extends (infer A)[]
@@ -17,7 +17,7 @@ export type Validators<T extends Record<string, unknown>> = Partial<{
 					: Validator<T[Property] extends (infer A2)[] ? A2 : T[Property]>
 				: Validator<T[Property]>
 		: never;
-}>;
+};
 
 export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null | undefined>;
 

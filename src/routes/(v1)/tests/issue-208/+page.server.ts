@@ -4,7 +4,7 @@ import { zod } from '$lib/adapters/index.js';
 
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import { UserType, NumberType } from './UserType';
+import { UserType, NumberType } from './UserType.js';
 
 const schema = z.object({
 	type: z.nativeEnum(UserType),

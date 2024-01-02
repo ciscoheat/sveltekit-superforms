@@ -1,4 +1,6 @@
 <script lang="ts">
+	/* eslint svelte/no-at-html-tags: "off" */
+
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
@@ -15,8 +17,7 @@
 	$bigForm.full_name = name;
 	$form.full_name = name;
 
-	/** @type {unknown} */
-	let someUnknownData;
+	let someUnknownData: unknown;
 	const emptyObject = {};
 
 	const promiseNeverCameTrue = new Promise((_, reject) => {
@@ -24,7 +25,7 @@
 	});
 
 	/** @type {() => Promise<unknown>} */
-	let promiseProduct = async () => ({});
+	let promiseProduct: () => Promise<unknown> = async (): Promise<unknown> => ({});
 
 	onMount(async () => {
 		// Put fetch inside onMount so svelte would stop gawking at us.
@@ -36,14 +37,13 @@
 	});
 
 	const promiseStore = readable(
-		/** @type {Promise<number>}*/ (/** @type {any}*/ (undefined)),
-		(set, update) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(set: any, update: any) => {
 			let count = 0;
-			/** @type {ReturnType<typeof setTimeout> | undefined}*/
-			let timeoutId;
+			let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 			set(
-				new Promise((resolve, reject) => {
+				new Promise((resolve) => {
 					timeoutId = setTimeout(() => {
 						timeoutId = undefined;
 						resolve(count++);
@@ -53,8 +53,8 @@
 
 			const interval = setInterval(() => {
 				update(
-					(_) =>
-						new Promise((resolve, reject) => {
+					() =>
+						new Promise((resolve) => {
 							timeoutId = setTimeout(() => {
 								timeoutId = undefined;
 								resolve(count++);

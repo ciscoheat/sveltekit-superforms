@@ -1,4 +1,6 @@
 <script lang="ts">
+	/* eslint svelte/no-at-html-tags: "off" */
+
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
@@ -22,8 +24,7 @@
 	class MyCustomClass {}
 
 	class MyCustomError extends Error {
-		/** @param {string} message*/
-		constructor(message) {
+		constructor(message: string) {
 			super(message);
 			this.name = 'MyError';
 		}
@@ -40,7 +41,12 @@
 	 * promise: boolean;
 	 * raw: boolean;
 	 * }} */
-	const config = {
+	const config: {
+		theme: import('svelte').ComponentProps<SuperDebug>['theme'];
+		functions: boolean;
+		promise: boolean;
+		raw: boolean;
+	} = {
 		theme: 'default',
 		functions: false,
 		promise: false,
@@ -61,7 +67,14 @@
 	 * complex: boolean;
 	 * edgecase: boolean;
 	 * }} */
-	const testType = {
+	const testType: {
+		primitive: boolean;
+		nonPrimitive: boolean;
+		store: boolean;
+		promise: boolean;
+		complex: boolean;
+		edgecase: boolean;
+	} = {
 		primitive: false,
 		nonPrimitive: false,
 		complex: false,
@@ -146,19 +159,19 @@
 	const timeStore = writable(new Date());
 	let changeableStoreCount = 0;
 	/** @type {import('svelte/store').Writable<number>}*/
-	let changeableStore = writable(changeableStoreCount++);
+	let changeableStore: import('svelte/store').Writable<number> = writable(changeableStoreCount++);
 	function renewChangeableStore() {
 		changeableStore = writable(changeableStoreCount++);
 	}
 	const storeOfPromisesStore = readable(
-		/** @type {Promise<number>}*/ (/** @type {any}*/ (undefined)),
-		(set, update) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(set: any, update: any) => {
 			let count = 0;
 			/** @type {ReturnType<typeof setTimeout> | undefined}*/
-			let timeoutId;
+			let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 			set(
-				new Promise((resolve, reject) => {
+				new Promise((resolve) => {
 					timeoutId = setTimeout(() => {
 						timeoutId = undefined;
 						resolve(count++);
@@ -168,8 +181,8 @@
 
 			const interval = setInterval(() => {
 				update(
-					(_) =>
-						new Promise((resolve, reject) => {
+					() =>
+						new Promise((resolve) => {
 							timeoutId = setTimeout(() => {
 								timeoutId = undefined;
 								resolve(count++);
@@ -220,9 +233,9 @@
 	};
 
 	/** @type {Promise<import('svelte/store').Readable<unknown>>} */
-	let promiseOfStore;
+	let promiseOfStore: Promise<import('svelte/store').Readable<unknown>>;
 	/** @type {Promise<any>[]} */
-	let promiseValues;
+	let promiseValues: Promise<any>[];
 	/** @type {Rotation}*/
 	const promiseRotation = {
 		index: 0,
@@ -592,7 +605,7 @@
 						<li>
 							<SuperDebug
 								label="long string in promise"
-								data={new Promise((resolve, reject) => {
+								data={new Promise((resolve) => {
 									setTimeout(() => {
 										resolve('a'.repeat(1000));
 									}, 5000);
@@ -603,7 +616,7 @@
 						<li>
 							<SuperDebug
 								label="empty promise"
-								data={new Promise((resolve, reject) => {
+								data={new Promise((resolve) => {
 									setTimeout(() => {
 										resolve(void 0);
 									}, 5000);

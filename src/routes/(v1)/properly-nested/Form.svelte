@@ -5,7 +5,7 @@
 	import TextInput from './TextInput.svelte';
 	import TextField from './TextField.svelte';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { fieldProxy, formFieldProxy } from '$lib/client/index.js';
+	import { fieldProxy } from '$lib/client/index.js';
 	import type { z } from 'zod';
 
 	export let data: SuperValidated<z.infer<Schema>>;
@@ -16,13 +16,15 @@
 	});
 	const { form: formData, errors, enhance, constraints, tainted, message } = form;
 
+	/*
 	const proxy1 = formFieldProxy(form, 'name');
 	const proxy2 = formFieldProxy(form, 'name');
 	const proxy3 = formFieldProxy(form, 'tags[3].name');
 	const proxy4 = formFieldProxy(form, 'luckyNumber');
 	const proxy5 = formFieldProxy(form, 'roles[0]');
-
 	const bool = fieldProxy(formData, 'agree');
+	*/
+
 	const tag1 = fieldProxy(formData, 'tags[0].name');
 	let field1 = fieldProxy(formData, 'luckyNumber');
 

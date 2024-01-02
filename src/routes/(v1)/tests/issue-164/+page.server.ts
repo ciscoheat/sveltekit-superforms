@@ -14,7 +14,7 @@ export const load = async () => {
 			name: 'Bob',
 			email: 'test@example.com'
 		},
-		schema
+		zod(schema)
 	);
 	return {
 		form

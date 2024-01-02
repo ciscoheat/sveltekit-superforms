@@ -218,17 +218,14 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 		`${path}` as any
 	);
 
-	const onlyFieldErrors = derived<typeof formErrors, ArrayFieldErrors>(
-		formErrors,
-		($errors: Record<string, unknown>) => {
-			const output: ArrayFieldErrors = [];
-			for (const key in $errors) {
-				if (key == '_errors') continue;
-				output[key as unknown as number] = $errors[key];
-			}
-			return output as ArrayFieldErrors;
+	const onlyFieldErrors = derived<typeof formErrors, ArrayFieldErrors>(formErrors, ($errors) => {
+		const output: ArrayFieldErrors = [];
+		for (const key in $errors) {
+			if (key == '_errors') continue;
+			output[key as unknown as number] = $errors[key];
 		}
-	);
+		return output as ArrayFieldErrors;
+	});
 
 	function updateArrayErrors(errors: Record<number, unknown>, value: ArrayFieldErrors) {
 		for (const key in errors) {
@@ -287,7 +284,7 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 
 	const taintedProxy = derived<typeof superForm.tainted, boolean | undefined>(
 		superForm.tainted,
-		($tainted: object) => {
+		($tainted) => {
 			if (!$tainted) return $tainted;
 			const taintedPath = traversePath($tainted, path2);
 			return taintedPath ? taintedPath.value : undefined;
@@ -323,6 +320,7 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	return {
 		path,
 		value: superFieldProxy(superForm, path, options),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		errors: fieldProxy(superForm.errors, path as any) as unknown as Writable<string[] | undefined>,
 		constraints: fieldProxy(superForm.constraints, constraintsPath as never) as Writable<
 			InputConstraint | undefined

@@ -13,7 +13,7 @@ export const load = (async () => {
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const form = await superValidate(formData, postSchema);
+		const form = await superValidate(formData, zod(postSchema));
 
 		console.dir(form, { depth: 6 });
 

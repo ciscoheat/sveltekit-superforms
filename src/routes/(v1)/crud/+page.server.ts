@@ -4,7 +4,7 @@ import { zod } from '$lib/adapters/index.js';
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
 
-import { users, userId, userSchema } from '../users';
+import { users, userId, userSchema } from '../users.js';
 
 const schema = userSchema.extend({
 	id: userSchema.shape.id.optional()

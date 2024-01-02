@@ -14,20 +14,25 @@ export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
 	return zodToJson(...params) as JSONSchema7;
 };
 
-type Arr<N extends number, T extends unknown[] = []> = T['length'] extends N
-	? T
-	: Arr<N, [...T, unknown]>;
+type ZodValidation<T extends AnyZodObject> =
+	| T
+	| ZodEffects<T>
+	| ZodEffects<ZodEffects<T>>
+	| ZodEffects<ZodEffects<ZodEffects<T>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
+	| ZodEffects<
+			ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
+	  >
+	| ZodEffects<
+			ZodEffects<
+				ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
+			>
+	  >;
 
-//type Increment<N extends number> = [...Arr<N>, unknown]['length'];
-type Decrement<N extends number> = Arr<N> extends [unknown, ...infer U] ? U['length'] : never;
-
-type RecursiveZodEffects<T extends AnyZodObject, Depth extends number> = Depth extends 0
-	? T
-	: ZodEffects<RecursiveZodEffects<T, Decrement<Depth>>> | RecursiveZodEffects<T, Decrement<Depth>>;
-
-type ZodValidation = RecursiveZodEffects<AnyZodObject, 10>;
-
-function _zod<T extends ZodValidation>(schema: T): ValidationAdapter<z.infer<T>> {
+function _zod<T extends ZodValidation<AnyZodObject>>(schema: T): ValidationAdapter<z.infer<T>> {
 	return {
 		superFormValidationLibrary: 'zod',
 		process: process(schema),

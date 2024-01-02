@@ -16,15 +16,12 @@
 			})
 	});
 
-	const { form, errors, message, enhance, constraints } = superForm<typeof postSchema>(
-		$page.data.form,
-		{
-			taintedMessage: 'Are you sure you want to leave?',
-			validators: zod(postSchema),
-			resetForm: true
-			//dataType: 'json'
-		}
-	);
+	const { form } = superForm<z.infer<typeof postSchema>>($page.data.form, {
+		taintedMessage: 'Are you sure you want to leave?',
+		validators: zod(postSchema),
+		resetForm: true
+		//dataType: 'json'
+	});
 
 	let tooManyQuestions = false;
 	let query = '';

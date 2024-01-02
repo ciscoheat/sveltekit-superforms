@@ -24,7 +24,7 @@ export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null 
 type Errors = string | string[] | undefined | null;
 
 function _superform<T extends Record<string, unknown>>(
-	schema: Validators<T>,
+	schema: Validators<Partial<T>>,
 	options?: { defaults: T }
 ): ValidationAdapter<T> {
 	return {

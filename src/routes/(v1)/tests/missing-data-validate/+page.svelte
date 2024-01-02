@@ -13,8 +13,12 @@
 	const { form, errors, message, enhance } = superForm(data.form, {
 		//dataType: 'json',
 		validators: superform({
-			age: (age) => (isNaN(age) || age < 30 ? 'At least 30 years, please!' : null),
-			name: (name) => (!name || name.length < 2 ? 'At least two characters, please!' : null)
+			age(age) {
+				if (age === undefined || isNaN(age) || age < 30) return 'At least 30 years, please!';
+			},
+			name(name) {
+				if (!name || name.length < 2) return 'At least two characters, please!';
+			}
 		}),
 		taintedMessage: null
 	});

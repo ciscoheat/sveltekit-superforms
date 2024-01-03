@@ -557,7 +557,7 @@ export async function superValidate<
     | FormData
     | URLSearchParams
     | URL
-    | Partial<z.infer<UnwrapEffects<T>>>
+    | Partial<z.input<UnwrapEffects<T>>>
     | null
     | undefined,
   schema: T,

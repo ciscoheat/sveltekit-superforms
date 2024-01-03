@@ -1,9 +1,9 @@
-import { assert, expect, it } from 'vitest';
-import { bigZodSchema, dataTypeForm } from './data.js';
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+//import { bigZodSchema, dataTypeForm } from './data.js';
 import { z } from 'zod';
-import type { JSONSchema7 } from 'json-schema';
+import { test } from 'vitest';
+import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import type { JSONSchema } from '$lib/jsonSchema/index.js';
 
 enum Foo {
 	A = 2,
@@ -32,11 +32,15 @@ const schema = z.object({
 	literal: z.literal(true).default(false as true)
 });
 
-it.skip('Zod to JSON Schema', () => {
-	console.dir(zodToJsonSchema(dataTypeForm), { depth: 10 });
+const schema2 = z.object({
+	len: z.string().transform((val) => val.length)
 });
 
-it.skip('defaultValues', () => {
-	const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema7);
+test.skip('Zod to JSON Schema', () => {
+	console.dir(zodToJsonSchema(schema2), { depth: 10 });
+});
+
+test.skip('defaultValues', () => {
+	const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema);
 	console.dir(values, { depth: 10 });
 });

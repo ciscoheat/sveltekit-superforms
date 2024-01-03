@@ -29,7 +29,7 @@ import { clientValidation } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
-import { isImmediateInput as inputInfo } from './elements.js';
+import { inputInfo } from './elements.js';
 import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';

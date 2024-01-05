@@ -365,7 +365,7 @@ export function superForm<
 			Form.set(result.data, { taint: 'ignore' });
 		}
 
-		if (options.validationMethod != 'auto' && options.validationMethod) {
+		if (options.validationMethod == 'oninput') {
 			return Errors.set(result.errors);
 		}
 
@@ -449,9 +449,9 @@ export function superForm<
 				// Display text errors on blur, if the event matches the error path
 				// Also, display errors if the error is in an array an it has been tainted.
 				if (
-					(type == 'blur' && isEventError) ||
-					(isErrorInArray &&
-						Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>))
+					type == 'blur' &&
+					isEventError
+					//|| (isErrorInArray && Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>))
 				) {
 					return addError();
 				}
@@ -544,12 +544,12 @@ export function superForm<
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
-		set(value: Parameters<typeof _errors.set>[0]) {
-			return _errors.set(updateErrors(value, Data.errors));
+		set(value: Parameters<typeof _errors.set>[0], options?: { force?: boolean }) {
+			return _errors.set(updateErrors(value, Data.errors, options?.force));
 		},
-		update(updater: Parameters<typeof _errors.update>[0]) {
+		update(updater: Parameters<typeof _errors.update>[0], options?: { force?: boolean }) {
 			return _errors.update((value) => {
-				return updateErrors(updater(value), Data.errors);
+				return updateErrors(updater(value), Data.errors, options?.force);
 			});
 		},
 		/**
@@ -844,10 +844,15 @@ export function superForm<
 	}
 
 	async function validate<Path extends FormPathLeaves<T>>(
-		path?: Path,
+		path?: Path | { update: boolean },
 		opts: ValidateOptions<FormPathType<T, Path>> = {}
 	) {
-		if (path === undefined) return Form_validate();
+		if (!path || typeof path === 'object') {
+			if (typeof path == 'object' && path.update === true) {
+				Form_clientValidation({ paths: [] });
+			}
+			return Form_validate();
+		}
 
 		if (opts.update === undefined) opts.update = true;
 		if (opts.taint === undefined) opts.taint = false;

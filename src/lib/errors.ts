@@ -89,9 +89,10 @@ export function mapErrors(errors: ValidationIssue[], shape: SchemaShape) {
  */
 export function updateErrors<T extends Record<string, unknown>>(
 	New: ValidationErrors<T>,
-	Previous: ValidationErrors<T>
+	Previous: ValidationErrors<T>,
+	force?: boolean
 ) {
-	//console.log('updateErrors:', New, Previous);
+	if (force) return New;
 
 	// Set previous errors to undefined,
 	// which signifies that an error can be displayed there again.

@@ -6,7 +6,7 @@ import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
 import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
-import type { TaintedFields } from '../superValidate.js';
+import type { TaintedFields, ValidationErrors } from '../superValidate.js';
 
 export { superForm } from './superForm.js';
 export { superValidate, message, setMessage, setError } from '../superValidate.js';
@@ -142,6 +142,13 @@ type SuperFormData<T extends Record<string, unknown>> = {
 	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
+type SuperFormErrors<T extends Record<string, unknown>> = {
+	subscribe: Writable<ValidationErrors<T>>['subscribe'];
+	set(this: void, value: ValidationErrors<T>, options?: { force?: boolean }): void;
+	update(this: void, updater: Updater<ValidationErrors<T>>, options?: { force?: boolean }): void;
+	clear: () => void;
+};
+
 export type SuperForm<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,9 +156,7 @@ export type SuperForm<
 > = {
 	form: SuperFormData<T>;
 	formId: Writable<string | undefined>;
-	errors: Writable<SuperValidated<T, M>['errors']> & {
-		clear: () => void;
-	};
+	errors: SuperFormErrors<T>;
 	constraints: Writable<SuperValidated<T, M>['constraints']>;
 	message: Writable<SuperValidated<T, M>['message']>;
 	tainted: Writable<TaintedFields<T> | undefined>;

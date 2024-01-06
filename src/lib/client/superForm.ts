@@ -558,12 +558,12 @@ export function superForm<
 	// eslint-disable-next-line dci-lint/grouped-rolemethods
 	const Errors = {
 		subscribe: _errors.subscribe,
-		set(value: Parameters<typeof _errors.set>[0]) {
-			return _errors.set(updateErrors(value, Data.errors));
+		set(value: Parameters<typeof _errors.set>[0], options?: { force?: boolean }) {
+			return _errors.set(updateErrors(value, Data.errors, options?.force));
 		},
-		update(updater: Parameters<typeof _errors.update>[0]) {
+		update(updater: Parameters<typeof _errors.update>[0], options?: { force?: boolean }) {
 			return _errors.update((value) => {
-				return updateErrors(updater(value), Data.errors);
+				return updateErrors(updater(value), Data.errors, options?.force);
 			});
 		},
 		/**

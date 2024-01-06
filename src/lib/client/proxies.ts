@@ -221,7 +221,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 			)
 	>;
 	errors: Writable<string[] | undefined>;
-	fieldErrors: Writable<ArrayFieldErrors>;
+	valueErrors: Writable<ArrayFieldErrors>;
 } {
 	const formErrors = fieldProxy(
 		superForm.errors,
@@ -273,15 +273,18 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	values.subscribe(($values) => {
 		const currentLength = Array.isArray($values) ? $values.length : 0;
 		if (currentLength < lastLength) {
-			superForm.errors.update(($errors) => {
-				const node = pathExists($errors, splitPath(path));
-				if (!node) return $errors;
-				for (const key in node.value) {
-					if (Number(key) < currentLength) continue;
-					delete node.value[key];
-				}
-				return $errors;
-			});
+			superForm.errors.update(
+				($errors) => {
+					const node = pathExists($errors, splitPath(path));
+					if (!node) return $errors;
+					for (const key in node.value) {
+						if (Number(key) < currentLength) continue;
+						delete node.value[key];
+					}
+					return $errors;
+				},
+				{ force: true }
+			);
 		}
 		lastLength = currentLength;
 	});
@@ -295,7 +298,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			`${path}._errors` as any
 		) as Writable<string[] | undefined>,
-		fieldErrors
+		valueErrors: fieldErrors
 	};
 }
 

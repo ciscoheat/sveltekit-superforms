@@ -13,7 +13,7 @@
 	export let label = '';
 	export let taint: TaintOptions = true;
 
-	const { values, errors, fieldErrors } = arrayProxy(form, field, { taint });
+	const { values, errors, valueErrors: fieldErrors } = arrayProxy(form, field, { taint });
 </script>
 
 {#if label}<label for={field}>{label}</label>{/if}

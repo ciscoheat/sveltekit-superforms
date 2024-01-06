@@ -14,28 +14,25 @@ export const userSchema = z.object({
 
 type UserDB = z.infer<typeof userSchema>[];
 
-// Set a global variable to preserve DB when Vite reloads.
-const g = globalThis as unknown as { users: UserDB };
-
 // Let's worry about id collisions later
 export const userId = () => String(Math.random()).slice(2);
 
-// A simple user "database"
-export const users: UserDB = (g.users = g.users || [
-	{
-		id: userId(),
-		name: 'Important Customer',
-		emails: [
-			{ email: 'important@example.com', type: 'private' },
-			{ email: 'important2@example.com', type: 'private' }
-		]
-	},
-	{
-		id: userId(),
-		name: 'Super Customer',
-		emails: [
-			{ email: 'super@example.com', type: 'private' },
-			{ email: 'super2@example.com', type: 'private' }
-		]
-	}
-]);
+export const users = () =>
+	[
+		{
+			id: userId(),
+			name: 'Important Customer',
+			emails: [
+				{ email: 'important@example.com', type: 'private' },
+				{ email: 'important2@example.com', type: 'private' }
+			]
+		},
+		{
+			id: userId(),
+			name: 'Super Customer',
+			emails: [
+				{ email: 'super@example.com', type: 'private' },
+				{ email: 'super2@example.com', type: 'private' }
+			]
+		}
+	] as UserDB;

@@ -6,7 +6,7 @@
 	export let field: 'emails';
 	export let taint = false;
 
-	const { values, fieldErrors } = arrayProxy<z.infer<typeof userSchema>, 'emails'>(form, field, {
+	const { values, valueErrors } = arrayProxy<z.infer<typeof userSchema>, 'emails'>(form, field, {
 		taint
 	});
 
@@ -26,7 +26,7 @@
 		$values = $values;
 	}
 
-	//$: console.log($values, $fieldErrors, taint);
+	//$: console.log($values, $valueErrors, taint);
 </script>
 
 <div>
@@ -35,11 +35,11 @@
 			name={field}
 			id={String(index)}
 			type="text"
-			aria-invalid={$fieldErrors?.[index]?.email ? 'true' : undefined}
+			aria-invalid={$valueErrors?.[index]?.email ? 'true' : undefined}
 			bind:value={item.email}
-			data-invalid={$fieldErrors?.[index]?.email}
+			data-invalid={$valueErrors?.[index]?.email}
 		/>
-		{#if $fieldErrors?.[index]?.email}<span class="invalid">{$fieldErrors?.[index]?.email}</span
+		{#if $valueErrors?.[index]?.email}<span class="invalid">{$valueErrors?.[index]?.email}</span
 			>{/if}
 		<button type="button" on:click={() => handleRemove(index)}>remove</button>
 		<br />

@@ -144,8 +144,8 @@ type SuperFormData<T extends Record<string, unknown>> = {
 
 type SuperFormErrors<T extends Record<string, unknown>> = {
 	subscribe: Writable<ValidationErrors<T>>['subscribe'];
-	set(this: void, value: ValidationErrors<T>): void;
-	update(this: void, updater: Updater<ValidationErrors<T>>): void;
+	set(this: void, value: ValidationErrors<T>, options?: { force?: boolean }): void;
+	update(this: void, updater: Updater<ValidationErrors<T>>, options?: { force?: boolean }): void;
 	clear: () => void;
 };
 

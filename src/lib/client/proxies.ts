@@ -1,6 +1,6 @@
-import { derived, type Readable, type Updater, type Writable } from 'svelte/store';
+import { derived, get, type Readable, type Updater, type Writable } from 'svelte/store';
 import { SuperFormError, type InputConstraint } from '../index.js';
-import { traversePath } from '../traversal.js';
+import { pathExists, traversePath } from '../traversal.js';
 //import type { SuperForm } from './index.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';
 import type { FormPathArrays } from '../stringPath.js';
@@ -265,10 +265,31 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 		}
 	};
 
+	const values = superFieldProxy(superForm, path, options);
+
+	// If array is shortened, delete all keys above length
+	// in errors, so they won't be kept if the array is lengthened again.
+	let lastLength = Array.isArray(get(values)) ? (get(values) as unknown[]).length : 0;
+	values.subscribe(($values) => {
+		const currentLength = Array.isArray($values) ? $values.length : 0;
+		if (currentLength < lastLength) {
+			superForm.errors.update(($errors) => {
+				const node = pathExists($errors, splitPath(path));
+				if (!node) return $errors;
+				for (const key in node.value) {
+					if (Number(key) < currentLength) continue;
+					delete node.value[key];
+				}
+				return $errors;
+			});
+		}
+		lastLength = currentLength;
+	});
+
 	return {
 		path,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		values: superFieldProxy(superForm, path, options) as any,
+		values: values as any,
 		errors: fieldProxy(
 			superForm.errors,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any

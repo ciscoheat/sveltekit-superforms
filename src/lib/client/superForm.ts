@@ -422,6 +422,20 @@ export function superForm<
 			// Immediate, non-multiple input should display the errors
 			if (immediate && !multiple) return addError();
 
+			// Special case for multiple, which should display errors on blur
+			// or if any error has existed previously. Tricky UX.
+			if (multiple) {
+				// For multi-select, if any error has existed, display all errors
+				const errorPath = pathExists(get(Errors), error.path.slice(0, -1));
+				if (errorPath?.value && typeof errorPath?.value == 'object') {
+					for (const errors of Object.values(errorPath.value)) {
+						if (Array.isArray(errors)) {
+							return addError();
+						}
+					}
+				}
+			}
+
 			// If previous error exist, always display
 			// TODO: What to do if path doesn't exist?
 			const previousError = pathExists(previous, error.path);
@@ -431,7 +445,7 @@ export function superForm<
 
 			const lastPath = error.path[error.path.length - 1];
 			const isObjectError = lastPath == '_errors';
-			const isErrorInArray = error.path.some((p) => /^\d+$/.test(String(p)));
+			//const isErrorInArray = error.path.some((p) => /^\d+$/.test(String(p)));
 
 			if (isObjectError) {
 				// TODO: Form-level errors should always be displayed?
@@ -451,7 +465,7 @@ export function superForm<
 				if (
 					type == 'blur' &&
 					isEventError
-					//|| (isErrorInArray && Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>))
+					//|| (isErrorInArray &&	Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>))
 				) {
 					return addError();
 				}

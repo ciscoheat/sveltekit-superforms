@@ -1,10 +1,14 @@
 <script lang="ts">
-	import { arrayProxy } from '$lib/client/index.js';
+	import { z } from 'zod';
+	import type { userSchema } from './users.js';
+	import { arrayProxy } from '$lib/client/proxies.js';
 	export let form;
-	export let field;
+	export let field: 'emails';
 	export let taint = false;
 
-	const { values, fieldErrors } = arrayProxy(form, field, { taint });
+	const { values, fieldErrors } = arrayProxy<z.infer<typeof userSchema>, 'emails'>(form, field, {
+		taint
+	});
 
 	function handleAdd() {
 		const field = { email: '', type: 'private' };
@@ -20,7 +24,6 @@
 			$values = [field];
 		}
 		$values = $values;
-		$fieldErrors = [];
 	}
 
 	//$: console.log($values, $fieldErrors, taint);
@@ -30,7 +33,7 @@
 	{#each $values as item, index}
 		<input
 			name={field}
-			id={index}
+			id={String(index)}
 			type="text"
 			aria-invalid={$fieldErrors?.[index]?.email ? 'true' : undefined}
 			bind:value={item.email}

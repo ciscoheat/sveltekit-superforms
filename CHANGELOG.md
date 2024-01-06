@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The timers didn't reset after navigation in certain cases.
+- Exported `FormPathType` in top export.
 
 ## [1.13.1] - 2023-12-22
 

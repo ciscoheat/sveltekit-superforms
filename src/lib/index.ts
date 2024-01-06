@@ -37,7 +37,8 @@ export type ZodValidation<T extends AnyZodObject> =
 export {
   type FormPath,
   type FormPathLeaves,
-  type FormPathArrays
+  type FormPathArrays,
+  type FormPathType
 } from './stringPath.js';
 
 export type RawShape<T> = T extends ZodObject<infer U> ? U : never;

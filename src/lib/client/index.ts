@@ -144,8 +144,8 @@ type SuperFormData<T extends Record<string, unknown>> = {
 
 type SuperFormErrors<T extends Record<string, unknown>> = {
 	subscribe: Writable<ValidationErrors<T>>['subscribe'];
-	set(this: void, value: ValidationErrors<T>, options?: { force?: boolean }): void;
-	update(this: void, updater: Updater<ValidationErrors<T>>, options?: { force?: boolean }): void;
+	set(this: void, value: ValidationErrors<T>): void;
+	update(this: void, updater: Updater<ValidationErrors<T>>): void;
 	clear: () => void;
 };
 
@@ -193,7 +193,9 @@ export type SuperForm<
 /**
  * Validate current form data.
  */
-export function validateForm<T extends Record<string, unknown>>(): Promise<SuperValidated<T>>;
+export function validateForm<T extends Record<string, unknown>>(path?: {
+	update: boolean;
+}): Promise<SuperValidated<T>>;
 
 /**
  * Validate a specific field in the form.

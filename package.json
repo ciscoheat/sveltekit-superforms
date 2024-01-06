@@ -93,6 +93,7 @@
     "@sveltejs/kit": "^1.30.3",
     "@sveltejs/package": "^2.2.4",
     "@types/throttle-debounce": "^5.0.2",
+    "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "devalue": "^4.3.2",
@@ -112,6 +113,7 @@
     "throttle-debounce": "^5.0.0",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3",
+    "uuid": "^9.0.1",
     "vite": "^4.5.1",
     "vitest": "^0.33.0",
     "zod": "^3.22.4"

@@ -1,6 +1,6 @@
 import { enhance, applyAction } from '$app/forms';
 import { invalidateAll } from '$app/navigation';
-import { page } from '$app/stores';
+import { navigating, page } from '$app/stores';
 import type { ActionResult } from '@sveltejs/kit';
 import { get, type Readable, type Writable } from 'svelte/store';
 import { browser } from '$app/environment';
@@ -548,19 +548,26 @@ export function formEnhance<T extends AnyZodObject, M>(
       // Also fixing an edge case when timers weren't resetted when redirecting to the same route.
       if (cancelled || result.type != 'redirect') {
         htmlForm.completed(cancelled);
-      } else if (
-        result.type == 'redirect' &&
-        new URL(
-          result.location,
-          /^https?:\/\//.test(result.location)
-            ? undefined
-            : document.location.origin
-        ).pathname == document.location.pathname
-      ) {
-        // Checks if beforeNavigate have been called in client/form.ts.
-        setTimeout(() => {
-          htmlForm.completed(true, true);
-        }, 0);
+      } else if (result.type == 'redirect') {
+        if (
+          new URL(
+            result.location,
+            /^https?:\/\//.test(result.location)
+              ? undefined
+              : document.location.origin
+          ).pathname == document.location.pathname
+        ) {
+          // Checks if beforeNavigate have been called in client/form.ts.
+          setTimeout(() => {
+            htmlForm.completed(true, true);
+          }, 0);
+        } else {
+          const unsub = navigating.subscribe(($nav) => {
+            if ($nav) return;
+            unsub();
+            htmlForm.completed(cancelled);
+          });
+        }
       }
     }
 

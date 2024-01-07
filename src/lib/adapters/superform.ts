@@ -3,6 +3,7 @@ import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { traversePath, traversePaths } from '$lib/traversal.js';
 import type { ValidationIssue } from '@decs/typeschema';
 import { adapter, type ValidationAdapter } from './index.js';
+import type { JSONSchema7TypeName } from 'json-schema';
 
 // Cannot be a SuperStruct due to Property having to be passed on.
 // Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
@@ -99,21 +100,23 @@ function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
 		type: 'object',
 		properties: Object.fromEntries(
 			Object.entries(defaults).map(([key, value]) => {
+				let output: JSONSchema;
 				if (value === null || value === undefined) {
-					value = {};
+					output = {};
 				} else if (typeof value == 'object' && value !== null && !Array.isArray(value)) {
-					value = simpleSchema(value as Record<string, unknown>);
+					output = simpleSchema(value as Record<string, unknown>);
 				} else if (Array.isArray(value)) {
-					value = { type: 'array' };
+					output = { type: 'array' };
 				} else {
-					value = typeof value;
+					output = { type: typeof value as JSONSchema7TypeName };
 				}
-				return [key, value];
+				return [key, output];
 			})
 		),
+		required: Object.keys(defaults).filter((key) => !defaults[key]),
 		additionalProperties: false
-	};
-	return output as JSONSchema;
+	} satisfies JSONSchema;
+	return output;
 }
 
 export const superform = adapter(_superform);

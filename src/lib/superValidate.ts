@@ -9,9 +9,6 @@ import { mapErrors } from './errors.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
 
-//type NeedDefaults<T extends Schema> = Lib<T> extends 'zod' ? false : true;
-//type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
-
 export type SuperValidated<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

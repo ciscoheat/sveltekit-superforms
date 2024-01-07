@@ -475,6 +475,15 @@ export function superForm<
 	}
 
 	function Form_set(data: T, options: FormDataOptions = {}) {
+		// Check if file fields should be kept, usually when the server returns them as undefined.
+		// in that case remove the undefined field from the new data.
+		if (options.keepFiles) {
+			traversePaths(Data.form, (info) => {
+				if (info.value instanceof File || (browser && info.value instanceof FileList)) {
+					setPaths(data, [info.path], info.value);
+				}
+			});
+		}
 		return Form.set(data, options);
 	}
 
@@ -487,7 +496,7 @@ export function superForm<
 		) {
 			Form_reset(form.message);
 		} else {
-			rebind(form, untaint);
+			rebind(form, untaint, undefined, true);
 		}
 
 		// onUpdated may check stores, so need to wait for them to update.
@@ -759,7 +768,12 @@ export function superForm<
 	options.taintedMessage = undefined;
 
 	// Role rebinding
-	function rebind(form: SuperValidated<T, M>, untaint: TaintedFields<T> | boolean, message?: M) {
+	function rebind(
+		form: SuperValidated<T, M>,
+		untaint: TaintedFields<T> | boolean,
+		message?: M,
+		keepFiles?: boolean
+	) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
 
 		if (untaint) {
@@ -770,7 +784,7 @@ export function superForm<
 
 		// Form data is not tainted when rebinding.
 		// Prevents object errors from being revalidated after rebind.
-		Form_set(form.data, { taint: 'ignore' });
+		Form_set(form.data, { taint: 'ignore', keepFiles });
 		Message.set(message);
 		Errors.set(form.errors);
 		FormId.set(form.id);
@@ -851,7 +865,7 @@ export function superForm<
 							continue;
 						}
 
-						rebind(newForm as SuperValidated<T, M>, untaint);
+						rebind(newForm as SuperValidated<T, M>, untaint, undefined, true);
 					}
 				}
 			})

@@ -28,4 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `superForm.isTainted(path?)`
-- `superValidate.options.allowFiles`
+- `superValidate.options.allowFiles` which makes `setError` and `message` remove files automatically by default. Use `failAndRemoveFiles` for convenience.

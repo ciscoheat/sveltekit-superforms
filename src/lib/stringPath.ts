@@ -18,6 +18,8 @@ export function mergePath(path: (string | number | symbol)[]) {
 	}, '');
 }
 
+type BuiltInObjects = Date | Set<unknown> | File;
+
 /**
  * Lists all paths in an object as string accessors.
  */
@@ -38,7 +40,7 @@ export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
 export type FormPathArrays<T extends object> = string & StringPathArrays<T>;
 
 export type StringPathArrays<T extends object, Path extends string = ''> = {
-	[K in Extract<keyof T, string>]: NonNullable<T[K]> extends Date | Set<unknown>
+	[K in Extract<keyof T, string>]: NonNullable<T[K]> extends BuiltInObjects
 		? never
 		: NonNullable<T[K]> extends (infer U)[]
 			?
@@ -110,7 +112,7 @@ export type StringPathLeaves<
 				| {
 						// Same as FilterObjects but inlined for better intellisense
 						[K in keyof T]: NonNullable<T[K]> extends object
-							? NonNullable<T[K]> extends Date | Set<unknown>
+							? NonNullable<T[K]> extends BuiltInObjects
 								? K
 								: never
 							: K;

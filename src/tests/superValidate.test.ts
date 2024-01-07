@@ -1,10 +1,17 @@
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, assert, beforeEach } from 'vitest';
 import { type ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
-import { superValidate } from '$lib/superValidate.js';
+import {
+	removeFiles,
+	message,
+	setError,
+	superValidate,
+	type SuperValidated,
+	failAndRemoveFiles
+} from '$lib/superValidate.js';
 import merge from 'ts-deepmerge';
 
 ///// Adapters //////////////////////////////////////////////////////
@@ -28,6 +35,7 @@ import Joi from 'joi';
 
 import { superform, type Validators } from '$lib/adapters/superform.js';
 import { superValidateSync } from '$lib/superValidateSync.js';
+import { fail } from '@sveltejs/kit';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -376,3 +384,80 @@ function schemaTest(
 		});
 	});
 }
+
+///// File handling /////////////////////////////////////////////////
+
+describe('File handling with the allowFiles option', () => {
+	const schema = z.object({
+		avatar: z.custom<File>().refine((f) => {
+			return f && f.size <= 1000;
+		}, 'Max 1Kb upload size.')
+	});
+
+	it('should allow files if specified as an option', async () => {
+		const formData = new FormData();
+		formData.set('avatar', new Blob(['A'.repeat(100)]));
+
+		const output = await superValidate(formData, zod(schema), { allowFiles: true });
+		assert(output.data.avatar instanceof File);
+		expect(output.data.avatar.size).toBe(100);
+		expect(output.valid).toBe(true);
+	});
+
+	it('should fail by testing the schema', async () => {
+		const formData = new FormData();
+		formData.set('avatar', new Blob(['A'.repeat(1001)]));
+
+		const output = await superValidate(formData, zod(schema), { allowFiles: true });
+		assert(output.data.avatar instanceof File);
+		expect(output.valid).toBe(false);
+		expect(output.errors.avatar).toEqual(['Max 1Kb upload size.']);
+	});
+
+	describe('File removal from the superValidate object', () => {
+		let form: SuperValidated<z.infer<typeof schema>>;
+
+		beforeEach(async () => {
+			const formData = new FormData();
+			formData.set('avatar', new Blob(['A'.repeat(100)]));
+			form = await superValidate(formData, zod(schema), { allowFiles: true });
+			expect(form.data.avatar).toBeInstanceOf(File);
+		});
+
+		it('should remove the files with setError', async () => {
+			setError(form, 'avatar', 'Setting error');
+			expect(form.data.avatar).toBeUndefined();
+			expect(form.errors.avatar).toEqual(['Setting error']);
+		});
+
+		it('should remove the files with message and a valid file', async () => {
+			expect(form.data.avatar).toBeInstanceOf(File);
+			expect(form.valid).toBe(true);
+			message(form, 'Message');
+			expect(form.data.avatar).toBeUndefined();
+			expect(form.message).toEqual('Message');
+		});
+
+		it('should remove the files with message and an invalid file', async () => {
+			const formData = new FormData();
+			formData.set('avatar', new Blob(['A'.repeat(1001)]));
+			form = await superValidate(formData, zod(schema), { allowFiles: true });
+			expect(form.data.avatar).toBeInstanceOf(File);
+			expect(form.valid).toBe(false);
+
+			message(form, 'Message');
+			expect(form.data.avatar).toBeUndefined();
+			expect(form.message).toEqual('Message');
+		});
+
+		it('should remove the files with the removeFiles function', async () => {
+			fail(400, removeFiles({ form }));
+			expect(form.data.avatar).toBeUndefined();
+		});
+
+		it('should remove the files with the failAndRemoveFiles function', async () => {
+			failAndRemoveFiles(400, removeFiles({ form }));
+			expect(form.data.avatar).toBeUndefined();
+		});
+	});
+});

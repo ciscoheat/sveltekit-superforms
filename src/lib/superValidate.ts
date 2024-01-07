@@ -1,5 +1,5 @@
 import { traversePath } from './traversal.js';
-import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
+import { type ActionFailure, fail as realFail, type RequestEvent } from '@sveltejs/kit';
 import { mapAdapter, type ValidationAdapter, type ValidationResult } from './adapters/index.js';
 import { parseRequest } from './formData.js';
 import type { NumericRange } from './utils.js';
@@ -161,6 +161,7 @@ export function message<T extends Record<string, unknown>, M>(
 	message: M,
 	options?: {
 		status?: NumericRange<400, 599>;
+		removeFiles?: boolean;
 	}
 ) {
 	if (options?.status && options.status >= 400) {
@@ -168,7 +169,12 @@ export function message<T extends Record<string, unknown>, M>(
 	}
 
 	form.message = message;
-	return !form.valid ? fail(options?.status ?? 400, { form }) : { form };
+
+	const remove = options?.removeFiles !== false;
+	if (form.valid) return remove ? removeFiles({ form }) : { form };
+
+	const func = remove ? failAndRemoveFiles : realFail;
+	return func(options?.status ?? 400, { form });
 }
 
 export const setMessage = message;
@@ -176,6 +182,7 @@ export const setMessage = message;
 type SetErrorOptions = {
 	overwrite?: boolean;
 	status?: NumericRange<400, 599>;
+	removeFiles?: boolean;
 };
 
 /**
@@ -247,14 +254,24 @@ export function setError<T extends Record<string, unknown>>(
 	}
 
 	form.valid = false;
-	return fail(options.status ?? 400, { form });
+
+	const func = options.removeFiles === false ? realFail : failAndRemoveFiles;
+	return func(options.status ?? 400, { form });
 }
 
 export function removeFiles<T extends object>(obj: T) {
+	if (typeof obj !== 'object') return obj;
 	for (const key in obj) {
 		const value = obj[key];
 		if (value instanceof File) delete obj[key];
 		else if (value && typeof value === 'object') removeFiles(value);
 	}
 	return obj;
+}
+
+export function failAndRemoveFiles<T extends Record<string, unknown> | undefined>(
+	...params: Parameters<typeof realFail<T>>
+) {
+	if (params[1]) params[1] = removeFiles(params[1]);
+	return realFail<T>(...params);
 }

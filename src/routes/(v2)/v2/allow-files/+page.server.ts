@@ -1,7 +1,6 @@
 import { zod } from '$lib/adapters/index.js';
-import { message, removeFiles, superValidate } from '$lib/server/index.js';
+import { failAndRemoveFiles, message, superValidate } from '$lib/server/index.js';
 import { schema } from './schema.js';
-import { fail } from '@sveltejs/kit';
 
 export const load = async () => {
 	const form = await superValidate(zod(schema));
@@ -16,8 +15,8 @@ export const actions = {
 		const form = await superValidate(formData, zod(schema), { allowFiles: true });
 		console.log('POST', form);
 
-		if (!form.valid) return fail(400, removeFiles({ form }));
+		if (!form.valid) return failAndRemoveFiles(400, { form });
 
-		return message(removeFiles(form), 'Posted OK!');
+		return message(form, 'Posted OK!');
 	}
 };

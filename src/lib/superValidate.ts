@@ -55,7 +55,7 @@ export type SuperValidateOptions<T extends Record<string, unknown>> = Partial<{
 	defaults: T;
 	jsonSchema: JSONSchema;
 	strict: boolean;
-	// TODO: allowFiles
+	allowFiles: boolean;
 }>;
 
 export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<T, boolean>;
@@ -248,4 +248,13 @@ export function setError<T extends Record<string, unknown>>(
 
 	form.valid = false;
 	return fail(options.status ?? 400, { form });
+}
+
+export function removeFiles<T extends object>(obj: T) {
+	for (const key in obj) {
+		const value = obj[key];
+		if (value instanceof File) delete obj[key];
+		else if (value && typeof value === 'object') removeFiles(value);
+	}
+	return obj;
 }

@@ -19,7 +19,7 @@ export async function parseRequest<T extends Record<string, unknown>>(
 	let parsed: ParsedData;
 
 	if (data instanceof FormData) {
-		parsed = parseFormData(data, schemaData, options?.preprocessed);
+		parsed = parseFormData(data, schemaData, options);
 	} else if (data instanceof URL || data instanceof URLSearchParams) {
 		parsed = parseSearchParams(data, schemaData, options);
 	} else if (data instanceof Request) {
@@ -60,7 +60,7 @@ async function tryParseFormData<T extends Record<string, unknown>>(
 		// No data found, return an empty form
 		return { id: undefined, data: undefined, posted: false };
 	}
-	return parseFormData(formData, schemaData, options?.preprocessed);
+	return parseFormData(formData, schemaData, options);
 }
 
 export function parseSearchParams<T extends Record<string, unknown>>(
@@ -75,7 +75,7 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 		convert.append(key, value);
 	}
 
-	const output = parseFormData(convert, schemaData, options?.preprocessed);
+	const output = parseFormData(convert, schemaData, options);
 
 	// Set posted to false since it's a URL
 	output.posted = false;
@@ -85,7 +85,7 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 export function parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
 	schemaData: JSONSchema7,
-	preprocessed?: SuperValidateOptions<T>['preprocessed']
+	options?: SuperValidateOptions<T>
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
@@ -108,15 +108,15 @@ export function parseFormData<T extends Record<string, unknown>>(
 		? { id, data, posted: true }
 		: {
 				id,
-				data: _parseFormData(formData, schemaData, preprocessed),
+				data: _parseFormData(formData, schemaData, options),
 				posted: true
 			};
 }
 
-function _parseFormData<T extends object>(
+function _parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
 	schema: JSONSchema7,
-	preprocessed?: (keyof T)[]
+	options?: SuperValidateOptions<T>
 ) {
 	const output: Record<string, unknown> = {};
 	const schemaKeys = [
@@ -125,14 +125,12 @@ function _parseFormData<T extends object>(
 	];
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
-		if (preprocessed && preprocessed.includes(key as keyof T)) {
+		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
 			return entry;
 		}
 
 		if (entry && typeof entry !== 'string') {
-			// File objects are not supported
-			// TODO: Add "allowFiles" option for uploaded files
-			return undefined;
+			return options?.allowFiles ? entry : undefined;
 		}
 
 		return parseFormDataEntry(key, entry, info);
@@ -206,7 +204,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	if (!value) {
 		const defaultValue = defaultValues(info.schema, info.isOptional, [key]);
 
-		//console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`, info.schema);
+		//console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`, info.schema); //debug
 
 		// defaultValue can be returned immediately unless it's boolean, which
 		// means it could have been posted as a checkbox.

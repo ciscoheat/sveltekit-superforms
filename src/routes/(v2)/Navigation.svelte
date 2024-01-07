@@ -4,6 +4,7 @@
 		<li><a href="/v2">v2</a></li>
 		<li><a href="/v2/validate">Validate</a></li>
 		<li><a href="/v2/discord/array-remove">Array-remove</a></li>
+		<li><a href="/v2/allow-files">Allow files</a></li>
 	</ul>
 </nav>
 

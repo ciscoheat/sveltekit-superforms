@@ -27,11 +27,6 @@ export function schemaInfo(
 
 	const types = schemaTypes(schema, path);
 
-	if (!types.length) {
-		//console.warn('No types found', schema);
-		return undefined;
-	}
-
 	const array =
 		schema.items && types.includes('array')
 			? ((Array.isArray(schema.items) ? schema.items : [schema.items]).filter(

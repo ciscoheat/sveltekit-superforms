@@ -448,9 +448,6 @@ export function superForm<
 			//const isErrorInArray = error.path.some((p) => /^\d+$/.test(String(p)));
 
 			if (isObjectError) {
-				// TODO: Form-level errors should always be displayed?
-				//if (error.path.length == 1) return addError();
-
 				// New object errors should be displayed on blur events,
 				// or the (parent) path is or has been tainted.
 				if (

@@ -146,6 +146,18 @@
 		collapsed = data.collapsed[route];
 	}
 
+	/**
+	 * @param {File} file
+	 */
+	function fileToJSON(file) {
+		return {
+			name: file.name,
+			size: file.size,
+			type: file.type,
+			lastModified: file.lastModified
+		};
+	}
+
 	///////////////////////////////////////////////////////////////////
 
 	/**
@@ -184,6 +196,19 @@
 				}
 				if (value instanceof Error) {
 					return '#}E#' + `${value.name}: ${value.message || value.cause || '(No error message)'}`;
+				}
+				if (typeof this === 'object' && this[key] instanceof File) {
+					return fileToJSON(this[key]);
+				}
+				if (browser && typeof this === 'object' && this[key] instanceof FileList) {
+					/** @type FileList */
+					const list = this[key];
+					const output = [];
+					for (let i = 0; i < list.length; i++) {
+						const file = list.item(i);
+						if (file) output.push(fileToJSON(file));
+					}
+					return output;
 				}
 				return value;
 			},

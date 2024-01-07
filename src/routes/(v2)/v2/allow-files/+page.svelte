@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { zod } from '$lib/adapters/zod.js';
+	import { schema } from './schema.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
+	import { page } from '$app/stores';
 
 	export let data;
 
+	// Doesn't work well with testing client-side validation for files
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
 		//dataType: 'json',
-		validators: zod(schema)
+		validators: $page.url.searchParams.has('client') ? zod(schema) : undefined
 	});
 </script>
 

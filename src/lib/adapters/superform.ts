@@ -100,7 +100,7 @@ function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
 		properties: Object.fromEntries(
 			Object.entries(defaults).map(([key, value]) => {
 				if (value === null || value === undefined) {
-					value = { type: ['null', 'boolean', 'object', 'array', 'number', 'integer', 'string'] };
+					value = {};
 				} else if (typeof value == 'object' && value !== null && !Array.isArray(value)) {
 					value = simpleSchema(value as Record<string, unknown>);
 				} else if (Array.isArray(value)) {

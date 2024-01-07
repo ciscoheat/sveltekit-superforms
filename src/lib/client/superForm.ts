@@ -52,6 +52,11 @@ type ChangeEvent = {
 	formEl?: HTMLFormElement;
 };
 
+type FormDataOptions = Partial<{
+	taint: TaintOption;
+	keepFiles: boolean;
+}>;
+
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 const initialForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
 
@@ -321,16 +326,13 @@ export function superForm<
 	const _formData = writable(form.data);
 	const Form = {
 		subscribe: _formData.subscribe,
-		set: (value: Parameters<typeof _formData.set>[0], options: { taint?: TaintOption } = {}) => {
+		set: (value: Parameters<typeof _formData.set>[0], options: FormDataOptions = {}) => {
 			// Need to clone the value, so it won't refer to $page for example.
 			const newData = clone(value);
 			Tainted_update(newData, options.taint ?? true);
 			return _formData.set(newData);
 		},
-		update: (
-			updater: Parameters<typeof _formData.update>[0],
-			options: { taint?: TaintOption } = {}
-		) => {
+		update: (updater: Parameters<typeof _formData.update>[0], options: FormDataOptions = {}) => {
 			return _formData.update((value) => {
 				// No cloning here, since it's an update
 				const newData = updater(value);
@@ -472,7 +474,7 @@ export function superForm<
 		Errors.set(output as ValidationErrors<T>);
 	}
 
-	function Form_set(data: T, options: { taint?: TaintOption } = {}) {
+	function Form_set(data: T, options: FormDataOptions = {}) {
 		return Form.set(data, options);
 	}
 
@@ -589,7 +591,9 @@ export function superForm<
 		formEl: HTMLFormElement
 	) {
 		if (NextChange === null) {
-			throw new SuperFormError('NextChange is null');
+			// TODO: Is null for file inputs
+			NextChange = { paths: [] };
+			//throw new SuperFormError('NextChange is null');
 		}
 
 		NextChange.type = event;
@@ -992,7 +996,7 @@ export function superForm<
 			async function onInput(e: Event) {
 				const info = inputInfo(e.target);
 				// Need to wait for immediate updates due to some timing issue
-				if (info.immediate) await new Promise((r) => setTimeout(r, 0));
+				if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
 
 				lastInputChange = NextChange_paths();
 				NextChange_additionalEventInformation('input', info.immediate, info.multiple, FormEl);
@@ -1008,7 +1012,7 @@ export function superForm<
 
 				const info = inputInfo(e.target);
 				// Need to wait for immediate updates due to some timing issue
-				if (info.immediate) await new Promise((r) => setTimeout(r, 0));
+				if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
 
 				Form_clientValidation({
 					paths: lastInputChange,

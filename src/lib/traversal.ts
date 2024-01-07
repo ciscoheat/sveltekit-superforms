@@ -73,6 +73,8 @@ export function traversePath<T extends object>(
 		path.push(realPath[path.length]);
 	}
 
+	if (!parent) return undefined;
+
 	const key = realPath[realPath.length - 1];
 	return {
 		parent,
@@ -127,10 +129,11 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 	const diffPaths = new Map<string, (string | number | symbol)[]>();
 
 	function checkPath(data: PathData, compareTo: object) {
-		const exists = traversePath(compareTo, data.path as FieldPath<object>);
+		const exists = compareTo ? traversePath(compareTo, data.path as FieldPath<object>) : undefined;
 
 		function addDiff() {
 			diffPaths.set(data.path.join(' '), data.path);
+			return 'skip';
 		}
 
 		if (data.isLeaf) {
@@ -144,12 +147,17 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 				(data.value instanceof Date || exists.value instanceof Date) &&
 				(!!data.value != !!exists.value || data.value.getTime() != exists.value.getTime())
 			) {
-				addDiff();
+				return addDiff();
 			} else if (
 				(data.value instanceof Set || exists.value instanceof Set) &&
 				(!!data.value != !!exists.value || !eqSet(data.value, exists.value))
 			) {
-				addDiff();
+				return addDiff();
+			} else if (
+				(data.value instanceof File || exists.value instanceof File) &&
+				(!!data.value != !!exists.value || data.value !== exists.value)
+			) {
+				return addDiff();
 			}
 		}
 	}

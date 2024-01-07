@@ -23,11 +23,12 @@ export const scrollToAndCenter = (
 	window.scrollTo({ left: 0, top, behavior });
 };
 
-const immediateInputTypes = ['checkbox', 'radio', 'range'];
+const immediateInputTypes = ['checkbox', 'radio', 'range', 'file'];
 
 export function inputInfo(el: EventTarget | null): {
 	immediate: boolean;
 	multiple: boolean;
+	file: boolean;
 } {
 	const immediate =
 		!!el &&
@@ -35,6 +36,7 @@ export function inputInfo(el: EventTarget | null): {
 			(el instanceof HTMLInputElement && immediateInputTypes.includes(el.type)));
 
 	const multiple = !!el && el instanceof HTMLSelectElement && el.multiple;
+	const file = !!el && el instanceof HTMLInputElement && el.type == 'file';
 
-	return { immediate, multiple };
+	return { immediate, multiple, file };
 }

@@ -1,13 +1,14 @@
 <script lang="ts">
+	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	//import { schema } from './schema.js';
+	import { schema } from './schema.js';
 
 	export let data;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
 		//dataType: 'json',
-		//validators: schema
+		validators: zod(schema)
 	});
 </script>
 
@@ -17,7 +18,12 @@
 
 <form method="POST" enctype="multipart/form-data" use:enhance>
 	<label>
-		Upload file, max 10 Kb: <input accept="image/png, image/jpeg" name="avatar" type="file" />
+		Upload file, max 10 Kb: <input
+			on:input={(e) => ($form.avatar = e.currentTarget.files?.item(0) ?? null)}
+			accept="image/png, image/jpeg"
+			name="avatar"
+			type="file"
+		/>
 		{#if $errors.avatar}<span class="invalid">{$errors.avatar}</span>{/if}
 	</label>
 	<div>

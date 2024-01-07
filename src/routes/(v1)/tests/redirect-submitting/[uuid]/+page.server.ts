@@ -7,7 +7,8 @@ import { superValidate } from '$lib/superValidate.js';
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const schema = z.object({
-	name: z.string()
+	name: z.string().min(1),
+	same: z.boolean()
 });
 
 export const load = async () => {
@@ -16,8 +17,8 @@ export const load = async () => {
 };
 
 export const actions = {
-	default: async ({ request }) => {
-		await sleep(1000);
+	default: async ({ request, url }) => {
+		await sleep(500);
 		const form = await superValidate(request, zod(schema));
 		console.log('POST', form);
 
@@ -31,6 +32,6 @@ export const actions = {
 
 		// Yep, return { form } here too
 		// return { form }
-		throw redirect(303, `/tests/redirect-submitting/${v4()}`);
+		throw redirect(303, form.data.same ? url.toString() : `/tests/redirect-submitting/${v4()}`);
 	}
 };

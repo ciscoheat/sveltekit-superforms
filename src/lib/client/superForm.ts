@@ -11,7 +11,7 @@ import type {
 	ValidateOptions
 } from './index.js';
 import { derived, get, readonly, writable, type Readable } from 'svelte/store';
-import { page } from '$app/stores';
+import { navigating, page } from '$app/stores';
 import { clone } from '$lib/utils.js';
 import { browser } from '$app/environment';
 import { onDestroy, tick } from 'svelte';
@@ -1304,17 +1304,14 @@ export function superForm<
 					// Also fixing an edge case when timers weren't resetted when redirecting to the same route.
 					if (cancelled || result.type != 'redirect') {
 						htmlForm.completed(cancelled);
-					} else if (
-						result.type == 'redirect' &&
-						new URL(
-							result.location,
-							/^https?:\/\//.test(result.location) ? undefined : document.location.origin
-						).pathname == document.location.pathname
-					) {
-						// Checks if beforeNavigate have been called in client/form.ts.
-						setTimeout(() => {
-							htmlForm.completed(true, true);
-						}, 0);
+					} else {
+						const unsub = navigating.subscribe(($nav) => {
+							if ($nav) return;
+							unsub();
+							if (htmlForm.isSubmitting()) {
+								htmlForm.completed(cancelled, true);
+							}
+						});
 					}
 				}
 

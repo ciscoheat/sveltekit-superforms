@@ -2,7 +2,6 @@ import { isElementInViewport, scrollToAndCenter } from './elements.js';
 import type { FormOptions } from './index.js';
 import { onDestroy, tick } from 'svelte';
 import type { Writable } from 'svelte/store';
-import { afterNavigate, beforeNavigate } from '$app/navigation';
 
 enum FetchStatus {
 	Idle = 0,
@@ -12,7 +11,7 @@ enum FetchStatus {
 }
 
 const activeTimers = new Set<() => void>();
-let _initialized = false;
+//let _initialized = false;
 
 /**
  * @DCI-context
@@ -28,7 +27,6 @@ export function Form<T extends Record<string, unknown>, M>(
 ) {
 	let state: FetchStatus = FetchStatus.Idle;
 	let delayedTimeout: number, timeoutTimeout: number;
-	let aboutToNavigate = false;
 
 	//#region Timers
 
@@ -170,16 +168,11 @@ export function Form<T extends Record<string, unknown>, M>(
 	{
 		ErrorTextEvents_addErrorTextListeners();
 
-		const completed = (cancelled: boolean, clearIfNotNavigating = false) => {
-			Timers_clear();
-			if (!cancelled) setTimeout(Form_scrollToFirstError, 1);
+		const completed = (cancelled: boolean, clearAll = false) => {
+			if (!clearAll) Timers_clear();
+			else Timers_clearAll();
 
-			// clearifNotNavigating is set when redirecting, to see if the navigation events
-			// have been triggered. In rare cases they aren't, in which case we need to clear
-			//  the timers here, instead of in afterNavigate.
-			if (clearIfNotNavigating && !aboutToNavigate) {
-				Timers_clearAll();
-			}
+			if (!cancelled) setTimeout(Form_scrollToFirstError, 1);
 		};
 
 		onDestroy(() => {
@@ -187,29 +180,14 @@ export function Form<T extends Record<string, unknown>, M>(
 			completed(true);
 		});
 
-		// If redirected, clear timers after navigating for better UX.
-		if (!_initialized) {
-			beforeNavigate(() => {
-				aboutToNavigate = true;
-			});
-
-			afterNavigate((nav) => {
-				if (nav.type == 'enter') return;
-				aboutToNavigate = false;
-				Timers_clearAll();
-			});
-			_initialized = true;
-		}
-
 		return {
-			submitting: () => {
-				aboutToNavigate = false;
+			submitting() {
 				Timers_start();
 			},
 
 			completed,
 
-			scrollToFirstError: () => {
+			scrollToFirstError() {
 				setTimeout(Form_scrollToFirstError, 1);
 			},
 

@@ -108,11 +108,10 @@ export function updateErrors<T extends Record<string, unknown>>(
 	return Previous;
 }
 
-export function flattenErrors(errors: ValidationErrors<Record<string, unknown>>) {
+export function flattenErrors<T extends Record<string, unknown>>(errors: ValidationErrors<T>) {
 	return _flattenErrors(errors, []);
 }
 
-// TODO: Does it work with array-level errors?
 function _flattenErrors(
 	errors: ValidationErrors<Record<string, unknown>>,
 	path: string[]

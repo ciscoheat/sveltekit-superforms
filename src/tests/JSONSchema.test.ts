@@ -284,7 +284,7 @@ describe('Default values', () => {
 		expect(defaultValues<any>(defaultTestSchema).gender).toEqual('female');
 	});
 
-	it.only('should work with nullable', () => {
+	it('should work with nullable', () => {
 		const userSchema = z.object({
 			gender: z.enum(['male', 'female', 'other']).default('male').nullish()
 		});

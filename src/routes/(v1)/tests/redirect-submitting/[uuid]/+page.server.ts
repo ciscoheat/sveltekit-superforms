@@ -22,16 +22,10 @@ export const actions = {
 		const form = await superValidate(request, zod(schema));
 		console.log('POST', form);
 
-		// Convenient validation check:
 		if (!form.valid) {
-			// Again, return { form } and things will just work.
 			return fail(400, { form });
 		}
 
-		// TODO: Do something with the validated form.data
-
-		// Yep, return { form } here too
-		// return { form }
 		throw redirect(303, form.data.same ? url.toString() : `/tests/redirect-submitting/${v4()}`);
 	}
 };

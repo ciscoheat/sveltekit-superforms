@@ -600,9 +600,7 @@ export function superForm<
 		formEl: HTMLFormElement
 	) {
 		if (NextChange === null) {
-			// TODO: Is null for file inputs
 			NextChange = { paths: [] };
-			//throw new SuperFormError('NextChange is null');
 		}
 
 		NextChange.type = event;

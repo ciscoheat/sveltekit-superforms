@@ -134,6 +134,7 @@ export type SuperFormSnapshot<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = SuperValidated<T, M> & { tainted: TaintedFields<T> | undefined };
 
+// TODO: Implement and test untaint and untaint-all
 export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'ignore';
 
 type SuperFormData<T extends Record<string, unknown>> = {

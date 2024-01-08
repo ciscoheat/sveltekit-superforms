@@ -1,4 +1,4 @@
-import { SuperFormError, type InputConstraints } from '$lib/index.js';
+import { SuperFormError, type InputConstraints, type Inferred } from '$lib/index.js';
 import { validate, type Schema as TypeSchema, type ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
@@ -31,6 +31,23 @@ export type ValidationLibrary =
 	| 'superform'
 	| 'custom';
 
+export type Schema = TypeSchema;
+
+export type AdapterDefaultOptions<T extends Schema> = {
+	defaults: Inferred<T>;
+	schemaOptions?: SchemaOptions;
+};
+
+export type JsonSchemaOptions<T extends Schema> = {
+	jsonSchema?: JSONSchema;
+	defaults?: Inferred<T>;
+};
+
+export type RequiredJsonSchemaOptions<T extends Schema> = {
+	jsonSchema: JSONSchema;
+	defaults?: Inferred<T>;
+};
+
 // Lifted from TypeSchema, since they are not exported
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ValidationResult<TOutput = any> =
@@ -42,8 +59,6 @@ export type ValidationResult<TOutput = any> =
 			success: false;
 			issues: Array<ValidationIssue>;
 	  };
-
-export type Schema = TypeSchema;
 
 export type ValidationAdapter<T extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;

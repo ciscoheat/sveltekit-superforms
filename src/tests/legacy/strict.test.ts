@@ -54,6 +54,16 @@ describe('Strict mode', () => {
 			errors: {}
 		},
 		{
+			name: 'Should be valid if foo is not present but a default value exists',
+			schema: z.object({
+				foo: z.string().default('Test')
+			}),
+			input: {},
+			expected: { foo: 'Test' },
+			valid: true,
+			errors: {}
+		},
+		{
 			name: 'Should be invalid if key is mispelled',
 			schema: z.object({
 				foo: z.string()

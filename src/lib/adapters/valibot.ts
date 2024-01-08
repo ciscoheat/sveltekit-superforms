@@ -1,21 +1,25 @@
 import {
 	toJsonSchema,
-	type SchemaOptions,
 	type ValidationAdapter,
 	adapter,
-	process
+	process,
+	type AdapterDefaultOptions,
+	type RequiredJsonSchemaOptions
 } from './index.js';
 import type { BaseSchema, BaseSchemaAsync } from 'valibot';
 import type { Inferred } from '$lib/index.js';
 
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
-	options: { defaults: Inferred<T>; schemaOptions?: SchemaOptions }
+	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
 ): ValidationAdapter<Inferred<T>> {
 	return {
 		superFormValidationLibrary: 'valibot',
 		process: process(schema),
-		jsonSchema: toJsonSchema(options.defaults, options.schemaOptions),
+		jsonSchema:
+			'jsonSchema' in options
+				? options.jsonSchema
+				: toJsonSchema(options.defaults, options.schemaOptions),
 		defaults: options.defaults
 	};
 }

@@ -113,7 +113,10 @@ function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
 				return [key, output];
 			})
 		),
-		required: Object.keys(defaults).filter((key) => !defaults[key]),
+		required: Object.keys(defaults).filter(
+			(key) =>
+				!defaults[key] || (Array.isArray(defaults[key]) && !(defaults[key] as unknown[]).length)
+		),
 		additionalProperties: false
 	} satisfies JSONSchema;
 	return output;

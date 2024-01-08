@@ -22,14 +22,8 @@ export {
 	fieldProxy,
 	formFieldProxy,
 	stringProxy,
-	arrayProxy,
-	type TaintOptions
+	arrayProxy
 } from './proxies.js';
-
-export type FormUpdate = (
-	result: Exclude<ActionResult, { type: 'error' }>,
-	untaint?: boolean
-) => Promise<void>;
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -135,12 +129,18 @@ export type SuperFormSnapshot<
 > = SuperValidated<T, M> & { tainted: TaintedFields<T> | undefined };
 
 // TODO: Implement and test untaint and untaint-all
-export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'ignore';
-
 type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
-	set(this: void, value: T, options?: { taint?: TaintOption }): void;
-	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
+	set(
+		this: void,
+		value: T,
+		options?: { taint?: boolean | 'untaint' | 'untaint-all' | 'ignore' }
+	): void;
+	update(
+		this: void,
+		updater: Updater<T>,
+		options?: { taint?: boolean | 'untaint' | 'untaint-all' | 'ignore' }
+	): void;
 };
 
 type SuperFormErrors<T extends Record<string, unknown>> = {
@@ -219,6 +219,6 @@ export function validateForm<
 export type ValidateOptions<V> = Partial<{
 	value: V;
 	update: boolean | 'errors' | 'value';
-	taint: TaintOption;
+	taint: boolean | 'untaint' | 'untaint-all' | 'ignore';
 	errors: string | string[];
 }>;

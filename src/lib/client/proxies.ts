@@ -30,8 +30,6 @@ const defaultOptions: DefaultOptions = {
 	emptyIfZero: true
 };
 
-export type TaintOptions = boolean | 'untaint' | 'untaint-all';
-
 ///// Proxy functions ///////////////////////////////////////////////
 
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
@@ -204,7 +202,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	superForm: SuperForm<T, any>,
 	path: Path,
-	options?: { taint?: TaintOptions }
+	options?: { taint?: boolean | 'untaint' | 'untaint-all' }
 ): {
 	path: Path;
 	values: Writable<
@@ -306,7 +304,7 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	superForm: SuperForm<T, any>,
 	path: Path,
-	options?: { taint?: TaintOptions }
+	options?: { taint?: boolean | 'untaint' | 'untaint-all' }
 ): {
 	path: Path;
 	value: SuperFieldProxy<FormPathType<T, Path>>;
@@ -367,14 +365,18 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 
 type SuperFieldProxy<T> = {
 	subscribe: Readable<T>['subscribe'];
-	set(this: void, value: T, options?: { taint?: TaintOptions }): void;
-	update(this: void, updater: Updater<T>, options?: { taint?: TaintOptions }): void;
+	set(this: void, value: T, options?: { taint?: boolean | 'untaint' | 'untaint-all' }): void;
+	update(
+		this: void,
+		updater: Updater<T>,
+		options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+	): void;
 };
 
 function superFieldProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	superForm: SuperForm<T>,
 	path: Path,
-	baseOptions?: { taint?: TaintOptions }
+	baseOptions?: { taint?: boolean | 'untaint' | 'untaint-all' }
 ): SuperFieldProxy<FormPathType<T, Path>> {
 	const form = superForm.form;
 	const path2 = splitPath<T>(path);
@@ -389,14 +391,17 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends FormPat
 			const unsub = proxy.subscribe(...params);
 			return () => unsub();
 		},
-		update(upd: Updater<FormPathType<T, Path>>, options?: { taint?: TaintOptions }) {
+		update(
+			upd: Updater<FormPathType<T, Path>>,
+			options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+		) {
 			form.update((f) => {
 				const output = traversePath(f, path2);
 				if (output) output.parent[output.key] = upd(output.value);
 				return f;
 			}, options ?? baseOptions);
 		},
-		set(value: FormPathType<T, Path>, options?: { taint?: TaintOptions }) {
+		set(value: FormPathType<T, Path>, options?: { taint?: boolean | 'untaint' | 'untaint-all' }) {
 			form.update((f) => {
 				const output = traversePath(f, path2);
 				if (output) output.parent[output.key] = value;

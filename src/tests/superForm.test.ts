@@ -1,5 +1,5 @@
 import { zod } from '$lib/adapters/zod.js';
-import type { SuperForm, TaintOptions } from '$lib/client/index.js';
+import type { SuperForm } from '$lib/client/index.js';
 import { superForm, superValidate, type SuperValidated } from '$lib/index.js';
 import { get } from 'svelte/store';
 import merge from 'ts-deepmerge';
@@ -15,7 +15,7 @@ const schema = z.object({
 
 type Schema = z.infer<typeof schema>;
 
-function updateForm(data: Partial<Schema>, taint?: TaintOptions) {
+function updateForm(data: Partial<Schema>, taint?: boolean | 'untaint') {
 	form.form.update(
 		($form) => {
 			const output = merge($form, data) as Schema;
@@ -40,7 +40,7 @@ describe('Tainted', () => {
 	function checkTaint(
 		data: Partial<Schema>,
 		expected: Record<string, unknown>,
-		taint?: TaintOptions
+		taint?: boolean | 'untaint'
 	) {
 		updateForm(data, taint);
 		expect(get(tainted)).toStrictEqual(expected);

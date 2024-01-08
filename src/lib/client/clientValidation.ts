@@ -1,5 +1,5 @@
 import { type SuperValidated } from '../index.js';
-import type { FormOptions, TaintOption } from './index.js';
+import type { FormOptions } from './index.js';
 import { mapErrors } from '../errors.js';
 import { mapAdapter, type ValidationResult } from '$lib/adapters/index.js';
 import type { ValidationErrors } from '$lib/superValidate.js';
@@ -7,7 +7,7 @@ import type { ValidationErrors } from '$lib/superValidate.js';
 export type ValidateOptions<V> = Partial<{
 	value: V;
 	update: boolean | 'errors' | 'value';
-	taint: TaintOption;
+	taint: boolean | 'untaint' | 'untaint-all' | 'ignore';
 	errors: string | string[];
 }>;
 

@@ -2,12 +2,10 @@ import { type SuperValidated, type TaintedFields } from '$lib/superValidate.js';
 import type { ActionResult, Page } from '@sveltejs/kit';
 import type {
 	FormOptions,
-	FormUpdate,
 	SuperForm,
 	SuperFormEventList,
 	SuperFormEvents,
 	SuperFormSnapshot,
-	TaintOption,
 	ValidateOptions
 } from './index.js';
 import { derived, get, readonly, writable, type Readable } from 'svelte/store';
@@ -53,9 +51,14 @@ type ChangeEvent = {
 };
 
 type FormDataOptions = Partial<{
-	taint: TaintOption;
+	taint: boolean | 'untaint' | 'untaint-all' | 'ignore';
 	keepFiles: boolean;
 }>;
+
+type FormUpdate = (
+	result: Exclude<ActionResult, { type: 'error' }>,
+	untaint?: boolean
+) => Promise<void>;
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 const initialForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
@@ -664,7 +667,10 @@ export function superForm<
 	/**
 	 * Updates the tainted state. Use most of the time, except when submitting.
 	 */
-	function Tainted_update(newData: T, taintOptions: TaintOption) {
+	function Tainted_update(
+		newData: T,
+		taintOptions: boolean | 'untaint' | 'untaint-all' | 'ignore'
+	) {
 		// Ignore is set when returning errors from the server
 		// so status messages and form-level errors won't be
 		// immediately cleared by client-side validation.

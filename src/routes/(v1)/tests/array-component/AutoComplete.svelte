@@ -5,13 +5,13 @@
 <script lang="ts" generics="T extends Record<string, unknown>">
 	import type { FormPathArrays } from '$lib/index.js';
 	import type { SuperForm } from '$lib/client/index.js';
-	import { arrayProxy, type TaintOptions } from '$lib/client/index.js';
+	import { arrayProxy } from '$lib/client/index.js';
 
 	export let form: SuperForm<T, unknown>;
 	export let field: FormPathArrays<T>;
 	export let options: { value: string; label: string }[];
 	export let label = '';
-	export let taint: TaintOptions = true;
+	export let taint = true;
 
 	const { values, errors, valueErrors: fieldErrors } = arrayProxy(form, field, { taint });
 </script>

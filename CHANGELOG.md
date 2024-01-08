@@ -16,14 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`. If type parameters are used, it must now be wrapped with `z.infer` for Zod schemas.
 - Default options now follow SvelteKit more closely: `resetForm: true` and `taintedMessage: false`. Add `define: { SUPERFORMS_LEGACY: true }` in `vite.config.ts` to keep the old behavior.
-- `superValidateSync` returns default values for the schema, but **does no validation anymore**. Use `+page.ts` if initial validation is required.
+- `superValidateSync` is renamed to `defaults`, returning default values for the schema, and **does no validation anymore**. Use `+page.ts` if initial validation is required, as described on the [SPA page](https://superforms.rocks/concepts/spa#using-pagets-instead-of-pageserverts).
+- `arrayProxy`: `fieldErrors` renamed to `valueErrors`.
+- Numeric enums cannot be parsed with their string values anymore.
+- Superform validator functions requires the `superform` adapter, and the input parameter can now be `undefined`.
+- If no data, the default values aren't parsed with the schema (i.e. no side-effects for default values).
 - Fields with default values don't have `required` in their constraints anymore.
 - Unions must have an explicit default value in the schema.
-- If no data, the default values aren't parsed with the schema (i.e. no side-effects for default values).
-- Numeric enums cannot be parsed with their string values anymore.
 - Form id cannot be `undefined` anymore, must be `string`. (It's set automatically by default)
-- Superform validator functions requires the `superform` adapter, and the input parameter can now be `undefined`.
-- `arrayProxy`: `fieldErrors` renamed to `valueErrors`.
 
 ### Added
 

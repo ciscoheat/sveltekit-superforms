@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { setError, setMessage, superForm, superValidateSync } from '$lib/client/index.js';
+	import { setError, setMessage, superForm, defaults } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/index.js';
 
 	import { page } from '$app/stores';
@@ -10,23 +10,20 @@
 		password: z.string().min(8)
 	});
 
-	const { form, errors, message, constraints, enhance } = superForm(
-		superValidateSync(zod(loginSchema)),
-		{
-			SPA: true,
-			validators: zod(loginSchema),
-			onUpdate({ form }) {
-				if (form.data.email.includes('spam')) {
-					setError(form, 'email', 'Suspicious email address.');
-				} else if (form.valid) {
-					setMessage(form, 'Valid data!');
-				}
-			},
-			onError({ result, message }) {
-				message.set(result.error.message);
+	const { form, errors, message, constraints, enhance } = superForm(defaults(zod(loginSchema)), {
+		SPA: true,
+		validators: zod(loginSchema),
+		onUpdate({ form }) {
+			if (form.data.email.includes('spam')) {
+				setError(form, 'email', 'Suspicious email address.');
+			} else if (form.valid) {
+				setMessage(form, 'Valid data!');
 			}
+		},
+		onError({ result, message }) {
+			message.set(result.error.message);
 		}
-	);
+	});
 </script>
 
 <h3>#176</h3>

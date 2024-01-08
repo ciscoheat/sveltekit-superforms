@@ -10,7 +10,7 @@ import type { TaintedFields, ValidationErrors } from '../superValidate.js';
 
 export { superForm } from './superForm.js';
 export { superValidate, message, setMessage, setError } from '../superValidate.js';
-export { superValidateSync } from '../superValidateSync.js';
+export { defaults } from '../defaults.js';
 export { defaultValues } from '../jsonSchema/defaultValues.js';
 export { actionResult } from '../actionResult.js';
 

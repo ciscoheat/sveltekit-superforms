@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { z } from 'zod';
 	import { superForm as _superForm } from '$lib/client/index.js';
-	import { superValidateSync } from '$lib/client/index.js';
+	import { defaults } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/index.js';
 	import SuperDebug from '$lib/index.js';
 
@@ -31,7 +31,7 @@
 		r2: ruleSet(r2)
 	});
 
-	const superForm = _superForm(superValidateSync(zod(schema)), {
+	const superForm = _superForm(defaults(zod(schema)), {
 		SPA: true,
 		dataType: 'json',
 		validators: zod(schema),

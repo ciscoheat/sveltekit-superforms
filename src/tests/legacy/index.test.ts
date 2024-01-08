@@ -1,9 +1,4 @@
-import {
-	setError,
-	setMessage,
-	superValidate
-	//superValidateSync
-} from '$lib/superValidate.js';
+import { setError, setMessage, superValidate } from '$lib/superValidate.js';
 import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
 import { SuperFormError } from '$lib/index.js';
@@ -223,22 +218,6 @@ describe('Default values', () => {
 			phone: null
 		});
 	});
-
-	/*
-	test('With a partial entity, sync version', () => {
-		const now = new Date();
-		const entity = { createdAt: now };
-		const output = superValidateSync(entity, zod(AccountSchema.extend({ name: z.string() })));
-
-		assert(output.valid == false);
-		expect(output.data).toStrictEqual({
-			id: 0,
-			createdAt: now,
-			name: '',
-			phone: null
-		});
-	});
-  */
 
 	test('With no entity and defaultValues', async () => {
 		const d = new Date();

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superForm, superValidateSync } from '$lib/client/index.js';
+	import { superForm, defaults } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/index.js';
 
 	import { z } from 'zod';
@@ -18,7 +18,7 @@
 	};
 
 	const { enhance, form, errors, allErrors } = superForm(
-		superValidateSync(initialValues, zod(parentSchema)),
+		defaults(initialValues, zod(parentSchema)),
 		{
 			SPA: true,
 			dataType: 'json',

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { superForm, superValidateSync } from '$lib/client/index.js';
+	import { superForm, defaults } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/index.js';
 
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
@@ -11,7 +11,7 @@
 		email: z.string().email()
 	});
 
-	const { form, errors, message, enhance } = superForm(superValidateSync(zod(schema)));
+	const { form, errors, message, enhance } = superForm(defaults(zod(schema)));
 </script>
 
 <div style="border: 3px solid red; padding: 10px;">

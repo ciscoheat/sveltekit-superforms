@@ -34,7 +34,7 @@ import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
 
 import { superform, type Validators } from '$lib/adapters/superform.js';
-import { superValidateSync } from '$lib/superValidateSync.js';
+import { defaults as schemaDefaults } from '$lib/defaults.js';
 import { fail } from '@sveltejs/kit';
 
 ///// Test data /////////////////////////////////////////////////////
@@ -363,9 +363,9 @@ function schemaTest(
 		expectConstraints(output.constraints);
 	});
 
-	describe('superValidateSync', () => {
+	describe('defaults', () => {
 		it('should return default values with schema only', () => {
-			const output = superValidateSync(adapter());
+			const output = schemaDefaults(adapter());
 			expect(output.errors).toEqual({});
 			expect(output.valid).toEqual(false);
 			expect(output.data).not.toBe(defaults);
@@ -374,8 +374,8 @@ function schemaTest(
 			expectConstraints(output.constraints);
 		});
 
-		it('should return partial values with defaults', () => {
-			const output = superValidateSync({ name: 'Sync' }, adapter());
+		it('should merge partial data with adapter defaults', () => {
+			const output = schemaDefaults({ name: 'Sync' }, adapter());
 			expect(output.errors).toEqual({});
 			expect(output.valid).toEqual(false);
 			expect(output.data).toEqual({ ...defaults, name: 'Sync' });

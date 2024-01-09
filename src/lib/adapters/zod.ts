@@ -5,7 +5,7 @@ import {
 	process,
 	type JsonSchemaOptions,
 	type ValidationAdapter,
-	mapAdapter
+	createAdapter
 } from './index.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
 import type { z } from 'zod';
@@ -42,7 +42,7 @@ function _zod<T extends ZodValidation<AnyZodObject>>(
 	schema: T,
 	options?: JsonSchemaOptions<z.infer<T>>
 ): ValidationAdapter<z.infer<T>> {
-	return mapAdapter({
+	return createAdapter({
 		superFormValidationLibrary: 'zod',
 		process: process(schema),
 		jsonSchema: options?.jsonSchema ?? zodToJsonSchema(schema),

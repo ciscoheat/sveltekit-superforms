@@ -1,4 +1,4 @@
-import { type ValidationAdapter, adapter, mapAdapter } from './index.js';
+import { type ValidationAdapter, adapter, createAdapter } from './index.js';
 import type { Inferred } from '$lib/index.js';
 import { type TSchema, FormatRegistry } from '@sinclair/typebox';
 import { type TypeCheck, TypeCompiler } from '@sinclair/typebox/compiler';
@@ -14,7 +14,7 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Inferred<T>> 
 
 	if (!FormatRegistry.Has('email')) FormatRegistry.Set('email', (value) => Email.test(value));
 
-	return mapAdapter({
+	return createAdapter({
 		superFormValidationLibrary: 'typebox',
 		jsonSchema: schema,
 		async process(data) {

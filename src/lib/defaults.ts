@@ -1,4 +1,4 @@
-import { mapAdapter, type BaseValidationAdapter } from './adapters/index.js';
+import { createAdapter, type BaseValidationAdapter } from './adapters/index.js';
 import type { SuperValidated } from './index.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import type { SuperValidateOptions } from './superValidate.js';
@@ -41,7 +41,7 @@ export function defaults<
 		defaults = null;
 	}
 
-	const validator = mapAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
+	const validator = createAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
 	const optionDefaults = options?.defaults ?? validator.defaults;
 
 	return {
@@ -58,5 +58,5 @@ export function defaultValues<T extends Record<string, unknown>>(
 	adapter: BaseValidationAdapter<T>,
 	options?: { jsonSchema: JSONSchema }
 ): T {
-	return mapAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema).defaults;
+	return createAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema).defaults;
 }

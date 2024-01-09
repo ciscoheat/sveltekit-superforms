@@ -3,7 +3,7 @@ import {
 	type BaseValidationAdapter,
 	adapter,
 	type JsonSchemaOptions,
-	mapAdapter
+	createAdapter
 } from './index.js';
 import type { Inferred } from '$lib/index.js';
 import type { ObjectSchema } from 'joi';
@@ -36,7 +36,7 @@ function _joi<T extends ObjectSchema>(
 		}
 	} satisfies BaseValidationAdapter<Inferred<T>>;
 
-	return mapAdapter(adapter);
+	return createAdapter(adapter);
 }
 
 export const joi = adapter(_joi);

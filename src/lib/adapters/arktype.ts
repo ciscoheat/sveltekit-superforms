@@ -6,7 +6,7 @@ import {
 	process,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
-	mapAdapter
+	createAdapter
 } from './index.js';
 import type { Inferred } from '$lib/index.js';
 
@@ -14,7 +14,7 @@ function _arktype<T extends Type>(
 	schema: T,
 	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
 ): ValidationAdapter<Inferred<T>> {
-	return mapAdapter({
+	return createAdapter({
 		superFormValidationLibrary: 'arktype',
 		process: process(schema),
 		jsonSchema:

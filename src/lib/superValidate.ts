@@ -1,6 +1,10 @@
 import { traversePath } from './traversal.js';
 import { type ActionFailure, fail as realFail, type RequestEvent } from '@sveltejs/kit';
-import { mapAdapter, type BaseValidationAdapter, type ValidationResult } from './adapters/index.js';
+import {
+	createAdapter,
+	type BaseValidationAdapter,
+	type ValidationResult
+} from './adapters/index.js';
 import { parseRequest } from './formData.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
@@ -98,7 +102,7 @@ export async function superValidate<
 		data = undefined;
 	}
 
-	const validator = mapAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
+	const validator = createAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
 
 	const defaults = options?.defaults ?? validator.defaults;
 	const jsonSchema = validator.jsonSchema;

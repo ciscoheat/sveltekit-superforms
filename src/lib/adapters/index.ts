@@ -79,7 +79,7 @@ export function process<T extends Record<string, unknown>>(schema: TypeSchema) {
 	return async (data: unknown) => (await validate(schema, data)) as ValidationResult<T>;
 }
 
-export function mapAdapter<T extends Record<string, unknown>>(
+export function createAdapter<T extends Record<string, unknown>>(
 	adapter: BaseValidationAdapter<T>,
 	jsonSchema?: JSONSchema
 ): ValidationAdapter<T> {

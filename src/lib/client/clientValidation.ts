@@ -1,7 +1,7 @@
 import { type SuperValidated } from '../index.js';
 import type { FormOptions } from './index.js';
 import { mapErrors } from '../errors.js';
-import { mapAdapter, type ValidationResult } from '$lib/adapters/index.js';
+import { createAdapter, type ValidationResult } from '$lib/adapters/index.js';
 import type { ValidationErrors } from '$lib/superValidate.js';
 
 export type ValidateOptions<V> = Partial<{
@@ -35,7 +35,7 @@ async function _clientValidation<T extends Record<string, unknown>, M = unknown>
 	let status: ValidationResult<T> = { success: true, data };
 
 	if (validator) {
-		const adapter = mapAdapter(validator);
+		const adapter = createAdapter(validator);
 		status = await adapter.process(data);
 
 		if (!status.success) {

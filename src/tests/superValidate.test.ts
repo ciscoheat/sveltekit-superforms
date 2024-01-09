@@ -13,12 +13,8 @@ import {
 	failAndRemoveFiles
 } from '$lib/superValidate.js';
 import merge from 'ts-deepmerge';
-import {
-	object as yupObject,
-	string as yupString,
-	number as yupNumber,
-	array as yupArray
-} from 'yup';
+import { fail } from '@sveltejs/kit';
+import { defaults as schemaDefaults } from '$lib/defaults.js';
 
 ///// Adapters //////////////////////////////////////////////////////
 
@@ -40,16 +36,21 @@ import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
 
 import { superform, type Validators } from '$lib/adapters/superform.js';
-import { defaults as schemaDefaults } from '$lib/defaults.js';
-import { fail } from '@sveltejs/kit';
+
 import { yup } from '$lib/adapters/yup.js';
+import {
+	object as yupObject,
+	string as yupString,
+	number as yupNumber,
+	array as yupArray
+} from 'yup';
 
 ///// Test data /////////////////////////////////////////////////////
 
 /* 
 TEST SCHEMA TEMPLATE:
 {
-	name: string, length >= 2, default value "Unknown"
+	name: string, default value "Unknown"
 	email: string, email format
 	tags: string array, array length >= 3, string length >= 2
 	score: integer, >= 0

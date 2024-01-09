@@ -21,12 +21,26 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
 	//else console.log(path, schema, { isOptional }); //debug
 
+	let objectDefaults: Record<string, unknown> = {};
+
 	// Default takes (early) priority.
 	if ('default' in schema) {
-		// TODO: Handle multiple default types by using the first one?
-		// Otherwise, format conversion is problematic.
-		const [type] = info.types;
-		return formatDefaultValue(type, schema.default);
+		// Test for defaults for the whole object
+		// Cannot be used directly, since undefined fields may have to be replaced
+		// with correct default values.
+		if (
+			info.types.includes('object') &&
+			schema.default &&
+			typeof schema.default == 'object' &&
+			!Array.isArray(schema.default)
+		) {
+			objectDefaults = schema.default as Record<string, unknown>;
+		} else {
+			// TODO: Handle multiple default types by using the first one?
+			// Otherwise, format conversion is problematic.
+			const [type] = info.types;
+			return formatDefaultValue(type, schema.default);
+		}
 	}
 
 	// Check unions first, so default values can take precedence over nullable and optional
@@ -64,8 +78,11 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			if (typeof value == 'boolean') {
 				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
 			}
-			const def = _defaultValues(value, !schema.required?.includes(key), [...path, key]);
-			// TODO: Remove undefined fields, or set them?
+			const def =
+				objectDefaults[key] !== undefined
+					? objectDefaults[key]
+					: _defaultValues(value, !schema.required?.includes(key), [...path, key]);
+
 			if (def !== undefined) output[key] = def;
 		}
 		return output;

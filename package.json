@@ -89,6 +89,7 @@
 	"devDependencies": {
 		"@decs/typeschema": "^0.12.1",
 		"@sinclair/typebox": "^0.32.5",
+		"@sodaru/yup-to-json-schema": "^2.0.1",
 		"@sveltejs/adapter-auto": "^3.1.0",
 		"@sveltejs/kit": "^2.0.6",
 		"@sveltejs/package": "^2.2.5",
@@ -130,6 +131,7 @@
 		"valibot": "^0.25.0",
 		"vite": "^5.0.11",
 		"vitest": "^1.1.3",
+		"yup": "^1.3.3",
 		"zod": "^3.22.4",
 		"zod-to-json-schema": "^3.22.3"
 	},

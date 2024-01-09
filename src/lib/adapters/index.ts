@@ -22,14 +22,15 @@ export { zod } from './zod.js';
 export type { Options as SchemaOptions } from 'to-json-schema';
 
 export type ValidationLibrary =
-	| 'zod'
-	| 'valibot'
 	| 'ajv'
 	| 'arktype'
-	| 'typebox'
+	| 'custom'
 	| 'joi'
 	| 'superform'
-	| 'custom';
+	| 'typebox'
+	| 'valibot'
+	| 'yup'
+	| 'zod';
 
 export type Schema = TypeSchema;
 

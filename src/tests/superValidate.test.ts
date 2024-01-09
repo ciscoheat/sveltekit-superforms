@@ -13,6 +13,12 @@ import {
 	failAndRemoveFiles
 } from '$lib/superValidate.js';
 import merge from 'ts-deepmerge';
+import {
+	object as yupObject,
+	string as yupString,
+	number as yupNumber,
+	array as yupArray
+} from 'yup';
 
 ///// Adapters //////////////////////////////////////////////////////
 
@@ -36,6 +42,7 @@ import Joi from 'joi';
 import { superform, type Validators } from '$lib/adapters/superform.js';
 import { defaults as schemaDefaults } from '$lib/defaults.js';
 import { fail } from '@sveltejs/kit';
+import { yup } from '$lib/adapters/yup.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -106,6 +113,23 @@ const simpleConstraints = {
 };
 
 ///// Validation libraries //////////////////////////////////////////
+
+describe('Yup', () => {
+	const schema = yupObject({
+		name: yupString().default('Unknown'),
+		email: yupString().email().required(),
+		tags: yupArray().of(yupString().min(2)).min(3).required(),
+		score: yupNumber().integer().min(0).required()
+	});
+
+	const errors = {
+		email: 'email is a required field',
+		tags: 'tags field must have at least 3 items',
+		tags1: 'tags[1] must be at least 2 characters'
+	};
+
+	schemaTest(() => yup(schema), errors);
+});
 
 describe('Superform', () => {
 	const schema: Validators<typeof validData> = {

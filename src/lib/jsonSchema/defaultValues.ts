@@ -41,6 +41,15 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 				'Only one default value can exist in a union, or set a default value for the whole union.',
 				path
 			);
+		} else if (info.union.length > 1) {
+			throw new SchemaError(
+				'Unions must have a default value, or exactly one of the union types must have.',
+				path
+			);
+		} else {
+			if (info.isNullable) return null;
+			if (info.isOptional) return undefined;
+			return _defaultValues(info.union[0], isOptional, path);
 		}
 	}
 

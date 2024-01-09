@@ -364,23 +364,25 @@ describe('Object shapes', () => {
 describe('Schema hash function', () => {
 	it('should return a hash for a schema based on types and properties', () => {
 		expect(schemaHash(schema)).toBe('1ipmquz');
-		expect(schemaHash(defaultTestSchema)).toBe('1k62ygs');
+		expect(schemaHash(defaultTestSchema)).toBe('1t18imi');
 	});
 });
 
-describe.only('Constraints', () => {
+describe('Constraints', () => {
 	it('should merge the constraints for unions', () => {
 		const adapter = zod(
 			z.object({
-				mixed: z.union([
-					z.date().min(new Date('2024-01-01')),
-					z
-						.string()
-						.min(5)
-						.max(10)
-						.regex(/^[A-Z]/),
-					z.number().int().positive().max(100)
-				])
+				mixed: z
+					.union([
+						z.date().min(new Date('2024-01-01')),
+						z
+							.string()
+							.min(5)
+							.max(10)
+							.regex(/^[A-Z]/),
+						z.number().int().positive().max(100)
+					])
+					.default('A string')
 			})
 		);
 
@@ -389,7 +391,6 @@ describe.only('Constraints', () => {
 				pattern: '^[A-Z]',
 				minlength: 5,
 				maxlength: 10,
-				required: true,
 				min: 1,
 				max: 100
 			}

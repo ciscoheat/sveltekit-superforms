@@ -98,7 +98,7 @@ export function mapAdapter<T extends Record<string, unknown>>(
 		defaults: adapter.defaults ?? defaultValues(jsonSchema),
 		shape: schemaShape(jsonSchema),
 		id: schemaHash(jsonSchema)
-	} satisfies ValidationAdapter<T>;
+	};
 }
 
 /**

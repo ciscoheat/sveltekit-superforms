@@ -1,7 +1,7 @@
 import { setError, setMessage, superValidate } from '$lib/superValidate.js';
 import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
-import { SuperFormError } from '$lib/index.js';
+import { SchemaError } from '$lib/index.js';
 import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/index.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
@@ -395,7 +395,7 @@ describe('Default values', () => {
 		});
 	});
 
-	test('Passing an array schema instead of an object', async () => {
+	test.only('Passing an array schema instead of an object', async () => {
 		const schema = z
 			.object({
 				name: z.string()
@@ -403,12 +403,12 @@ describe('Default values', () => {
 			.array();
 
 		await expect(
-			superValidate(null, zod(z.string() as unknown as AnyZodObject))
-		).rejects.toThrowError(SuperFormError);
+			async () => await superValidate(null, zod(z.string() as unknown as AnyZodObject))
+		).rejects.toThrowError(SchemaError);
 
-		await expect(superValidate(null, zod(schema as unknown as AnyZodObject))).rejects.toThrowError(
-			SuperFormError
-		);
+		await expect(
+			async () => await superValidate(zod(schema as unknown as AnyZodObject))
+		).rejects.toThrowError(SchemaError);
 	});
 
 	test('Deeply nested objects', async () => {

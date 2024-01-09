@@ -2,7 +2,7 @@ import {
 	toJsonSchema,
 	type ValidationAdapter,
 	adapter,
-	process,
+	validate,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	createAdapter
@@ -16,7 +16,7 @@ function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 ): ValidationAdapter<Inferred<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
-		process: process(schema),
+		validate: validate(schema),
 		jsonSchema:
 			'jsonSchema' in options
 				? options.jsonSchema

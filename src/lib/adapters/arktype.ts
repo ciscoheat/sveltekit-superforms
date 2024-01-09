@@ -3,7 +3,7 @@ import {
 	toJsonSchema,
 	type ValidationAdapter,
 	adapter,
-	process,
+	validate,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	createAdapter
@@ -16,7 +16,7 @@ function _arktype<T extends Type>(
 ): ValidationAdapter<Inferred<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
-		process: process(schema),
+		validate: validate(schema),
 		jsonSchema:
 			'jsonSchema' in options
 				? options.jsonSchema

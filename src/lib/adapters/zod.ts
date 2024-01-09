@@ -2,13 +2,13 @@ import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	adapter,
-	process,
+	validate,
 	type JsonSchemaOptions,
 	type ValidationAdapter,
 	createAdapter
 } from './index.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
-import type { z } from 'zod';
+import type { Inferred } from '$lib/index.js';
 
 const defaultOptions: Partial<Options> = {
 	dateStrategy: 'integer',
@@ -40,11 +40,11 @@ type ZodValidation<T extends AnyZodObject> =
 
 function _zod<T extends ZodValidation<AnyZodObject>>(
 	schema: T,
-	options?: JsonSchemaOptions<z.infer<T>>
-): ValidationAdapter<z.infer<T>> {
+	options?: JsonSchemaOptions<Inferred<T>>
+): ValidationAdapter<Inferred<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
-		process: process(schema),
+		validate: validate(schema),
 		jsonSchema: options?.jsonSchema ?? zodToJsonSchema(schema),
 		defaults: options?.defaults
 	});

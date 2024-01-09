@@ -14,7 +14,7 @@ function _yup<T extends Schema>(
 ): ValidationAdapter<Inferred<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'yup',
-		async process(data: unknown) {
+		async validate(data: unknown) {
 			try {
 				return {
 					success: true,

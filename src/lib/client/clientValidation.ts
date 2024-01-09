@@ -36,7 +36,7 @@ async function _clientValidation<T extends Record<string, unknown>, M = unknown>
 
 	if (validator) {
 		const adapter = createAdapter(validator);
-		status = await adapter.process(data);
+		status = await adapter.validate(data);
 
 		if (!status.success) {
 			errors = mapErrors(status.issues, adapter.shape) as ValidationErrors<T>;

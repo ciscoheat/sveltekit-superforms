@@ -32,7 +32,7 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 		superFormValidationLibrary: 'superform',
 		jsonSchema: simpleSchema(options?.defaults ?? {}),
 		defaults: options?.defaults ?? ({} as T),
-		async process(data: unknown) {
+		async validate(data: unknown) {
 			// Add top-level validator fields to non-existing data fields
 			// so they will be validated even if the field doesn't exist
 			if (!data || typeof data !== 'object') data = {};

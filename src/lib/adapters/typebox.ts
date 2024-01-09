@@ -17,7 +17,7 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Inferred<T>> 
 	return createAdapter({
 		superFormValidationLibrary: 'typebox',
 		jsonSchema: schema,
-		async process(data) {
+		async validate(data) {
 			const validator = compiled.get(schema);
 			const errors = [...(validator?.Errors(data) ?? [])];
 

@@ -18,7 +18,7 @@ function _joi<T extends ObjectSchema>(
 		// @ts-expect-error No type information exists for joi-to-json
 		jsonSchema: options?.jsonSchema ?? joiToJson(schema),
 		defaults: options?.defaults,
-		async process(data) {
+		async validate(data) {
 			const result = schema.validate(data, { abortEarly: false });
 			if (result.error == null) {
 				return {

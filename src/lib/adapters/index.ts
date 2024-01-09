@@ -1,5 +1,9 @@
 import { SuperFormError, type InputConstraints, type Inferred } from '$lib/index.js';
-import { validate, type Schema as TypeSchema, type ValidationIssue } from '@decs/typeschema';
+import {
+	validate as typeSchemaValidate,
+	type Schema as TypeSchema,
+	type ValidationIssue
+} from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
@@ -65,7 +69,7 @@ export type ValidationResult<TOutput = any> =
 export type BaseValidationAdapter<T extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;
 	jsonSchema: JSONSchema;
-	process: (data: unknown) => Promise<ValidationResult<T>>;
+	validate: (data: unknown) => Promise<ValidationResult<T>>;
 	defaults?: T;
 	constraints?: InputConstraints<T>;
 };
@@ -77,8 +81,8 @@ export type ValidationAdapter<T extends Record<string, unknown>> = BaseValidatio
 	id: string;
 };
 
-export function process<T extends Record<string, unknown>>(schema: TypeSchema) {
-	return async (data: unknown) => (await validate(schema, data)) as ValidationResult<T>;
+export function validate<T extends Record<string, unknown>>(schema: TypeSchema) {
+	return async (data: unknown) => (await typeSchemaValidate(schema, data)) as ValidationResult<T>;
 }
 
 export function createAdapter<T extends Record<string, unknown>>(

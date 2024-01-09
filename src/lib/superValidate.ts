@@ -116,7 +116,7 @@ export async function superValidate<
 	let status: ValidationResult<T>;
 
 	if (!!parsed.data || addErrors) {
-		status = await validator.process(parsedData);
+		status = await validator.validate(parsedData);
 	} else {
 		status = { success: false, issues: [] };
 	}

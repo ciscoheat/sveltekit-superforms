@@ -27,7 +27,6 @@ function _yup<T extends Schema>(
 					success: false,
 					issues: error.inner.map((error) => ({
 						message: error.message,
-						// TODO: What if path is null or undefined? (goes for all adapters)
 						path:
 							error.path !== null && error.path !== undefined ? splitPath(error.path) : undefined
 					}))

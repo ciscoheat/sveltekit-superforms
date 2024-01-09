@@ -5,7 +5,8 @@ import {
 	adapter,
 	process,
 	type AdapterDefaultOptions,
-	type RequiredJsonSchemaOptions
+	type RequiredJsonSchemaOptions,
+	mapAdapter
 } from './index.js';
 import type { Inferred } from '$lib/index.js';
 
@@ -13,7 +14,7 @@ function _arktype<T extends Type>(
 	schema: T,
 	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
 ): ValidationAdapter<Inferred<T>> {
-	return {
+	return mapAdapter({
 		superFormValidationLibrary: 'arktype',
 		process: process(schema),
 		jsonSchema:
@@ -21,7 +22,7 @@ function _arktype<T extends Type>(
 				? options.jsonSchema
 				: toJsonSchema(options.defaults, options.schemaOptions),
 		defaults: options.defaults
-	};
+	});
 }
 
 export const arktype = adapter(_arktype);

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { ValidationAdapter } from '$lib/adapters/index.js';
+	import type { BaseValidationAdapter } from '$lib/adapters/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
 	import { superForm } from '$lib/client/index.js';
 	export let data;
-	export let schema: ValidationAdapter<Record<string, unknown>> | undefined = undefined;
+	export let schema: BaseValidationAdapter<Record<string, unknown>> | undefined = undefined;
 	export let dataType: 'form' | 'json' = 'form';
 	export let invalidateAll; // set to false to keep form data using muliple forms on a page
 

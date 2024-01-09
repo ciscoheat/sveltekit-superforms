@@ -1,4 +1,4 @@
-import { mapAdapter, type ValidationAdapter } from './adapters/index.js';
+import { mapAdapter, type BaseValidationAdapter } from './adapters/index.js';
 import type { SuperValidated } from './index.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import type { SuperValidateOptions } from './superValidate.js';
@@ -14,7 +14,7 @@ export function defaults<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(adapter: ValidationAdapter<T>, options?: SuperSchemaOptions<T>): SuperValidated<T, M>;
+>(adapter: BaseValidationAdapter<T>, options?: SuperSchemaOptions<T>): SuperValidated<T, M>;
 
 export function defaults<
 	T extends Record<string, unknown>,
@@ -22,7 +22,7 @@ export function defaults<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
 	defaults: SuperSchemaData<T>,
-	adapter: ValidationAdapter<T>,
+	adapter: BaseValidationAdapter<T>,
 	options?: SuperSchemaOptions<T>
 ): SuperValidated<T, M>;
 
@@ -31,8 +31,8 @@ export function defaults<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	defaults: SuperSchemaData<T> | ValidationAdapter<T>,
-	adapter?: ValidationAdapter<T> | SuperSchemaOptions<T>,
+	defaults: SuperSchemaData<T> | BaseValidationAdapter<T>,
+	adapter?: BaseValidationAdapter<T> | SuperSchemaOptions<T>,
 	options?: SuperSchemaOptions<T>
 ): SuperValidated<T, M> {
 	if (defaults && 'superFormValidationLibrary' in defaults) {
@@ -41,7 +41,7 @@ export function defaults<
 		defaults = null;
 	}
 
-	const validator = mapAdapter(adapter as ValidationAdapter<T>, options?.jsonSchema);
+	const validator = mapAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
 	const optionDefaults = options?.defaults ?? validator.defaults;
 
 	return {
@@ -55,8 +55,8 @@ export function defaults<
 }
 
 export function defaultValues<T extends Record<string, unknown>>(
-	adapter: ValidationAdapter<T>,
+	adapter: BaseValidationAdapter<T>,
 	options?: { jsonSchema: JSONSchema }
 ): T {
-	return mapAdapter(adapter as ValidationAdapter<T>, options?.jsonSchema).defaults;
+	return mapAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema).defaults;
 }

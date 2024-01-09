@@ -60,7 +60,7 @@ export type ValidationResult<TOutput = any> =
 			issues: Array<ValidationIssue>;
 	  };
 
-export type ValidationAdapter<T extends Record<string, unknown>> = {
+export type BaseValidationAdapter<T extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;
 	jsonSchema: JSONSchema;
 	process: (data: unknown) => Promise<ValidationResult<T>>;
@@ -68,7 +68,7 @@ export type ValidationAdapter<T extends Record<string, unknown>> = {
 	constraints?: InputConstraints<T>;
 };
 
-export type MappedValidationAdapter<T extends Record<string, unknown>> = ValidationAdapter<T> & {
+export type ValidationAdapter<T extends Record<string, unknown>> = BaseValidationAdapter<T> & {
 	defaults: T;
 	constraints: InputConstraints<T>;
 	shape: SchemaShape;
@@ -80,30 +80,25 @@ export function process<T extends Record<string, unknown>>(schema: TypeSchema) {
 }
 
 export function mapAdapter<T extends Record<string, unknown>>(
-	adapter: ValidationAdapter<T>,
+	adapter: BaseValidationAdapter<T>,
 	jsonSchema?: JSONSchema
-): MappedValidationAdapter<T> {
-	if (!adapterCache.has(adapter)) {
-		if (!adapter || !('superFormValidationLibrary' in adapter)) {
-			throw new SuperFormError(
-				'Superforms v2 requires a validation adapter for the schema. ' +
-					'Import one of your choice from "sveltekit-superforms/adapters" and wrap the schema with it.'
-			);
-		}
-
-		if (!jsonSchema) jsonSchema = adapter.jsonSchema;
-
-		const mapped = {
-			...adapter,
-			constraints: adapter.constraints ?? schemaConstraints(jsonSchema),
-			defaults: adapter.defaults ?? defaultValues(jsonSchema),
-			shape: schemaShape(jsonSchema),
-			id: schemaHash(jsonSchema)
-		} satisfies MappedValidationAdapter<T>;
-
-		adapterCache.set(adapter, mapped);
+): ValidationAdapter<T> {
+	if (!adapter || !('superFormValidationLibrary' in adapter)) {
+		throw new SuperFormError(
+			'Superforms v2 requires a validation adapter for the schema. ' +
+				'Import one of your choice from "sveltekit-superforms/adapters" and wrap the schema with it.'
+		);
 	}
-	return adapterCache.get(adapter) as MappedValidationAdapter<T>;
+
+	if (!jsonSchema) jsonSchema = adapter.jsonSchema;
+
+	return {
+		...adapter,
+		constraints: adapter.constraints ?? schemaConstraints(jsonSchema),
+		defaults: adapter.defaults ?? defaultValues(jsonSchema),
+		shape: schemaShape(jsonSchema),
+		id: schemaHash(jsonSchema)
+	} satisfies ValidationAdapter<T>;
 }
 
 /**
@@ -136,9 +131,11 @@ export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOp
 	return toSchema(object, options) as JSONSchema;
 };
 
+/*
 const adapterCache = new WeakMap<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	ValidationAdapter<any>,
+	BaseValidationAdapter<any>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	MappedValidationAdapter<any>
+	ValidationAdapter<any>
 >();
+*/

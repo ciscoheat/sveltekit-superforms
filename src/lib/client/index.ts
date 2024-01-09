@@ -4,7 +4,7 @@ import type { Readable, Writable, Updater } from 'svelte/store';
 import { type SuperValidated, SuperFormError } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
-import type { ValidationAdapter } from '$lib/adapters/index.js';
+import type { BaseValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
 import type { TaintedFields, ValidationErrors } from '../superValidate.js';
 
@@ -81,7 +81,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 		  }) => MaybePromise<unknown | void>);
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: ValidationAdapter<T> | false;
+	validators: BaseValidationAdapter<T> | false;
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
 	defaultValidator: 'keep' | 'clear';
 	customValidity: boolean;

@@ -1,7 +1,7 @@
 import Ajv from 'ajv';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import addFormats from 'ajv-formats';
-import { adapter, type ValidationAdapter } from './index.js';
+import { adapter, mapAdapter, type ValidationAdapter } from './index.js';
 
 function _ajv<T extends Record<string, unknown>>(
 	schema: JSONSchema,
@@ -12,7 +12,7 @@ function _ajv<T extends Record<string, unknown>>(
 	addFormats(ajv);
 	const validator = ajv.compile(schema);
 
-	return {
+	return mapAdapter({
 		superFormValidationLibrary: 'ajv',
 		jsonSchema: schema,
 		async process(data: unknown) {
@@ -32,7 +32,7 @@ function _ajv<T extends Record<string, unknown>>(
 				success: false
 			};
 		}
-	};
+	});
 }
 
 export const ajv = adapter(_ajv);

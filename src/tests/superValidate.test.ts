@@ -1,6 +1,6 @@
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { describe, it, expect, assert, beforeEach } from 'vitest';
-import { type ValidationAdapter } from '$lib/adapters/index.js';
+import { type BaseValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
@@ -292,7 +292,7 @@ describe('Zod', () => {
 ///// Test function for all validation libraries ////////////////////
 
 function schemaTest(
-	adapter: () => ValidationAdapter<Record<string, unknown>>,
+	adapter: () => BaseValidationAdapter<Record<string, unknown>>,
 	errors: { email: string | RegExp; tags?: string | RegExp; tags1?: string | RegExp },
 	constraints: 'full' | 'simple' | 'none' = 'full'
 ) {

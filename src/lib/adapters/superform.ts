@@ -2,7 +2,7 @@ import { type FieldPath, type MaybePromise } from '$lib/index.js';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { traversePath, traversePaths } from '$lib/traversal.js';
 import type { ValidationIssue } from '@decs/typeschema';
-import { adapter, type ValidationAdapter } from './index.js';
+import { adapter, mapAdapter, type ValidationAdapter } from './index.js';
 import type { JSONSchema7TypeName } from 'json-schema';
 
 // Cannot be a SuperStruct due to Property having to be passed on.
@@ -28,7 +28,7 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 	schema: Validators<PartialT>,
 	options?: { defaults: T }
 ): ValidationAdapter<T> {
-	return {
+	return mapAdapter({
 		superFormValidationLibrary: 'superform',
 		jsonSchema: simpleSchema(options?.defaults ?? {}),
 		defaults: options?.defaults ?? ({} as T),
@@ -92,7 +92,7 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 						data: data as T
 					};
 		}
-	};
+	});
 }
 
 function simpleSchema(defaults: Record<string, unknown>): JSONSchema {

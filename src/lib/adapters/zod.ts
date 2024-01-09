@@ -1,6 +1,12 @@
 import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import { adapter, process, type JsonSchemaOptions, type ValidationAdapter } from './index.js';
+import {
+	adapter,
+	process,
+	type JsonSchemaOptions,
+	type ValidationAdapter,
+	mapAdapter
+} from './index.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
 import type { z } from 'zod';
 
@@ -36,12 +42,12 @@ function _zod<T extends ZodValidation<AnyZodObject>>(
 	schema: T,
 	options?: JsonSchemaOptions<z.infer<T>>
 ): ValidationAdapter<z.infer<T>> {
-	return {
+	return mapAdapter({
 		superFormValidationLibrary: 'zod',
 		process: process(schema),
 		jsonSchema: options?.jsonSchema ?? zodToJsonSchema(schema),
 		defaults: options?.defaults
-	};
+	});
 }
 
 export const zod = adapter(_zod);

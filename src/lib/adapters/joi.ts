@@ -1,4 +1,10 @@
-import { type ValidationAdapter, adapter, type JsonSchemaOptions } from './index.js';
+import {
+	type ValidationAdapter,
+	type BaseValidationAdapter,
+	adapter,
+	type JsonSchemaOptions,
+	mapAdapter
+} from './index.js';
 import type { Inferred } from '$lib/index.js';
 import type { ObjectSchema } from 'joi';
 import joiToJson from 'joi-to-json';
@@ -6,8 +12,8 @@ import joiToJson from 'joi-to-json';
 function _joi<T extends ObjectSchema>(
 	schema: T,
 	options?: JsonSchemaOptions<T>
-): ValidationAdapter<Inferred<T>> {
-	return {
+): ValidationAdapter<Record<string, unknown>> {
+	const adapter = {
 		superFormValidationLibrary: 'joi',
 		// @ts-expect-error No type information exists for joi-to-json
 		jsonSchema: options?.jsonSchema ?? joiToJson(schema),
@@ -28,7 +34,9 @@ function _joi<T extends ObjectSchema>(
 				success: false
 			};
 		}
-	};
+	} satisfies BaseValidationAdapter<Inferred<T>>;
+
+	return mapAdapter(adapter);
 }
 
 export const joi = adapter(_joi);

@@ -2,7 +2,7 @@
 	import { z } from 'zod';
 	import { superForm as _superForm } from '$lib/client/index.js';
 	import { defaults } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/index.js';
+	import { zod } from '$lib/adapters/zod.js';
 	import SuperDebug from '$lib/index.js';
 
 	function ruleSet<T extends readonly [string, ...string[]]>(options: T) {

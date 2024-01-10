@@ -1,5 +1,5 @@
 import { superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/index.js';
+import { zod } from '$lib/adapters/zod.js';
 
 import { redirect } from 'sveltekit-flash-message/server';
 import { schema } from './schema.js';

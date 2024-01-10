@@ -1,4 +1,4 @@
-import { zod } from '$lib/adapters/index.js';
+import { zod } from '$lib/adapters/zod.js';
 import { failAndRemoveFiles, message, superValidate } from '$lib/server/index.js';
 import { schema } from './schema.js';
 

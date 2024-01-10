@@ -1,5 +1,5 @@
 import { superValidate, message, setError } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/index.js';
+import { zod } from '$lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';

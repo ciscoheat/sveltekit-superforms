@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm, defaults, arrayProxy } from '$lib/client/index.js';
-	import { zod as adapter } from '$lib/adapters/index.js';
+	import { zod as adapter } from '$lib/adapters/zod.js';
 
 	import * as zod from 'zod';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';

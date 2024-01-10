@@ -1,6 +1,6 @@
 import { schema } from './schema.js';
 import { superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/index.js';
+import { zod } from '$lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types.js';

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setError, setMessage, superForm, defaults } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/index.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	import { page } from '$app/stores';
 	import { z } from 'zod';

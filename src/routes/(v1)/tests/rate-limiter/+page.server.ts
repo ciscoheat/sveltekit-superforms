@@ -1,6 +1,6 @@
 import { RateLimiter } from 'sveltekit-rate-limiter/server';
 import { superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/index.js';
+import { zod } from '$lib/adapters/zod.js';
 
 import { setFlash } from 'sveltekit-flash-message/server';
 import { fail } from '@sveltejs/kit';

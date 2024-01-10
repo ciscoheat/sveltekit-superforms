@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { superForm, defaults } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/index.js';
+	import { zod } from '$lib/adapters/zod.js';
 
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { z } from 'zod';

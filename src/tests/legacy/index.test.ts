@@ -3,7 +3,7 @@ import { assert, expect, test, describe } from 'vitest';
 import { z, type AnyZodObject } from 'zod';
 import { SchemaError } from '$lib/index.js';
 import { dataTypeForm } from '../data.js';
-import { zod } from '$lib/adapters/index.js';
+import { zod } from '$lib/adapters/zod.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
 import { stringify } from 'devalue';

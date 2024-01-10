@@ -36,6 +36,11 @@ type FormData = {
 };
 type FormDataArrays = FormPathArrays<FormData>;
 
+type ObjUnion = {
+	name: string;
+	entity: { type: 'person'; DOB: Date } | { type: 'corporate'; taxId: string };
+};
+
 const i = 7 + 3;
 
 type Test = StringPath<Obj>;
@@ -82,6 +87,22 @@ test('StringPath', () => {
 	const a6e: Arrays = 'names[1]';
 });
 
+type TestUnion = StringPath<ObjUnion>;
+
+test('StringPath with Union', () => {
+	const t1: TestUnion = 'name';
+	const t2: TestUnion = 'entity';
+	const t3: TestUnion = 'entity.type';
+	const t4: TestUnion = 'entity.DOB';
+	const t5: TestUnion = 'entity.taxId';
+
+	// @ts-expect-error incorrect path
+	const e1: TestUnion = 'another';
+
+	// @ts-expect-error incorrect path
+	const e2: TestUnion = 'entity.nope';
+});
+
 function checkPath<T = never>() {
 	return function <U extends string = string>(path: U): FormPathType<T, U> {
 		return path as FormPathType<T, U>;
@@ -89,8 +110,9 @@ function checkPath<T = never>() {
 }
 
 const checkObj = checkPath<Obj>();
+const checkUnion = checkPath<ObjUnion>();
 
-test('StringPathType', () => {
+test('FormPathType', () => {
 	const a = checkObj(`tags[${i + 3}].name`); // string
 	const b = checkObj(`scores[${i + 3}][0]`); // Date
 
@@ -110,6 +132,22 @@ test('StringPathType', () => {
 	const n1: FormPathType<Obj, 'city[2]'> = 'never';
 	// @ts-expect-error incorrect path
 	const n2: FormPathType<Obj, 'nope incorrect'> = 'never';
+});
+
+test('FormPathType with union', () => {
+	const a = checkUnion(`name`); // string
+	const b = checkUnion(`entity.DOB`); // Date
+
+	const t0: FormPathType<ObjUnion, 'name'> = 'string';
+	const t2: FormPathType<ObjUnion, 'entity'> = { type: 'corporate', taxId: '12345' };
+	const t3: FormPathType<ObjUnion, 'entity.DOB'> = new Date();
+	const t4: FormPathType<ObjUnion, 'entity.type'> = 'person';
+	const t5: FormPathType<ObjUnion, 'entity.taxId'> = '12345';
+
+	// @ts-expect-error incorrect type
+	const n1: FormPathType<ObjUnion, 'entity'> = 'never';
+	// @ts-expect-error incorrect path
+	const n2: FormPathType<ObjUnion, 'nope incorrect'> = 'never';
 });
 
 test('StringPathLeaves', () => {

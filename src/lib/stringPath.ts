@@ -20,6 +20,17 @@ export function mergePath(path: (string | number | symbol)[]) {
 
 type BuiltInObjects = Date | Set<unknown> | File;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AllKeys<T> = T extends any ? keyof T : never;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
+
+// Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
+type MergeUnion<T> = {
+	[K in AllKeys<T>]: PickType<T, K>;
+};
+
 /**
  * Lists all paths in an object as string accessors.
  */
@@ -40,7 +51,7 @@ export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
 export type FormPathArrays<T extends object> = string & StringPathArrays<T>;
 
 export type StringPathArrays<T extends object, Path extends string = ''> = {
-	[K in Extract<keyof T, string>]: NonNullable<T[K]> extends BuiltInObjects
+	[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends BuiltInObjects
 		? never
 		: NonNullable<T[K]> extends (infer U)[]
 			?
@@ -51,7 +62,7 @@ export type StringPathArrays<T extends object, Path extends string = ''> = {
 				: NonNullable<T> extends unknown[]
 					? Path
 					: never;
-}[Extract<keyof T, string>];
+}[Extract<AllKeys<T>, string>];
 
 export type StringPath<
 	T extends object,
@@ -64,34 +75,34 @@ export type StringPath<
 						: NonNullable<U> extends unknown[]
 							? `[${number}]`
 							: never)
-				| `[${number}]${NonNullable<U> extends unknown[] ? '' : '.'}${NonNullable<U> extends
-						| Date
-						| Set<unknown>
+				| `[${number}]${NonNullable<U> extends unknown[]
+						? ''
+						: '.'}${NonNullable<U> extends BuiltInObjects
 						? never
 						: StringPath<NonNullable<U>, OnlyArrays> & string}`
 		: `[${number}]`
 	: NonNullable<T> extends object
 		?
 				| (OnlyArrays extends false
-						? keyof T
+						? AllKeys<T>
 						: {
-								[K in keyof T]-?: K extends string
+								[K in AllKeys<T>]-?: K extends string
 									? NonNullable<T[K]> extends unknown[]
 										? K
 										: never
 									: never;
-							}[keyof T])
+							}[AllKeys<T>])
 				| {
-						[K in keyof T]-?: K extends string
+						[K in AllKeys<T>]-?: K extends string
 							? NonNullable<T[K]> extends object
-								? `${K}${NonNullable<T[K]> extends unknown[] ? '' : '.'}${NonNullable<T[K]> extends
-										| Date
-										| Set<unknown>
+								? `${K}${NonNullable<T[K]> extends unknown[] ? '' : '.'}${NonNullable<
+										T[K]
+									> extends BuiltInObjects
 										? never
 										: StringPath<NonNullable<T[K]>, OnlyArrays> & string}`
 								: never
 							: never;
-				  }[keyof T]
+				  }[AllKeys<T>]
 		: never;
 
 export type StringPathLeaves<
@@ -111,14 +122,14 @@ export type StringPathLeaves<
 		?
 				| {
 						// Same as FilterObjects but inlined for better intellisense
-						[K in keyof T]: NonNullable<T[K]> extends object
+						[K in AllKeys<T>]: NonNullable<T[K]> extends object
 							? NonNullable<T[K]> extends BuiltInObjects
 								? K
 								: never
 							: K;
-				  }[keyof T]
+				  }[AllKeys<T>]
 				| {
-						[K in keyof T]-?: K extends string
+						[K in AllKeys<T>]-?: K extends string
 							? NonNullable<T[K]> extends object
 								? `${K}${NonNullable<T[K]> extends unknown[] ? '' : '.'}${StringPathLeaves<
 										NonNullable<T[K]>,
@@ -127,7 +138,7 @@ export type StringPathLeaves<
 										string}`
 								: never
 							: never;
-				  }[keyof T]
+				  }[AllKeys<T>]
 		: never;
 
 export type FormPathType<T, P extends string> = P extends keyof T
@@ -168,4 +179,6 @@ export type FormPathType<T, P extends string> = P extends keyof T
 											: { invalid_path6: P; Type: T }
 							: P extends ''
 								? T
-								: { invalid_path7: P; Type: T };
+								: P extends AllKeys<T>
+									? MergeUnion<T>[P]
+									: { invalid_path7: P; Type: T };

@@ -260,8 +260,6 @@ describe('Default values', () => {
 
 	it('should map the default value of a union (anyOf) if only one default value exists.', () => {
 		expect(defaultValues(defaultTestSchema)).toEqual({
-			name: undefined,
-			email: undefined,
 			gender: 'other',
 			age: 25
 		});
@@ -399,7 +397,7 @@ describe('Constraints', () => {
 	});
 });
 
-describe.only('Unions', () => {
+describe('Unions', () => {
 	const schemaUnion = z.union([
 		z.object({
 			name: z.string().min(1)
@@ -420,7 +418,9 @@ describe.only('Unions', () => {
 	});
 
 	it('should handle default values properly', async () => {
-		const form = await superValidate(zod(discriminated));
-		console.log(form);
+		const defaults = zod(discriminated).defaults;
+		expect(defaults.name).toBe('');
+		assert(defaults.entity.type == 'person');
+		expect(defaults.entity.DOB).toBeInstanceOf(Date);
 	});
 });

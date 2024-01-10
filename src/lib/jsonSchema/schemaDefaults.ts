@@ -18,16 +18,16 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	const info = schemaInfo(schema, isOptional);
 	if (!info) return undefined;
 
-	if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
-	else console.dir({ path, schema, isOptional }, { depth: 10 }); //debug
+	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
+	//else console.dir({ path, schema, isOptional }, { depth: 10 }); //debug
 
-	let objectDefaults: Record<string, unknown> = {};
+	let objectDefaults: Record<string, unknown> | undefined = undefined;
 
 	// Default takes (early) priority.
 	if ('default' in schema) {
-		// Test for defaults for the whole object
-		// Cannot be used directly, since undefined fields may have to be replaced
-		// with correct default values.
+		// Test for object defaults.
+		// Cannot be returned directly, since undefined fields
+		// may have to be replaced with correct default values.
 		if (
 			info.types.includes('object') &&
 			schema.default &&
@@ -44,7 +44,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	}
 
 	// Check unions first, so default values can take precedence over nullable and optional
-	if (info.union) {
+	if (!objectDefaults && info.union) {
 		const singleDefault = info.union.filter(
 			(s) => typeof s !== 'boolean' && s.default !== undefined
 		);
@@ -61,15 +61,15 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 				path
 			);
 		} else {
-			if (info.isNullable) return null;
-			if (info.isOptional) return undefined;
 			return _defaultValues(info.union[0], isOptional, path);
 		}
 	}
 
-	// Null takes priority over undefined
-	if (info.isNullable) return null;
-	if (info.isOptional) return undefined;
+	if (!objectDefaults) {
+		// Null takes priority over undefined
+		if (info.isNullable) return null;
+		if (info.isOptional) return undefined;
+	}
 
 	// Objects
 	if (info.properties) {
@@ -79,13 +79,15 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
 			}
 			const def =
-				objectDefaults[key] !== undefined
+				objectDefaults && objectDefaults[key] !== undefined
 					? objectDefaults[key]
 					: _defaultValues(value, !schema.required?.includes(key), [...path, key]);
 
 			if (def !== undefined) output[key] = def;
 		}
 		return output;
+	} else if (objectDefaults) {
+		return objectDefaults;
 	}
 
 	// Enums

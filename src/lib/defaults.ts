@@ -1,4 +1,4 @@
-import { createAdapter, type BaseValidationAdapter } from './adapters/index.js';
+import { createAdapter, type BaseValidationAdapter } from './adapters/adapters.js';
 import type { SuperValidated } from './index.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import type { SuperValidateOptions } from './superValidate.js';

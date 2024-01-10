@@ -1,7 +1,8 @@
-import { type ValidationAdapter, adapter, createAdapter } from './index.js';
+import { type ValidationAdapter, createAdapter } from './adapters.js';
 import type { Inferred } from '$lib/index.js';
 import { type TSchema, FormatRegistry } from '@sinclair/typebox';
 import { type TypeCheck, TypeCompiler } from '@sinclair/typebox/compiler';
+import { memoize } from '$lib/memoize.js';
 
 // From https://github.com/sinclairzx81/typebox/tree/ca4d771b87ee1f8e953036c95a21da7150786d3e/example/formats
 const Email =
@@ -36,6 +37,6 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Inferred<T>> 
 	});
 }
 
-export const typebox = adapter(_typebox);
+export const typebox = memoize(_typebox);
 
 const compiled = new WeakMap<TSchema, TypeCheck<TSchema>>();

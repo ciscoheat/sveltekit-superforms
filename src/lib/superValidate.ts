@@ -4,7 +4,7 @@ import {
 	createAdapter,
 	type BaseValidationAdapter,
 	type ValidationResult
-} from './adapters/index.js';
+} from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';

@@ -1,7 +1,8 @@
 import Ajv from 'ajv';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import addFormats from 'ajv-formats';
-import { adapter, createAdapter, type ValidationAdapter } from './index.js';
+import { memoize } from '$lib/memoize.js';
+import { createAdapter, type ValidationAdapter } from './adapters.js';
 
 function _ajv<T extends Record<string, unknown>>(
 	schema: JSONSchema,
@@ -35,4 +36,4 @@ function _ajv<T extends Record<string, unknown>>(
 	});
 }
 
-export const ajv = adapter(_ajv);
+export const ajv = memoize(_ajv);

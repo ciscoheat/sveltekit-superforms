@@ -2,13 +2,13 @@ import type { Type } from 'arktype';
 import {
 	toJsonSchema,
 	type ValidationAdapter,
-	adapter,
 	validate,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	createAdapter
-} from './index.js';
+} from './adapters.js';
 import type { Inferred } from '$lib/index.js';
+import { memoize } from '$lib/memoize.js';
 
 function _arktype<T extends Type>(
 	schema: T,
@@ -25,4 +25,4 @@ function _arktype<T extends Type>(
 	});
 }
 
-export const arktype = adapter(_arktype);
+export const arktype = memoize(_arktype);

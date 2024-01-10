@@ -1,19 +1,13 @@
-import {
-	type ValidationAdapter,
-	type BaseValidationAdapter,
-	adapter,
-	type JsonSchemaOptions,
-	createAdapter
-} from './index.js';
-import type { Inferred } from '$lib/index.js';
+import { type ValidationAdapter, type JsonSchemaOptions, createAdapter } from './adapters.js';
 import type { ObjectSchema } from 'joi';
 import joiToJson from 'joi-to-json';
+import { memoize } from '$lib/memoize.js';
 
 function _joi<T extends ObjectSchema>(
 	schema: T,
 	options?: JsonSchemaOptions<T>
 ): ValidationAdapter<Record<string, unknown>> {
-	const adapter = {
+	return createAdapter({
 		superFormValidationLibrary: 'joi',
 		// @ts-expect-error No type information exists for joi-to-json
 		jsonSchema: options?.jsonSchema ?? joiToJson(schema),
@@ -34,9 +28,7 @@ function _joi<T extends ObjectSchema>(
 				success: false
 			};
 		}
-	} satisfies BaseValidationAdapter<Inferred<T>>;
-
-	return createAdapter(adapter);
+	});
 }
 
-export const joi = adapter(_joi);
+export const joi = memoize(_joi);

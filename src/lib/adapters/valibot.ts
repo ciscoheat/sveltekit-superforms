@@ -1,14 +1,14 @@
 import {
 	toJsonSchema,
 	type ValidationAdapter,
-	adapter,
 	validate,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	createAdapter
-} from './index.js';
+} from './adapters.js';
 import type { BaseSchema, BaseSchemaAsync } from 'valibot';
 import type { Inferred } from '$lib/index.js';
+import { memoize } from '$lib/memoize.js';
 
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
@@ -25,4 +25,4 @@ function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	});
 }
 
-export const valibot = adapter(_valibot);
+export const valibot = memoize(_valibot);

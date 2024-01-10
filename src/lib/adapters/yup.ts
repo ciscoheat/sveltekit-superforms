@@ -1,8 +1,9 @@
 import { convertSchema } from '@sodaru/yup-to-json-schema';
-import { adapter, type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './index.js';
+import { type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './adapters.js';
 import { Schema, ValidationError } from 'yup';
 import type { Inferred } from '$lib/index.js';
 import { splitPath } from '$lib/stringPath.js';
+import { memoize } from '$lib/memoize.js';
 
 export const yupToJsonSchema = (...params: Parameters<typeof convertSchema>) => {
 	return convertSchema(...params);
@@ -38,4 +39,4 @@ function _yup<T extends Schema>(
 	});
 }
 
-export const yup = adapter(_yup);
+export const yup = memoize(_yup);

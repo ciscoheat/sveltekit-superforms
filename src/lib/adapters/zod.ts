@@ -1,14 +1,14 @@
 import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
-	adapter,
 	validate,
 	type JsonSchemaOptions,
 	type ValidationAdapter,
 	createAdapter
-} from './index.js';
+} from './adapters.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
 import type { Inferred } from '$lib/index.js';
+import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {
 	dateStrategy: 'integer',
@@ -50,4 +50,4 @@ function _zod<T extends ZodValidation<AnyZodObject>>(
 	});
 }
 
-export const zod = adapter(_zod);
+export const zod = memoize(_zod);

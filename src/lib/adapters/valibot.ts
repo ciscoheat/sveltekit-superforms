@@ -7,13 +7,13 @@ import {
 	createAdapter
 } from './adapters.js';
 import type { BaseSchema, BaseSchemaAsync } from 'valibot';
-import type { Inferred } from '$lib/index.js';
+import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
 	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
-): ValidationAdapter<Inferred<T>> {
+): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
 		validate: validate(schema),

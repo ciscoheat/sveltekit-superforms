@@ -7,13 +7,13 @@ import {
 	type RequiredJsonSchemaOptions,
 	createAdapter
 } from './adapters.js';
-import type { Inferred } from '$lib/index.js';
+import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
 function _arktype<T extends Type>(
 	schema: T,
 	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
-): ValidationAdapter<Inferred<T>> {
+): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
 		validate: validate(schema),

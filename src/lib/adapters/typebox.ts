@@ -1,5 +1,5 @@
 import { type ValidationAdapter, createAdapter } from './adapters.js';
-import type { Inferred } from '$lib/index.js';
+import type { Infer } from '$lib/index.js';
 import { type TSchema, FormatRegistry } from '@sinclair/typebox';
 import { type TypeCheck, TypeCompiler } from '@sinclair/typebox/compiler';
 import { memoize } from '$lib/memoize.js';
@@ -8,7 +8,7 @@ import { memoize } from '$lib/memoize.js';
 const Email =
 	/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
 
-function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Inferred<T>> {
+function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 	if (!compiled.has(schema)) {
 		compiled.set(schema, TypeCompiler.Compile(schema));
 	}
@@ -23,7 +23,7 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Inferred<T>> 
 			const errors = [...(validator?.Errors(data) ?? [])];
 
 			if (!errors.length) {
-				return { success: true, data: data as Inferred<T> };
+				return { success: true, data: data as Infer<T> };
 			}
 
 			return {

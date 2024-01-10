@@ -63,7 +63,7 @@ type FormUpdate = (
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 const initialForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
 
-export const defaultOnError = (event: { result: { error: unknown } }) => {
+const defaultOnError = (event: { result: { error: unknown } }) => {
 	console.warn('Unhandled Superform error, use onError event to handle it:', event.result.error);
 };
 
@@ -1297,6 +1297,7 @@ export function superForm<
 											onErrorEvent !== 'apply' &&
 											(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
 										) {
+											// TODO: Will this be triggered as default?
 											await onErrorEvent(data);
 										}
 									}

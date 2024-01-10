@@ -1,14 +1,19 @@
-import type { Infer, Schema } from '@decs/typeschema';
+import type { Infer as InferSchema, Schema } from '@decs/typeschema';
 import SuperDebug from './client/SuperDebug.svelte';
 import type { AnyZodObject, ZodEffects, z } from 'zod';
 
 export default SuperDebug;
 
 export { superForm } from './client/superForm.js';
-export { superValidate, type SuperValidated } from './superValidate.js';
+export {
+	superValidate,
+	type SuperValidated,
+	type TaintedFields,
+	type ValidationErrors
+} from './superValidate.js';
 
 export type MaybePromise<T> = T | Promise<T>;
-export type Inferred<T extends Schema> = NonNullable<Infer<T>>;
+export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
 export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
 export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';
 

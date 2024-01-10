@@ -1,4 +1,4 @@
-import { SuperFormError, type InputConstraints, type Inferred } from '$lib/index.js';
+import { SuperFormError, type InputConstraints, type Infer } from '$lib/index.js';
 import {
 	validate as typeSchemaValidate,
 	type Schema as TypeSchema,
@@ -11,8 +11,6 @@ import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
 import toSchema from 'to-json-schema';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import type { Options as SchemaOptions } from 'to-json-schema';
-
-export { memoize as adapter } from '$lib/memoize.js';
 
 export type { Options as SchemaOptions } from 'to-json-schema';
 
@@ -30,18 +28,18 @@ export type ValidationLibrary =
 export type Schema = TypeSchema;
 
 export type AdapterDefaultOptions<T extends Schema> = {
-	defaults: Inferred<T>;
+	defaults: Infer<T>;
 	schemaOptions?: SchemaOptions;
 };
 
 export type JsonSchemaOptions<T extends Schema> = {
 	jsonSchema?: JSONSchema;
-	defaults?: Inferred<T>;
+	defaults?: Infer<T>;
 };
 
 export type RequiredJsonSchemaOptions<T extends Schema> = {
 	jsonSchema: JSONSchema;
-	defaults?: Inferred<T>;
+	defaults?: Infer<T>;
 };
 
 // Lifted from TypeSchema, since they are not exported

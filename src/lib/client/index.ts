@@ -4,15 +4,9 @@ import type { Readable, Writable, Updater } from 'svelte/store';
 import { type SuperValidated, SuperFormError } from '../index.js';
 import type { MaybePromise } from '../index.js';
 import type { FormPath, FormPathLeaves, FormPathType } from '../stringPath.js';
-import type { BaseValidationAdapter } from '$lib/adapters/index.js';
 import { enhance as svelteKitEnhance } from '$app/forms';
 import type { TaintedFields, ValidationErrors } from '../superValidate.js';
-
-export { superForm } from './superForm.js';
-export { superValidate, message, setMessage, setError } from '../superValidate.js';
-export { defaults } from '../defaults.js';
-export { defaultValues } from '../jsonSchema/defaultValues.js';
-export { actionResult } from '../actionResult.js';
+import type { ValidationAdapter } from '$lib/adapters/adapters.js';
 
 export {
 	intProxy,
@@ -24,6 +18,13 @@ export {
 	stringProxy,
 	arrayProxy
 } from './proxies.js';
+
+export { superValidate, message, setMessage, setError } from '../superValidate.js';
+export { defaults } from '../defaults.js';
+export { actionResult } from '../actionResult.js';
+export { defaultValues } from '../jsonSchema/defaultValues.js';
+
+export { superForm } from './superForm.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -81,7 +82,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 		  }) => MaybePromise<unknown | void>);
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: BaseValidationAdapter<T> | false;
+	validators: ValidationAdapter<T> | false;
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
 	defaultValidator: 'keep' | 'clear';
 	customValidity: boolean;
@@ -118,17 +119,12 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	legacy: boolean;
 }>;
 
-export const defaultOnError = (event: { result: { error: unknown } }) => {
-	console.warn('Unhandled Superform error, use onError event to handle it:', event.result.error);
-};
-
 export type SuperFormSnapshot<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = SuperValidated<T, M> & { tainted: TaintedFields<T> | undefined };
 
-// TODO: Implement and test untaint and untaint-all
 type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
 	set(

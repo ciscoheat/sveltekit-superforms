@@ -7,7 +7,7 @@ import {
 	createAdapter
 } from './adapters.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
-import type { Inferred } from '$lib/index.js';
+import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {
@@ -40,8 +40,8 @@ type ZodValidation<T extends AnyZodObject> =
 
 function _zod<T extends ZodValidation<AnyZodObject>>(
 	schema: T,
-	options?: JsonSchemaOptions<Inferred<T>>
-): ValidationAdapter<Inferred<T>> {
+	options?: JsonSchemaOptions<Infer<T>>
+): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
 		validate: validate(schema),

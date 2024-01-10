@@ -32,6 +32,8 @@
 		}
 	],
 	"scripts": {
+		"alpha:bump": "npm version prerelease",
+		"alpha:pub": "npm publish --tag alpha",
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
 		"preview": "vite preview",

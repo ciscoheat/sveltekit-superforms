@@ -1,6 +1,6 @@
 import { zod } from '$lib/adapters/zod.js';
-import type { SuperForm } from '$lib/client/index.js';
-import { superForm, superValidate, type SuperValidated } from '$lib/index.js';
+import { superForm, type SuperForm } from '$lib/client/index.js';
+import { superValidate, type SuperValidated } from '$lib/index.js';
 import { get } from 'svelte/store';
 import merge from 'ts-deepmerge';
 import { describe, it, expect, beforeEach, test } from 'vitest';

@@ -4,9 +4,15 @@ import type { AnyZodObject, ZodEffects, z } from 'zod';
 
 export default SuperDebug;
 
-export { superForm } from './client/superForm.js';
+export { defaults } from './defaults.js';
+export { actionResult } from './actionResult.js';
+export { defaultValues } from './jsonSchema/defaultValues.js';
+
 export {
 	superValidate,
+	message,
+	setMessage,
+	setError,
 	type SuperValidated,
 	type TaintedFields,
 	type ValidationErrors
@@ -27,7 +33,7 @@ export {
 } from './stringPath.js';
 
 /**
- * @deprecated Use z.infer\<T\> instead, where T is the schema.
+ * @deprecated Use Infer\<T\> instead, where T is the schema.
  */
 export type ZodValidation<T extends AnyZodObject> = z.infer<
 	| T

@@ -61,6 +61,10 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 				path
 			);
 		} else {
+			// Null takes priority over undefined
+			if (info.isNullable) return null;
+			if (info.isOptional) return undefined;
+
 			return _defaultValues(info.union[0], isOptional, path);
 		}
 	}

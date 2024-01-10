@@ -8,7 +8,6 @@ import { z } from 'zod';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
-import { superValidate } from '$lib/superValidate.js';
 
 const schema = {
 	type: 'object',
@@ -398,14 +397,18 @@ describe('Constraints', () => {
 });
 
 describe('Unions', () => {
-	const schemaUnion = z.union([
-		z.object({
-			name: z.string().min(1)
-		}),
-		z.object({
-			number: z.number().int()
-		})
-	]);
+	const schemaUnion = z
+		.union([
+			z
+				.object({
+					name: z.string().min(1)
+				})
+				.default({ name: 'Test' }),
+			z.object({
+				number: z.number().int()
+			})
+		])
+		.default({ name: 'Test' });
 
 	const discriminated = z.object({
 		name: z.string().min(1),
@@ -422,5 +425,11 @@ describe('Unions', () => {
 		expect(defaults.name).toBe('');
 		assert(defaults.entity.type == 'person');
 		expect(defaults.entity.DOB).toBeInstanceOf(Date);
+	});
+
+	it('should handle schema unions', async () => {
+		expect(zod(schemaUnion).defaults).toEqual({
+			name: 'Test'
+		});
 	});
 });

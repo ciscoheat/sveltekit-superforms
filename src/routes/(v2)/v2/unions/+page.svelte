@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { dateProxy, superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
+	//import { schema } from './schema.js';
 
 	export let data;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
-		//dataType: 'json',
+		dataType: 'json'
 		//validators: schema
 	});
+
+	const proxy = dateProxy(form, 'entity.DOB', { format: 'date' });
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />
@@ -17,14 +19,29 @@
 
 <form method="POST" use:enhance>
 	<label>
-		Name: <input name="name" bind:value={$form.name} />
+		Name: <input bind:value={$form.name} />
 		{#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
 	</label>
 
-	<select name="entity" bind:value={$form.entity}>
-		<option value="person">Person</option>
-		<option value="corporate">Person</option>
-	</select>
+	<label>
+		Entity type:
+		<select bind:value={$form.entity.type}>
+			<option value="person">Person</option>
+			<option value="corporate">Corporate</option>
+		</select>
+	</label>
+
+	{#if $form.entity.type == 'person'}
+		<label>
+			Date of Birth:
+			<input type="date" bind:value={$proxy} />
+		</label>
+	{:else}
+		<label>
+			Tax ID:
+			<input bind:value={$form.entity.taxId} />
+		</label>
+	{/if}
 
 	<div>
 		<button>Submit</button>

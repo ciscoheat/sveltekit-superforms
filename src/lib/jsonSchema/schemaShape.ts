@@ -12,12 +12,10 @@ export type SchemaShape = {
 };
 
 export function schemaShape(schema: JSONSchema, path: string[] = []): SchemaShape {
-	if (schema.type !== 'object') {
-		throw new SchemaError('Only objects can use errorShape', path);
-	}
+	const output = _schemaShape(schema, path);
 
-	// Can be casted since it guaranteed to be an object
-	return _schemaShape(schema, path) as SchemaShape;
+	if (!output) throw new SchemaError('No shape could be created for schema.', path);
+	return output;
 }
 
 function _schemaShape(schema: JSONSchema7Definition, path: string[]): SchemaShape | undefined {

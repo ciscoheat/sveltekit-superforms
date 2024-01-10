@@ -1,4 +1,4 @@
-import type { AnyZodObject, ZodEffects } from 'zod';
+import type { AnyZodObject, ZodDefault, ZodEffects, ZodUnion } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import { type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './adapters.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
@@ -15,7 +15,11 @@ export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
 	return zodToJson(...params) as JSONSchema7;
 };
 
-type ZodValidation<T extends AnyZodObject> =
+type ZodObjectUnion<T extends AnyZodObject> = ZodUnion<
+	[ZodValidation<T>, ZodValidation<T>, ...ZodValidation<T>[]]
+>;
+
+export type ZodValidation<T extends AnyZodObject | ZodObjectUnion<AnyZodObject>> =
 	| T
 	| ZodEffects<T>
 	| ZodEffects<ZodEffects<T>>
@@ -24,16 +28,18 @@ type ZodValidation<T extends AnyZodObject> =
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>
 	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
-	| ZodEffects<
+	| ZodDefault<T>
+	| ZodDefault<ZodEffects<T>>
+	| ZodDefault<ZodEffects<ZodEffects<T>>>
+	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<T>>>>
+	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>
+	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>
+	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
+	| ZodDefault<
 			ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
-	  >
-	| ZodEffects<
-			ZodEffects<
-				ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
-			>
 	  >;
 
-function _zod<T extends ZodValidation<AnyZodObject>>(
+function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
 	schema: T,
 	options?: JsonSchemaOptions<Infer<T>>
 ): ValidationAdapter<Infer<T>> {

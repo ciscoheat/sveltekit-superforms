@@ -1,4 +1,3 @@
-import { SchemaError } from '$lib/index.js';
 import type { SuperStruct } from '$lib/superStruct.js';
 import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
 
@@ -17,10 +16,6 @@ export type InputConstraints<T extends Record<string, unknown>> = SuperStruct<T,
 export function constraints<T extends Record<string, unknown>>(
 	schema: JSONSchema
 ): InputConstraints<T> {
-	if (schema.type != 'object') {
-		throw new SchemaError('Constraints must be created from an object schema.');
-	}
-
 	return _constraints(schemaInfo(schema, false), []) as InputConstraints<T>;
 }
 

@@ -1,7 +1,6 @@
 import { setError, setMessage, superValidate } from '$lib/superValidate.js';
 import { assert, expect, test, describe } from 'vitest';
-import { z, type AnyZodObject } from 'zod';
-import { SchemaError } from '$lib/index.js';
+import { z } from 'zod';
 import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/zod.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
@@ -393,22 +392,6 @@ describe('Default values', () => {
 				number: { min: Number.MIN_VALUE }
 			}
 		});
-	});
-
-	test.only('Passing an array schema instead of an object', async () => {
-		const schema = z
-			.object({
-				name: z.string()
-			})
-			.array();
-
-		await expect(
-			async () => await superValidate(null, zod(z.string() as unknown as AnyZodObject))
-		).rejects.toThrowError(SchemaError);
-
-		await expect(
-			async () => await superValidate(zod(schema as unknown as AnyZodObject))
-		).rejects.toThrowError(SchemaError);
 	});
 
 	test('Deeply nested objects', async () => {

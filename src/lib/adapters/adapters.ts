@@ -1,9 +1,5 @@
 import { SuperFormError, type InputConstraints, type Infer } from '$lib/index.js';
-import {
-	//validate as typeSchemaValidate,
-	type Schema as TypeSchema,
-	type ValidationIssue
-} from '@decs/typeschema';
+import { type Schema as TypeSchema, type ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';

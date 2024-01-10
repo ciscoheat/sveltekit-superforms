@@ -21,7 +21,7 @@
 
 <br/>
 
-Making SvelteKit **validation** and **displaying** of forms a pleasure!
+Making SvelteKit forms a pleasure to use!
 
 # Feature list
 

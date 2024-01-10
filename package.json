@@ -141,8 +141,10 @@
 			"optional": true
 		}
 	},
+	"dependencies": {
+		"@decs/typeschema": "^0.12.1"
+	},
 	"devDependencies": {
-		"@decs/typeschema": "^0.12.1",
 		"@sveltejs/adapter-auto": "^3.1.0",
 		"@sveltejs/kit": "^2.0.6",
 		"@sveltejs/package": "^2.2.5",

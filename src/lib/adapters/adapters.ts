@@ -54,7 +54,7 @@ export type ValidationResult<TOutput = any> =
 			issues: Array<ValidationIssue>;
 	  };
 
-export type BaseValidationAdapter<T extends Record<string, unknown>> = {
+type BaseValidationAdapter<T extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;
 	jsonSchema: JSONSchema;
 	validate: (data: unknown) => Promise<ValidationResult<T>>;

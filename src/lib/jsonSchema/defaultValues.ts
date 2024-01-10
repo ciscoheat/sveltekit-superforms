@@ -18,8 +18,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	const info = schemaInfo(schema, isOptional);
 	if (!info) return undefined;
 
-	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
-	//else console.log(path, schema, { isOptional }); //debug
+	if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
+	else console.dir({ path, schema, isOptional }, { depth: 10 }); //debug
 
 	let objectDefaults: Record<string, unknown> = {};
 

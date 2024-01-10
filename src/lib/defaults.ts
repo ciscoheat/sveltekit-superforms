@@ -1,7 +1,5 @@
-import { createAdapter, type BaseValidationAdapter } from './adapters/adapters.js';
-import type { SuperValidated } from './index.js';
-import type { JSONSchema } from './jsonSchema/index.js';
-import type { SuperValidateOptions } from './superValidate.js';
+import { type ValidationAdapter } from './adapters/adapters.js';
+import type { SuperValidateOptions, SuperValidated } from './superValidate.js';
 
 type SuperSchemaData<T extends Record<string, unknown>> = Partial<T> | null | undefined;
 
@@ -14,7 +12,7 @@ export function defaults<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(adapter: BaseValidationAdapter<T>, options?: SuperSchemaOptions<T>): SuperValidated<T, M>;
+>(adapter: ValidationAdapter<T>, options?: SuperSchemaOptions<T>): SuperValidated<T, M>;
 
 export function defaults<
 	T extends Record<string, unknown>,
@@ -22,7 +20,7 @@ export function defaults<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
 	defaults: SuperSchemaData<T>,
-	adapter: BaseValidationAdapter<T>,
+	adapter: ValidationAdapter<T>,
 	options?: SuperSchemaOptions<T>
 ): SuperValidated<T, M>;
 
@@ -31,8 +29,8 @@ export function defaults<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	defaults: SuperSchemaData<T> | BaseValidationAdapter<T>,
-	adapter?: BaseValidationAdapter<T> | SuperSchemaOptions<T>,
+	defaults: SuperSchemaData<T> | ValidationAdapter<T>,
+	adapter?: ValidationAdapter<T> | SuperSchemaOptions<T>,
 	options?: SuperSchemaOptions<T>
 ): SuperValidated<T, M> {
 	if (defaults && 'superFormValidationLibrary' in defaults) {
@@ -41,7 +39,7 @@ export function defaults<
 		defaults = null;
 	}
 
-	const validator = createAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
+	const validator = adapter as ValidationAdapter<T>;
 	const optionDefaults = options?.defaults ?? validator.defaults;
 
 	return {
@@ -54,9 +52,6 @@ export function defaults<
 	};
 }
 
-export function defaultValues<T extends Record<string, unknown>>(
-	adapter: BaseValidationAdapter<T>,
-	options?: { jsonSchema: JSONSchema }
-): T {
-	return createAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema).defaults;
+export function defaultValues<T extends Record<string, unknown>>(adapter: ValidationAdapter<T>): T {
+	return adapter.defaults;
 }

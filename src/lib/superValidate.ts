@@ -1,10 +1,6 @@
 import { traversePath } from './traversal.js';
 import { type ActionFailure, fail as realFail, type RequestEvent } from '@sveltejs/kit';
-import {
-	createAdapter,
-	type BaseValidationAdapter,
-	type ValidationResult
-} from './adapters/adapters.js';
+import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
@@ -67,10 +63,7 @@ export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(
-	adapter: BaseValidationAdapter<T>,
-	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M>>;
+>(adapter: ValidationAdapter<T>, options?: SuperValidateOptions<T>): Promise<SuperValidated<T, M>>;
 
 export async function superValidate<
 	T extends Record<string, unknown>,
@@ -78,7 +71,7 @@ export async function superValidate<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
 	data: SuperValidateData<T>,
-	adapter: BaseValidationAdapter<T>,
+	adapter: ValidationAdapter<T>,
 	options?: SuperValidateOptions<T>
 ): Promise<SuperValidated<T, M>>;
 
@@ -92,8 +85,8 @@ export async function superValidate<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	data: BaseValidationAdapter<T> | SuperValidateData<T>,
-	adapter?: BaseValidationAdapter<T> | SuperValidateData<T> | SuperValidateOptions<T>,
+	data: ValidationAdapter<T> | SuperValidateData<T>,
+	adapter?: ValidationAdapter<T> | SuperValidateData<T> | SuperValidateOptions<T>,
 	options?: SuperValidateOptions<T>
 ): Promise<SuperValidated<T, M>> {
 	if (data && 'superFormValidationLibrary' in data) {
@@ -102,7 +95,7 @@ export async function superValidate<
 		data = undefined;
 	}
 
-	const validator = createAdapter(adapter as BaseValidationAdapter<T>, options?.jsonSchema);
+	const validator = adapter as ValidationAdapter<T>;
 
 	const defaults = options?.defaults ?? validator.defaults;
 	const jsonSchema = validator.jsonSchema;

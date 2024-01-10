@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
+import { superValidate } from '$lib/superValidate.js';
 
 const schema = {
 	type: 'object',
@@ -395,5 +396,31 @@ describe('Constraints', () => {
 				max: 100
 			}
 		});
+	});
+});
+
+describe.only('Unions', () => {
+	const schemaUnion = z.union([
+		z.object({
+			name: z.string().min(1)
+		}),
+		z.object({
+			number: z.number().int()
+		})
+	]);
+
+	const discriminated = z.object({
+		name: z.string().min(1),
+		entity: z
+			.discriminatedUnion('type', [
+				z.object({ type: z.literal('person'), DOB: z.date() }),
+				z.object({ type: z.literal('corporate'), taxId: z.string().min(5) })
+			])
+			.default({ type: 'person', DOB: new Date() })
+	});
+
+	it('should handle default values properly', async () => {
+		const form = await superValidate(zod(discriminated));
+		console.log(form);
 	});
 });

@@ -2,7 +2,6 @@ import type { Type } from 'arktype';
 import {
 	toJsonSchema,
 	type ValidationAdapter,
-	validate,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	createAdapter
@@ -16,12 +15,27 @@ function _arktype<T extends Type>(
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
-		validate: validate(schema),
+		defaults: options.defaults,
 		jsonSchema:
 			'jsonSchema' in options
 				? options.jsonSchema
 				: toJsonSchema(options.defaults, options.schemaOptions),
-		defaults: options.defaults
+		async validate(data) {
+			const result = schema(data);
+			if (result.problems == null) {
+				return {
+					data: result.data as Infer<T>,
+					success: true
+				};
+			}
+			return {
+				issues: Array.from(result.problems).map(({ message, path }) => ({
+					message,
+					path
+				})),
+				success: false
+			};
+		}
 	});
 }
 

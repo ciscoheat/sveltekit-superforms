@@ -1,11 +1,6 @@
 import type { AnyZodObject, ZodEffects } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import {
-	validate,
-	type JsonSchemaOptions,
-	type ValidationAdapter,
-	createAdapter
-} from './adapters.js';
+import { type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './adapters.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
 import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
@@ -44,7 +39,19 @@ function _zod<T extends ZodValidation<AnyZodObject>>(
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
-		validate: validate(schema),
+		async validate(data) {
+			const result = await schema.safeParseAsync(data);
+			if (result.success) {
+				return {
+					data: result.data as Infer<T>,
+					success: true
+				};
+			}
+			return {
+				issues: result.error.issues.map(({ message, path }) => ({ message, path })),
+				success: false
+			};
+		},
 		jsonSchema: options?.jsonSchema ?? zodToJsonSchema(schema),
 		defaults: options?.defaults
 	});

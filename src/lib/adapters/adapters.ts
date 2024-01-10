@@ -1,6 +1,6 @@
 import { SuperFormError, type InputConstraints, type Infer } from '$lib/index.js';
 import {
-	validate as typeSchemaValidate,
+	//validate as typeSchemaValidate,
 	type Schema as TypeSchema,
 	type ValidationIssue
 } from '@decs/typeschema';
@@ -69,9 +69,11 @@ export type ValidationAdapter<T extends Record<string, unknown>> = BaseValidatio
 	id: string;
 };
 
+/*
 export function validate<T extends Record<string, unknown>>(schema: TypeSchema) {
 	return async (data: unknown) => (await typeSchemaValidate(schema, data)) as ValidationResult<T>;
 }
+*/
 
 export function createAdapter<T extends Record<string, unknown>>(
 	adapter: BaseValidationAdapter<T>,

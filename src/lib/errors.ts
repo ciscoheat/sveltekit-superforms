@@ -1,8 +1,8 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
-import type { ValidationIssue } from '@decs/typeschema';
 import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
 import { mergePath } from './stringPath.js';
 import type { ValidationErrors } from './superValidate.js';
+import type { ValidationIssue } from '@decs/typeschema';
 
 export class SuperFormError extends Error {
 	constructor(message?: string) {

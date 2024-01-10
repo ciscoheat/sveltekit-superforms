@@ -8,6 +8,7 @@ import { memoize } from '$lib/memoize.js';
 const Email =
 	/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
 
+/* @__NO_SIDE_EFFECTS__ */
 function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 	if (!compiled.has(schema)) {
 		compiled.set(schema, TypeCompiler.Compile(schema));
@@ -37,6 +38,6 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 	});
 }
 
-export const typebox = memoize(_typebox);
+export const typebox = /* @__PURE__ */ memoize(_typebox);
 
 const compiled = new WeakMap<TSchema, TypeCheck<TSchema>>();

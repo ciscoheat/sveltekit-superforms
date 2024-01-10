@@ -1,8 +1,7 @@
-import { type SuperValidated } from '../index.js';
 import type { FormOptions } from './index.js';
 import { mapErrors } from '../errors.js';
 import { createAdapter, type ValidationResult } from '$lib/adapters/adapters.js';
-import type { ValidationErrors } from '$lib/superValidate.js';
+import type { SuperValidated, ValidationErrors } from '$lib/superValidate.js';
 
 export type ValidateOptions<V> = Partial<{
 	value: V;
@@ -36,7 +35,7 @@ async function _clientValidation<T extends Record<string, unknown>, M = unknown>
 
 	if (validator) {
 		const adapter = createAdapter<T>(validator);
-		status = await adapter.validate(data);
+		status = await /* @__PURE__ */ adapter.validate(data);
 
 		if (!status.success) {
 			errors = mapErrors(status.issues, adapter.shape) as ValidationErrors<T>;

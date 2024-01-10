@@ -1,5 +1,5 @@
 import { SuperFormError, type InputConstraints, type Infer } from '$lib/index.js';
-import { type Schema as TypeSchema, type ValidationIssue } from '@decs/typeschema';
+import type { Schema as TypeSchema, ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
@@ -65,12 +65,7 @@ export type ValidationAdapter<T extends Record<string, unknown>> = BaseValidatio
 	id: string;
 };
 
-/*
-export function validate<T extends Record<string, unknown>>(schema: TypeSchema) {
-	return async (data: unknown) => (await typeSchemaValidate(schema, data)) as ValidationResult<T>;
-}
-*/
-
+/* @__NO_SIDE_EFFECTS__ */
 export function createAdapter<T extends Record<string, unknown>>(
 	adapter: BaseValidationAdapter<T>,
 	jsonSchema?: JSONSchema
@@ -101,6 +96,7 @@ export function createAdapter<T extends Record<string, unknown>>(
  * @param options customize schema options
  * @returns JSON Schema for the object
  * @see https://www.npmjs.com/package/to-json-schema
+ * @__NO_SIDE_EFFECTS__
  */
 export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOptions) => {
 	options = {
@@ -120,5 +116,5 @@ export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOp
 		objects: { additionalProperties: false, ...(options?.objects ?? {}) },
 		...(options ?? {})
 	};
-	return toSchema(object, options) as JSONSchema;
+	return /* @__PURE__ */ toSchema(object, options) as JSONSchema;
 };

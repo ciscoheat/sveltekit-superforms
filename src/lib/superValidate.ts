@@ -109,7 +109,7 @@ export async function superValidate<
 	let status: ValidationResult<T>;
 
 	if (!!parsed.data || addErrors) {
-		status = await validator.validate(parsedData);
+		status = await /* @__PURE__ */ validator.validate(parsedData);
 	} else {
 		status = { success: false, issues: [] };
 	}
@@ -216,7 +216,7 @@ export function setError<T extends Record<string, unknown>>(
 
 export function setError<T extends Record<string, unknown>>(
 	form: SuperValidated<T, unknown>,
-	path: string | string[] | (string & StringPathLeaves<T, '_errors'>),
+	path: string | string[] | StringPathLeaves<T, '_errors'>,
 	error?: string | string[] | SetErrorOptions,
 	options?: SetErrorOptions
 ): ActionFailure<{ form: SuperValidated<T, unknown> }> {

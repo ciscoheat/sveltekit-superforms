@@ -9,6 +9,7 @@ import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
 import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
+/* @__NO_SIDE_EFFECTS__ */
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
 	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
@@ -39,4 +40,4 @@ function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	});
 }
 
-export const valibot = memoize(_valibot);
+export const valibot = /* @__PURE__ */ memoize(_valibot);

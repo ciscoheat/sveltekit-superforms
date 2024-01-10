@@ -3,6 +3,7 @@ import type { ObjectSchema } from 'joi';
 import joiToJson from 'joi-to-json';
 import { memoize } from '$lib/memoize.js';
 
+/* @__NO_SIDE_EFFECTS__ */
 function _joi<T extends ObjectSchema>(
 	schema: T,
 	options?: JsonSchemaOptions<T>
@@ -31,4 +32,4 @@ function _joi<T extends ObjectSchema>(
 	});
 }
 
-export const joi = memoize(_joi);
+export const joi = /* @__PURE__ */ memoize(_joi);

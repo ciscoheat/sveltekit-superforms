@@ -10,6 +10,7 @@ const defaultOptions: Partial<Options> = {
 	pipeStrategy: 'output'
 } as const;
 
+/* @__NO_SIDE_EFFECTS */
 export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
 	params[1] = typeof params[1] == 'object' ? { ...defaultOptions, ...params[1] } : defaultOptions;
 	return zodToJson(...params) as JSONSchema7;
@@ -39,6 +40,7 @@ export type ZodValidation<T extends AnyZodObject | ZodObjectUnion<AnyZodObject>>
 			ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
 	  >;
 
+/* @__NO_SIDE_EFFECTS__ */
 function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
 	schema: T,
 	options?: JsonSchemaOptions<Infer<T>>
@@ -63,4 +65,4 @@ function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject
 	});
 }
 
-export const zod = memoize(_zod);
+export const zod = /* @__PURE__ */ memoize(_zod);

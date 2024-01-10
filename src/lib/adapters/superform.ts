@@ -25,6 +25,7 @@ export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null 
 
 type Errors = string | string[] | undefined | null;
 
+/* @__NO_SIDE_EFFECTS__ */
 function _superform<T extends Record<string, unknown>, PartialT extends Partial<T>>(
 	schema: Validators<PartialT>,
 	options?: { defaults: T }
@@ -96,6 +97,7 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 	});
 }
 
+/* @__NO_SIDE_EFFECTS__ */
 function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
 	const output = {
 		type: 'object',
@@ -123,4 +125,4 @@ function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
 	return output;
 }
 
-export const superform = memoize(_superform);
+export const superform = /* @__PURE__ */ memoize(_superform);

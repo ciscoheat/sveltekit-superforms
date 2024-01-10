@@ -4,6 +4,7 @@ import addFormats from 'ajv-formats';
 import { memoize } from '$lib/memoize.js';
 import { createAdapter, type ValidationAdapter } from './adapters.js';
 
+/* @__NO_SIDE_EFFECTS__ */
 function _ajv<T extends Record<string, unknown>>(
 	schema: JSONSchema,
 	options?: Ajv.Options
@@ -36,4 +37,4 @@ function _ajv<T extends Record<string, unknown>>(
 	});
 }
 
-export const ajv = memoize(_ajv);
+export const ajv = /* @__PURE__ */ memoize(_ajv);

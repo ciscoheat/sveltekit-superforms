@@ -9,6 +9,7 @@ export const yupToJsonSchema = (...params: Parameters<typeof convertSchema>) => 
 	return convertSchema(...params);
 };
 
+/* @__NO_SIDE_EFFECTS__ */
 function _yup<T extends Schema>(
 	schema: T,
 	options?: JsonSchemaOptions<Infer<T>>
@@ -39,4 +40,4 @@ function _yup<T extends Schema>(
 	});
 }
 
-export const yup = memoize(_yup);
+export const yup = /* @__PURE__ */ memoize(_yup);

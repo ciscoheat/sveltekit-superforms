@@ -1,7 +1,7 @@
 //import { bigZodSchema, dataTypeForm } from './data.js';
 import { z } from 'zod';
 import { test } from 'vitest';
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 

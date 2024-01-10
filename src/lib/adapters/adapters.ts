@@ -6,7 +6,7 @@ import {
 } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
 import toSchema from 'to-json-schema';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';

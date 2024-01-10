@@ -3,7 +3,7 @@ import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo } from './jsonSchema/schemaInfo.js';
-import { defaultValues } from './jsonSchema/defaultValues.js';
+import { defaultValues } from './jsonSchema/schemaDefaults.js';
 
 type ParsedData = {
 	id: string | undefined;

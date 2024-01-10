@@ -12,7 +12,7 @@ export {
 export { superValidate, message, setMessage, setError } from '../superValidate.js';
 export { defaults } from '../defaults.js';
 export { actionResult } from '../actionResult.js';
-export { defaultValues } from '../jsonSchema/defaultValues.js';
+export { defaultValues } from '../jsonSchema/schemaDefaults.js';
 
 export { superForm } from './superForm.js';
 

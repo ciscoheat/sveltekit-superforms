@@ -5,7 +5,7 @@ export default SuperDebug;
 
 export { defaults } from './defaults.js';
 export { actionResult } from './actionResult.js';
-export { defaultValues } from './jsonSchema/defaultValues.js';
+export { defaultValues } from './jsonSchema/schemaDefaults.js';
 
 /*
 export {

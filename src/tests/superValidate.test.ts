@@ -3,7 +3,7 @@ import { describe, it, expect, assert, beforeEach } from 'vitest';
 import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import {
 	removeFiles,
 	message,

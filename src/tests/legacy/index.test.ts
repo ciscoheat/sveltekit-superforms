@@ -5,7 +5,7 @@ import { SchemaError } from '$lib/index.js';
 import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/zod.js';
 import { zodToJsonSchema } from '$lib/adapters/zod.js';
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { stringify } from 'devalue';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 

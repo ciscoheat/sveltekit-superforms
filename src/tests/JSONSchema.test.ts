@@ -2,7 +2,7 @@ import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
 import { schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
-import { defaultValues } from '$lib/jsonSchema/defaultValues.js';
+import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';

@@ -1,3 +1,5 @@
+export { superForm } from './superForm.js';
+
 export {
 	intProxy,
 	numberProxy,
@@ -25,8 +27,6 @@ export {
 	type ValidationErrors,
 	type Infer
 } from '../server/index.js';
-
-export { superForm } from './superForm.js';
 
 export type {
 	FormResult,

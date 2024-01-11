@@ -1,7 +1,13 @@
 import { type ValidationAdapter, type JsonSchemaOptions, createAdapter } from './adapters.js';
 import type { ObjectSchema } from 'joi';
-import joiToJson from 'joi-to-json';
 import { memoize } from '$lib/memoize.js';
+
+const fetchModule = /* @__PURE__ */ memoize(async () => {
+	const joiToJson = await import(/* webpackIgnore: true */ '@sinclair/typebox/compiler');
+	return { joiToJson };
+});
+
+const { joiToJson } = await fetchModule();
 
 /* @__NO_SIDE_EFFECTS__ */
 function _joi<T extends ObjectSchema>(

@@ -1,10 +1,18 @@
-import { convertSchema } from '@sodaru/yup-to-json-schema';
 import { type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './adapters.js';
-import { Schema, ValidationError } from 'yup';
+import type { Schema } from 'yup';
 import type { Infer } from '$lib/index.js';
 import { splitPath } from '$lib/stringPath.js';
 import { memoize } from '$lib/memoize.js';
 
+const fetchModule = /* @__PURE__ */ memoize(async () => {
+	const { ValidationError } = await import(/* webpackIgnore: true */ 'yup');
+	const { convertSchema } = await import(/* webpackIgnore: true */ '@sodaru/yup-to-json-schema');
+	return { ValidationError, convertSchema };
+});
+
+const { ValidationError, convertSchema } = await fetchModule();
+
+/* @__NO_SIDE_EFFECTS__ */
 export const yupToJsonSchema = (...params: Parameters<typeof convertSchema>) => {
 	return convertSchema(...params);
 };

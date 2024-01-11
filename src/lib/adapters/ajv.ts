@@ -1,16 +1,25 @@
-import Ajv from 'ajv';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
-import addFormats from 'ajv-formats';
 import { memoize } from '$lib/memoize.js';
 import { createAdapter, type ValidationAdapter } from './adapters.js';
+import type { Options } from 'ajv';
+
+const fetchModule = /* @__PURE__ */ memoize(async () => {
+	const { default: Ajv } = await import(/* webpackIgnore: true */ 'ajv');
+	const addFormats = (await import(/* webpackIgnore: true */ 'ajv-formats')) as unknown as (
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		ajv: any
+	) => void;
+	return { Ajv, addFormats };
+});
+
+const { Ajv, addFormats } = await /* @__PURE__ */ fetchModule();
 
 /* @__NO_SIDE_EFFECTS__ */
 function _ajv<T extends Record<string, unknown>>(
 	schema: JSONSchema,
-	options?: Ajv.Options
+	options?: Options
 ): ValidationAdapter<T> {
 	const ajv = new Ajv.default({ allErrors: true, ...(options || {}) });
-	// @ts-expect-error No type info exists
 	addFormats(ajv);
 	const validator = ajv.compile(schema);
 

@@ -3,21 +3,13 @@ import SuperDebug from './client/SuperDebug.svelte';
 
 export default SuperDebug;
 
+/*
 export { defaults } from './defaults.js';
 export { actionResult } from './actionResult.js';
 export { defaultValues } from './jsonSchema/schemaDefaults.js';
+*/
 
-export {
-	/*
-	superValidate,
-	message,
-	setMessage,
-	setError,
-	*/
-	type SuperValidated,
-	type TaintedFields,
-	type ValidationErrors
-} from './superValidate.js';
+export { type SuperValidated, type TaintedFields, type ValidationErrors } from './superValidate.js';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;

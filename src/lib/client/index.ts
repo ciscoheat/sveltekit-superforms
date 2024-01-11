@@ -9,10 +9,20 @@ export {
 	arrayProxy
 } from './proxies.js';
 
-export { superValidate, message, setMessage, setError } from '../superValidate.js';
-export { defaults } from '../defaults.js';
-export { actionResult } from '../actionResult.js';
-export { defaultValues } from '../jsonSchema/schemaDefaults.js';
+export {
+	defaults,
+	actionResult,
+	defaultValues,
+	superValidate,
+	message,
+	setMessage,
+	setError,
+	removeFiles,
+	failAndRemoveFiles,
+	type SuperValidated,
+	type TaintedFields,
+	type ValidationErrors
+} from '../server/index.js';
 
 export { superForm } from './superForm.js';
 

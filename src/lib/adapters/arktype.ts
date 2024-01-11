@@ -9,7 +9,6 @@ import {
 import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
-/* @__NO_SIDE_EFFECTS__ */
 function _arktype<T extends Type>(
 	schema: T,
 	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>

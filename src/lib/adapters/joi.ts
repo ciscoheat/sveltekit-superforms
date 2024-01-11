@@ -1,15 +1,7 @@
 import { type ValidationAdapter, type JsonSchemaOptions, createAdapter } from './adapters.js';
 import type { ObjectSchema } from 'joi';
 import { memoize } from '$lib/memoize.js';
-
-const fetchModule = /* @__PURE__ */ memoize(async () => {
-	const { default: joiToJson } = await import(
-		/* webpackIgnore: true */ './joi-to-json-schema/index.js'
-	);
-	return { joiToJson };
-});
-
-const { joiToJson } = await fetchModule();
+import convert from './joi-to-json-schema/index.js';
 
 /* @__NO_SIDE_EFFECTS__ */
 function _joi<T extends ObjectSchema>(
@@ -18,7 +10,7 @@ function _joi<T extends ObjectSchema>(
 ): ValidationAdapter<Record<string, unknown>> {
 	return createAdapter({
 		superFormValidationLibrary: 'joi',
-		jsonSchema: options?.jsonSchema ?? joiToJson(schema),
+		jsonSchema: options?.jsonSchema ?? convert(schema),
 		defaults: options?.defaults,
 		async validate(data) {
 			const result = schema.validate(data, { abortEarly: false });

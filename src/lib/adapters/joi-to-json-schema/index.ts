@@ -1,3 +1,6 @@
+// Taken from https://github.com/lightsofapollo/joi-to-json-schema and converted to ESM
+// TODO: Need more tests!
+
 function assert(condition: unknown, errorMessage: string) {
 	if (!condition) throw new Error(errorMessage);
 }

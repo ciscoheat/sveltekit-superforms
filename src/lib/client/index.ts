@@ -11,11 +11,17 @@ export {
 	arrayProxy
 } from './proxies.js';
 
-// Everything from server/index.ts
+/////////////////////////////////////////////////////////////////////
+// Duplicated from server/index.ts,
+// because "server" path cannot be imported on client.
+
+export { defaults } from '../defaults.js';
+export { actionResult } from '../actionResult.js';
+export { defaultValues } from '../jsonSchema/schemaDefaults.js';
+
+export type { Infer } from '../adapters/adapters.js';
+
 export {
-	defaults,
-	actionResult,
-	defaultValues,
 	superValidate,
 	message,
 	setMessage,
@@ -24,9 +30,10 @@ export {
 	failAndRemoveFiles,
 	type SuperValidated,
 	type TaintedFields,
-	type ValidationErrors,
-	type Infer
-} from '../server/index.js';
+	type ValidationErrors
+} from '../superValidate.js';
+
+/////////////////////////////////////////////////////////////////////
 
 export type {
 	FormResult,

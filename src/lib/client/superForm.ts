@@ -87,7 +87,6 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 					status?: number;
 					error: App.Error;
 				};
-				message: Writable<SuperValidated<T, M>['message']>;
 		  }) => MaybePromise<unknown | void>);
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
@@ -111,7 +110,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 				status?: number;
 				error: App.Error;
 			};
-			message: Writable<App.PageData['flash']>;
+			flashMessage: Writable<App.PageData['flash']>;
 		}) => MaybePromise<unknown | void>;
 		cookiePath?: string;
 		cookieName?: string;
@@ -1479,7 +1478,6 @@ export function superForm<
 											onErrorEvent !== 'apply' &&
 											(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
 										) {
-											// TODO: Will this be triggered as default?
 											await onErrorEvent(data);
 										}
 									}
@@ -1491,7 +1489,7 @@ export function superForm<
 								if (result.type == 'error' && options.flashMessage.onError) {
 									await options.flashMessage.onError({
 										result,
-										message: options.flashMessage.module.getFlash(page)
+										flashMessage: options.flashMessage.module.getFlash(page)
 									});
 								}
 							}

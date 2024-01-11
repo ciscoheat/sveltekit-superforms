@@ -47,8 +47,8 @@
 		validators: validator == 'zod' ? zod(schema) : superFormValidator,
 		flashMessage: {
 			module: flashModule,
-			onError({ result, message }) {
-				message.set({
+			onError({ result, flashMessage }) {
+				flashMessage.set({
 					type: 'error',
 					message: result.error.message
 				});

@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- superForm.fields
+- `superForm.fields`
 - `fields` options for setting tainted.
+- `message` parameter in `onError` event.
 
 ### Changed
 
@@ -22,11 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Superform validator functions requires the `superform` adapter, and the input parameter can now be `undefined`.
 - If no data, the default values aren't parsed with the schema (i.e. no side-effects for default values).
 - Fields with default values don't have `required` in their constraints anymore.
-- Unions must have an explicit default value in the schema.
-- Form id cannot be `undefined` anymore, must be `string`. (It's set automatically by default)
+- Form id cannot be `undefined` anymore, must be `string`. (It's set automatically by default).
+- `flashMessage.onError.message` option in `superForm` renamed to `flashMessage.onError.flashMessage`.
 
 ### Added
 
+- Support for unions in schemas. Unions must have an explicit default value and can only be used with `dataType: 'json'` set.
 - `superForm.isTainted(path?)`
-- `superValidate.options.allowFiles` which makes `setError` and `message` remove files automatically by default. Use `failAndRemoveFiles` for convenience.
+- `superValidate.options.allowFiles` which makes `setError` and `message` remove files automatically by default. Use `removeFiles` and `failAndRemoveFiles` in other cases.
 - SuperDebug now displays `File` and `FileList`.

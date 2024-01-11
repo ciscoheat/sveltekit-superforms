@@ -12,8 +12,8 @@
 		onUpdated: () => {
 			toggleEdit();
 		},
-		onError({ result, message }) {
-			message.set(result.error.message);
+		onError({ result }) {
+			$message = result.error.message;
 		}
 	});
 

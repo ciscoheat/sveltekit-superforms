@@ -20,8 +20,8 @@
 				setMessage(form, 'Valid data!');
 			}
 		},
-		onError({ result, message }) {
-			message.set(result.error.message);
+		onError({ result }) {
+			$message = result.error.message;
 		}
 	});
 </script>

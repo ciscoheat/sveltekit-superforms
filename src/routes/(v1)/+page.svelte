@@ -22,16 +22,16 @@
 		onUpdated({ form }) {
 			updates = [...updates, '1:' + String(form.valid)];
 		},
-		onError({ result, message }) {
-			message.set({ type: 'error', message: result.error.message });
+		onError({ result }) {
+			$message = { type: 'error', message: result.error.message };
 		},
 		flashMessage: {
 			module: flashModule,
-			onError({ result, message }) {
-				message.set({
+			onError({ result }) {
+				$message = {
 					type: 'error',
 					message: result.error.message
-				});
+				};
 			}
 		},
 		syncFlashMessage: true,

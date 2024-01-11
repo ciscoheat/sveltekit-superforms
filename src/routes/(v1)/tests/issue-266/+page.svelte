@@ -18,10 +18,9 @@
       }
       */
 		}),
-		onError({ result, message }) {
+		onError({ result }) {
 			console.log('error');
 			console.log(result);
-			console.log(message);
 		}
 	});
 </script>

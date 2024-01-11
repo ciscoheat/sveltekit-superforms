@@ -14,8 +14,8 @@
 		validators: zod(schema),
 		flashMessage: {
 			module: flashModule,
-			onError: ({ result, message }) => {
-				message.set({ type: 'error', message: result.error.message });
+			onError: ({ result, flashMessage }) => {
+				flashMessage.set({ type: 'error', message: result.error.message });
 			}
 		}
 	});

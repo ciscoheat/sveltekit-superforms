@@ -65,8 +65,8 @@
 	const { form, errors, message, delayed, timeout, enhance, allErrors, tainted, constraints } =
 		superForm(data.form, {
 			taintedMessage: null,
-			onError({ result, message }) {
-				message.set(result.error.message);
+			onError({ result }) {
+				$message = result.error.message;
 			},
 			onUpdated: runFormTests,
 			flashMessage: {

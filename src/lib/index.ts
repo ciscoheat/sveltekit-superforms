@@ -21,7 +21,7 @@ export {
 
 export type MaybePromise<T> = T | Promise<T>;
 export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
-export type FieldPath<T extends object> = [keyof T, ...(string | number)[]];
+export type FieldPath<T extends object> = [keyof T, ...(string | number | symbol)[]];
 export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';
 
 export { SuperFormError, SchemaError } from './errors.js';

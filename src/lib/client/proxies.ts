@@ -4,7 +4,7 @@ import { pathExists, traversePath } from '../traversal.js';
 //import type { SuperForm } from './index.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';
 import type { FormPathArrays } from '../stringPath.js';
-import type { SuperForm } from './index.js';
+import type { SuperForm, TaintOption } from './index.js';
 
 type DefaultOptions = {
 	trueStringValue: string;
@@ -202,7 +202,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	superForm: SuperForm<T, any>,
 	path: Path,
-	options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+	options?: { taint?: TaintOption }
 ): {
 	path: Path;
 	values: Writable<
@@ -304,7 +304,7 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	superForm: SuperForm<T, any>,
 	path: Path,
-	options?: { taint?: boolean | 'untaint' | 'untaint-all' }
+	options?: { taint?: TaintOption }
 ): {
 	path: Path;
 	value: SuperFieldProxy<FormPathType<T, Path>>;
@@ -365,18 +365,14 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 
 type SuperFieldProxy<T> = {
 	subscribe: Readable<T>['subscribe'];
-	set(this: void, value: T, options?: { taint?: boolean | 'untaint' | 'untaint-all' }): void;
-	update(
-		this: void,
-		updater: Updater<T>,
-		options?: { taint?: boolean | 'untaint' | 'untaint-all' }
-	): void;
+	set(this: void, value: T, options?: { taint?: TaintOption }): void;
+	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
 function superFieldProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	superForm: SuperForm<T>,
 	path: Path,
-	baseOptions?: { taint?: boolean | 'untaint' | 'untaint-all' }
+	baseOptions?: { taint?: TaintOption }
 ): SuperFieldProxy<FormPathType<T, Path>> {
 	const form = superForm.form;
 	const path2 = splitPath<T>(path);
@@ -391,17 +387,14 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends FormPat
 			const unsub = proxy.subscribe(...params);
 			return () => unsub();
 		},
-		update(
-			upd: Updater<FormPathType<T, Path>>,
-			options?: { taint?: boolean | 'untaint' | 'untaint-all' }
-		) {
+		update(upd: Updater<FormPathType<T, Path>>, options?: { taint?: TaintOption }) {
 			form.update((f) => {
 				const output = traversePath(f, path2);
 				if (output) output.parent[output.key] = upd(output.value);
 				return f;
 			}, options ?? baseOptions);
 		},
-		set(value: FormPathType<T, Path>, options?: { taint?: boolean | 'untaint' | 'untaint-all' }) {
+		set(value: FormPathType<T, Path>, options?: { taint?: TaintOption }) {
 			form.update((f) => {
 				const output = traversePath(f, path2);
 				if (output) output.parent[output.key] = value;

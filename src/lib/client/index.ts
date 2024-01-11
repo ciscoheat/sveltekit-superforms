@@ -22,5 +22,14 @@ export type {
 	SuperFormEventList,
 	SuperFormEvents,
 	SuperFormSnapshot,
-	ValidateOptions
+	ValidateOptions,
+	TaintOption
 } from './superForm.js';
+
+// Exporting from here also, for convenience in components.
+export {
+	type FormPath,
+	type FormPathLeaves,
+	type FormPathArrays,
+	type FormPathType
+} from '../stringPath.js';

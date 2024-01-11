@@ -52,6 +52,8 @@ export type FormResult<T extends Record<string, unknown> | null> = ActionResult<
 	NonNullable<T>
 >;
 
+export type TaintOption = boolean | 'untaint' | 'untaint-all';
+
 export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	id: string;
 	applyAction: boolean;
@@ -134,16 +136,8 @@ export type SuperFormSnapshot<
 
 type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
-	set(
-		this: void,
-		value: T,
-		options?: { taint?: boolean | 'untaint' | 'untaint-all' | 'ignore' }
-	): void;
-	update(
-		this: void,
-		updater: Updater<T>,
-		options?: { taint?: boolean | 'untaint' | 'untaint-all' | 'ignore' }
-	): void;
+	set(this: void, value: T, options?: { taint?: TaintOption }): void;
+	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
 type SuperFormErrors<T extends Record<string, unknown>> = {
@@ -194,7 +188,7 @@ export type SuperForm<
 export type ValidateOptions<V> = Partial<{
 	value: V;
 	update: boolean | 'errors' | 'value';
-	taint: boolean | 'untaint' | 'untaint-all' | 'ignore';
+	taint: TaintOption;
 	errors: string | string[];
 }>;
 
@@ -242,7 +236,7 @@ type ChangeEvent = {
 };
 
 type FormDataOptions = Partial<{
-	taint: boolean | 'untaint' | 'untaint-all' | 'ignore';
+	taint: TaintOption | 'ignore';
 	keepFiles: boolean;
 }>;
 
@@ -858,14 +852,11 @@ export function superForm<
 	/**
 	 * Updates the tainted state. Use most of the time, except when submitting.
 	 */
-	function Tainted_update(
-		newData: T,
-		taintOptions: boolean | 'untaint' | 'untaint-all' | 'ignore'
-	) {
+	function Tainted_update(newData: T, taintOptions: TaintOption | 'ignore') {
 		// Ignore is set when returning errors from the server
 		// so status messages and form-level errors won't be
 		// immediately cleared by client-side validation.
-		if (taintOptions == 'ignore') return [];
+		if (taintOptions == 'ignore') return;
 
 		const paths = comparePaths(newData, Data.form);
 		//console.log("🚀 ~ Tainted_update:", paths) //debug

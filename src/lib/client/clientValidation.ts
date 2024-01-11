@@ -3,13 +3,6 @@ import { mapErrors } from '../errors.js';
 import { createAdapter, type ValidationResult } from '$lib/adapters/adapters.js';
 import type { SuperValidated, ValidationErrors } from '$lib/superValidate.js';
 
-export type ValidateOptions<V> = Partial<{
-	value: V;
-	update: boolean | 'errors' | 'value';
-	taint: boolean | 'untaint' | 'untaint-all' | 'ignore';
-	errors: string | string[];
-}>;
-
 /**
  * Validate form data.
  */

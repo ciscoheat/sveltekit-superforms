@@ -1,4 +1,4 @@
-import type { SuperValidated } from '$lib/index.js';
+import type { SuperValidated } from '$lib/client/index.js';
 import { splitPath } from '$lib/stringPath.js';
 import { traversePath } from '$lib/traversal.js';
 

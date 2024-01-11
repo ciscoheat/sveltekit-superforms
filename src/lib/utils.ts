@@ -13,3 +13,5 @@ export type NumericRange<
 export function clone<T>(data: T): T {
 	return klona(data);
 }
+
+export type MaybePromise<T> = T | Promise<T>;

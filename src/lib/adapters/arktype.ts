@@ -4,9 +4,9 @@ import {
 	type ValidationAdapter,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
+	type Infer,
 	createAdapter
 } from './adapters.js';
-import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
 function _arktype<T extends Type>(

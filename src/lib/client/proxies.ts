@@ -1,5 +1,6 @@
 import { derived, get, type Readable, type Updater, type Writable } from 'svelte/store';
-import { SuperFormError, type InputConstraint } from '../index.js';
+import type { InputConstraint } from '../index.js';
+import { SuperFormError } from '$lib/errors.js';
 import { pathExists, traversePath } from '../traversal.js';
 //import type { SuperForm } from './index.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';

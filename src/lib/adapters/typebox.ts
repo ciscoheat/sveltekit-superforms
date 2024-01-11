@@ -1,5 +1,4 @@
-import { type ValidationAdapter, createAdapter } from './adapters.js';
-import type { Infer } from '$lib/index.js';
+import { type ValidationAdapter, createAdapter, type Infer } from './adapters.js';
 import type { TSchema } from '@sinclair/typebox';
 import type { TypeCheck } from '@sinclair/typebox/compiler';
 import { memoize } from '$lib/memoize.js';

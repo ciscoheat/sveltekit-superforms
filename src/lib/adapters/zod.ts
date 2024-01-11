@@ -1,8 +1,12 @@
 import type { AnyZodObject, ZodDefault, ZodEffects, ZodUnion } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
-import { type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './adapters.js';
+import {
+	type JsonSchemaOptions,
+	type ValidationAdapter,
+	type Infer,
+	createAdapter
+} from './adapters.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
-import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {

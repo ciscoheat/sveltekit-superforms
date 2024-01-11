@@ -1,4 +1,4 @@
-import type { FieldPath } from './index.js';
+type FieldPath<T extends object> = [keyof T, ...(string | number | symbol)[]];
 
 export function splitPath<T extends object>(path: string) {
 	return path

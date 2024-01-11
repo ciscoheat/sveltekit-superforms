@@ -1,4 +1,4 @@
-import { SchemaError } from '$lib/index.js';
+import { SchemaError } from '$lib/errors.js';
 import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type JSONSchema } from './index.js';
 

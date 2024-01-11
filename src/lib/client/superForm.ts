@@ -31,7 +31,7 @@ import { inputInfo } from './elements.js';
 import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
-import type { MaybePromise } from '$lib/index.js';
+import type { MaybePromise } from '$lib/utils.js';
 import type { ValidationAdapter } from '$lib/adapters/adapters.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<

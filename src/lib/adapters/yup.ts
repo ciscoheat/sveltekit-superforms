@@ -1,6 +1,10 @@
-import { type JsonSchemaOptions, type ValidationAdapter, createAdapter } from './adapters.js';
+import {
+	type JsonSchemaOptions,
+	type ValidationAdapter,
+	type Infer,
+	createAdapter
+} from './adapters.js';
 import type { Schema } from 'yup';
-import type { Infer } from '$lib/index.js';
 import { splitPath } from '$lib/stringPath.js';
 import { memoize } from '$lib/memoize.js';
 

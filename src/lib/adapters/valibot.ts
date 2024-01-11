@@ -3,10 +3,10 @@ import {
 	type ValidationAdapter,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
+	type Infer,
 	createAdapter
 } from './adapters.js';
 import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
-import type { Infer } from '$lib/index.js';
 import { memoize } from '$lib/memoize.js';
 
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(

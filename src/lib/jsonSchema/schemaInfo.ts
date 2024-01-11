@@ -1,4 +1,4 @@
-import { SchemaError as SchemaError } from '$lib/index.js';
+import { SchemaError } from '$lib/errors.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 
 export type SchemaType = JSONSchema7TypeName | 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';

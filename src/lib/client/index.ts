@@ -9,6 +9,7 @@ export {
 	arrayProxy
 } from './proxies.js';
 
+// Everything from server/index.ts
 export {
 	defaults,
 	actionResult,
@@ -21,12 +22,14 @@ export {
 	failAndRemoveFiles,
 	type SuperValidated,
 	type TaintedFields,
-	type ValidationErrors
+	type ValidationErrors,
+	type Infer
 } from '../server/index.js';
 
 export { superForm } from './superForm.js';
 
 export type {
+	FormResult,
 	FormOptions,
 	SuperForm,
 	SuperFormEventList,
@@ -36,7 +39,7 @@ export type {
 	TaintOption
 } from './superForm.js';
 
-// Exporting from here also, for convenience in components.
+// Exporting from stringPath also, for convenience in components.
 export {
 	type FormPath,
 	type FormPathLeaves,

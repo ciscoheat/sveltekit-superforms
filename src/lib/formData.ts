@@ -1,4 +1,4 @@
-import { SuperFormError, SchemaError } from './index.js';
+import { SuperFormError, SchemaError } from './errors.js';
 import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';

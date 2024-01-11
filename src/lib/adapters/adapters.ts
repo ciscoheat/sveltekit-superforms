@@ -1,5 +1,4 @@
-import { SuperFormError, type InputConstraints, type Infer } from '$lib/index.js';
-import type { Schema as TypeSchema, ValidationIssue } from '@decs/typeschema';
+import type { Schema as TypeSchema, Infer as InferSchema, ValidationIssue } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
@@ -7,21 +6,17 @@ import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
 import toSchema from 'to-json-schema';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import type { Options as SchemaOptions } from 'to-json-schema';
+import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import { SuperFormError } from '$lib/errors.js';
 
 export type { Options as SchemaOptions } from 'to-json-schema';
 
-export type ValidationLibrary =
-	| 'ajv'
-	| 'arktype'
-	| 'custom'
-	| 'joi'
-	| 'superform'
-	| 'typebox'
-	| 'valibot'
-	| 'yup'
-	| 'zod';
-
 export type Schema = TypeSchema;
+export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
+
+export type ValidationLibrary =
+	//| 'ajv'
+	'arktype' | 'custom' | 'joi' | 'superform' | 'typebox' | 'valibot' | 'yup' | 'zod';
 
 export type AdapterDefaultOptions<T extends Schema> = {
 	defaults: Infer<T>;
@@ -38,7 +33,7 @@ export type RequiredJsonSchemaOptions<T extends Schema> = {
 	defaults?: Infer<T>;
 };
 
-// Lifted from TypeSchema, since they are not exported
+// Lifted from TypeSchema, since it's not exported
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ValidationResult<TOutput = any> =
 	| {

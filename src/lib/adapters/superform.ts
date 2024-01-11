@@ -1,10 +1,10 @@
-import { type FieldPath, type MaybePromise } from '$lib/index.js';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { traversePath, traversePaths } from '$lib/traversal.js';
 import type { ValidationIssue } from '@decs/typeschema';
 import { createAdapter, type ValidationAdapter } from './adapters.js';
 import type { JSONSchema7TypeName } from 'json-schema';
 import { memoize } from '$lib/memoize.js';
+import type { MaybePromise } from '$lib/utils.js';
 
 // Cannot be a SuperStruct due to Property having to be passed on.
 // Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
@@ -67,7 +67,7 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 			traversePaths(newData, async ({ value, path }) => {
 				// Filter out array indices, the validator structure doesn't contain these.
 				const validationPath = path.filter((p) => /\D/.test(String(p)));
-				const maybeValidator = traversePath(schema, validationPath as FieldPath<typeof schema>);
+				const maybeValidator = traversePath(schema, validationPath);
 
 				if (typeof maybeValidator?.value === 'function') {
 					const check = maybeValidator.value as Validator<unknown>;

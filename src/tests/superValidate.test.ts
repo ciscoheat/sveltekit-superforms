@@ -154,7 +154,7 @@ describe('Superform', () => {
 
 describe('Joi', () => {
 	const schema = Joi.object({
-		name: Joi.string().pattern(/aaa/).default('Unknown'),
+		name: Joi.string().default('Unknown'),
 		email: Joi.string().email().required(),
 		tags: Joi.array().items(Joi.string().min(2)).min(3).required(),
 		score: Joi.number().integer().min(0).required()

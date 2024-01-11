@@ -8,6 +8,20 @@ dependencies:
   '@decs/typeschema':
     specifier: ^0.12.1
     version: 0.12.1(@sinclair/typebox@0.32.8)(ajv@8.12.0)(arktype@1.0.28-alpha)(joi@17.11.0)(valibot@0.25.0)(vite@5.0.11)(yup@1.3.3)(zod@3.22.4)
+  devalue:
+    specifier: ^4.3.2
+    version: 4.3.2
+  klona:
+    specifier: ^2.0.6
+    version: 2.0.6
+  memoize-weak:
+    specifier: ^1.0.2
+    version: 1.0.2
+  to-json-schema:
+    specifier: ^0.2.5
+    version: 0.2.5
+
+optionalDependencies:
   '@sinclair/typebox':
     specifier: ^0.32.5
     version: 0.32.8
@@ -23,24 +37,9 @@ dependencies:
   arktype:
     specifier: 1.0.28-alpha
     version: 1.0.28-alpha
-  devalue:
-    specifier: ^4.3.2
-    version: 4.3.2
   joi:
     specifier: ^17.11.0
     version: 17.11.0
-  joi-to-json:
-    specifier: ^4.2.1
-    version: 4.2.1
-  klona:
-    specifier: ^2.0.6
-    version: 2.0.6
-  memoize-weak:
-    specifier: ^1.0.2
-    version: 1.0.2
-  to-json-schema:
-    specifier: ^0.2.5
-    version: 0.2.5
   valibot:
     specifier: ^0.25.0
     version: 0.25.0
@@ -97,6 +96,9 @@ devDependencies:
   eslint-plugin-svelte:
     specifier: ^2.35.1
     version: 2.35.1(eslint@8.56.0)(svelte@4.2.8)
+  joi-to-json-schema:
+    specifier: ^5.1.0
+    version: 5.1.0
   json-schema-to-ts:
     specifier: ^3.0.0
     version: 3.0.0
@@ -454,10 +456,12 @@ packages:
 
   /@hapi/hoek@9.3.0:
     resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
+    requiresBuild: true
     dev: false
 
   /@hapi/topo@5.1.0:
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
+    requiresBuild: true
     dependencies:
       '@hapi/hoek': 9.3.0
     dev: false
@@ -642,16 +646,19 @@ packages:
 
   /@sideway/address@4.1.4:
     resolution: {integrity: sha512-7vwq+rOHVWjyXxVlR76Agnvhy8I9rpzjosTESvmhNeXOXdZZB15Fl+TI9x1SiHZH5Jv2wTGduSxFDIaq0m3DUw==}
+    requiresBuild: true
     dependencies:
       '@hapi/hoek': 9.3.0
     dev: false
 
   /@sideway/formula@3.0.1:
     resolution: {integrity: sha512-/poHZJJVjx3L+zVD6g9KgHfYnb443oi7wLu/XKojDviHy6HOEOA6z1Trk5aR1dGcmPenJEgb2sK2I80LeS3MIg==}
+    requiresBuild: true
     dev: false
 
   /@sideway/pinpoint@2.0.0:
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
+    requiresBuild: true
     dev: false
 
   /@sinclair/typebox@0.27.8:
@@ -660,11 +667,14 @@ packages:
 
   /@sinclair/typebox@0.32.8:
     resolution: {integrity: sha512-ifqNG6GBr0QRao2Vy+2P2WzxkOnpGmHfZCFXWwuR/0elH4h79mGXN8mEYwnJ2qGEr7MGgfqvf8Njwj4dBGFMBA==}
+    requiresBuild: true
     dev: false
 
   /@sodaru/yup-to-json-schema@2.0.1:
     resolution: {integrity: sha512-lWb0Wiz8KZ9ip/dY1eUqt7fhTPmL24p6Hmv5Fd9pzlzAdw/YNcWZr+tiCT4oZ4Zyxzi9+1X4zv82o7jYvcFxYA==}
+    requiresBuild: true
     dev: false
+    optional: true
 
   /@sveltejs/adapter-auto@3.1.0(@sveltejs/kit@2.3.0):
     resolution: {integrity: sha512-igS5hqCwdiXWb8NoWzThKCVQQj9tKgUkbTtzfxBPgSLOyFjkiGNDX0SgCoY2QIUWBqOkfGTOqGlrW5Ynw9oUvw==}
@@ -984,6 +994,7 @@ packages:
 
   /ajv-formats@2.1.1(ajv@8.12.0):
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
+    requiresBuild: true
     peerDependencies:
       ajv: ^8.0.0
     peerDependenciesMeta:
@@ -992,6 +1003,7 @@ packages:
     dependencies:
       ajv: 8.12.0
     dev: false
+    optional: true
 
   /ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -1004,6 +1016,7 @@ packages:
 
   /ajv@8.12.0:
     resolution: {integrity: sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==}
+    requiresBuild: true
     dependencies:
       fast-deep-equal: 3.1.3
       json-schema-traverse: 1.0.0
@@ -1047,6 +1060,7 @@ packages:
 
   /arktype@1.0.28-alpha:
     resolution: {integrity: sha512-cjakiZXXa4+y1OL0oFk0HRjIrEwJhNNvkqXkiR53SOpyKHwSqFrjrQkY4K8MlnQybRhd/y4OG4NVDR1Ea4WDkQ==}
+    requiresBuild: true
     dev: false
 
   /array-union@2.1.0:
@@ -1166,10 +1180,6 @@ packages:
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
     dev: true
-
-  /combinations@1.0.0:
-    resolution: {integrity: sha512-aVgTfI/dewHblSn4gF+NZHvS7wtwg9YAPF2EknHMdH+xLsXLLIMpmHkSj64Zxs/R2m9VAAgn3bENjssrn7V4vQ==}
-    dev: false
 
   /concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -1725,16 +1735,13 @@ packages:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
     dev: true
 
-  /joi-to-json@4.2.1:
-    resolution: {integrity: sha512-HIPyrmT9akm2C4zOZ3qR30GkQs7JBr3LX1/oXXWyC2E1NUnDHjTczqHT0H6l495B99xAyFaJ6LM6KRFTdkKoxQ==}
-    dependencies:
-      combinations: 1.0.0
-      lodash: 4.17.21
-      semver-compare: 1.0.0
-    dev: false
+  /joi-to-json-schema@5.1.0:
+    resolution: {integrity: sha512-suSQS0zGdkIgnxKuc9huX+J/+RGtADNmp7Uh6HdCpkguN0Lxhy+7MT7d/BtQW4IBaYv/5AeR4uADN3m6BijQtw==}
+    dev: true
 
   /joi@17.11.0:
     resolution: {integrity: sha512-NgB+lZLNoqISVy1rZocE9PZI36bL/77ie924Ri43yEvi9GUUMPeyVIr8KdFTMUlby1p0PBYMk9spIxEUQYqrJQ==}
+    requiresBuild: true
     dependencies:
       '@hapi/hoek': 9.3.0
       '@hapi/topo': 5.1.0
@@ -1769,6 +1776,7 @@ packages:
 
   /json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
+    requiresBuild: true
     dev: false
 
   /json-stable-stringify-without-jsonify@1.0.1:
@@ -1852,10 +1860,6 @@ packages:
 
   /lodash.xor@4.5.0:
     resolution: {integrity: sha512-sVN2zimthq7aZ5sPGXnSz32rZPuqcparVW50chJQe+mzTYV+IsxSsl/2gnkWWE2Of7K3myBQBqtLKOUEHJKRsQ==}
-    dev: false
-
-  /lodash@4.17.21:
-    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
     dev: false
 
   /loupe@2.3.7:
@@ -2222,6 +2226,7 @@ packages:
 
   /property-expr@2.0.6:
     resolution: {integrity: sha512-SVtmxhRE/CGkn3eZY1T6pC8Nln6Fr/lu1mKSgRud0eC73whjGfoAogbn78LkD8aFL0zz3bAFerKSnOl7NlErBA==}
+    requiresBuild: true
     dev: false
 
   /publint@0.2.7:
@@ -2260,6 +2265,7 @@ packages:
   /require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
     engines: {node: '>=0.10.0'}
+    requiresBuild: true
     dev: false
 
   /resolve-from@4.0.0:
@@ -2338,10 +2344,6 @@ packages:
       chokidar: 3.5.3
       immutable: 4.3.4
       source-map-js: 1.0.2
-
-  /semver-compare@1.0.0:
-    resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
-    dev: false
 
   /semver@7.5.4:
     resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
@@ -2612,6 +2614,7 @@ packages:
 
   /tiny-case@1.0.3:
     resolution: {integrity: sha512-Eet/eeMhkO6TX8mnUteS9zgPbUMQa4I6Kkp5ORiBD5476/m+PIRiumP5tmh5ioJpH7k51Kehawy2UDfsnxxY8Q==}
+    requiresBuild: true
     dev: false
 
   /tiny-glob@0.2.9:
@@ -2654,6 +2657,7 @@ packages:
 
   /toposort@2.0.2:
     resolution: {integrity: sha512-0a5EOkAUp8D4moMi2W8ZF8jcga7BgZd91O/yabJCFY8az+XSzeGyTKs0Aoo897iV1Nj6guFq8orWDS96z91oGg==}
+    requiresBuild: true
     dev: false
 
   /totalist@3.0.1:
@@ -2703,6 +2707,7 @@ packages:
   /type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
+    requiresBuild: true
     dev: false
 
   /typescript@5.3.3:
@@ -2731,6 +2736,7 @@ packages:
 
   /valibot@0.25.0:
     resolution: {integrity: sha512-cmD0ca15oyAbT75iYLNW6uU6doAeIwYfOshpXka/E1Bx4frzbkrgb7gvkI7K0YK/DVOksei4FfxWfRoBP3NFTg==}
+    requiresBuild: true
     dev: false
 
   /vite-node@1.1.3(sass@1.69.7):
@@ -2898,6 +2904,7 @@ packages:
 
   /yup@1.3.3:
     resolution: {integrity: sha512-v8QwZSsHH2K3/G9WSkp6mZKO+hugKT1EmnMqLNUcfu51HU9MDyhlETT/JgtzprnrnQHPWsjc6MUDMBp/l9fNnw==}
+    requiresBuild: true
     dependencies:
       property-expr: 2.0.6
       tiny-case: 1.0.3
@@ -2907,12 +2914,15 @@ packages:
 
   /zod-to-json-schema@3.22.3(zod@3.22.4):
     resolution: {integrity: sha512-9isG8SqRe07p+Aio2ruBZmLm2Q6Sq4EqmXOiNpDxp+7f0LV6Q/LX65fs5Nn+FV/CzfF3NLBoksXbS2jNYIfpKw==}
+    requiresBuild: true
     peerDependencies:
       zod: ^3.22.4
     dependencies:
       zod: 3.22.4
     dev: false
+    optional: true
 
   /zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+    requiresBuild: true
     dev: false

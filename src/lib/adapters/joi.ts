@@ -3,7 +3,9 @@ import type { ObjectSchema } from 'joi';
 import { memoize } from '$lib/memoize.js';
 
 const fetchModule = /* @__PURE__ */ memoize(async () => {
-	const joiToJson = await import(/* webpackIgnore: true */ '@sinclair/typebox/compiler');
+	const { default: joiToJson } = await import(
+		/* webpackIgnore: true */ './joi-to-json-schema/index.js'
+	);
 	return { joiToJson };
 });
 
@@ -16,7 +18,6 @@ function _joi<T extends ObjectSchema>(
 ): ValidationAdapter<Record<string, unknown>> {
 	return createAdapter({
 		superFormValidationLibrary: 'joi',
-		// @ts-expect-error No type information exists for joi-to-json
 		jsonSchema: options?.jsonSchema ?? joiToJson(schema),
 		defaults: options?.defaults,
 		async validate(data) {

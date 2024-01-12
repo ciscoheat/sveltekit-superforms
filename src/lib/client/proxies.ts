@@ -313,9 +313,9 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	constraints: Writable<InputConstraint | undefined>;
 	tainted: Writable<boolean | undefined>;
 } {
-	const path2 = splitPath<T>(path);
+	const path2 = splitPath(path);
 	// Filter out array indices, the constraints structure doesn't contain these.
-	const constraintsPath = (path2 as unknown[]).filter((p) => /\D/.test(String(p))).join('.');
+	const constraintsPath = path2.filter((p) => /\D/.test(String(p))).join('.');
 
 	const taintedProxy = derived<typeof superForm.tainted, boolean | undefined>(
 		superForm.tainted,
@@ -376,7 +376,7 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends FormPat
 	baseOptions?: { taint?: TaintOption }
 ): SuperFieldProxy<FormPathType<T, Path>> {
 	const form = superForm.form;
-	const path2 = splitPath<T>(path);
+	const path2 = splitPath(path);
 
 	const proxy: Readable<FormPathType<T, Path>> = derived(form, ($form: object) => {
 		const data = traversePath($form, path2);
@@ -409,7 +409,7 @@ export function fieldProxy<T extends Record<string, unknown>, Path extends FormP
 	form: Writable<T>,
 	path: Path
 ): Writable<FormPathType<T, Path>> {
-	const path2 = splitPath<T>(path);
+	const path2 = splitPath(path);
 
 	const proxy: Readable<FormPathType<T, Path>> = derived(form, ($form: object) => {
 		const data = traversePath($form, path2);

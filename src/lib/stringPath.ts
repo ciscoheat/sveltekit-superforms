@@ -1,10 +1,8 @@
-type FieldPath<T extends object> = [keyof T, ...(string | number | symbol)[]];
-
-export function splitPath<T extends object>(path: string) {
+export function splitPath(path: string) {
 	return path
 		.toString()
 		.split(/[[\].]+/)
-		.filter((p) => p) as FieldPath<T>;
+		.filter((p) => p);
 }
 
 export function mergePath(path: (string | number | symbol)[]) {

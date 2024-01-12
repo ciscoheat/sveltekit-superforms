@@ -1,5 +1,3 @@
-import type { FieldPath } from './index.js';
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type PathData = {
@@ -36,7 +34,7 @@ export function pathExists<T extends object>(
 		options.modifier = (pathData) => (isInvalidPath(path, pathData) ? undefined : pathData.value);
 	}
 
-	const exists = traversePath(obj, path as FieldPath<T>, options.modifier);
+	const exists = traversePath(obj, path, options.modifier);
 	if (!exists) return undefined;
 
 	if (options.value === undefined) return exists;
@@ -88,10 +86,10 @@ export function traversePath<T extends object>(
 
 type TraverseStatus = 'abort' | 'skip' | unknown | void;
 
-export function traversePaths<T extends object, Path extends FieldPath<T>>(
+export function traversePaths<T extends object>(
 	parent: T,
 	modifier: (data: PathData) => TraverseStatus,
-	path: Path | [] = []
+	path: (string | number | symbol)[] = []
 ): TraverseStatus {
 	for (const key in parent) {
 		const value = parent[key] as any;
@@ -101,7 +99,7 @@ export function traversePaths<T extends object, Path extends FieldPath<T>>(
 			parent,
 			key,
 			value,
-			path: path.map(String).concat([key]),
+			path: path.concat([key]), // path.map(String).concat([key])
 			isLeaf,
 			set: (v) => setPath(parent, key, v)
 		};
@@ -129,7 +127,7 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 	const diffPaths = new Map<string, (string | number | symbol)[]>();
 
 	function checkPath(data: PathData, compareTo: object) {
-		const exists = compareTo ? traversePath(compareTo, data.path as FieldPath<object>) : undefined;
+		const exists = compareTo ? traversePath(compareTo, data.path) : undefined;
 
 		function addDiff() {
 			diffPaths.set(data.path.join(' '), data.path);
@@ -180,7 +178,7 @@ export function setPaths(
 	const isFunction = typeof value === 'function';
 
 	for (const path of paths) {
-		const leaf = traversePath(obj, path as FieldPath<typeof obj>, ({ parent, key, value }) => {
+		const leaf = traversePath(obj, path, ({ parent, key, value }) => {
 			if (value === undefined || typeof value !== 'object') {
 				// If a previous check tainted the node, but the search goes deeper,
 				// so it needs to be replaced with a (parent) node

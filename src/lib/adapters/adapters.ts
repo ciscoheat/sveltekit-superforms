@@ -1,4 +1,9 @@
-import type { Schema as TypeSchema, Infer as InferSchema, ValidationIssue } from '@decs/typeschema';
+import type {
+	Schema as TypeSchema,
+	Infer as InferSchema,
+	InferIn as InferInSchema,
+	ValidationIssue
+} from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
@@ -13,6 +18,7 @@ export type { Options as SchemaOptions } from 'to-json-schema';
 
 export type Schema = TypeSchema;
 export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
+export type InferIn<T extends Schema> = NonNullable<InferInSchema<T>>;
 
 export type ValidationLibrary =
 	//| 'ajv'

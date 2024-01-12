@@ -37,13 +37,14 @@ export type SuperValidateSyncOptions<T extends Record<string, unknown>> = Pick<
 	'id' | 'defaults' | 'jsonSchema'
 >;
 
-type SuperValidateData<T extends Record<string, unknown>> =
+type SuperValidateData<T extends Record<string, unknown>, In extends Record<string, unknown>> =
 	| RequestEvent
 	| Request
 	| FormData
 	| URLSearchParams
 	| URL
-	| SuperValidateSyncData<T>;
+	| SuperValidateSyncData<T>
+	| In;
 
 export type SuperValidateOptions<T extends Record<string, unknown>> = Partial<{
 	errors: boolean;
@@ -68,9 +69,10 @@ export async function superValidate<
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
 >(
-	data: SuperValidateData<T>,
+	data: SuperValidateData<T, In>,
 	adapter: ValidationAdapter<T>,
 	options?: SuperValidateOptions<T>
 ): Promise<SuperValidated<T, M>>;
@@ -83,10 +85,11 @@ export async function superValidate<
 export async function superValidate<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
 >(
-	data: ValidationAdapter<T> | SuperValidateData<T>,
-	adapter?: ValidationAdapter<T> | SuperValidateData<T> | SuperValidateOptions<T>,
+	data: ValidationAdapter<T> | SuperValidateData<T, In>,
+	adapter?: ValidationAdapter<T> | SuperValidateData<T, In> | SuperValidateOptions<T>,
 	options?: SuperValidateOptions<T>
 ): Promise<SuperValidated<T, M>> {
 	if (data && 'superFormValidationLibrary' in data) {

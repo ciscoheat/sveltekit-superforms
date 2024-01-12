@@ -1,7 +1,17 @@
 import { SchemaError } from '$lib/errors.js';
+import { traversePath } from '$lib/traversal.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
+import type { JSONSchema } from './index.js';
 
-export type SchemaType = JSONSchema7TypeName | 'unix-time' | 'bigint' | 'any' | 'symbol' | 'set';
+export type SchemaType =
+	| JSONSchema7TypeName
+	| 'unix-time'
+	| 'bigint'
+	| 'any'
+	| 'symbol'
+	| 'set'
+	| 'null'
+	| 'undefined';
 
 export type SchemaInfo = {
 	types: Exclude<SchemaType, 'null'>[];
@@ -16,11 +26,31 @@ export type SchemaInfo = {
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
+export function schemaInfoForPath(
+	schema: JSONSchema7Definition,
+	path: (string | number | symbol)[]
+) {
+	if (typeof schema === 'boolean') {
+		throw new SchemaError('Schema cannot be defined as boolean', path);
+	}
+
+	let isOptional = !schema.required?.includes(String(path[0]));
+	const info = traversePath(schema, path, (data) => {
+		const schema: JSONSchema = data.parent;
+		isOptional = !schema.required?.includes(data.key);
+		return schema.properties?.[data.key];
+	});
+
+	return info
+		? schemaInfo(info.parent.properties?.[path[path.length - 1]], isOptional, path)
+		: undefined;
+}
+
 export function schemaInfo(
 	schema: JSONSchema7Definition,
 	isOptional: boolean,
-	path: string[] = []
-): SchemaInfo | undefined {
+	path: (string | number | symbol)[] = []
+): SchemaInfo {
 	if (typeof schema === 'boolean') {
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
@@ -55,7 +85,10 @@ export function schemaInfo(
 	};
 }
 
-function schemaTypes(schema: JSONSchema7Definition, path: string[]): SchemaType[] {
+function schemaTypes(
+	schema: JSONSchema7Definition,
+	path: (string | number | symbol)[]
+): SchemaType[] {
 	if (typeof schema === 'boolean') {
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}

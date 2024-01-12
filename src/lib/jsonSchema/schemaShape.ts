@@ -24,7 +24,6 @@ function _schemaShape(schema: JSONSchema7Definition, path: string[]): SchemaShap
 	}
 
 	const info = schemaInfo(schema, false);
-	if (!info) return undefined;
 
 	if (info.array || info.union) {
 		const arr = info.array || [];

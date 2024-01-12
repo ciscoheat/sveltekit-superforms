@@ -132,7 +132,7 @@ function formatDefaultValue(type: SchemaType, value: unknown) {
 	return value;
 }
 
-function defaultValue(type: SchemaType, enumType: unknown[] | undefined): unknown {
+export function defaultValue(type: SchemaType, enumType: unknown[] | undefined): unknown {
 	switch (type) {
 		case 'string':
 			return enumType && enumType.length > 0 ? enumType[0] : '';
@@ -156,6 +156,7 @@ function defaultValue(type: SchemaType, enumType: unknown[] | undefined): unknow
 			return new Set();
 		case 'symbol':
 			return Symbol();
+		case 'undefined':
 		case 'any':
 			return undefined;
 
@@ -164,4 +165,60 @@ function defaultValue(type: SchemaType, enumType: unknown[] | undefined): unknow
 				'Schema type or format not supported, requires explicit default value: ' + type
 			);
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+export function defaultTypes(schema: JSONSchema, path: string[] = []) {
+	return _defaultTypes(schema, false, path);
+}
+
+type Types = { _types: (SchemaType | 'null' | 'undefined')[] };
+export type ArrayType = Types & { _items?: Types };
+export type TypeObject = { [Key in Exclude<string, '_types' | '_items'>]: TypeObject } & ArrayType;
+
+function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) {
+	if (!schema) {
+		throw new SchemaError('Schema was undefined', path);
+	}
+
+	const info = schemaInfo(schema, isOptional);
+
+	const output = {
+		_types: info.types
+	} as TypeObject;
+
+	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
+	//else console.dir({ path, info }, { depth: 10 }); //debug
+
+	// TODO: Can schema.items be an array? Not according to https://www.learnjsonschema.com/2020-12/applicator/items/
+	if (
+		info.schema.items &&
+		typeof info.schema.items == 'object' &&
+		!Array.isArray(info.schema.items)
+	) {
+		output._items = _defaultTypes(info.schema.items, info.isOptional, path);
+	}
+
+	if (info.properties) {
+		for (const [key, value] of Object.entries(info.properties)) {
+			if (typeof value == 'boolean') {
+				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
+			}
+			output[key] = _defaultTypes(info.properties[key], !info.required?.includes(key), [
+				...path,
+				key
+			]);
+		}
+	}
+
+	if (info.isNullable && !output._types.includes('null')) {
+		output._types.push('null');
+	}
+
+	if (info.isOptional && !output._types.includes('undefined')) {
+		output._types.push('undefined');
+	}
+
+	return output;
 }

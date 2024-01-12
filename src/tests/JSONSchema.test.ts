@@ -2,7 +2,7 @@ import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
 import { schemaInfo } from '$lib/jsonSchema/index.js';
 import type { FromSchema } from 'json-schema-to-ts';
-import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
+import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
@@ -430,6 +430,39 @@ describe('Unions', () => {
 	it('should handle schema unions', async () => {
 		expect(zod(schemaUnion).defaults).toEqual({
 			name: 'Test'
+		});
+	});
+});
+
+describe.only('Default value types', () => {
+	const schema = z.object({
+		name: z.string(),
+		len: z
+			.string()
+			.transform((s) => s.length)
+			.pipe(z.number().min(5)),
+		nested: z.object({
+			tags: z.string().min(2).nullable().array().min(1),
+			score: z.number()
+		}),
+		no: z.date().optional()
+	});
+
+	const adapter = zod(schema);
+
+	it('should return the types for each field', () => {
+		expect(defaultTypes(adapter.jsonSchema)).toEqual({
+			_types: ['object'],
+			name: { _types: ['string'] },
+			len: { _types: ['number'] },
+			nested: {
+				_types: ['object'],
+				tags: { _types: ['array'], _items: { _types: ['string', 'null'] } },
+				score: { _types: ['number'] }
+			},
+			no: {
+				_types: ['unix-time', 'undefined']
+			}
 		});
 	});
 });

@@ -173,9 +173,13 @@ export function defaultTypes(schema: JSONSchema, path: string[] = []) {
 	return _defaultTypes(schema, false, path);
 }
 
-type Types = { _types: (SchemaType | 'null' | 'undefined')[] };
-export type ArrayType = Types & { _items?: Types };
-export type TypeObject = { [Key in Exclude<string, '_types' | '_items'>]: TypeObject } & ArrayType;
+export type SchemaFieldType = {
+	__types: (SchemaType | 'null' | 'undefined')[];
+	__items?: SchemaTypeObject;
+};
+type SchemaTypeObject = {
+	[Key in Exclude<string, '_types' | '_items'>]: SchemaTypeObject;
+} & SchemaFieldType;
 
 function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) {
 	if (!schema) {
@@ -185,8 +189,8 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 	const info = schemaInfo(schema, isOptional);
 
 	const output = {
-		_types: info.types
-	} as TypeObject;
+		__types: info.types
+	} as SchemaTypeObject;
 
 	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
 	//else console.dir({ path, info }, { depth: 10 }); //debug
@@ -197,7 +201,8 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 		typeof info.schema.items == 'object' &&
 		!Array.isArray(info.schema.items)
 	) {
-		output._items = _defaultTypes(info.schema.items, info.isOptional, path);
+		output.__items = _defaultTypes(info.schema.items, info.isOptional, path);
+		//info = schemaInfo(info.schema.items, info.isOptional, path);
 	}
 
 	if (info.properties) {
@@ -212,12 +217,12 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 		}
 	}
 
-	if (info.isNullable && !output._types.includes('null')) {
-		output._types.push('null');
+	if (info.isNullable && !output.__types.includes('null')) {
+		output.__types.push('null');
 	}
 
-	if (info.isOptional && !output._types.includes('undefined')) {
-		output._types.push('undefined');
+	if (info.isOptional && !output.__types.includes('undefined')) {
+		output.__types.push('undefined');
 	}
 
 	return output;

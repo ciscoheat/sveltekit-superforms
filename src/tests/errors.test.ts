@@ -1,6 +1,5 @@
 import { zod } from '$lib/adapters/zod.js';
-import { flattenErrors, mergeDefaults } from '$lib/errors.js';
-import { defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
+import { flattenErrors, mergeDefaults, replaceInvalidDefaults } from '$lib/errors.js';
 import type { ValidationErrors } from '$lib/superValidate.js';
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
@@ -21,7 +20,7 @@ describe('Flattening errors', () => {
 	});
 });
 
-describe.only('Mapping defaults to invalid data', () => {
+describe('Mapping defaults to invalid data', () => {
 	const schema = z.object({
 		name: z.string(),
 		len: z
@@ -37,9 +36,11 @@ describe.only('Mapping defaults to invalid data', () => {
 	const adapter = zod(schema);
 
 	it('should replace error fields with defaults', () => {
-		const data = { len: 'a', name: 'Test' };
+		const data = mergeDefaults({ len: 'a', name: 'Test' }, adapter.defaults);
 		const errors = [{ message: 'Too short', path: ['len'] }];
-		expect(mergeDefaults(data, adapter, errors)).toStrictEqual({
+		expect(
+			replaceInvalidDefaults(data, adapter.defaults, adapter.jsonSchema, errors, [])
+		).toStrictEqual({
 			len: 0,
 			name: 'Test',
 			nested: { score: 0, tags: [] }
@@ -47,8 +48,10 @@ describe.only('Mapping defaults to invalid data', () => {
 	});
 
 	it('should add missing fields with defaults', () => {
-		const data = { len: 12 };
-		expect(mergeDefaults(data, adapter, [])).toStrictEqual({
+		const data = mergeDefaults({ len: 12 }, adapter.defaults);
+		expect(
+			replaceInvalidDefaults(data, adapter.defaults, adapter.jsonSchema, [], [])
+		).toStrictEqual({
 			len: 12,
 			name: '',
 			nested: { score: 0, tags: [] }
@@ -56,8 +59,11 @@ describe.only('Mapping defaults to invalid data', () => {
 	});
 
 	it('should replace nested data properly', () => {
-		const data = { nested: { tags: ['a', 'longer'] } };
-		expect(mergeDefaults(data, adapter, [])).toStrictEqual({
+		const data = mergeDefaults({ nested: { tags: ['a', 'longer'] } }, adapter.defaults);
+
+		expect(
+			replaceInvalidDefaults(data, adapter.defaults, adapter.jsonSchema, [], [])
+		).toStrictEqual({
 			len: 0,
 			name: '',
 			nested: { score: 0, tags: ['a', 'longer'] }
@@ -65,24 +71,40 @@ describe.only('Mapping defaults to invalid data', () => {
 	});
 
 	it('should replace incorrectly typed data with the default type, even in arrays', () => {
-		const data = { nested: { tags: ['a', 123] } };
+		const data = mergeDefaults({ nested: { tags: ['a', 123] } }, adapter.defaults);
 		const errors = [{ message: 'Expected string', path: ['nested', 'tags', 1] }];
-		expect(mergeDefaults(data, adapter, errors)).toStrictEqual({
+		expect(
+			replaceInvalidDefaults(data, adapter.defaults, adapter.jsonSchema, errors, [])
+		).toStrictEqual({
 			len: 0,
 			name: '',
 			nested: { score: 0, tags: ['a', null] }
 		});
 	});
 
+	it('should not let null pass for objects unless the field is nullable', () => {
+		const data = mergeDefaults({ nested: null }, adapter.defaults);
+		const errors = [{ message: 'Expected an object', path: ['nested'] }];
+		expect(
+			replaceInvalidDefaults(data, adapter.defaults, adapter.jsonSchema, errors, [])
+		).toStrictEqual({
+			len: 0,
+			name: '',
+			nested: { tags: [], score: 0 }
+		});
+	});
+
 	it('should not replace correctly typed data', () => {
 		//console.dir(schemaInfoForPath(adapter.jsonSchema, ['nested', 'tags']), { depth: 10 }); //debug
-		const data = { nested: { tags: ['a', 'b'] } };
+		const data = mergeDefaults({ nested: { tags: ['a', 'b'] } }, adapter.defaults);
 		const errors = [
 			{ message: 'Too short', path: ['nested', 'tags', 0] },
 			{ message: 'Too short', path: ['nested', 'tags', 1] }
 		];
 
-		expect(mergeDefaults(data, adapter, errors)).toStrictEqual({
+		expect(
+			replaceInvalidDefaults(data, adapter.defaults, adapter.jsonSchema, errors, [])
+		).toStrictEqual({
 			len: 0,
 			name: '',
 			nested: { score: 0, tags: ['a', 'b'] }

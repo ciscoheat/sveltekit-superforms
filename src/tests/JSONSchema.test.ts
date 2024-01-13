@@ -434,7 +434,7 @@ describe('Unions', () => {
 	});
 });
 
-describe.only('Default value types', () => {
+describe('Default value types', () => {
 	const schema = z.object({
 		name: z.string(),
 		len: z
@@ -443,6 +443,7 @@ describe.only('Default value types', () => {
 			.pipe(z.number().min(5)),
 		nested: z.object({
 			tags: z.string().min(2).nullable().array().min(1),
+			idTags: z.object({ name: z.string().optional(), id: z.number().int() }).array().min(1),
 			score: z.number()
 		}),
 		no: z.date().optional()
@@ -452,16 +453,27 @@ describe.only('Default value types', () => {
 
 	it('should return the types for each field', () => {
 		expect(defaultTypes(adapter.jsonSchema)).toEqual({
-			_types: ['object'],
-			name: { _types: ['string'] },
-			len: { _types: ['number'] },
+			__types: ['object'],
+			name: { __types: ['string'] },
+			len: { __types: ['number'] },
 			nested: {
-				_types: ['object'],
-				tags: { _types: ['array'], _items: { _types: ['string', 'null'] } },
-				score: { _types: ['number'] }
+				__types: ['object'],
+				tags: {
+					__types: ['array'],
+					__items: { __types: ['string', 'null'] }
+				},
+				idTags: {
+					__types: ['array'],
+					__items: {
+						__types: ['object'],
+						id: { __types: ['integer'] },
+						name: { __types: ['string', 'undefined'] }
+					}
+				},
+				score: { __types: ['number'] }
 			},
 			no: {
-				_types: ['unix-time', 'undefined']
+				__types: ['unix-time', 'undefined']
 			}
 		});
 	});

@@ -107,6 +107,7 @@ function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
 				} else if (typeof value == 'object' && value !== null && !Array.isArray(value)) {
 					output = simpleSchema(value as Record<string, unknown>);
 				} else if (Array.isArray(value)) {
+					// TODO: Cannot know array type, so merging with defaults is a problem.
 					output = { type: 'array' };
 				} else {
 					output = { type: typeof value as JSONSchema7TypeName };

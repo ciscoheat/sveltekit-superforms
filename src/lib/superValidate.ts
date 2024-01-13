@@ -5,7 +5,7 @@ import { parseRequest } from './formData.js';
 import type { NumericRange } from './utils.js';
 import { splitPath, type StringPathLeaves } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
-import { mapErrors } from './errors.js';
+import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
 
@@ -107,7 +107,7 @@ export async function superValidate<
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
 
 	// Merge with defaults in non-strict mode.
-	const parsedData = { ...(options?.strict ? {} : defaults), ...(parsed.data ?? {}) } as T;
+	const parsedData = options?.strict ? parsed.data ?? {} : mergeDefaults(parsed.data, defaults);
 
 	let status: ValidationResult<T>;
 
@@ -121,7 +121,16 @@ export async function superValidate<
 	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validator.shape);
 
 	// Final data should always have defaults, to ensure type safety
-	const dataWithDefaults = { ...defaults, ...(valid ? status.data : parsedData) };
+	//const dataWithDefaults = { ...defaults, ...(valid ? status.data : parsedData) };
+	const dataWithDefaults = valid
+		? status.data
+		: replaceInvalidDefaults(
+				options?.strict ? mergeDefaults(parsedData, defaults) : parsedData,
+				defaults,
+				jsonSchema,
+				status.issues,
+				options?.preprocessed
+			);
 
 	let outputData: Record<string, unknown>;
 	if (jsonSchema.additionalProperties === false) {

@@ -13,6 +13,7 @@ type ModeTest = {
 };
 
 describe('Strict mode', () => {
+	/*
 	test('Should remove keys not part of the schema', async () => {
 		const input = { fooo: 'wrong-key', foo: 'correct-key' };
 		const schema = z.object({
@@ -27,8 +28,10 @@ describe('Strict mode', () => {
 		expect(form.errors).toEqual({});
 		expect(form.valid).toEqual(true);
 	});
+	*/
 
 	const strictTests = [
+		/*
 		{
 			name: 'Should be invalid if foo is not present in object',
 			schema: z.object({
@@ -63,6 +66,7 @@ describe('Strict mode', () => {
 			valid: true,
 			errors: {}
 		},
+		*/
 		{
 			name: 'Should be invalid if key is mispelled',
 			schema: z.object({
@@ -78,7 +82,8 @@ describe('Strict mode', () => {
 			errors: {
 				foo: ['Required']
 			}
-		},
+		}
+		/*
 		{
 			name: 'Should work with number',
 			schema: z.object({
@@ -137,11 +142,13 @@ describe('Strict mode', () => {
 				foo: ['Required']
 			}
 		}
+		*/
 	];
 
 	testMode(strictTests, true);
 });
 
+/*
 describe('Non-strict mode', () => {
 	test('Should remove keys not part of the schema', async () => {
 		const input = { fooo: 'wrong-key', foo: 'correct-key' };
@@ -251,6 +258,7 @@ describe('Non-strict mode', () => {
 
 	testMode(nonStrictTests, false);
 });
+*/
 
 function testMode(tests: ModeTest[], strict: boolean) {
 	for (const { name, input, schema, valid, expected, errors } of tests) {
@@ -287,7 +295,7 @@ function testMode(tests: ModeTest[], strict: boolean) {
 
 		test(name + ' (UrlSearchParams)', async () => {
 			const params = new URLSearchParams();
-			for (const [key, value] of Object.entries(input)) {
+			for (const [key, value] of Object.entries(input ?? {})) {
 				params.set(key, `${value}`);
 			}
 

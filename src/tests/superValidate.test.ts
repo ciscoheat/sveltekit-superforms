@@ -368,7 +368,8 @@ function schemaTest(
 	});
 
 	it('with invalid test data', async () => {
-		const output = await superValidate(invalidData, adapter());
+		const a = adapter();
+		const output = await superValidate(invalidData, a);
 		expectErrors(output.errors);
 		expect(output.valid).toEqual(false);
 		expect(output.data).not.toBe(invalidData);

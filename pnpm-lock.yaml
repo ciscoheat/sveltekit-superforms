@@ -96,9 +96,6 @@ devDependencies:
   eslint-plugin-svelte:
     specifier: ^2.35.1
     version: 2.35.1(eslint@8.56.0)(svelte@4.2.8)
-  joi-to-json-schema:
-    specifier: ^5.1.0
-    version: 5.1.0
   json-schema-to-ts:
     specifier: ^3.0.0
     version: 3.0.0
@@ -1733,10 +1730,6 @@ packages:
 
   /isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
-    dev: true
-
-  /joi-to-json-schema@5.1.0:
-    resolution: {integrity: sha512-suSQS0zGdkIgnxKuc9huX+J/+RGtADNmp7Uh6HdCpkguN0Lxhy+7MT7d/BtQW4IBaYv/5AeR4uADN3m6BijQtw==}
     dev: true
 
   /joi@17.11.0:

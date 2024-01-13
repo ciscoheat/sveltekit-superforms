@@ -112,7 +112,8 @@
 		"devalue": "^4.3.2",
 		"klona": "^2.0.6",
 		"memoize-weak": "^1.0.2",
-		"to-json-schema": "^0.2.5"
+		"to-json-schema": "^0.2.5",
+		"ts-deepmerge": "^6.2.0"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.1.0",
@@ -139,7 +140,6 @@
 		"sveltekit-flash-message": "^2.3.1",
 		"sveltekit-rate-limiter": "^0.4.2",
 		"throttle-debounce": "^5.0.0",
-		"ts-deepmerge": "^6.2.0",
 		"tslib": "^2.6.2",
 		"typescript": "^5.3.3",
 		"uuid": "^9.0.1",

@@ -3,16 +3,11 @@ import { pathExists, setPaths, traversePath, traversePaths } from './traversal.j
 import { mergePath } from './stringPath.js';
 import type { ValidationErrors } from './superValidate.js';
 import type { ValidationIssue } from '@decs/typeschema';
-import { schemaInfo, schemaInfoForPath } from './jsonSchema/schemaInfo.js';
-import type { ValidationAdapter } from './adapters/adapters.js';
-import {
-	defaultTypes,
-	defaultValue,
-	defaultValues,
-	type ArrayType,
-	type TypeObject
-} from './jsonSchema/schemaDefaults.js';
+//import { schemaInfoForPath } from './jsonSchema/schemaInfo.js';
+import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './jsonSchema/index.js';
+import { clone } from './utils.js';
+import merge from 'ts-deepmerge';
 
 export class SuperFormError extends Error {
 	constructor(message?: string) {
@@ -143,73 +138,158 @@ function _flattenErrors(
 }
 
 /**
- * Merge defaults with (important!) already validated data.
+ * Merge defaults with parsed data.
+ * TODO: Optimize
  */
 export function mergeDefaults<T extends Record<string, unknown>>(
-	validatedData: Record<string, unknown> | null | undefined,
-	adapter: ValidationAdapter<T>,
-	errors: ValidationIssue[]
+	parsedData: Record<string, unknown> | null | undefined,
+	defaults: T
 ): T {
-	const data = validatedData ?? {};
+	if (!parsedData) return clone(defaults);
+	return merge.withOptions({ mergeArrays: false }, defaults, parsedData) as T;
+}
 
-	traversePaths(adapter.defaults, (path) => {
-		const dataPath = pathExists(data!, path.path);
-		if ((!dataPath || dataPath.value === undefined) && path.value !== undefined) {
-			setPaths(data, [path.path], path.value);
+/*
+	const types = defaultTypes(jsonSchema);
+
+	traversePaths(defaults, (defaultPath) => {
+		const dataPath = pathExists(parsedData, defaultPath.path);
+		const dataValue = dataPath?.value;
+
+		const checkPath = defaultPath.path.filter((p) => /\D/.test(String(p)));
+		const pathTypes = pathExists(types, checkPath);
+		if (!pathTypes) {
+			throw new SchemaError('No types found for field in schema.', checkPath);
+		}
+
+		const thePathTypes = (pathTypes.value as SchemaFieldType).__types;
+
+		// If no types, it's an "any", usually a File type.
+		if (!thePathTypes.length) return;
+
+		if (thePathTypes.length == 1 && thePathTypes[0] == 'array') {
+			// No type info for array, keep the value
+			return;
+		}
+
+		console.log(defaultPath.path, dataValue, 'checking for type', thePathTypes);
+
+		for (const type of thePathTypes) {
+			const defaultTypeValue = defaultValue(type, undefined);
+			const sameType = typeof dataValue === typeof defaultTypeValue;
+			const sameExistance = sameType && (dataValue === null) === (defaultTypeValue === null);
+
+			if (!sameType || !sameExistance) {
+				setPaths(parsedData, [defaultPath.path], defaultPath.value);
+				break;
+			}
 		}
 	});
+*/
 
-	const output = data;
-	const types = defaultTypes(adapter.jsonSchema);
+/**
+ * Merge defaults with (important!) *already validated and merged data*.
+ */
+export function replaceInvalidDefaults<T extends Record<string, unknown>>(
+	data: Record<string, unknown>,
+	defaults: T,
+	jsonSchema: JSONSchema,
+	errors: ValidationIssue[],
+	preprocessed: (keyof T)[] | undefined
+): T {
+	// TODO: Optimize function.
+	const types = defaultTypes(jsonSchema);
 
 	//console.log('🚀 ~ mergeDefaults');
 	//console.dir(types, { depth: 10 }); //debug
 
-	for (const error of errors) {
-		if (!error.path || !error.path[0]) continue;
+	function checkCorrectType(dataValue: unknown, defValue: unknown, type: SchemaFieldType) {
+		const types = type.__types;
 
-		const dataPath = pathExists(data, error.path);
-		const defaultPath = pathExists(adapter.defaults, error.path);
+		if (!types.length) {
+			// No types counts as an "any" type
+			return dataValue;
+		} else if (types.length == 1 && types[0] == 'array' && !type.__items) {
+			/* 
+				No type info for array exists. 
+				Keep the value even though it may not be the correct type, but validation 
+				won't fail and the failed data is usually returned to the form without UX problems.
+			*/
+			return dataValue;
+		}
 
-		const dataValue = dataPath?.value;
-		let defValue: unknown = defaultPath?.value;
+		for (const schemaType of types) {
+			const defaultTypeValue = defaultValue(schemaType, undefined);
 
-		if (defValue === undefined) {
-			const isArrayError = /^\d+$/.test(String(error.path[error.path.length - 1]));
-			const checkPath = isArrayError ? error.path.slice(0, -1) : error.path;
+			const sameType = typeof dataValue === typeof defaultTypeValue;
+			const sameExistance = sameType && (dataValue === null) === (defaultTypeValue === null);
 
-			const pathTypes = pathExists(types, checkPath);
-			if (!pathTypes) throw new SchemaError('No types found for defaults', checkPath);
-
-			const p = pathTypes.value as ArrayType;
-			const t = p._items ? p._items._types : p._types;
-
-			//console.log(error.path, t); //debug
-
-			for (const type of t) {
-				const defaultTypeValue = defaultValue(type, undefined);
-				const sameType = typeof dataValue === typeof defaultTypeValue;
-
-				if (sameType) {
-					defValue = defaultTypeValue;
-					break;
-				}
+			if (sameType && sameExistance) {
+				return dataValue;
+			} else if (type.__items) {
+				//console.log('Array, now what:', dataValue, defValue, type);
+				// Parse array type
+				return checkCorrectType(dataValue, defValue, type.__items);
+				//const info = schemaInfoForPath(jsonSchema, error.path.slice(0, -1));
+				//const arrayTypes = { anyOf: info?.array } satisfies JSONSchema;
+				//setPaths(data, [error.path], defaultValues(arrayTypes));
 			}
 		}
 
-		const sameType = typeof dataValue === typeof defValue;
-		//const sameExistance = sameType && (dataValue === null) === (defValue === null);
+		if (defValue === undefined && types.includes('null')) return null;
+		return defValue;
+	}
 
-		if (sameType /* && sameExistance */) {
-			setPaths(output, [error.path], dataValue);
-		} else if (Array.isArray(defaultPath?.parent)) {
-			// Parse array type
-			const info = schemaInfoForPath(adapter.jsonSchema, error.path.slice(0, -1));
-			const arrayTypes = { anyOf: info?.array } satisfies JSONSchema;
-			setPaths(output, [error.path], defaultValues(arrayTypes));
-		} else {
-			setPaths(output, [error.path], defValue);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	function traverseDefaultPath(defaultPath: { path: (string | number | symbol)[]; value: any }) {
+		const currentPath = defaultPath.path;
+		if (!currentPath || !currentPath[0]) return;
+		if (typeof currentPath[0] === 'string' && preprocessed?.includes(currentPath[0])) return;
+
+		const dataPath = pathExists(data, currentPath);
+
+		const defValue = defaultPath.value;
+		let newValue = defValue;
+
+		if (dataPath) {
+			const dataValue = dataPath.value;
+
+			// Check for same JS type with an existing default value.
+			if (
+				defValue !== undefined &&
+				typeof dataValue === typeof defValue &&
+				(dataValue === null) === (defValue === null)
+			) {
+				return dataValue;
+			}
+
+			const typePath = currentPath.filter((p) => /\D/.test(String(p)));
+			const pathTypes = traversePath(types, typePath, (path) => {
+				//console.log(path.path, path.value); //debug
+				return '__items' in path.value ? path.value.__items : path.value;
+			});
+			if (!pathTypes) {
+				throw new SchemaError('No types found for defaults', currentPath);
+			}
+
+			newValue = checkCorrectType(dataValue, defValue, pathTypes.value);
+		}
+
+		if (dataPath?.value !== newValue) {
+			setPaths(data, [currentPath], newValue);
 		}
 	}
-	return output as T;
+
+	traversePaths(defaults, traverseDefaultPath);
+
+	for (const error of errors) {
+		if (!error.path) continue;
+
+		traverseDefaultPath({
+			path: error.path,
+			value: pathExists(defaults, error.path)?.value
+		});
+	}
+
+	return data as T;
 }

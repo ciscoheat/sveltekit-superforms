@@ -51,17 +51,17 @@ export type ValidationResult<TOutput = any> =
 			issues: Array<ValidationIssue>;
 	  };
 
-type BaseValidationAdapter<T extends Record<string, unknown>> = {
+type BaseValidationAdapter<Out extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;
 	jsonSchema: JSONSchema;
-	validate: (data: unknown) => Promise<ValidationResult<T>>;
-	defaults?: T;
-	constraints?: InputConstraints<T>;
+	validate: (data: unknown) => Promise<ValidationResult<Out>>;
+	defaults?: Out;
+	constraints?: InputConstraints<Out>;
 };
 
-export type ValidationAdapter<T extends Record<string, unknown>> = BaseValidationAdapter<T> & {
-	defaults: T;
-	constraints: InputConstraints<T>;
+export type ValidationAdapter<Out extends Record<string, unknown>> = BaseValidationAdapter<Out> & {
+	defaults: Out;
+	constraints: InputConstraints<Out>;
 	shape: SchemaShape;
 	id: string;
 };

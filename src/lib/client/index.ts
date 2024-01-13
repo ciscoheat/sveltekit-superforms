@@ -1,3 +1,5 @@
+// Backwards compatibility, everything should be imported from top-level in v2.
+
 export { superForm } from './superForm.js';
 
 export {
@@ -19,7 +21,7 @@ export { defaults } from '../defaults.js';
 export { actionResult } from '../actionResult.js';
 export { defaultValues } from '../jsonSchema/schemaDefaults.js';
 
-export type { Infer } from '../adapters/adapters.js';
+export type { Infer, InferIn } from '../adapters/adapters.js';
 
 export {
 	superValidate,

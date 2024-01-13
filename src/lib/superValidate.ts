@@ -10,47 +10,46 @@ import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
 
 export type SuperValidated<
-	T extends Record<string, unknown>,
+	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = {
 	id: string;
 	valid: boolean;
 	posted: boolean;
-	errors: ValidationErrors<T>;
-	data: T;
-	constraints: InputConstraints<T>;
-	message?: M;
+	errors: ValidationErrors<Out>;
+	data: Out;
+	constraints: InputConstraints<Out>;
+	message?: Message;
 };
 
-export type ValidationErrors<T extends Record<string, unknown>> = {
+export type ValidationErrors<Out extends Record<string, unknown>> = {
 	_errors?: string[];
-} & SuperStructArray<T, string[], { _errors?: string[] }>;
+} & SuperStructArray<Out, string[], { _errors?: string[] }>;
 
-export type SuperValidateSyncData<T extends Record<string, unknown>> =
-	| Partial<T>
+export type SuperValidateSyncData<In extends Record<string, unknown>> =
+	| Partial<In>
 	| null
 	| undefined;
 
-export type SuperValidateSyncOptions<T extends Record<string, unknown>> = Pick<
-	SuperValidateOptions<T>,
+export type SuperValidateSyncOptions<Out extends Record<string, unknown>> = Pick<
+	SuperValidateOptions<Out>,
 	'id' | 'defaults' | 'jsonSchema'
 >;
 
-type SuperValidateData<T extends Record<string, unknown>, In extends Record<string, unknown>> =
+type SuperValidateData<In extends Record<string, unknown>> =
 	| RequestEvent
 	| Request
 	| FormData
 	| URLSearchParams
 	| URL
-	| SuperValidateSyncData<T>
-	| In;
+	| SuperValidateSyncData<In>;
 
-export type SuperValidateOptions<T extends Record<string, unknown>> = Partial<{
+export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<{
 	errors: boolean;
 	id: string;
-	preprocessed: (keyof T)[];
-	defaults: T;
+	preprocessed: (keyof Out)[];
+	defaults: Out;
 	jsonSchema: JSONSchema;
 	strict: boolean;
 	allowFiles: boolean;
@@ -61,21 +60,24 @@ export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<
 /////////////////////////////////////////////////////////////////////
 
 export async function superValidate<
-	T extends Record<string, unknown>,
+	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(adapter: ValidationAdapter<T>, options?: SuperValidateOptions<T>): Promise<SuperValidated<T, M>>;
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message
+>(
+	adapter: ValidationAdapter<Out>,
+	options?: SuperValidateOptions<Out>
+): Promise<SuperValidated<Out, Message>>;
 
 export async function superValidate<
-	T extends Record<string, unknown>,
+	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	In extends Record<string, unknown> = T
+	In extends Record<string, unknown> = Out
 >(
-	data: SuperValidateData<T, In>,
-	adapter: ValidationAdapter<T>,
-	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M>>;
+	data: SuperValidateData<In>,
+	adapter: ValidationAdapter<Out>,
+	options?: SuperValidateOptions<Out>
+): Promise<SuperValidated<Out, M>>;
 
 /**
  * Validates a schema for data validation and usage in superForm.
@@ -83,33 +85,33 @@ export async function superValidate<
  * @param schema The schema to validate against.
  */
 export async function superValidate<
-	T extends Record<string, unknown>,
+	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	In extends Record<string, unknown> = T
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = Out
 >(
-	data: ValidationAdapter<T> | SuperValidateData<T, In>,
-	adapter?: ValidationAdapter<T> | SuperValidateData<T, In> | SuperValidateOptions<T>,
-	options?: SuperValidateOptions<T>
-): Promise<SuperValidated<T, M>> {
+	data: ValidationAdapter<Out> | SuperValidateData<In>,
+	adapter?: ValidationAdapter<Out> | SuperValidateData<In> | SuperValidateOptions<Out>,
+	options?: SuperValidateOptions<Out>
+): Promise<SuperValidated<Out, Message>> {
 	if (data && 'superFormValidationLibrary' in data) {
-		options = adapter as SuperValidateOptions<T>;
+		options = adapter as SuperValidateOptions<Out>;
 		adapter = data;
 		data = undefined;
 	}
 
-	const validator = adapter as ValidationAdapter<T>;
+	const validator = adapter as ValidationAdapter<Out>;
 
 	const defaults = options?.defaults ?? validator.defaults;
 	const jsonSchema = validator.jsonSchema;
 
-	const parsed = await parseRequest<T>(data, jsonSchema, options);
+	const parsed = await parseRequest<Out>(data, jsonSchema, options);
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
 
 	// Merge with defaults in non-strict mode.
 	const parsedData = options?.strict ? parsed.data ?? {} : mergeDefaults(parsed.data, defaults);
 
-	let status: ValidationResult<T>;
+	let status: ValidationResult<Out>;
 
 	if (!!parsed.data || addErrors) {
 		status = await /* @__PURE__ */ validator.validate(parsedData);
@@ -153,8 +155,8 @@ export async function superValidate<
 		id: parsed.id ?? options?.id ?? validator.id,
 		valid,
 		posted: parsed.posted,
-		errors: errors as ValidationErrors<T>,
-		data: outputData as T,
+		errors: errors as ValidationErrors<Out>,
+		data: outputData as Out,
 		constraints: validator.constraints
 	};
 }

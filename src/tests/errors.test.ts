@@ -95,7 +95,6 @@ describe('Mapping defaults to invalid data', () => {
 	});
 
 	it('should not replace correctly typed data', () => {
-		//console.dir(schemaInfoForPath(adapter.jsonSchema, ['nested', 'tags']), { depth: 10 }); //debug
 		const data = mergeDefaults({ nested: { tags: ['a', 'b'] } }, adapter.defaults);
 		const errors = [
 			{ message: 'Too short', path: ['nested', 'tags', 0] },

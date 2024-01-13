@@ -29,6 +29,7 @@ export {
 	type TaintedFields,
 	type ValidationErrors,
 	type Infer,
+	type InferIn,
 	type FormResult,
 	type FormOptions,
 	type SuperForm,

@@ -88,6 +88,10 @@
     "svelte": "3.x || 4.x",
     "zod": "3.x"
   },
+  "dependencies": {
+    "devalue": "^4.3.2",
+    "klona": "^2.0.6"
+  },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.1.1",
     "@sveltejs/kit": "^1.30.3",
@@ -96,7 +100,6 @@
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
-    "devalue": "^4.3.2",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^8.10.0",
     "eslint-plugin-dci-lint": "^0.3.1",

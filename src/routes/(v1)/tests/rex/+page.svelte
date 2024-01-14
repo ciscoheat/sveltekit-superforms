@@ -47,6 +47,7 @@
 	</div>
 
 	<div class="tags">
+		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 		{#each $form.tags as _, i}
 			<div>
 				<label for="min">Min</label>

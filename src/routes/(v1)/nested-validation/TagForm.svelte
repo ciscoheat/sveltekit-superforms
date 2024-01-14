@@ -111,6 +111,7 @@
 	<input type="hidden" name="id" value={validator} />
 	<small>{validator} validation</small>
 
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.tags as _, i}
 		<div>
 			<input type="number" data-invalid={$errors.tags?.[i]?.id} bind:value={$form.tags[i].id} />

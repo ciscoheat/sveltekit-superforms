@@ -51,6 +51,7 @@
 		<div class="invalid">{$errors.shareholders._errors}</div>
 	{/if}
 
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.shareholders as _, i}
 		{@const error = $errors?.shareholders?.[i]?.id_issuance_date}
 		<label>

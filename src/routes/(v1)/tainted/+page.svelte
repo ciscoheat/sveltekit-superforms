@@ -37,6 +37,7 @@
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.tags as _, i}
 		<div>
 			<input type="number" data-invalid={$errors.tags?.[i]?.id} bind:value={$form.tags[i].id} />

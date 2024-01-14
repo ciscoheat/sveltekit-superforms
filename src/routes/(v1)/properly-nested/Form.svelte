@@ -61,6 +61,7 @@
 
 	<section>
 		<h4>Tags</h4>
+		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 		{#each $formData.tags as _, i}
 			{#if i % 2}
 				<TextInput

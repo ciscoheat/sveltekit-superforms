@@ -2,7 +2,7 @@
 	import type { PageData } from './$types.js';
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 	import { zod } from '$lib/adapters/zod.js';
 
@@ -35,6 +35,7 @@
 
 <form method="POST" use:enhance>
 	{#if $form.tags}
+		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 		{#each $form.tags as _, i}
 			<div>
 				<input type="number" data-invalid={$errors.tags?.[i]?.id} bind:value={$form.tags[i].id} />

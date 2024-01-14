@@ -1,13 +1,10 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	//import { postSchema } from './schema.js';
-	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json'
 		//validators: zod(postSchema)
 	});
@@ -22,6 +19,7 @@
 {/if}
 
 <form method="POST" use:enhance>
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.questions as _, i}
 		<label>
 			Question: <input name="questions" bind:value={$form.questions[i].text} />

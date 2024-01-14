@@ -34,6 +34,7 @@
 <button on:click={addPerson}>Add Person</button>
 
 <form use:enhance>
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.people as _, i}
 		<div>
 			<div>

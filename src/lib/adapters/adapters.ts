@@ -22,7 +22,15 @@ export type InferIn<T extends Schema> = NonNullable<InferInSchema<T>>;
 
 export type ValidationLibrary =
 	//| 'ajv'
-	'arktype' | 'custom' | 'joi' | 'superform' | 'typebox' | 'valibot' | 'yup' | 'zod';
+	| 'arktype'
+	| 'custom'
+	| 'joi'
+	| 'superform'
+	//| 'superstruct'
+	| 'typebox'
+	| 'valibot'
+	| 'yup'
+	| 'zod';
 
 export type AdapterDefaultOptions<T extends Schema> = {
 	defaults: Infer<T>;

@@ -1,5 +1,6 @@
 import type { SuperStruct } from '$lib/superStruct.js';
-import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
+import type { JSONSchema } from './index.js';
+import { schemaInfo, type SchemaInfo } from './schemaInfo.js';
 
 export type InputConstraint = Partial<{
 	pattern: string; // RegExp

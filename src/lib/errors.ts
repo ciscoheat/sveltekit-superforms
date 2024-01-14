@@ -3,7 +3,6 @@ import { pathExists, setPaths, traversePath, traversePaths } from './traversal.j
 import { mergePath } from './stringPath.js';
 import type { ValidationErrors } from './superValidate.js';
 import type { ValidationIssue } from '@decs/typeschema';
-//import { schemaInfoForPath } from './jsonSchema/schemaInfo.js';
 import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone } from './utils.js';

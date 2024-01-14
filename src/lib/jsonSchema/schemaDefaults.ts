@@ -1,5 +1,6 @@
 import { SchemaError } from '$lib/errors.js';
-import { schemaInfo, type JSONSchema } from './index.js';
+import type { JSONSchema } from './index.js';
+import { schemaInfo } from './schemaInfo.js';
 import type { SchemaType } from './schemaInfo.js';
 
 export function defaultValues<T extends Record<string, unknown> = Record<string, unknown>>(

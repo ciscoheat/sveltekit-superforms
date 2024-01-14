@@ -1,4 +1,5 @@
-import { schemaInfo, type JSONSchema, type SchemaInfo } from './index.js';
+import type { JSONSchema } from './index.js';
+import { schemaInfo, type SchemaInfo } from './schemaInfo.js';
 
 export function schemaHash(schema: JSONSchema): string {
 	return hashCode(_schemaHash(schemaInfo(schema, false), 0));

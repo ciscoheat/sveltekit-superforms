@@ -1,6 +1,6 @@
 import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
-import { schemaInfo } from '$lib/jsonSchema/index.js';
+import { schemaInfo } from '$lib/jsonSchema/schemaInfo.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';

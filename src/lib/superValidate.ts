@@ -140,15 +140,9 @@ export async function superValidate<
 		outputData = {};
 		for (const key of Object.keys(jsonSchema.properties ?? {})) {
 			if (key in dataWithDefaults) outputData[key] = dataWithDefaults[key];
-			else if (defaults[key] !== undefined) outputData[key] = defaults[key];
 		}
 	} else {
 		outputData = dataWithDefaults;
-		for (const key of Object.keys(defaults)) {
-			if (!(key in dataWithDefaults) && defaults[key] !== undefined) {
-				outputData[key] = defaults[key];
-			}
-		}
 	}
 
 	return {

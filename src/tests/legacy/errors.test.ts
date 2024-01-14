@@ -177,6 +177,9 @@ describe('Errors', async () => {
 			constraints: {
 				scoops: { min: 1 },
 				flavours: { minlength: 1 }
+			},
+			shape: {
+				flavours: {}
 			}
 		});
 	});

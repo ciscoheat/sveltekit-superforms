@@ -17,6 +17,7 @@ export {
 	stringProxy,
 	arrayProxy,
 	defaults,
+	schemaShape,
 	actionResult,
 	defaultValues,
 	superValidate,

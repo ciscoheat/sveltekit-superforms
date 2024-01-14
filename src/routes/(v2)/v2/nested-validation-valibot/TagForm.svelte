@@ -6,22 +6,20 @@
 	import { schema } from './schema.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import { onMount } from 'svelte';
-	import type { SuperValidated } from '$lib/index.js';
-
-	import type { z } from 'zod';
-	import { zodClient } from '$lib/adapters/zod.js';
+	import type { SuperValidated, Infer } from '$lib/index.js';
 	import { superform } from '$lib/adapters/superform.js';
+	import { valibotClient } from '$lib/adapters/valibot.js';
 
-	export let data: SuperValidated<z.infer<typeof schema>>;
-	export let validator: 'zod' | 'superforms';
+	export let data: SuperValidated<Infer<typeof schema>>;
+	export let validator: 'valibot' | 'superforms';
 
 	export let output: (string[] | undefined)[] = [];
-	export let validated: SuperValidated<z.infer<typeof schema>> | undefined = undefined;
+	export let validated: SuperValidated<Infer<typeof schema>> | undefined = undefined;
 
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 
-	const superFormValidator: FormOptions<z.infer<typeof schema>, unknown>['validators'] = superform(
+	const superFormValidator: FormOptions<Infer<typeof schema>, unknown>['validators'] = superform(
 		{
 			name: (name) => {
 				return !name || !name.length ? 'Name is too short' : null;
@@ -34,7 +32,7 @@
 				}
 			}
 		},
-		{ defaults: { name: '', tags: [] } as z.infer<typeof schema> }
+		{ defaults: { name: '', tags: [] } as Infer<typeof schema> }
 	);
 
 	const { form, errors, enhance, message, tainted, validate } = superForm(data, {
@@ -43,8 +41,8 @@
 		onUpdate(event) {
 			if ($page.url.searchParams.has('cancel')) event.cancel();
 		},
-		defaultValidator: validator == 'zod' ? 'keep' : 'clear',
-		validators: validator == 'zod' ? zodClient(schema) : superFormValidator,
+		defaultValidator: validator == 'valibot' ? 'keep' : 'clear',
+		validators: validator == 'valibot' ? valibotClient(schema) : superFormValidator,
 		flashMessage: {
 			module: flashModule,
 			onError({ result, flashMessage }) {

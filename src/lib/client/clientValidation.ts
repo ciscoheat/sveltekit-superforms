@@ -1,6 +1,6 @@
 import type { FormOptions } from './index.js';
 import { mapErrors } from '../errors.js';
-import { createAdapter, type ValidationResult } from '$lib/adapters/adapters.js';
+import { type ValidationResult } from '$lib/adapters/adapters.js';
 import type { SuperValidated, ValidationErrors } from '$lib/superValidate.js';
 
 /**
@@ -11,9 +11,10 @@ export async function clientValidation<T extends Record<string, unknown>, M = un
 	data: T,
 	formId: string,
 	constraints: SuperValidated<T>['constraints'],
-	posted: boolean
+	posted: boolean,
+	formShape: SuperValidated<T>['shape']
 ) {
-	return _clientValidation(validators, data, formId, constraints, posted);
+	return _clientValidation(validators, data, formId, constraints, posted, formShape);
 }
 
 async function _clientValidation<T extends Record<string, unknown>, M = unknown>(
@@ -21,17 +22,17 @@ async function _clientValidation<T extends Record<string, unknown>, M = unknown>
 	data: T,
 	formId: string,
 	constraints: SuperValidated<T>['constraints'],
-	posted: boolean
+	posted: boolean,
+	formShape: SuperValidated<T>['shape']
 ): Promise<SuperValidated<T>> {
 	let errors: ValidationErrors<T> = {};
 	let status: ValidationResult<T> = { success: true, data };
 
 	if (validator) {
-		const adapter = createAdapter<T>(validator);
-		status = await /* @__PURE__ */ adapter.validate(data);
+		status = await /* @__PURE__ */ validator.validate(data);
 
 		if (!status.success) {
-			errors = mapErrors(status.issues, adapter.shape) as ValidationErrors<T>;
+			errors = mapErrors(status.issues, validator.shape ?? formShape ?? {}) as ValidationErrors<T>;
 		}
 	}
 

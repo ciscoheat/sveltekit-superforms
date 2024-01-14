@@ -4,10 +4,32 @@ import {
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	type Infer,
-	createAdapter
+	createAdapter,
+	type ValidationResult,
+	type ClientValidationAdapter
 } from './adapters.js';
 import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
 import { memoize } from '$lib/memoize.js';
+
+async function validate<T extends BaseSchema | BaseSchemaAsync>(
+	schema: T,
+	data: unknown
+): Promise<ValidationResult<Infer<T>>> {
+	const result = await safeParseAsync(schema, data);
+	if (result.success) {
+		return {
+			data: result.output as Infer<T>,
+			success: true
+		};
+	}
+	return {
+		issues: result.issues.map(({ message, path }) => ({
+			message,
+			path: path?.map(({ key }) => key) as string[]
+		})),
+		success: false
+	};
+}
 
 function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T,
@@ -15,22 +37,7 @@ function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
-		async validate(data) {
-			const result = await safeParseAsync(schema, data);
-			if (result.success) {
-				return {
-					data: result.output as Infer<T>,
-					success: true
-				};
-			}
-			return {
-				issues: result.issues.map(({ message, path }) => ({
-					message,
-					path: path?.map(({ key }) => key) as string[]
-				})),
-				success: false
-			};
-		},
+		validate: async (data) => validate(schema, data),
 		jsonSchema:
 			'jsonSchema' in options
 				? options.jsonSchema
@@ -39,4 +46,14 @@ function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 	});
 }
 
+function _valibotClient<T extends BaseSchema | BaseSchemaAsync>(
+	schema: T
+): ClientValidationAdapter<Infer<T>> {
+	return {
+		superFormValidationLibrary: 'zod',
+		validate: async (data) => validate(schema, data)
+	};
+}
+
 export const valibot = /* @__PURE__ */ memoize(_valibot);
+export const valibotClient = /* @__PURE__ */ memoize(_valibotClient);

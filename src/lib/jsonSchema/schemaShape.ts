@@ -3,7 +3,7 @@ import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type JSONSchema } from './index.js';
 
 /**
- * A tree structure where the existence of a node means that its not a leaf.
+ * A tree structure where the existence of a node means that the field is an array or an object.
  * Used in error mapping to determine whether to add errors to an _error field
  * (as in arrays and objects), or directly on the field itself.
  */

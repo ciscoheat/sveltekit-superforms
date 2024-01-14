@@ -334,6 +334,10 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				fruitsstring: { required: true }
+			},
+			shape: {
+				fruit: {},
+				fruitsstring: {}
 			}
 		});
 	});
@@ -368,6 +372,10 @@ describe('Default values', () => {
 			constraints: {
 				fruit: { required: true },
 				fruitsstring: { required: true }
+			},
+			shape: {
+				fruit: {},
+				fruitsstring: {}
 			}
 		});
 	});
@@ -626,6 +634,10 @@ describe('Default values', () => {
 			constraints: {
 				textresource: { required: true },
 				numbers: { required: true }
+			},
+			shape: {
+				numbers: {},
+				promptMetaData: {}
 			}
 		});
 	});

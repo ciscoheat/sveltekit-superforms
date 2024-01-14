@@ -8,6 +8,7 @@ import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
+import type { SchemaShape } from './jsonSchema/schemaShape.js';
 
 export type SuperValidated<
 	Out extends Record<string, unknown>,
@@ -21,6 +22,7 @@ export type SuperValidated<
 	data: Out;
 	constraints: InputConstraints<Out>;
 	message?: Message;
+	shape?: SchemaShape;
 };
 
 export type ValidationErrors<Out extends Record<string, unknown>> = {
@@ -145,7 +147,7 @@ export async function superValidate<
 		outputData = dataWithDefaults;
 	}
 
-	return {
+	const output: SuperValidated<Out, Message> = {
 		id: parsed.id ?? options?.id ?? validator.id,
 		valid,
 		posted: parsed.posted,
@@ -153,6 +155,12 @@ export async function superValidate<
 		data: outputData as Out,
 		constraints: validator.constraints
 	};
+
+	if (Object.keys(validator.shape).length) {
+		output.shape = validator.shape;
+	}
+
+	return output;
 }
 
 /////////////////////////////////////////////////////////////////////

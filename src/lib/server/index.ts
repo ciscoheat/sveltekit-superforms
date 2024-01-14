@@ -5,8 +5,6 @@ export { defaults } from '../defaults.js';
 export { actionResult } from '../actionResult.js';
 export { defaultValues } from '../jsonSchema/schemaDefaults.js';
 
-export type { Infer, InferIn } from '../adapters/adapters.js';
-
 export {
 	superValidate,
 	message,
@@ -18,3 +16,5 @@ export {
 	type TaintedFields,
 	type ValidationErrors
 } from '../superValidate.js';
+
+export type { Infer, InferIn } from '../adapters/adapters.js';

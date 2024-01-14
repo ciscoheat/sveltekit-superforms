@@ -32,7 +32,7 @@ import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
 import type { MaybePromise } from '$lib/utils.js';
-import type { ValidationAdapter } from '$lib/adapters/adapters.js';
+import type { ClientValidationAdapter } from '$lib/adapters/adapters.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -90,7 +90,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 		  }) => MaybePromise<unknown | void>);
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: ValidationAdapter<T> | false;
+	validators: ClientValidationAdapter<T> | false;
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
 	defaultValidator: 'keep' | 'clear';
 	customValidity: boolean;
@@ -329,7 +329,7 @@ export function superForm<
 		if (options.SPA && options.validators === undefined) {
 			console.warn(
 				'No validators set for superForm in SPA mode. ' +
-					'Add them to the validators option, or set it to false to disable this warning.'
+					'Add a validation adapter to the validators option, or set it to false to disable this warning.'
 			);
 		}
 
@@ -337,7 +337,7 @@ export function superForm<
 			throw new SuperFormError(
 				'No form data sent to superForm. ' +
 					"Make sure the output from superValidate is used (usually data.form) and that it's not null or undefined. " +
-					'Alternatively, an object with default values for the form can also be used.'
+					"Alternatively, an object with default values for the form can also be used, but then constraints won't be available."
 			);
 		}
 
@@ -467,7 +467,8 @@ export function superForm<
 		message: form.message,
 		tainted: undefined as TaintedFields<T> | undefined,
 		valid: form.valid,
-		submitting: false
+		submitting: false,
+		shape: form.shape
 	};
 
 	const Data: Readonly<typeof __data> = __data;
@@ -535,7 +536,8 @@ export function superForm<
 			Data.form,
 			Data.formId,
 			Data.constraints,
-			false
+			false,
+			Data.shape
 		);
 	}
 
@@ -974,8 +976,9 @@ export function superForm<
 		Errors.set(form.errors);
 		FormId.set(form.id);
 		Posted.set(form.posted);
-		// Only allowed non-subscribe __data access, in rebind
+		// Only allowed non-subscribe __data access, here in rebind
 		__data.valid = form.valid;
+		__data.shape = form.shape;
 
 		if (options.flashMessage && shouldSyncFlash(options)) {
 			const flash = options.flashMessage.module.getFlash(page);
@@ -1099,7 +1102,8 @@ export function superForm<
 			data,
 			Data.formId,
 			Data.constraints,
-			false
+			false,
+			Data.shape
 		);
 
 		const error = pathExists(result.errors, splittedPath);
@@ -1142,7 +1146,8 @@ export function superForm<
 				constraints: Data.constraints,
 				message: Data.message,
 				id: Data.formId,
-				tainted: Data.tainted
+				tainted: Data.tainted,
+				shape: Data.shape
 			};
 		},
 

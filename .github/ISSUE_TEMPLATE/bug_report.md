@@ -7,7 +7,8 @@ assignees: ''
 
 ---
 
-- [ ] Before posting an issue, read the FAQ at https://superforms.rocks/faq and search the previous issues.
+- [ ] Before posting an issue, read the [FAQ](https://superforms.rocks/faq) and search the previous issues.
+- [ ] If you're posting a bug for [Superforms v2](https://superforms.rocks/migration-v2), make sure you're on the latest alpha version with `npm i -D sveltekit-superforms@alpha`.
 
 **Description**
 A clear and concise description of what the bug is, and, unless obvious, what you expected instead.

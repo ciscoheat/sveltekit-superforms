@@ -1,4 +1,10 @@
-import { type ValidationAdapter, createAdapter, type Infer } from './adapters.js';
+import {
+	type ValidationAdapter,
+	createAdapter,
+	type Infer,
+	type ValidationResult,
+	type ClientValidationAdapter
+} from './adapters.js';
 import type { TSchema } from '@sinclair/typebox';
 import type { TypeCheck } from '@sinclair/typebox/compiler';
 import { memoize } from '$lib/memoize.js';
@@ -13,9 +19,12 @@ const fetchModule = /* @__PURE__ */ memoize(async () => {
 	return { TypeCompiler, FormatRegistry };
 });
 
-const { TypeCompiler, FormatRegistry } = await fetchModule();
+async function validate<T extends TSchema>(
+	schema: T,
+	data: unknown
+): Promise<ValidationResult<Infer<T>>> {
+	const { TypeCompiler, FormatRegistry } = await fetchModule();
 
-function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 	if (!compiled.has(schema)) {
 		compiled.set(schema, TypeCompiler.Compile(schema));
 	}
@@ -24,28 +33,38 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 		FormatRegistry.Set('email', (value) => Email.test(value));
 	}
 
+	const validator = compiled.get(schema);
+	const errors = [...(validator?.Errors(data) ?? [])];
+
+	if (!errors.length) {
+		return { success: true, data: data as Infer<T> };
+	}
+
+	return {
+		success: false,
+		issues: errors.map((issue) => ({
+			path: issue.path.substring(1).split('/'),
+			message: issue.message
+		}))
+	};
+}
+
+function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'typebox',
-		jsonSchema: schema,
-		async validate(data) {
-			const validator = compiled.get(schema);
-			const errors = [...(validator?.Errors(data) ?? [])];
-
-			if (!errors.length) {
-				return { success: true, data: data as Infer<T> };
-			}
-
-			return {
-				success: false,
-				issues: errors.map((issue) => ({
-					path: issue.path.substring(1).split('/'),
-					message: issue.message
-				}))
-			};
-		}
+		validate: async (data: unknown) => validate(schema, data),
+		jsonSchema: schema
 	});
 }
 
+function _typeboxClient<T extends TSchema>(schema: T): ClientValidationAdapter<Infer<T>> {
+	return {
+		superFormValidationLibrary: 'typebox',
+		validate: async (data) => validate(schema, data)
+	};
+}
+
 export const typebox = /* @__PURE__ */ memoize(_typebox);
+export const typeboxClient = /* @__PURE__ */ memoize(_typeboxClient);
 
 const compiled = new WeakMap<TSchema, TypeCheck<TSchema>>();

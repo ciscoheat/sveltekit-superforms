@@ -2,24 +2,47 @@ import {
 	type JsonSchemaOptions,
 	type ValidationAdapter,
 	type Infer,
-	createAdapter
+	createAdapter,
+	type ValidationResult,
+	type ClientValidationAdapter
 } from './adapters.js';
 import type { Schema } from 'yup';
 import { splitPath } from '$lib/stringPath.js';
 import { memoize } from '$lib/memoize.js';
+import { convertSchema } from '@sodaru/yup-to-json-schema';
 
 const fetchModule = /* @__PURE__ */ memoize(async () => {
 	const { ValidationError } = await import(/* webpackIgnore: true */ 'yup');
-	const { convertSchema } = await import(/* webpackIgnore: true */ '@sodaru/yup-to-json-schema');
-	return { ValidationError, convertSchema };
+	return { ValidationError };
 });
-
-const { ValidationError, convertSchema } = await fetchModule();
 
 /* @__NO_SIDE_EFFECTS__ */
 export const yupToJsonSchema = (...params: Parameters<typeof convertSchema>) => {
 	return convertSchema(...params);
 };
+
+async function validate<T extends Schema>(
+	schema: T,
+	data: unknown
+): Promise<ValidationResult<Infer<T>>> {
+	const { ValidationError } = await fetchModule();
+	try {
+		return {
+			success: true,
+			data: await schema.validate(data, { strict: true, abortEarly: false })
+		};
+	} catch (error) {
+		if (!(error instanceof ValidationError)) throw error;
+
+		return {
+			success: false,
+			issues: error.inner.map((error) => ({
+				message: error.message,
+				path: error.path !== null && error.path !== undefined ? splitPath(error.path) : undefined
+			}))
+		};
+	}
+}
 
 /* @__NO_SIDE_EFFECTS__ */
 function _yup<T extends Schema>(
@@ -28,28 +51,18 @@ function _yup<T extends Schema>(
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'yup',
-		async validate(data: unknown) {
-			try {
-				return {
-					success: true,
-					data: await schema.validate(data, { strict: true, abortEarly: false })
-				};
-			} catch (error) {
-				if (!(error instanceof ValidationError)) throw error;
-
-				return {
-					success: false,
-					issues: error.inner.map((error) => ({
-						message: error.message,
-						path:
-							error.path !== null && error.path !== undefined ? splitPath(error.path) : undefined
-					}))
-				};
-			}
-		},
+		validate: async (data: unknown) => validate(schema, data),
 		jsonSchema: options?.jsonSchema ?? yupToJsonSchema(schema),
 		defaults: options?.defaults
 	});
 }
 
+function _yupClient<T extends Schema>(schema: T): ClientValidationAdapter<Infer<T>> {
+	return {
+		superFormValidationLibrary: 'yup',
+		validate: async (data) => validate(schema, data)
+	};
+}
+
 export const yup = /* @__PURE__ */ memoize(_yup);
+export const yupClient = /* @__PURE__ */ memoize(_yupClient);

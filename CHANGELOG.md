@@ -5,6 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Using full version of klona to address a cloning issue. ([#312](https://github.com/ciscoheat/sveltekit-superforms/pull/312))
+- Nullable nested objects couldn't be set with `$form` when `null`. ([#311](https://github.com/ciscoheat/sveltekit-superforms/pull/311))
+
 ## [1.13.2] - 2024-01-07
 
 ### Fixed

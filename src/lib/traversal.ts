@@ -91,9 +91,9 @@ export function traversePath<T extends object>(
   realPath: FieldPath<T>,
   modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
-  if (!realPath.length) return undefined;
-  const path: FieldPath<T> = [realPath[0]];
+  if (!realPath.length || !obj) return undefined;
 
+  const path: FieldPath<T> = [realPath[0]];
   let parent = obj;
 
   while (path.length < realPath.length) {
@@ -111,10 +111,12 @@ export function traversePath<T extends object>(
       : parent[key];
 
     if (value === undefined) return undefined;
-    else parent = value as T; // TODO: Handle non-object values
+    else parent = value as T;
 
     path.push(realPath[path.length]);
   }
+
+  if (!parent) return undefined;
 
   const key = realPath[realPath.length - 1];
   return {

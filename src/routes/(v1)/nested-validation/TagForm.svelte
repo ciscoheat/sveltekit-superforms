@@ -21,21 +21,17 @@
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 
-	const superFormValidator: FormOptions<z.infer<typeof schema>, unknown>['validators'] = superform(
-		{
-			name: (name) => {
-				return !name || !name.length ? 'Name is too short' : null;
-			},
-			tags: {
-				id: (id) =>
-					!id || isNaN(id) || id < 3 ? 'Number must be greater than or equal to 3' : null,
-				name: (name) => {
-					return !name || name.length < 2 ? 'Tags must be at least two characters' : null;
-				}
-			}
+	const superFormValidator: FormOptions<z.infer<typeof schema>, unknown>['validators'] = superform({
+		name: (name) => {
+			return !name || !name.length ? 'Name is too short' : null;
 		},
-		{ defaults: { name: '', tags: [] } as z.infer<typeof schema> }
-	);
+		tags: {
+			id: (id) => (!id || isNaN(id) || id < 3 ? 'Number must be greater than or equal to 3' : null),
+			name: (name) => {
+				return !name || name.length < 2 ? 'Tags must be at least two characters' : null;
+			}
+		}
+	});
 
 	const { form, errors, enhance, message, tainted, validate } = superForm(data, {
 		taintedMessage: null,

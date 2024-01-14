@@ -50,7 +50,7 @@ function _valibotClient<T extends BaseSchema | BaseSchemaAsync>(
 	schema: T
 ): ClientValidationAdapter<Infer<T>> {
 	return {
-		superFormValidationLibrary: 'zod',
+		superFormValidationLibrary: 'valibot',
 		validate: async (data) => validate(schema, data)
 	};
 }

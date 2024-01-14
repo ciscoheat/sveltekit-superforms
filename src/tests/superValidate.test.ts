@@ -35,8 +35,6 @@ import { Type } from '@sinclair/typebox';
 import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
 
-import { superform, type Validators } from '$lib/adapters/superform.js';
-
 import { yup } from '$lib/adapters/yup.js';
 import {
 	object as yupObject,
@@ -130,26 +128,6 @@ describe('Yup', () => {
 	};
 
 	schemaTest(() => yup(schema), errors);
-});
-
-describe('Superform', () => {
-	const schema: Validators<typeof validData> = {
-		name: (name) => (!name || name.length < 2 ? '"name" is too short' : null),
-		email: (email) => (!email || !email.includes('@') ? 'Email is invalid' : null),
-		tags: (tag) => {
-			if (!tag || tag.length < 2) return 'Tag must contain at least 2 characters';
-		},
-		score: (score) => {
-			if (isNaN(parseInt(String(score)))) return '"score" must be an integer above or equal to 0';
-		}
-	};
-
-	const errors = {
-		email: 'Email is invalid',
-		tags1: 'Tag must contain at least 2 characters'
-	};
-
-	schemaTest(() => superform(schema, { defaults }), errors, 'none');
 });
 
 describe('Joi', () => {

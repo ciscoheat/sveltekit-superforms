@@ -1,8 +1,6 @@
-import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { traversePath, traversePaths } from '$lib/traversal.js';
 import type { ValidationIssue } from '@decs/typeschema';
-import { createAdapter, type ValidationAdapter } from './adapters.js';
-import type { JSONSchema7TypeName } from 'json-schema';
+import { type ClientValidationAdapter } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
 import type { MaybePromise } from '$lib/utils.js';
 
@@ -26,13 +24,10 @@ export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null 
 type Errors = string | string[] | undefined | null;
 
 function _superform<T extends Record<string, unknown>, PartialT extends Partial<T>>(
-	schema: Validators<PartialT>,
-	options?: { defaults: T }
-): ValidationAdapter<T> {
-	return createAdapter({
+	schema: Validators<PartialT>
+): ClientValidationAdapter<T> {
+	return {
 		superFormValidationLibrary: 'superform',
-		jsonSchema: simpleSchema(options?.defaults ?? {}),
-		defaults: options?.defaults ?? ({} as T),
 		async validate(data: unknown) {
 			// Add top-level validator fields to non-existing data fields
 			// so they will be validated even if the field doesn't exist
@@ -93,35 +88,7 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 						data: data as T
 					};
 		}
-	});
-}
-
-function simpleSchema(defaults: Record<string, unknown>): JSONSchema {
-	const output = {
-		type: 'object',
-		properties: Object.fromEntries(
-			Object.entries(defaults).map(([key, value]) => {
-				let output: JSONSchema;
-				if (value === null || value === undefined) {
-					output = {};
-				} else if (typeof value == 'object' && value !== null && !Array.isArray(value)) {
-					output = simpleSchema(value as Record<string, unknown>);
-				} else if (Array.isArray(value)) {
-					// TODO: Cannot know array type, so merging with defaults is a problem.
-					output = { type: 'array' };
-				} else {
-					output = { type: typeof value as JSONSchema7TypeName };
-				}
-				return [key, output];
-			})
-		),
-		required: Object.keys(defaults).filter(
-			(key) =>
-				!defaults[key] || (Array.isArray(defaults[key]) && !(defaults[key] as unknown[]).length)
-		),
-		additionalProperties: false
-	} satisfies JSONSchema;
-	return output;
+	};
 }
 
 export const superform = /* @__PURE__ */ memoize(_superform);

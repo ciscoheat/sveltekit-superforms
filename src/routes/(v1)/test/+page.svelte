@@ -62,17 +62,19 @@
 		testErrors = tests;
 	}
 
+	const theForm = superForm(data.form, {
+		taintedMessage: null,
+		onError({ result }) {
+			theForm.message.set(result.error.message);
+		},
+		onUpdated: runFormTests,
+		flashMessage: {
+			module: flashModule
+		}
+	});
+
 	const { form, errors, message, delayed, timeout, enhance, allErrors, tainted, constraints } =
-		superForm(data.form, {
-			taintedMessage: null,
-			onError({ result }) {
-				$message = result.error.message;
-			},
-			onUpdated: runFormTests,
-			flashMessage: {
-				module: flashModule
-			}
-		});
+		theForm;
 
 	// Testing default values
 	const {
@@ -96,7 +98,7 @@
 		}
 	);
 
-	const proxyBool = booleanProxy(form, 'bool', { trueStringValue: '1' });
+	const proxyBool = booleanProxy(theForm, 'bool', { trueStringValue: '1' });
 	const proxyNumber = intProxy(form, 'proxyNumber');
 	const proxyDate = dateProxy(form, 'date', {
 		format: 'datetime-local'

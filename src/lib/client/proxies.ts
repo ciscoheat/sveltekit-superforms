@@ -2,7 +2,6 @@ import { derived, get, type Readable, type Updater, type Writable } from 'svelte
 import type { InputConstraint } from '../index.js';
 import { SuperFormError } from '$lib/errors.js';
 import { pathExists, traversePath } from '../traversal.js';
-//import type { SuperForm } from './index.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';
 import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './index.js';
@@ -23,6 +22,7 @@ type DefaultOptions = {
 	delimiter?: '.' | ',';
 	empty?: 'null' | 'undefined';
 	emptyIfZero?: boolean;
+	taint?: TaintOption;
 };
 
 const defaultOptions: DefaultOptions = {
@@ -34,11 +34,9 @@ const defaultOptions: DefaultOptions = {
 ///// Proxy functions ///////////////////////////////////////////////
 
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
-	form: Writable<T>,
+	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options: Pick<DefaultOptions, 'trueStringValue'> = {
-		trueStringValue: 'true'
-	}
+	options?: Pick<DefaultOptions, 'trueStringValue' | 'taint'>
 ) {
 	return _stringProxy(form, path, 'boolean', {
 		...defaultOptions,
@@ -47,9 +45,9 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 }
 
 export function intProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
-	form: Writable<T>,
+	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options: Pick<DefaultOptions, 'empty' | 'emptyIfZero'> = {}
+	options?: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'taint'>
 ) {
 	return _stringProxy(form, path, 'int', {
 		...defaultOptions,
@@ -58,9 +56,9 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 }
 
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
-	form: Writable<T>,
+	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'delimiter'> = {}
+	options?: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'delimiter' | 'taint'>
 ) {
 	return _stringProxy(form, path, 'number', {
 		...defaultOptions,
@@ -69,32 +67,32 @@ export function numberProxy<T extends Record<string, unknown>, Path extends Form
 }
 
 export function dateProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
-	form: Writable<T>,
+	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options: {
+	options?: {
 		format: DefaultOptions['dateFormat'];
 		empty?: DefaultOptions['empty'];
-	} = {
-		format: 'iso'
+		taint?: TaintOption;
 	}
 ) {
 	return _stringProxy(form, path, 'date', {
 		...defaultOptions,
-		dateFormat: options.format,
-		empty: options.empty
+		dateFormat: options?.format ?? 'iso',
+		empty: options?.empty
 	}) as FormPathType<T, Path> extends Date ? Writable<string> : never;
 }
 
 export function stringProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
-	form: Writable<T>,
+	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options: {
 		empty: NonNullable<DefaultOptions['empty']>;
+		taint?: TaintOption;
 	}
 ): Writable<string> {
 	return _stringProxy(form, path, 'string', {
 		...defaultOptions,
-		empty: options.empty
+		...options
 	}) as FormPathType<T, Path> extends string ? Writable<string> : never;
 }
 
@@ -110,7 +108,12 @@ function _stringProxy<
 	T extends Record<string, unknown>,
 	Type extends 'number' | 'int' | 'boolean' | 'date' | 'string',
 	Path extends FormPath<T>
->(form: Writable<T>, path: Path, type: Type, options: DefaultOptions): Writable<string> {
+>(
+	form: Writable<T> | SuperForm<T, unknown>,
+	path: Path,
+	type: Type,
+	options: DefaultOptions
+): Writable<string> {
 	function toValue(value: unknown) {
 		if (!value && options.empty !== undefined && (value !== 0 || options.emptyIfZero)) {
 			return options.empty === 'null' ? null : undefined;
@@ -143,7 +146,17 @@ function _stringProxy<
 		return num;
 	}
 
-	const proxy2 = fieldProxy(form, path);
+	const isSuperForm = 'form' in form;
+
+	if (!isSuperForm && options.taint !== undefined) {
+		throw new SuperFormError(
+			'If options.taint is set, the whole superForm object must be used as a proxy, not just form.'
+		);
+	}
+
+	const proxy2 = isSuperForm
+		? superFieldProxy(form, path, { taint: options.taint })
+		: fieldProxy(form, path);
 
 	const proxy: Readable<string> = derived(proxy2, (value: unknown) => {
 		if (value === undefined || value === null) return '';

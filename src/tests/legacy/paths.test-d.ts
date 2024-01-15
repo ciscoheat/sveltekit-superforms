@@ -4,7 +4,8 @@ import type {
 	FormPathType,
 	FormPathArrays,
 	StringPathLeaves,
-	FormPathLeaves
+	FormPathLeaves,
+	FormPath
 } from '$lib/stringPath.js';
 import { test } from 'vitest';
 import { z } from 'zod';
@@ -43,10 +44,10 @@ type ObjUnion = {
 
 const i = 7 + 3;
 
-type Test = StringPath<Obj>;
+type Test = FormPath<Obj>;
 type Arrays = FormPathArrays<Obj>;
 
-test('StringPath', () => {
+test('FormPath', () => {
 	const t1: Test = 'name';
 	const t2: Test = 'city';
 	const t3: Test = 'tags';

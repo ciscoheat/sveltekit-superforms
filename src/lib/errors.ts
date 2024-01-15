@@ -7,6 +7,7 @@ import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/s
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone } from './utils.js';
 import merge from 'ts-deepmerge';
+import { schemaInfo } from './jsonSchema/schemaInfo.js';
 
 export class SuperFormError extends Error {
 	constructor(message?: string) {
@@ -138,7 +139,6 @@ function _flattenErrors(
 
 /**
  * Merge defaults with parsed data.
- * TODO: Optimize
  */
 export function mergeDefaults<T extends Record<string, unknown>>(
 	parsedData: Record<string, unknown> | null | undefined,
@@ -147,44 +147,6 @@ export function mergeDefaults<T extends Record<string, unknown>>(
 	if (!parsedData) return clone(defaults);
 	return merge.withOptions({ mergeArrays: false }, defaults, parsedData) as T;
 }
-
-/*
-	const types = defaultTypes(jsonSchema);
-
-	traversePaths(defaults, (defaultPath) => {
-		const dataPath = pathExists(parsedData, defaultPath.path);
-		const dataValue = dataPath?.value;
-
-		const checkPath = defaultPath.path.filter((p) => /\D/.test(String(p)));
-		const pathTypes = pathExists(types, checkPath);
-		if (!pathTypes) {
-			throw new SchemaError('No types found for field in schema.', checkPath);
-		}
-
-		const thePathTypes = (pathTypes.value as SchemaFieldType).__types;
-
-		// If no types, it's an "any", usually a File type.
-		if (!thePathTypes.length) return;
-
-		if (thePathTypes.length == 1 && thePathTypes[0] == 'array') {
-			// No type info for array, keep the value
-			return;
-		}
-
-		console.log(defaultPath.path, dataValue, 'checking for type', thePathTypes);
-
-		for (const type of thePathTypes) {
-			const defaultTypeValue = defaultValue(type, undefined);
-			const sameType = typeof dataValue === typeof defaultTypeValue;
-			const sameExistance = sameType && (dataValue === null) === (defaultTypeValue === null);
-
-			if (!sameType || !sameExistance) {
-				setPaths(parsedData, [defaultPath.path], defaultPath.value);
-				break;
-			}
-		}
-	});
-*/
 
 /**
  * Merge defaults with (important!) *already validated and merged data*.
@@ -196,8 +158,14 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	errors: ValidationIssue[],
 	preprocessed: (keyof T)[] | undefined
 ): T {
-	// TODO: Optimize function.
+	// TODO: Optimize this function.
+
 	const types = defaultTypes(jsonSchema);
+
+	const defaultType =
+		jsonSchema.additionalProperties && typeof jsonSchema.additionalProperties == 'object'
+			? { __types: schemaInfo(jsonSchema.additionalProperties, false, []).types }
+			: undefined;
 
 	//console.log('🚀 ~ mergeDefaults');
 	//console.dir(types, { depth: 10 }); //debug
@@ -226,12 +194,8 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 			if (sameType && sameExistance) {
 				return dataValue;
 			} else if (type.__items) {
-				//console.log('Array, now what:', dataValue, defValue, type);
 				// Parse array type
 				return checkCorrectType(dataValue, defValue, type.__items);
-				//const info = schemaInfoForPath(jsonSchema, error.path.slice(0, -1));
-				//const arrayTypes = { anyOf: info?.array } satisfies JSONSchema;
-				//setPaths(data, [error.path], defaultValues(arrayTypes));
 			}
 		}
 
@@ -271,7 +235,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 				throw new SchemaError('No types found for defaults', currentPath);
 			}
 
-			newValue = checkCorrectType(dataValue, defValue, pathTypes.value);
+			newValue = checkCorrectType(dataValue, defValue, pathTypes.value ?? defaultType);
 		}
 
 		if (dataPath?.value !== newValue) {

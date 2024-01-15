@@ -304,7 +304,7 @@ describe('Unions (anyOf)', () => {
 			]
 		};
 
-		const infos = schemaInfo(unionSchema, false);
+		const infos = schemaInfo(unionSchema, false, []);
 		assert(infos);
 
 		expect(infos.schema).toBe(unionSchema);

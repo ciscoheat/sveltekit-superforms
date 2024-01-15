@@ -2,10 +2,10 @@ import type { JSONSchema } from './index.js';
 import { schemaInfo, type SchemaInfo } from './schemaInfo.js';
 
 export function schemaHash(schema: JSONSchema): string {
-	return hashCode(_schemaHash(schemaInfo(schema, false), 0));
+	return hashCode(_schemaHash(schemaInfo(schema, false, []), 0, []));
 }
 
-function _schemaHash(info: SchemaInfo | undefined, depth: number): string {
+function _schemaHash(info: SchemaInfo | undefined, depth: number, path: string[]): string {
 	if (!info) return '';
 
 	function tab() {
@@ -14,7 +14,7 @@ function _schemaHash(info: SchemaInfo | undefined, depth: number): string {
 
 	function mapSchemas(schemas: JSONSchema[]) {
 		return schemas
-			.map((s) => _schemaHash(schemaInfo(s, info?.isOptional ?? false), depth + 1))
+			.map((s) => _schemaHash(schemaInfo(s, info?.isOptional ?? false, path), depth + 1, path))
 			.filter((s) => s)
 			.join('|');
 	}
@@ -37,9 +37,10 @@ function _schemaHash(info: SchemaInfo | undefined, depth: number): string {
 		for (const [key, prop] of Object.entries(info.properties)) {
 			const propInfo = schemaInfo(
 				prop,
-				!info.required?.includes(key) || prop.default !== undefined
+				!info.required?.includes(key) || prop.default !== undefined,
+				[key]
 			);
-			output.push(key + ': ' + _schemaHash(propInfo, depth + 1));
+			output.push(key + ': ' + _schemaHash(propInfo, depth + 1, path));
 		}
 		return 'Object {\n  ' + tab() + output.join(',\n  ') + '\n' + tab() + '}' + nullish();
 	}

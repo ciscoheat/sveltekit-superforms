@@ -24,7 +24,7 @@ function _schemaShape(schema: JSONSchema7Definition, path: string[]): SchemaShap
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
-	const info = schemaInfo(schema, false);
+	const info = schemaInfo(schema, false, path);
 
 	if (info.array || info.union) {
 		const arr = info.array || [];

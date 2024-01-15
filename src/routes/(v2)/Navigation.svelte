@@ -5,8 +5,10 @@
 		<li><a href="/v2/validate">Validate</a></li>
 		<li><a href="/v2/discord/array-remove">Array-remove</a></li>
 		<li><a href="/v2/allow-files">Allow files</a></li>
+		<li><a href="/v2/multiple-files">Multiple files</a></li>
 		<li><a href="/v2/unions">Unions</a></li>
 		<li><a href="/v2/nested-validation-valibot">Nested validation - Valibot</a></li>
+		<li><a href="/v2/catchall">z.catchAll</a></li>
 	</ul>
 </nav>
 

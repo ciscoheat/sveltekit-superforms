@@ -16,7 +16,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		throw new SchemaError('Schema was undefined', path);
 	}
 
-	const info = schemaInfo(schema, isOptional);
+	const info = schemaInfo(schema, isOptional, path);
 	if (!info) return undefined;
 
 	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
@@ -187,7 +187,7 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 		throw new SchemaError('Schema was undefined', path);
 	}
 
-	const info = schemaInfo(schema, isOptional);
+	const info = schemaInfo(schema, isOptional, path);
 
 	const output = {
 		__types: info.types
@@ -203,7 +203,6 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 		!Array.isArray(info.schema.items)
 	) {
 		output.__items = _defaultTypes(info.schema.items, info.isOptional, path);
-		//info = schemaInfo(info.schema.items, info.isOptional, path);
 	}
 
 	if (info.properties) {

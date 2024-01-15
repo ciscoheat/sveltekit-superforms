@@ -283,6 +283,37 @@ describe('Zod', () => {
 		});
 	});
 
+	it('with catchAll', async () => {
+		const schema = z
+			.object({
+				name: z.string().min(1)
+			})
+			.catchall(z.number().int());
+
+		const formData = new FormData();
+		formData.set('name', 'Test');
+		formData.set('score', '1');
+		formData.set('stats', 'nope');
+
+		const form = await superValidate(formData, zod(schema));
+		assert(!form.valid);
+		expect(form.data).toStrictEqual({
+			name: 'Test',
+			score: 1,
+			stats: NaN
+		});
+
+		formData.set('stats', '2');
+
+		const form2 = await superValidate(formData, zod(schema));
+		assert(form2.valid);
+		expect(form2.data).toStrictEqual({
+			name: 'Test',
+			score: 1,
+			stats: 2
+		});
+	});
+
 	const errors = {
 		email: 'Invalid email',
 		tags: 'Array must contain at least 3 element(s)',

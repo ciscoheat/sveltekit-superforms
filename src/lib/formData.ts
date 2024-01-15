@@ -1,9 +1,10 @@
 import { SuperFormError, SchemaError } from './errors.js';
 import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
-import type { JSONSchema7, JSONSchema7Definition } from 'json-schema';
+import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo } from './jsonSchema/schemaInfo.js';
 import { defaultValues } from './jsonSchema/schemaDefaults.js';
+import type { JSONSchema } from './index.js';
 
 type ParsedData = {
 	id: string | undefined;
@@ -13,7 +14,7 @@ type ParsedData = {
 
 export async function parseRequest<T extends Record<string, unknown>>(
 	data: unknown,
-	schemaData: JSONSchema7,
+	schemaData: JSONSchema,
 	options?: SuperValidateOptions<T>
 ) {
 	let parsed: ParsedData;
@@ -45,7 +46,7 @@ export async function parseRequest<T extends Record<string, unknown>>(
 
 async function tryParseFormData<T extends Record<string, unknown>>(
 	request: Request,
-	schemaData: JSONSchema7,
+	schemaData: JSONSchema,
 	options?: SuperValidateOptions<T>
 ) {
 	let formData: FormData | undefined = undefined;
@@ -65,7 +66,7 @@ async function tryParseFormData<T extends Record<string, unknown>>(
 
 export function parseSearchParams<T extends Record<string, unknown>>(
 	data: URL | URLSearchParams,
-	schemaData: JSONSchema7,
+	schemaData: JSONSchema,
 	options?: SuperValidateOptions<T>
 ): ParsedData {
 	if (data instanceof URL) data = data.searchParams;
@@ -84,7 +85,7 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 
 export function parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
-	schemaData: JSONSchema7,
+	schemaData: JSONSchema,
 	options?: SuperValidateOptions<T>
 ): ParsedData {
 	function tryParseSuperJson() {
@@ -115,14 +116,16 @@ export function parseFormData<T extends Record<string, unknown>>(
 
 function _parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
-	schema: JSONSchema7,
+	schema: JSONSchema,
 	options?: SuperValidateOptions<T>
 ) {
 	const output: Record<string, unknown> = {};
-	const schemaKeys = [
-		...Object.keys(schema.properties ?? {}),
-		...(schema.additionalProperties ? formData.keys() : [])
-	];
+	const schemaKeys = new Set(
+		[
+			...Object.keys(schema.properties ?? {}),
+			...(schema.additionalProperties ? formData.keys() : [])
+		].filter((key) => !key.startsWith('__superform_'))
+	);
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
 		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
@@ -136,16 +139,23 @@ function _parseFormData<T extends Record<string, unknown>>(
 		return parseFormDataEntry(key, entry, info);
 	}
 
+	const defaultPropertyType =
+		typeof schema.additionalProperties == 'object'
+			? schema.additionalProperties
+			: ({ type: 'string' } as const);
+
 	for (const key of schemaKeys) {
 		const property: JSONSchema7Definition = schema.properties
 			? schema.properties[key]
-			: { type: 'string' }; // TODO: Option for setting type of extra posted values?
+			: defaultPropertyType;
 
 		if (typeof property == 'boolean') {
 			throw new SchemaError('Schema properties defined as boolean is not supported.', key);
 		}
 
-		const info = schemaInfo(property, !schema.required?.includes(key), [key]);
+		const info = schemaInfo(property ?? defaultPropertyType, !schema.required?.includes(key), [
+			key
+		]);
 		if (!info) continue;
 
 		if (!info.types.includes('boolean') && !schema.additionalProperties && !formData.has(key)) {

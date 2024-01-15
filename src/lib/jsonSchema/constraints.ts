@@ -17,7 +17,7 @@ export type InputConstraints<T extends Record<string, unknown>> = SuperStruct<T,
 export function constraints<T extends Record<string, unknown>>(
 	schema: JSONSchema
 ): InputConstraints<T> {
-	return _constraints(schemaInfo(schema, false), []) as InputConstraints<T>;
+	return _constraints(schemaInfo(schema, false, []), []) as InputConstraints<T>;
 }
 
 function merge<T extends Record<string, unknown>>(
@@ -56,10 +56,10 @@ function _constraints<T extends Record<string, unknown>>(
 	if (info.array) {
 		if (info.array.length == 1) {
 			//console.log('Array constraint', schema, path);
-			return _constraints(schemaInfo(info.array[0], info.isOptional), path);
+			return _constraints(schemaInfo(info.array[0], info.isOptional, path), path);
 		}
 
-		return merge(info.array.map((i) => _constraints(schemaInfo(i, info.isOptional), path)));
+		return merge(info.array.map((i) => _constraints(schemaInfo(i, info.isOptional, path), path)));
 	}
 
 	// Objects
@@ -68,7 +68,8 @@ function _constraints<T extends Record<string, unknown>>(
 		for (const [key, prop] of Object.entries(info.properties)) {
 			const propInfo = schemaInfo(
 				prop,
-				!info.required?.includes(key) || prop.default !== undefined
+				!info.required?.includes(key) || prop.default !== undefined,
+				[key]
 			);
 			const propConstraint = _constraints(propInfo, [...path, key]);
 

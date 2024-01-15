@@ -394,7 +394,7 @@ function schemaTest(
 describe('File handling with the allowFiles option', () => {
 	const schema = z.object({
 		avatar: z.custom<File>().refine((f) => {
-			return f && f.size <= 1000;
+			return f instanceof File && f.size <= 1000;
 		}, 'Max 1Kb upload size.')
 	});
 

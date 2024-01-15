@@ -92,9 +92,7 @@
 			flashMessage: {
 				module: flashModule
 			},
-			warnings: {
-				noValidationAndConstraints: false
-			}
+			warnings: {}
 		}
 	);
 

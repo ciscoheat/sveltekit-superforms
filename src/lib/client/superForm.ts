@@ -117,7 +117,6 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	};
 	warnings: {
 		duplicateId?: boolean;
-		noValidationAndConstraints?: boolean;
 	};
 
 	/**

@@ -668,7 +668,10 @@ export function superForm<
 		// in that case remove the undefined field from the new data.
 		if (options.keepFiles) {
 			traversePaths(Data.form, (info) => {
-				if (info.value instanceof File || (browser && info.value instanceof FileList)) {
+				if (
+					!(info.parent instanceof FileList) &&
+					(info.value instanceof File || (browser && info.value instanceof FileList))
+				) {
 					setPaths(data, [info.path], info.value);
 				}
 			});

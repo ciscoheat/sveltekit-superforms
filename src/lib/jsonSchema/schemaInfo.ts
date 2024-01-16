@@ -3,6 +3,8 @@ import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'js
 
 export type SchemaType =
 	| JSONSchema7TypeName
+	| 'Date'
+	| 'date'
 	| 'unix-time'
 	| 'bigint'
 	| 'any'

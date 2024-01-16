@@ -1,4 +1,3 @@
-import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { describe, it, expect, assert, beforeEach } from 'vitest';
 import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
@@ -22,9 +21,10 @@ import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { z } from 'zod';
 
 import { valibot } from '$lib/adapters/valibot.js';
-import { object, string, email, minLength, array, integer, number, minValue } from 'valibot';
+import { object, string, email, minLength, array, integer, number, minValue, date } from 'valibot';
 
-import { ajv } from '$lib/adapters/ajv.js';
+//import { ajv } from '$lib/adapters/ajv.js';
+//import type { JSONSchema } from '$lib/jsonSchema/index.js';
 
 import { arktype } from '$lib/adapters/arktype.js';
 import { type } from 'arktype';
@@ -40,7 +40,8 @@ import {
 	object as yupObject,
 	string as yupString,
 	number as yupNumber,
-	array as yupArray
+	array as yupArray,
+	date as yupDate
 } from 'yup';
 
 ///// Test data /////////////////////////////////////////////////////
@@ -51,7 +52,8 @@ TEST SCHEMA TEMPLATE:
 	name: string, default value "Unknown"
 	email: string, email format
 	tags: string array, array length >= 3, string length >= 2
-	score: integer, >= 0
+	score: integer, >= 0,
+	date: Date
 }
 */
 
@@ -63,21 +65,28 @@ const validData = {
 	name: 'Ok',
 	email: 'test@example.com',
 	tags: ['Ok 1', 'Ok 2', 'Ok 3'],
-	score: 10
+	score: 10,
+	date: new Date('2024-01-01')
 };
 
 /**
  * Input data to superValidate
  * Should give error on email, tags and tags[1]
- * Score is left out, to see if defaults are added properly.
+ * Score and date is left out, to see if defaults are added properly.
  */
 const invalidData = { name: 'Ok', email: '', tags: ['AB', 'B'] };
 
 /**
  * What should be returned when no data is sent to superValidate
- * Should give error on email and tags
+ * Should give error on email, date and tags
  */
-const defaults = { name: 'Unknown', email: '', tags: [] as string[], score: 0 };
+const defaults = {
+	name: 'Unknown',
+	email: '',
+	tags: [] as string[],
+	score: 0,
+	date: undefined as unknown as Date
+};
 
 /**
  * Expected constraints for libraries with introspection
@@ -93,6 +102,9 @@ const fullConstraints = {
 	tags: {
 		required: true,
 		minlength: 2
+	},
+	date: {
+		required: true
 	}
 };
 
@@ -108,6 +120,9 @@ const simpleConstraints = {
 	},
 	tags: {
 		required: true
+	},
+	date: {
+		required: true
 	}
 };
 
@@ -118,7 +133,8 @@ describe('Yup', () => {
 		name: yupString().default('Unknown'),
 		email: yupString().email().required(),
 		tags: yupArray().of(yupString().min(2)).min(3).required(),
-		score: yupNumber().integer().min(0).required()
+		score: yupNumber().integer().min(0).required(),
+		date: yupDate().required()
 	});
 
 	const errors = {
@@ -135,7 +151,8 @@ describe('Joi', () => {
 		name: Joi.string().default('Unknown'),
 		email: Joi.string().email().required(),
 		tags: Joi.array().items(Joi.string().min(2)).min(3).required(),
-		score: Joi.number().integer().min(0).required()
+		score: Joi.number().integer().min(0).required(),
+		date: Joi.date().required()
 	});
 
 	const errors = {
@@ -152,7 +169,8 @@ describe('TypeBox', () => {
 		name: Type.String({ default: 'Unknown' }),
 		email: Type.String({ format: 'email' }),
 		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
-		score: Type.Integer({ minimum: 0 })
+		score: Type.Integer({ minimum: 0 }),
+		date: Type.Date()
 	});
 
 	const errors = {
@@ -171,7 +189,8 @@ describe('Arktype', () => {
 		name: 'string',
 		email: 'email',
 		tags: '(string>=2)[]>=3',
-		score: 'integer>=0'
+		score: 'integer>=0',
+		date: 'Date'
 	});
 
 	const errors = {
@@ -190,7 +209,8 @@ describe('Valibot', () => {
 		name: string(),
 		email: string([email()]),
 		tags: array(string([minLength(2)]), [minLength(3)]),
-		score: number([integer(), minValue(0)])
+		score: number([integer(), minValue(0)]),
+		date: date()
 	});
 
 	const errors = {
@@ -204,6 +224,8 @@ describe('Valibot', () => {
 
 /////////////////////////////////////////////////////////////////////
 
+// ajv is disabled due to no ESM compatibility.
+/*
 describe('ajv', () => {
 	const schema: JSONSchema = {
 		type: 'object',
@@ -215,7 +237,8 @@ describe('ajv', () => {
 				minItems: 3,
 				items: { type: 'string', minLength: 2 }
 			},
-			score: { type: 'integer', minimum: 0 }
+			score: { type: 'integer', minimum: 0 },
+			date: { type: 'integer', format: 'unix-time' }
 		},
 		required: ['name', 'email', 'tags', 'score'] as string[],
 		additionalProperties: false,
@@ -230,6 +253,7 @@ describe('ajv', () => {
 
 	schemaTest(() => ajv(schema), errors);
 });
+*/
 
 /////////////////////////////////////////////////////////////////////
 
@@ -239,7 +263,8 @@ describe('Zod', () => {
 			name: z.string().default('Unknown'),
 			email: z.string().email(),
 			tags: z.string().min(2).array().min(3),
-			score: z.number().int().min(0)
+			score: z.number().int().min(0),
+			date: z.date()
 		})
 		.refine((a) => a)
 		.refine((a) => a)

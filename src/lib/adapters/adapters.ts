@@ -126,7 +126,33 @@ export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOp
 			}
 			return defaultFunc(type, schema, value);
 		},
-		objects: { additionalProperties: false, ...(options?.objects ?? {}) },
+		objects: {
+			additionalProperties: false,
+			preProcessFnc(obj, defaultFunc) {
+				if (obj && typeof obj == 'object') {
+					const unknownKeys: string[] = [];
+					for (const [key, value] of Object.entries(obj)) {
+						if (value !== undefined && value !== null) continue;
+						unknownKeys.push(key);
+					}
+
+					if (unknownKeys.length) {
+						obj = { ...obj };
+						for (const key of unknownKeys) {
+							delete obj[key];
+						}
+						const output = defaultFunc(obj);
+						if (!output.properties) output.properties = {};
+						for (const key of unknownKeys) {
+							output.properties[key] = {};
+						}
+						return output;
+					}
+				}
+				return defaultFunc(obj);
+			},
+			...(options?.objects ?? {})
+		},
 		...(options ?? {})
 	};
 	return /* @__PURE__ */ toSchema(object, options) as JSONSchema;

@@ -6,7 +6,7 @@ import {
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
-import type { Schema } from 'yup';
+import type { AnySchema, Schema } from 'yup';
 import { splitPath } from '$lib/stringPath.js';
 import { memoize } from '$lib/memoize.js';
 import { convertSchema } from '@sodaru/yup-to-json-schema';
@@ -17,8 +17,14 @@ const fetchModule = /* @__PURE__ */ memoize(async () => {
 });
 
 /* @__NO_SIDE_EFFECTS__ */
-export const yupToJsonSchema = (...params: Parameters<typeof convertSchema>) => {
-	return convertSchema(...params);
+const yupToJsonSchema = (schema: AnySchema) => {
+	return convertSchema(schema, {
+		//@ts-expect-error Incorrect type information, Converters can be partial.
+		converters: {
+			// options.string must return type 'date'. Otherwise, set it manually.
+			date: (desc, options) => options.string(desc, options)
+		}
+	});
 };
 
 async function validate<T extends Schema>(

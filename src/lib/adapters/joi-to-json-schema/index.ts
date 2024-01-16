@@ -35,13 +35,17 @@ const TYPES = {
 	},
 
 	date: (schema, joi) => {
+		schema.type = 'Date';
+		/*
 		if (joi._flags.timestamp) {
 			schema.type = 'integer';
+			schema.format = 'unix-time';
 			return schema;
 		}
 
 		schema.type = 'string';
 		schema.format = 'date-time';
+		*/
 		return schema;
 	},
 

@@ -109,7 +109,6 @@
 		"zod-to-json-schema": "^3.22.3"
 	},
 	"dependencies": {
-		"@decs/typeschema": "^0.12.1",
 		"devalue": "^4.3.2",
 		"klona": "^2.0.6",
 		"memoize-weak": "^1.0.2",

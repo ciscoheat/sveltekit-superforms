@@ -1,7 +1,6 @@
 import { traversePath, traversePaths } from '$lib/traversal.js';
-import type { ValidationIssue } from '@decs/typeschema';
-import { type ClientValidationAdapter } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
+import type { ClientValidationAdapter, ValidationIssue } from './adapters.js';
 import type { MaybePromise } from '$lib/utils.js';
 
 // Cannot be a SuperStruct due to Property having to be passed on.

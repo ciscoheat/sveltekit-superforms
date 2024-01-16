@@ -2,12 +2,12 @@ import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
 import { mergePath } from './stringPath.js';
 import type { ValidationErrors } from './superValidate.js';
-import type { ValidationIssue } from '@decs/typeschema';
 import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone } from './utils.js';
 import merge from 'ts-deepmerge';
 import { schemaInfo } from './jsonSchema/schemaInfo.js';
+import type { ValidationIssue } from './adapters/adapters.js';
 
 export class SuperFormError extends Error {
 	constructor(message?: string) {

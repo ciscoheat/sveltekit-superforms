@@ -1,8 +1,7 @@
 import type {
 	Schema as TypeSchema,
 	Infer as InferSchema,
-	InferIn as InferInSchema,
-	ValidationIssue
+	InferIn as InferInSchema
 } from '@decs/typeschema';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
@@ -47,7 +46,7 @@ export type RequiredJsonSchemaOptions<T extends Schema> = {
 	defaults?: Infer<T>;
 };
 
-// Lifted from TypeSchema, since it's not exported
+// Lifted from TypeSchema
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ValidationResult<TOutput = any> =
 	| {
@@ -58,6 +57,12 @@ export type ValidationResult<TOutput = any> =
 			success: false;
 			issues: Array<ValidationIssue>;
 	  };
+
+// Lifted from TypeSchema
+export type ValidationIssue = {
+	message: string;
+	path?: Array<string | number | symbol>;
+};
 
 export type ClientValidationAdapter<Out extends Record<string, unknown>> = {
 	superFormValidationLibrary: ValidationLibrary;

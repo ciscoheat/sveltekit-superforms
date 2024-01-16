@@ -165,7 +165,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	const defaultType =
 		jsonSchema.additionalProperties && typeof jsonSchema.additionalProperties == 'object'
 			? { __types: schemaInfo(jsonSchema.additionalProperties, false, []).types }
-			: undefined;
+			: undefined; // Will throw if a field does not exist
 
 	//console.log('🚀 ~ mergeDefaults');
 	//console.dir(types, { depth: 10 }); //debug
@@ -173,7 +173,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	function checkCorrectType(dataValue: unknown, defValue: unknown, type: SchemaFieldType) {
 		const types = type.__types;
 
-		if (!types.length) {
+		if (!types.length || types.every((t) => t == 'undefined' || t == 'null' || t == 'any')) {
 			// No types counts as an "any" type
 			return dataValue;
 		} else if (types.length == 1 && types[0] == 'array' && !type.__items) {
@@ -235,7 +235,15 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 				throw new SchemaError('No types found for defaults', currentPath);
 			}
 
-			newValue = checkCorrectType(dataValue, defValue, pathTypes.value ?? defaultType);
+			const fieldType = pathTypes.value ?? defaultType;
+			if (!fieldType) {
+				throw new SchemaError(
+					'No default value specified for field (can be undefined, but must be explicit)',
+					currentPath
+				);
+			}
+
+			newValue = checkCorrectType(dataValue, defValue, fieldType);
 		}
 
 		if (dataPath?.value !== newValue) {

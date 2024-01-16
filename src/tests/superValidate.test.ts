@@ -21,7 +21,19 @@ import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { z } from 'zod';
 
 import { valibot } from '$lib/adapters/valibot.js';
-import { object, string, email, minLength, array, integer, number, minValue, date } from 'valibot';
+import {
+	object,
+	string,
+	email,
+	minLength,
+	array,
+	integer,
+	number,
+	minValue,
+	date,
+	optional,
+	regex
+} from 'valibot';
 
 //import { ajv } from '$lib/adapters/ajv.js';
 //import type { JSONSchema } from '$lib/jsonSchema/index.js';
@@ -43,18 +55,22 @@ import {
 	array as yupArray,
 	date as yupDate
 } from 'yup';
+import { traversePath } from '$lib/traversal.js';
+import { splitPath } from '$lib/stringPath.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
 /* 
 TEST SCHEMA TEMPLATE:
-{
-	name: string, default value "Unknown"
-	email: string, email format
-	tags: string array, array length >= 3, string length >= 2
-	score: integer, >= 0,
-	date: Date
-}
+
+| field   | type     | required | constraints             | default   |
+| ------- | -------- | -------- | ----------------------- | --------- |
+| name    | string   | no       |                         | "Unknown" |
+| email   | string   | yes      | email format            |           |
+| tags    | string[] | yes      | array >= 3, string >= 2 |           |
+| score   | number   | yes      | integer                 |           |
+| date    | Date     | no       |                         |           |
+| nospace | string   | no       | pattern /^\S*$/         |           |
 */
 
 /**
@@ -66,7 +82,8 @@ const validData = {
 	email: 'test@example.com',
 	tags: ['Ok 1', 'Ok 2', 'Ok 3'],
 	score: 10,
-	date: new Date('2024-01-01')
+	date: new Date('2024-01-01'),
+	nospace: 'Abc'
 };
 
 /**
@@ -74,18 +91,19 @@ const validData = {
  * Should give error on email, tags and tags[1]
  * Score and date is left out, to see if defaults are added properly.
  */
-const invalidData = { name: 'Ok', email: '', tags: ['AB', 'B'] };
+const invalidData = { name: 'Ok', email: '', tags: ['AB', 'B'], nospace: 'One space' };
 
 /**
  * What should be returned when no data is sent to superValidate
- * Should give error on email, date and tags
+ * Should give error on email and tags
  */
 const defaults = {
 	name: 'Unknown',
 	email: '',
 	tags: [] as string[],
 	score: 0,
-	date: undefined as unknown as Date
+	date: undefined,
+	nospace: undefined
 };
 
 /**
@@ -103,8 +121,8 @@ const fullConstraints = {
 		required: true,
 		minlength: 2
 	},
-	date: {
-		required: true
+	nospace: {
+		pattern: '^\\S*$'
 	}
 };
 
@@ -120,11 +138,10 @@ const simpleConstraints = {
 	},
 	tags: {
 		required: true
-	},
-	date: {
-		required: true
 	}
 };
+
+const nospacePattern = /^\S*$/;
 
 ///// Validation libraries //////////////////////////////////////////
 
@@ -134,16 +151,11 @@ describe('Yup', () => {
 		email: yupString().email().required(),
 		tags: yupArray().of(yupString().min(2)).min(3).required(),
 		score: yupNumber().integer().min(0).required(),
-		date: yupDate().required()
+		date: yupDate(),
+		nospace: yupString().matches(nospacePattern)
 	});
 
-	const errors = {
-		email: 'email is a required field',
-		tags: 'tags field must have at least 3 items',
-		tags1: 'tags[1] must be at least 2 characters'
-	};
-
-	schemaTest(() => yup(schema), errors);
+	schemaTest(yup(schema));
 });
 
 describe('Joi', () => {
@@ -152,16 +164,11 @@ describe('Joi', () => {
 		email: Joi.string().email().required(),
 		tags: Joi.array().items(Joi.string().min(2)).min(3).required(),
 		score: Joi.number().integer().min(0).required(),
-		date: Joi.date().required()
+		date: Joi.date(),
+		nospace: Joi.string().pattern(nospacePattern)
 	});
 
-	const errors = {
-		email: '"email" is not allowed to be empty',
-		tags: '"tags" must contain at least 3 items',
-		tags1: '"tags[1]" length must be at least 2 characters'
-	};
-
-	schemaTest(() => joi(schema), errors);
+	schemaTest(joi(schema));
 });
 
 describe('TypeBox', () => {
@@ -170,16 +177,11 @@ describe('TypeBox', () => {
 		email: Type.String({ format: 'email' }),
 		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
 		score: Type.Integer({ minimum: 0 }),
-		date: Type.Date()
+		date: Type.Optional(Type.Date()),
+		nospace: Type.Optional(Type.String({ pattern: '^\\S*$' }))
 	});
 
-	const errors = {
-		email: "Expected string to match 'email' format",
-		tags: 'Expected array length to be greater or equal to 3',
-		tags1: 'Expected string length greater or equal to 2'
-	};
-
-	schemaTest(() => typebox(schema), errors);
+	schemaTest(typebox(schema));
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -190,16 +192,12 @@ describe('Arktype', () => {
 		email: 'email',
 		tags: '(string>=2)[]>=3',
 		score: 'integer>=0',
-		date: 'Date'
+		'date?': 'Date',
+		'nospace?': nospacePattern
 	});
 
-	const errors = {
-		email: "email must be a valid email (was '')",
-		tags: /tags must be at least 3 characters \(was [02]\)/
-		//tags1: 'tags/1 must be at least 2 characters (was 1)'
-	};
-
-	schemaTest(() => arktype(schema, { defaults }), errors, 'simple');
+	const adapter = arktype(schema, { defaults });
+	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -210,16 +208,11 @@ describe('Valibot', () => {
 		email: string([email()]),
 		tags: array(string([minLength(2)]), [minLength(3)]),
 		score: number([integer(), minValue(0)]),
-		date: date()
+		date: optional(date()),
+		nospace: optional(string([regex(nospacePattern)]))
 	});
 
-	const errors = {
-		email: 'Invalid email',
-		tags: 'Invalid length',
-		tags1: 'Invalid length'
-	};
-
-	schemaTest(() => valibot(schema, { defaults }), errors, 'simple');
+	schemaTest(valibot(schema, { defaults }), undefined, 'simple');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -245,13 +238,7 @@ describe('ajv', () => {
 		$schema: 'http://json-schema.org/draft-07/schema#'
 	} as const;
 
-	const errors = {
-		email: 'must match format "email"',
-		tags: 'must NOT have fewer than 3 items',
-		tags1: 'must NOT have fewer than 2 characters'
-	};
-
-	schemaTest(() => ajv(schema), errors);
+	schemaTest(ajv(schema));
 });
 */
 
@@ -264,7 +251,8 @@ describe('Zod', () => {
 			email: z.string().email(),
 			tags: z.string().min(2).array().min(3),
 			score: z.number().int().min(0),
-			date: z.date()
+			date: z.date().optional(),
+			nospace: z.string().regex(nospacePattern).optional()
 		})
 		.refine((a) => a)
 		.refine((a) => a)
@@ -339,37 +327,44 @@ describe('Zod', () => {
 		});
 	});
 
-	const errors = {
-		email: 'Invalid email',
-		tags: 'Array must contain at least 3 element(s)',
-		tags1: 'String must contain at least 2 character(s)'
-	};
-
-	schemaTest(() => zod(schema), errors);
+	schemaTest(zod(schema));
 });
 
 ///// Test function for all validation libraries ////////////////////
 
+type ErrorFields = ('email' | 'date' | 'nospace' | 'tags' | 'tags[1]')[];
+
 function schemaTest(
-	adapter: () => ValidationAdapter<Record<string, unknown>>,
-	errors: { email: string | RegExp; tags?: string | RegExp; tags1?: string | RegExp },
-	constraints: 'full' | 'simple' | 'none' = 'full'
+	adapter: ValidationAdapter<Record<string, unknown>>,
+	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
+	adapterType: 'full' | 'simple' = 'full'
 ) {
+	/*
+	if (adapter.superFormValidationLibrary == 'zod') {
+		console.dir(
+			{ $library: adapter.superFormValidationLibrary, ...adapter.jsonSchema },
+			{ depth: 10 }
+		);
+	}
+	*/
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function expectErrors(errorMessages: Record<string, any>, hasTagContentErrors = true) {
-		expect(errorMessages.email).toMatch(errors.email);
+	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
+		//console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
 
-		if (errors.tags) {
-			expect(errorMessages?.tags?._errors?.[0] ?? '').toMatch(errors.tags);
-		}
+		if (errors.includes('nospace')) expect(errorMessages.nospace).toBeTruthy();
+		if (errors.includes('email')) expect(errorMessages.email).toBeTruthy();
+		if (errors.includes('date')) expect(errorMessages.date).toBeTruthy();
+		if (errors.includes('tags')) expect(errorMessages?.tags?._errors?.[0]).toBeTruthy();
+		if (errors.includes('tags[1]')) expect(errorMessages?.tags?.['1']?.[0]).toBeTruthy();
 
-		if (hasTagContentErrors && errors.tags1) {
-			expect(errorMessages?.tags?.['1']?.[0] ?? '').toMatch(errors.tags1);
-		}
+		const errorCount = errors.filter((path) => traversePath(errorMessages, splitPath(path))?.value);
+
+		expect(errors).toEqual(errorCount);
 	}
 
 	function expectConstraints(inputConstraints: InputConstraints<Record<string, unknown>>) {
-		switch (constraints) {
+		switch (adapterType) {
 			case 'simple':
 				expect(inputConstraints).toEqual(simpleConstraints);
 				break;
@@ -379,8 +374,16 @@ function schemaTest(
 		}
 	}
 
+	function mergeDefaults(invalidData: Record<string, unknown>) {
+		// undefined fields should not be added to invalidData.
+		const filteredDefaults = Object.fromEntries(
+			Object.entries(defaults).filter(([, value]) => value !== undefined)
+		);
+		return merge(filteredDefaults, invalidData);
+	}
+
 	it('with schema only', async () => {
-		const output = await superValidate(adapter());
+		const output = await superValidate(adapter);
 		expect(output.errors).toEqual({});
 		expect(output.valid).toEqual(false);
 		expect(output.data).not.toBe(defaults);
@@ -390,10 +393,10 @@ function schemaTest(
 	});
 
 	it('with schema only and initial errors', async () => {
-		const output = await superValidate(adapter(), { errors: true });
+		const output = await superValidate(adapter, { errors: true });
 		// Expect default value errors, which means that tags[1] should not exist,
 		// the error is only for the array length.
-		expectErrors(output.errors, false);
+		expectErrors(['email', 'tags'], output.errors);
 		expect(output.valid).toEqual(false);
 		expect(output.data).not.toBe(defaults);
 		expect(output.data).toEqual(defaults);
@@ -402,19 +405,18 @@ function schemaTest(
 	});
 
 	it('with invalid test data', async () => {
-		const a = adapter();
-		const output = await superValidate(invalidData, a);
-		expectErrors(output.errors);
+		const output = await superValidate(invalidData, adapter);
+		expectErrors(errors, output.errors);
 		expect(output.valid).toEqual(false);
 		expect(output.data).not.toBe(invalidData);
-		// Defaults and incorrectData are now merged
-		expect(output.data).toEqual(merge(defaults, invalidData));
+
+		expect(output.data).toEqual(mergeDefaults(invalidData));
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
 	});
 
 	it('with valid test data', async () => {
-		const output = await superValidate(validData, adapter());
+		const output = await superValidate(validData, adapter);
 		expect(output.errors).toEqual({});
 		expect(output.valid).toEqual(true);
 		expect(output.data).not.toBe(validData);
@@ -425,7 +427,7 @@ function schemaTest(
 
 	describe('defaults', () => {
 		it('should return default values with schema only', () => {
-			const output = schemaDefaults(adapter());
+			const output = schemaDefaults(adapter);
 			expect(output.errors).toEqual({});
 			expect(output.valid).toEqual(false);
 			expect(output.data).not.toBe(defaults);
@@ -435,10 +437,10 @@ function schemaTest(
 		});
 
 		it('should merge partial data with adapter defaults', () => {
-			const output = schemaDefaults({ name: 'Sync' }, adapter());
+			const output = schemaDefaults({ name: 'Sync' }, adapter);
 			expect(output.errors).toEqual({});
 			expect(output.valid).toEqual(false);
-			expect(output.data).toEqual({ ...defaults, name: 'Sync' });
+			expect(output.data).toEqual(mergeDefaults({ name: 'Sync' }));
 			expect(output.message).toBeUndefined();
 			expectConstraints(output.constraints);
 		});

@@ -104,7 +104,7 @@ export function createAdapter<T extends Record<string, unknown>>(
 /**
  * Version of to-json-schema that checks if the object properties are default
  * (empty string, 0, empty array, etc) and sets the required property if not.
- * Also sets additionalProperties to false.
+ * Also sets additionalProperties to false, and sets undefined or null values on an object to "any".
  * @param object object that should be converted to JSON Schema
  * @param options customize schema options
  * @returns JSON Schema for the object
@@ -119,7 +119,7 @@ export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOp
 					if (options?.required === true) return true;
 					const hasValue = value[prop] && (!Array.isArray(value[prop]) || value[prop].length > 0);
 					// If no value, it probably doesn't have a default value and should be required
-					return !hasValue;
+					return !hasValue && value[prop] !== undefined && value[prop] !== null;
 				});
 				if (schema.required.length == 0) delete schema.required;
 				return schema;
@@ -141,11 +141,13 @@ export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOp
 						for (const key of unknownKeys) {
 							delete obj[key];
 						}
+
 						const output = defaultFunc(obj);
 						if (!output.properties) output.properties = {};
 						for (const key of unknownKeys) {
 							output.properties[key] = {};
 						}
+
 						return output;
 					}
 				}

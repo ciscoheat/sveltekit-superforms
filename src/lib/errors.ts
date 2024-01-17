@@ -158,7 +158,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	errors: ValidationIssue[],
 	preprocessed: (keyof T)[] | undefined
 ): T {
-	// TODO: Optimize this function.
+	// TODO: Optimize this function, and convert to a DCI context.
 
 	const types = defaultTypes(jsonSchema);
 
@@ -170,41 +170,8 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	//console.log('🚀 ~ mergeDefaults');
 	//console.dir(types, { depth: 10 }); //debug
 
-	function checkCorrectType(dataValue: unknown, defValue: unknown, type: SchemaFieldType) {
-		const types = type.__types;
-
-		if (!types.length || types.every((t) => t == 'undefined' || t == 'null' || t == 'any')) {
-			// No types counts as an "any" type
-			return dataValue;
-		} else if (types.length == 1 && types[0] == 'array' && !type.__items) {
-			/* 
-				No type info for array exists. 
-				Keep the value even though it may not be the correct type, but validation 
-				won't fail and the failed data is usually returned to the form without UX problems.
-			*/
-			return dataValue;
-		}
-
-		for (const schemaType of types) {
-			const defaultTypeValue = defaultValue(schemaType, undefined);
-
-			const sameType = typeof dataValue === typeof defaultTypeValue;
-			const sameExistance = sameType && (dataValue === null) === (defaultTypeValue === null);
-
-			if (sameType && sameExistance) {
-				return dataValue;
-			} else if (type.__items) {
-				// Parse array type
-				return checkCorrectType(dataValue, defValue, type.__items);
-			}
-		}
-
-		if (defValue === undefined && types.includes('null')) return null;
-		return defValue;
-	}
-
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function traverseDefaultPath(defaultPath: { path: (string | number | symbol)[]; value: any }) {
+	function traverseAndReplace(defaultPath: { path: (string | number | symbol)[]; value: any }) {
 		const currentPath = defaultPath.path;
 		if (!currentPath || !currentPath[0]) return;
 		if (typeof currentPath[0] === 'string' && preprocessed?.includes(currentPath[0])) return;
@@ -251,12 +218,45 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 		}
 	}
 
-	traversePaths(defaults, traverseDefaultPath);
+	function checkCorrectType(dataValue: unknown, defValue: unknown, type: SchemaFieldType) {
+		const types = type.__types;
+
+		if (!types.length || types.every((t) => t == 'undefined' || t == 'null' || t == 'any')) {
+			// No types counts as an "any" type
+			return dataValue;
+		} else if (types.length == 1 && types[0] == 'array' && !type.__items) {
+			/* 
+				No type info for array exists. 
+				Keep the value even though it may not be the correct type, but validation 
+				won't fail and the failed data is usually returned to the form without UX problems.
+			*/
+			return dataValue;
+		}
+
+		for (const schemaType of types) {
+			const defaultTypeValue = defaultValue(schemaType, undefined);
+
+			const sameType = typeof dataValue === typeof defaultTypeValue;
+			const sameExistance = sameType && (dataValue === null) === (defaultTypeValue === null);
+
+			if (sameType && sameExistance) {
+				return dataValue;
+			} else if (type.__items) {
+				// Parse array type
+				return checkCorrectType(dataValue, defValue, type.__items);
+			}
+		}
+
+		if (defValue === undefined && types.includes('null')) return null;
+		return defValue;
+	}
+
+	traversePaths(defaults, traverseAndReplace);
 
 	for (const error of errors) {
 		if (!error.path) continue;
 
-		traverseDefaultPath({
+		traverseAndReplace({
 			path: error.path,
 			value: pathExists(defaults, error.path)?.value
 		});

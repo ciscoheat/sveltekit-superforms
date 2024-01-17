@@ -90,11 +90,11 @@ function schemaTypes(
 		types[i] = 'set';
 	} else if (schema.format && conversionFormatTypes.includes(schema.format)) {
 		types.unshift(schema.format as SchemaType);
-	}
 
-	if (types.includes('unix-time')) {
-		const i = types.findIndex((t) => t == 'integer');
-		types.splice(i, 1);
+		if (schema.format == 'unix-time') {
+			const i = types.findIndex((t) => t == 'integer');
+			types.splice(i, 1);
+		}
 	}
 
 	return Array.from(new Set(types));

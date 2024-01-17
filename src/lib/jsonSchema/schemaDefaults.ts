@@ -37,8 +37,17 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		) {
 			objectDefaults = schema.default as Record<string, unknown>;
 		} else {
-			// TODO: Handle multiple default types by using the first one?
-			// Otherwise, format conversion is problematic.
+			if (info.types.length > 1) {
+				if (
+					info.types.includes('unix-time') &&
+					(info.types.includes('integer') || info.types.includes('number'))
+				)
+					throw new SchemaError(
+						'Cannot resolve a default value with a union that includes a date and a number/integer.',
+						path
+					);
+			}
+
 			const [type] = info.types;
 			return formatDefaultValue(type, schema.default);
 		}
@@ -119,6 +128,8 @@ function formatDefaultValue(type: SchemaType, value: unknown) {
 	switch (type) {
 		case 'set':
 			return Array.isArray(value) ? new Set(value) : value;
+		case 'Date':
+		case 'date':
 		case 'unix-time':
 			if (typeof value === 'string' || typeof value === 'number') return new Date(value);
 			break;

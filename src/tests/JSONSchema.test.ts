@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
+import { SchemaError } from '$lib/errors.js';
 
 const schema = {
 	type: 'object',
@@ -372,7 +373,6 @@ describe('Constraints', () => {
 			z.object({
 				mixed: z
 					.union([
-						z.date().min(new Date('2024-01-01')),
 						z
 							.string()
 							.min(5)
@@ -431,6 +431,26 @@ describe('Unions', () => {
 		expect(zod(schemaUnion).defaults).toEqual({
 			name: 'Test'
 		});
+	});
+
+	it('should require an explicit default value', () => {
+		expect(() =>
+			zod(
+				z.object({
+					union: z.union([z.date(), z.string()])
+				})
+			)
+		).toThrowError(SchemaError);
+	});
+
+	it('should fail resolving a union of a date and a number/integer', () => {
+		expect(() =>
+			zod(
+				z.object({
+					dateNumber: z.union([z.date(), z.number().int().positive().max(100)]).default(1)
+				})
+			)
+		).toThrowError(SchemaError);
 	});
 });
 

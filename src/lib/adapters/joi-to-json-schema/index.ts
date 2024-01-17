@@ -1,5 +1,5 @@
 // Taken from https://github.com/lightsofapollo/joi-to-json-schema and converted to ESM
-// TODO: Need more tests and a proper to TS conversion!
+// TODO: Need more tests
 
 import type { JSONSchema } from '$lib/index.js';
 import type { JSONSchema7TypeName } from 'json-schema';
@@ -9,11 +9,7 @@ function assert(condition: unknown, errorMessage: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Joi = Record<string, any> & {
-	type: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	_rules: Record<string, any>;
-};
+type Joi = Record<string, any>;
 
 type Transformer = (schema: JSONSchema, joi: Joi, transformer?: Transformer) => JSONSchema;
 
@@ -68,7 +64,7 @@ const TYPES: Record<string, Transformer> = {
 	array: (schema: JSONSchema, joi: Joi, transformer) => {
 		schema.type = 'array';
 
-		joi._rules?.forEach((test) => {
+		joi._rules?.forEach((test: { name: string; args: { limit: number | undefined } }) => {
 			switch (test.name) {
 				case 'unique':
 					schema.uniqueItems = true;
@@ -125,7 +121,7 @@ const TYPES: Record<string, Transformer> = {
 
 	number: (schema: JSONSchema, joi: Joi) => {
 		schema.type = 'number';
-		joi._rules?.forEach((test) => {
+		joi._rules?.forEach((test: { name: string; args: { limit: number | undefined } }) => {
 			switch (test.name) {
 				case 'integer':
 					schema.type = 'integer';
@@ -148,7 +144,7 @@ const TYPES: Record<string, Transformer> = {
 					break;
 				case 'precision': {
 					let multipleOf;
-					if (test.args.limit > 1) {
+					if (test.args.limit && test.args.limit > 1) {
 						multipleOf = JSON.parse('0.' + '0'.repeat(test.args.limit - 1) + '1');
 					} else {
 						multipleOf = 1;
@@ -164,7 +160,7 @@ const TYPES: Record<string, Transformer> = {
 	string: (schema: JSONSchema, joi: Joi) => {
 		schema.type = 'string';
 
-		joi._rules.forEach((test) => {
+		joi._rules.forEach((test: { name: string; args: { limit?: number; regex?: RegExp } }) => {
 			switch (test.name) {
 				case 'email':
 					schema.format = 'email';
@@ -199,7 +195,8 @@ const TYPES: Record<string, Transformer> = {
 		schema.properties = {};
 		schema.additionalProperties = Boolean(joi._flags.allowUnknown || !joi._inner.children);
 		schema.pattern =
-			joi.patterns?.map((pattern) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			joi.patterns?.map((pattern: { regex: RegExp; rule: Record<string, any> }) => {
 				return { regex: pattern.regex, rule: convert(pattern.rule, transformer) };
 			}) ?? [];
 
@@ -207,7 +204,8 @@ const TYPES: Record<string, Transformer> = {
 			return schema;
 		}
 
-		joi.$_terms.keys.forEach((property) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		joi.$_terms.keys.forEach((property: { schema: Record<string, any>; key: string }) => {
 			if (property.schema._flags.presence !== 'forbidden') {
 				if (!schema.properties) schema.properties = {};
 				schema.properties[property.key] = convert(property.schema, transformer);
@@ -256,7 +254,8 @@ export default function convert(joi: Record<string, any>, transformer?: Transfor
 	}
 
 	if (joi._examples && joi._examples.length > 0) {
-		schema.examples = joi._examples.map((e) => e.value);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		schema.examples = joi._examples.map((e: { value: any }) => e.value);
 	}
 
 	if (joi._examples && joi._examples.length === 1) {

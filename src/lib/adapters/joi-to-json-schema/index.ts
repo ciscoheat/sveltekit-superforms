@@ -1,17 +1,27 @@
 // Taken from https://github.com/lightsofapollo/joi-to-json-schema and converted to ESM
 // TODO: Need more tests and a proper to TS conversion!
 
+import type { JSONSchema } from '$lib/index.js';
+import type { JSONSchema7TypeName } from 'json-schema';
+
 function assert(condition: unknown, errorMessage: string) {
 	if (!condition) throw new Error(errorMessage);
 }
 
-// Converter helpers for Joi types.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Joi = Record<string, any> & {
+	type: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	_rules: Record<string, any>;
+};
 
-const TYPES = {
-	alternatives: (schema, joi, transformer) => {
-		var result = (schema.oneOf = []);
+type Transformer = (schema: JSONSchema, joi: Joi, transformer?: Transformer) => JSONSchema;
 
-		joi.matches.forEach(function (match) {
+const TYPES: Record<string, Transformer> = {
+	alternatives: (schema: JSONSchema, joi: Joi, transformer) => {
+		const result = (schema.oneOf = [] as JSONSchema[]);
+
+		joi.matches.forEach(function (match: Record<string, unknown>) {
 			if (match.schema) {
 				return result.push(convert(match.schema, transformer));
 			}
@@ -34,8 +44,8 @@ const TYPES = {
 		return schema;
 	},
 
-	date: (schema, joi) => {
-		schema.type = 'Date';
+	date: (schema: JSONSchema) => {
+		schema.type = 'Date' as JSONSchema7TypeName;
 		/*
 		if (joi._flags.timestamp) {
 			schema.type = 'integer';
@@ -49,12 +59,13 @@ const TYPES = {
 		return schema;
 	},
 
-	any: (schema) => {
-		schema.type = ['array', 'boolean', 'number', 'object', 'string', 'null'];
+	any: (schema: JSONSchema) => {
+		delete schema.type;
+		//schema.type = ['array', 'boolean', 'number', 'object', 'string', 'null'];
 		return schema;
 	},
 
-	array: (schema, joi, transformer) => {
+	array: (schema: JSONSchema, joi: Joi, transformer) => {
 		schema.type = 'array';
 
 		joi._rules?.forEach((test) => {
@@ -75,9 +86,12 @@ const TYPES = {
 		});
 
 		if (joi.$_terms) {
+			/*
+			Ordered is not a part of the spec.
 			if (joi.$_terms.ordered.length) {
 				schema.ordered = joi.$_terms.ordered.map((item) => convert(item, transformer));
 			}
+			*/
 
 			let list;
 			if (joi.$_terms._inclusions.length) {
@@ -94,7 +108,7 @@ const TYPES = {
 		return schema;
 	},
 
-	binary: (schema, joi) => {
+	binary: (schema: JSONSchema, joi: Joi) => {
 		schema.type = 'string';
 		schema.contentMediaType =
 			joi._meta.length > 0 && joi._meta[0].contentMediaType
@@ -104,12 +118,12 @@ const TYPES = {
 		return schema;
 	},
 
-	boolean: (schema) => {
+	boolean: (schema: JSONSchema) => {
 		schema.type = 'boolean';
 		return schema;
 	},
 
-	number: (schema, joi) => {
+	number: (schema: JSONSchema, joi: Joi) => {
 		schema.type = 'number';
 		joi._rules?.forEach((test) => {
 			switch (test.name) {
@@ -117,12 +131,14 @@ const TYPES = {
 					schema.type = 'integer';
 					break;
 				case 'less':
-					schema.exclusiveMaximum = true;
-					schema.maximum = test.args.limit;
+					//schema.exclusiveMaximum = true;
+					//schema.maximum = test.args.limit;
+					schema.exclusiveMaximum = test.args.limit;
 					break;
 				case 'greater':
-					schema.exclusiveMinimum = true;
-					schema.minimum = test.args.limit;
+					//schema.exclusiveMinimum = true;
+					//schema.minimum = test.args.limit;
+					schema.exclusiveMinimum = test.args.limit;
 					break;
 				case 'min':
 					schema.minimum = test.args.limit;
@@ -130,7 +146,7 @@ const TYPES = {
 				case 'max':
 					schema.maximum = test.args.limit;
 					break;
-				case 'precision':
+				case 'precision': {
 					let multipleOf;
 					if (test.args.limit > 1) {
 						multipleOf = JSON.parse('0.' + '0'.repeat(test.args.limit - 1) + '1');
@@ -139,12 +155,13 @@ const TYPES = {
 					}
 					schema.multipleOf = multipleOf;
 					break;
+				}
 			}
 		});
 		return schema;
 	},
 
-	string: (schema, joi) => {
+	string: (schema: JSONSchema, joi: Joi) => {
 		schema.type = 'string';
 
 		joi._rules.forEach((test) => {
@@ -153,11 +170,12 @@ const TYPES = {
 					schema.format = 'email';
 					break;
 				case 'pattern':
-				case 'regex':
+				case 'regex': {
 					const arg = test.args;
 					const pattern = arg && arg.regex ? arg.regex : arg;
 					schema.pattern = String(pattern).replace(/^\//, '').replace(/\/$/, '');
 					break;
+				}
 				case 'min':
 					schema.minLength = test.args.limit;
 					break;
@@ -176,11 +194,11 @@ const TYPES = {
 		return schema;
 	},
 
-	object: (schema, joi, transformer) => {
+	object: (schema: JSONSchema, joi: Joi, transformer) => {
 		schema.type = 'object';
 		schema.properties = {};
 		schema.additionalProperties = Boolean(joi._flags.allowUnknown || !joi._inner.children);
-		schema.patterns =
+		schema.pattern =
 			joi.patterns?.map((pattern) => {
 				return { regex: pattern.regex, rule: convert(pattern.rule, transformer) };
 			}) ?? [];
@@ -191,6 +209,7 @@ const TYPES = {
 
 		joi.$_terms.keys.forEach((property) => {
 			if (property.schema._flags.presence !== 'forbidden') {
+				if (!schema.properties) schema.properties = {};
 				schema.properties[property.key] = convert(property.schema, transformer);
 				if (
 					property.schema._flags.presence === 'required' ||
@@ -216,7 +235,8 @@ const TYPES = {
  * @param {TransformFunction} [transformer=null]
  * @returns {JSONSchema}
  */
-export default function convert(joi, transformer = null) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function convert(joi: Record<string, any>, transformer?: Transformer): JSONSchema {
 	assert('object' === typeof joi && 'type' in joi, 'requires a joi schema object');
 
 	if (!TYPES[joi.type]) {
@@ -228,7 +248,7 @@ export default function convert(joi, transformer = null) {
 	}
 
 	// JSON Schema root for this type.
-	let schema = {};
+	const schema: JSONSchema = {};
 
 	// Copy over the details that all schemas may have...
 	if (joi._description) {
@@ -240,7 +260,7 @@ export default function convert(joi, transformer = null) {
 	}
 
 	if (joi._examples && joi._examples.length === 1) {
-		schema.example = joi._examples[0].value;
+		schema.examples = joi._examples[0].value;
 	}
 
 	// Add the label as a title if it exists
@@ -263,17 +283,17 @@ export default function convert(joi, transformer = null) {
 						type: joi.type,
 						enum: [...joi._valids._set]
 					},
-					TYPES[joi.type](schema, joi, transformer)
+					TYPES[joi.type](schema, joi as Joi, transformer)
 				]
 			};
 		}
 		schema['enum'] = [...joi._valids._set];
 	}
 
-	let result = TYPES[joi.type](schema, joi, transformer);
+	let result = TYPES[joi.type](schema, joi as Joi, transformer);
 
 	if (transformer) {
-		result = transformer(result, joi);
+		result = transformer(result, joi as Joi);
 	}
 
 	return result;

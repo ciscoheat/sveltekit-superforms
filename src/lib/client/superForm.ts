@@ -627,7 +627,6 @@ export function superForm<
 			}
 
 			// If previous error exist, always display
-			// TODO: What to do if path doesn't exist?
 			const previousError = pathExists(previous, error.path);
 			if (previousError && previousError.key in previousError.parent) {
 				return addError();

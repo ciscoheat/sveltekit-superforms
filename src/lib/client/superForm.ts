@@ -1227,8 +1227,8 @@ export function superForm<
 					formEl: FormEl
 				});
 
-				// TODO: Can probably not be set to null for multiple inputs
-				//lastInputChange == null;
+				// Clear input change event
+				lastInputChange == null;
 			}
 
 			FormEl.addEventListener('focusout', onBlur);

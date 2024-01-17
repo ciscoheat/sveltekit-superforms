@@ -3,6 +3,7 @@ import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
+import { defaultValues as adapterDefaults } from '$lib/defaults.js';
 import {
 	removeFiles,
 	message,
@@ -454,6 +455,12 @@ describe('File handling with the allowFiles option', () => {
 		avatar: z.custom<File>().refine((f) => {
 			return f instanceof File && f.size <= 1000;
 		}, 'Max 1Kb upload size.')
+	});
+
+	it('should define the file field as undefined', () => {
+		expect(adapterDefaults(zod(schema))).toEqual({
+			avatar: undefined
+		});
 	});
 
 	it('should allow files if specified as an option', async () => {

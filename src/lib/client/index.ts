@@ -17,9 +17,8 @@ export {
 // Duplicated from server/index.ts,
 // because "server" path cannot be imported on client.
 
-export { defaults } from '../defaults.js';
+export { defaults, defaultValues } from '../defaults.js';
 export { actionResult } from '../actionResult.js';
-export { defaultValues } from '../jsonSchema/schemaDefaults.js';
 export { schemaShape } from '../jsonSchema/schemaShape.js';
 
 export {

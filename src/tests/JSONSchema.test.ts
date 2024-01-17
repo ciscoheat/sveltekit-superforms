@@ -248,7 +248,7 @@ describe('Default values', () => {
 
 		const defs = defaultValues(schema2);
 
-		expect('warehouseLocation' in defs).toBe(false);
+		expect('warehouseLocation' in defs).toBe(true);
 		expect(defs).toEqual({
 			productId: 0,
 			productName: '',

@@ -233,6 +233,7 @@ describe('Default values', () => {
 		const expected = {
 			name: null,
 			email: '',
+			id: undefined,
 			createdAt: d,
 			slug: '',
 			isBool: true,
@@ -269,6 +270,7 @@ describe('Default values', () => {
 			nullableString: null,
 			nullishString: null,
 			numberArray: [],
+			optionalString: undefined,
 			proxyString: '',
 			trimmedString: '',
 			date: d,
@@ -393,7 +395,7 @@ describe('Default values', () => {
 			id: '1diyedk',
 			valid: false,
 			errors: {},
-			data: { agree: false, number: NaN },
+			data: { agree: false, number: NaN, fruit: undefined },
 			posted: false,
 			constraints: {
 				fruit: { required: true },
@@ -628,7 +630,9 @@ describe('Default values', () => {
 			data: {
 				textresource: '',
 				promptMetaData: { textServiceId: null, imageServiceId: null },
-				numbers: {}
+				numbers: {},
+				promptExtra: undefined,
+				provider: undefined
 			},
 			posted: false,
 			constraints: {

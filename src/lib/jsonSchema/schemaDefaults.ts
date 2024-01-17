@@ -97,7 +97,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 					? objectDefaults[key]
 					: _defaultValues(value, !schema.required?.includes(key), [...path, key]);
 
-			if (def !== undefined) output[key] = def;
+			//if (def !== undefined) output[key] = def;
+			output[key] = def;
 		}
 		return output;
 	} else if (objectDefaults) {

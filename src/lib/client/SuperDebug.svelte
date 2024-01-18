@@ -154,7 +154,7 @@
 			name: file.name,
 			size: file.size,
 			type: file.type,
-			lastModified: file.lastModified
+			lastModified: new Date(file.lastModified)
 		};
 	}
 
@@ -219,7 +219,7 @@
 			.replace(/>/g, '&gt;');
 
 		return encodedString.replace(
-			/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+			/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
 			function (match) {
 				let cls = 'number';
 				if (/^"/.test(match)) {
@@ -330,6 +330,7 @@
 	$: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
+<!-- eslint-disable svelte/no-at-html-tags -->
 {#if display}
 	<div class="super-debug" style={themeStyle}>
 		{#if label || status}

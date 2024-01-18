@@ -2,21 +2,27 @@
 	import { zod } from '$lib/adapters/zod.js';
 	import { schema } from './schema.js';
 	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { page } from '$app/stores';
 
 	export let data;
 
 	// Doesn't work well with testing client-side validation for files
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
-		validators: $page.url.searchParams.has('client') ? zod(schema) : undefined
+		validators: $page.url.searchParams.has('client') ? zod(schema) : undefined,
+		taintedMessage: false
 	});
 </script>
 
-<SuperDebug data={{ $form, $errors, $tainted }} />
+<!-- SuperDebug data={{ $form, $errors, $tainted }} / -->
+
+<hr />
 
 {#if $message}<h4>{$message}</h4>{/if}
+
+<p>{$form.image ? 'Image exists' : 'No image'}</p>
+<p>{$form.images.length ? `${$form.images.length} image(s)` : 'No multiple images'}</p>
 
 <form method="POST" enctype="multipart/form-data" use:enhance>
 	<label>

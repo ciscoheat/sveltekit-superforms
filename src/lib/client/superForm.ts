@@ -1355,12 +1355,26 @@ export function superForm<
 						} else if (options.dataType === 'json') {
 							if (!validation) validation = await Form_validate();
 
-							const postData = validation.data;
-							const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
+							const postData = clone(validation.data);
 
-							for (const chunk of chunks) {
-								submitData.append('__superform_json', chunk);
-							}
+							// Move files to form data, since they cannot be serialized
+							// will be reassembled in superValidate.
+							traversePaths(postData, (data) => {
+								if (data.value instanceof File) {
+									const key = '__superform_file_' + mergePath(data.path);
+									submitData.append(key, data.value);
+									return data.set(undefined);
+								} else if (
+									Array.isArray(data.value) &&
+									data.value.every((v) => v instanceof File)
+								) {
+									const key = '__superform_files_' + mergePath(data.path);
+									for (const file of data.value) {
+										submitData.append(key, file);
+									}
+									return data.set(undefined);
+								}
+							});
 
 							// Clear post data to reduce transfer size,
 							// since $form should be serialized and sent as json.
@@ -1370,6 +1384,12 @@ export function superForm<
 									submitData.delete(key);
 								}
 							});
+
+							// Split the form data into chunks, in case it gets too large for proxy servers
+							const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
+							for (const chunk of chunks) {
+								submitData.append('__superform_json', chunk);
+							}
 						}
 
 						if (!options.SPA && !submitData.has('__superform_id')) {

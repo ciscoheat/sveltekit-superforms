@@ -5,6 +5,8 @@ import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo } from './jsonSchema/schemaInfo.js';
 import { defaultValues } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './index.js';
+import { setPaths } from './traversal.js';
+import { splitPath } from './stringPath.js';
 
 type ParsedData = {
 	id: string | undefined;
@@ -93,6 +95,21 @@ export function parseFormData<T extends Record<string, unknown>>(
 			try {
 				const output = parse(formData.getAll('__superform_json').join('') ?? '');
 				if (typeof output === 'object') {
+					// Restore uploaded files and add to data
+					const filePaths = Array.from(formData.keys());
+
+					for (const path of filePaths.filter((path) => path.startsWith('__superform_file_'))) {
+						const realPath = splitPath(path.substring(17));
+						setPaths(output, [realPath], formData.get(path));
+					}
+
+					for (const path of filePaths.filter((path) => path.startsWith('__superform_files_'))) {
+						const realPath = splitPath(path.substring(18));
+						const allFiles = formData.getAll(path);
+
+						setPaths(output, [realPath], Array.from(allFiles));
+					}
+
 					return output as Record<string, unknown>;
 				}
 			} catch {

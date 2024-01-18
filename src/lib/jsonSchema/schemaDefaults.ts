@@ -210,7 +210,8 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
 	//else console.dir({ path, info }, { depth: 10 }); //debug
 
-	// TODO: Can schema.items be an array? Not according to https://www.learnjsonschema.com/2020-12/applicator/items/
+	// schema.items cannot be an array according to
+	// https://www.learnjsonschema.com/2020-12/applicator/items/
 	if (
 		info.schema.items &&
 		typeof info.schema.items == 'object' &&

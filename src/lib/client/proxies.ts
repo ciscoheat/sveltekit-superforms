@@ -146,15 +146,7 @@ function _stringProxy<
 		return num;
 	}
 
-	const isSuperForm = 'form' in form;
-
-	if (!isSuperForm && options.taint !== undefined) {
-		throw new SuperFormError(
-			'If options.taint is set, the whole superForm object must be used as a proxy, not just form.'
-		);
-	}
-
-	const proxy2 = isSuperForm
+	const proxy2 = isSuperForm(form, options)
 		? superFieldProxy(form, path, { taint: options.taint })
 		: fieldProxy(form, path);
 
@@ -383,6 +375,19 @@ type SuperFieldProxy<T> = {
 	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
+function updateProxyField<T extends Record<string, unknown>, Path extends FormPath<T>>(
+	obj: T,
+	path: (string | number | symbol)[],
+	updater: Updater<FormPathType<T, Path>>
+) {
+	const output = traversePath(obj, path, ({ parent, key, value }) => {
+		if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
+		return parent[key];
+	});
+	if (output) output.parent[output.key] = updater(output.value);
+	return obj;
+}
+
 function superFieldProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	superForm: SuperForm<T>,
 	path: Path,
@@ -391,7 +396,7 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends FormPat
 	const form = superForm.form;
 	const path2 = splitPath(path);
 
-	const proxy: Readable<FormPathType<T, Path>> = derived(form, ($form: object) => {
+	const proxy = derived(form, ($form: object) => {
 		const data = traversePath($form, path2);
 		return data?.value;
 	});
@@ -402,29 +407,41 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends FormPat
 			return () => unsub();
 		},
 		update(upd: Updater<FormPathType<T, Path>>, options?: { taint?: TaintOption }) {
-			form.update((f) => {
-				const output = traversePath(f, path2);
-				if (output) output.parent[output.key] = upd(output.value);
-				return f;
-			}, options ?? baseOptions);
+			form.update((data) => updateProxyField(data, path2, upd), options ?? baseOptions);
 		},
 		set(value: FormPathType<T, Path>, options?: { taint?: TaintOption }) {
-			form.update((f) => {
-				const output = traversePath(f, path2);
-				if (output) output.parent[output.key] = value;
-				return f;
-			}, options ?? baseOptions);
+			form.update((data) => updateProxyField(data, path2, () => value), options ?? baseOptions);
 		}
 	};
 }
 
+function isSuperForm<T extends Record<string, unknown>>(
+	form: Writable<T> | SuperForm<T, unknown>,
+	options?: { taint?: TaintOption }
+): form is SuperForm<T, unknown> {
+	const isSuperForm = 'form' in form;
+
+	if (!isSuperForm && options?.taint !== undefined) {
+		throw new SuperFormError(
+			'If options.taint is set, the whole superForm object must be used as a proxy, not just form.'
+		);
+	}
+
+	return isSuperForm;
+}
+
 export function fieldProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
-	form: Writable<T>,
-	path: Path
+	form: Writable<T> | SuperForm<T, unknown>,
+	path: Path,
+	options?: { taint?: TaintOption }
 ): Writable<FormPathType<T, Path>> {
 	const path2 = splitPath(path);
 
-	const proxy: Readable<FormPathType<T, Path>> = derived(form, ($form: object) => {
+	if (isSuperForm(form, options)) {
+		return superFieldProxy(form, path, options);
+	}
+
+	const proxy = derived(form, ($form) => {
 		const data = traversePath($form, path2);
 		return data?.value;
 	});
@@ -432,28 +449,13 @@ export function fieldProxy<T extends Record<string, unknown>, Path extends FormP
 	return {
 		subscribe(...params: Parameters<typeof proxy.subscribe>) {
 			const unsub = proxy.subscribe(...params);
-
 			return () => unsub();
 		},
 		update(upd: Updater<FormPathType<T, Path>>) {
-			form.update((f) => {
-				const output = traversePath(f, path2, ({ parent, key, value }) => {
-					if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
-					return parent[key];
-				});
-				if (output) output.parent[output.key] = upd(output.value);
-				return f;
-			});
+			form.update((data) => updateProxyField(data, path2, upd));
 		},
 		set(value: FormPathType<T, Path>) {
-			form.update((f) => {
-				const output = traversePath(f, path2, ({ parent, key, value }) => {
-					if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
-					return parent[key];
-				});
-				if (output) output.parent[output.key] = value;
-				return f;
-			});
+			form.update((data) => updateProxyField(data, path2, () => value));
 		}
 	};
 }

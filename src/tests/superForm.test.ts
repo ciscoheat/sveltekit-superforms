@@ -1,5 +1,5 @@
 import { zod } from '$lib/adapters/zod.js';
-import { superForm, type SuperForm } from '$lib/client/index.js';
+import { fieldProxy, superForm, type SuperForm } from '$lib/client/index.js';
 import { superValidate, type SuperValidated } from '$lib/superValidate.js';
 import { get } from 'svelte/store';
 import merge from 'ts-deepmerge';
@@ -226,6 +226,17 @@ describe('Validate', () => {
 		expect(await form.validate('score', { value: 1 })).toBeUndefined();
 
 		expect((await form.validate()).data).toEqual(get(form.form));
+	});
+});
+
+describe('fieldProxy with superForm', async () => {
+	it('should have the taint option', () => {
+		const proxy = fieldProxy(form, 'score', { taint: false });
+		proxy.set(100);
+
+		expect(get(form.form).score).toBe(100);
+		expect(form.isTainted('score')).toBe(false);
+		expect(form.isTainted()).toBe(false);
 	});
 });
 

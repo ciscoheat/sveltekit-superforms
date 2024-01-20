@@ -423,7 +423,7 @@ function isSuperForm<T extends Record<string, unknown>>(
 
 	if (!isSuperForm && options?.taint !== undefined) {
 		throw new SuperFormError(
-			'If options.taint is set, the whole superForm object must be used as a proxy, not just form.'
+			'If options.taint is set, the whole superForm object must be used as a proxy.'
 		);
 	}
 

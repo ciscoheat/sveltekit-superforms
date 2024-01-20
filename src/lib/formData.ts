@@ -149,6 +149,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return entry;
 		}
 
+		// TODO: Require allowFiles in v2, or only in legacy mode?
 		if (entry && typeof entry !== 'string') {
 			return options?.allowFiles ? entry : undefined;
 		}

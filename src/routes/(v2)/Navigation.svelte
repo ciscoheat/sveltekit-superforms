@@ -10,6 +10,7 @@
 		<li><a href="/v2/unions">Unions</a></li>
 		<li><a href="/v2/nested-validation-valibot">Nested validation-Valibot</a></li>
 		<li><a href="/v2/catchall">z.catchAll</a></li>
+		<li><a href="/v2/submit-enter">Submit on enter</a></li>
 	</ul>
 </nav>
 

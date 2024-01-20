@@ -91,3 +91,4 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 }
 
 export const superform = /* @__PURE__ */ memoize(_superform);
+export const superformClient = superform;

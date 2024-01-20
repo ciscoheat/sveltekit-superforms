@@ -1227,8 +1227,8 @@ export function superForm<
 					formEl: FormEl
 				});
 
-				// Clear input change event
-				lastInputChange == null;
+				// Clear input change event, now that the field doesn't have focus anymore.
+				lastInputChange = undefined;
 			}
 
 			FormEl.addEventListener('focusout', onBlur);
@@ -1334,6 +1334,10 @@ export function superForm<
 						// Deprecation fix
 						const submitData =
 							'formData' in submit ? submit.formData : (submit as { data: FormData }).data;
+
+						// Prevent input/blur events to trigger client-side validation,
+						// and accidentally removing errors set by setError
+						lastInputChange = undefined;
 
 						if (options.SPA) {
 							cancel(false);

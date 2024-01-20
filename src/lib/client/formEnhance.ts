@@ -369,6 +369,10 @@ export function formEnhance<T extends AnyZodObject, M>(
             ? submit.formData
             : (submit as { data: FormData }).data;
 
+        // Prevent input/blur events to trigger client-side validation,
+        // and accidentally removing errors set by setError
+        lastChanges.set([]);
+
         if (options.SPA) {
           cancel(false);
 

@@ -282,6 +282,9 @@ export function removeFiles<T extends object>(obj: T) {
 	return obj;
 }
 
+/**
+ * @deprecated Use `removeFiles` on the object that should be returned instead.
+ */
 export function failAndRemoveFiles<T extends Record<string, unknown> | undefined>(
 	...params: Parameters<typeof realFail<T>>
 ) {

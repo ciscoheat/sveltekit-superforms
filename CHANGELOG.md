@@ -30,6 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for unions in schemas. Unions must have an explicit default value and can only be used with `dataType: 'json'` set.
 - `superForm.isTainted(path?)`
-- `superValidate.options.allowFiles` which makes `setError` and `message` remove files automatically by default. Use `removeFiles` and `failAndRemoveFiles` in other cases.
+- `superValidate.options.allowFiles` which makes `setError` and `message` remove files automatically by default. Use `removeFiles` on the returned object in other cases.
 - SuperDebug now displays `File` and `FileList`.
 - All proxies can now take the whole `superForm` object with an extra `taint` option.

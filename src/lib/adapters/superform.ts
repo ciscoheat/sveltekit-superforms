@@ -90,5 +90,8 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 	};
 }
 
+/**
+ * @deprecated Use `superformClient` instead.
+ */
 export const superform = /* @__PURE__ */ memoize(_superform);
 export const superformClient = superform;

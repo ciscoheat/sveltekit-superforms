@@ -9,8 +9,7 @@ import {
 	message,
 	setError,
 	superValidate,
-	type SuperValidated,
-	failAndRemoveFiles
+	type SuperValidated
 } from '$lib/superValidate.js';
 import merge from 'ts-deepmerge';
 import { fail } from '@sveltejs/kit';
@@ -521,11 +520,6 @@ describe('File handling with the allowFiles option', () => {
 
 		it('should remove the files with the removeFiles function', async () => {
 			fail(400, removeFiles({ form }));
-			expect(form.data.avatar).toBeUndefined();
-		});
-
-		it('should remove the files with the failAndRemoveFiles function', async () => {
-			failAndRemoveFiles(400, removeFiles({ form }));
 			expect(form.data.avatar).toBeUndefined();
 		});
 	});

@@ -65,7 +65,7 @@ async function validate<T extends ZodValidation<AnyZodObject | ZodObjectUnion<An
 
 function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
 	schema: T,
-	options?: JsonSchemaOptions<Infer<T>>
+	options?: JsonSchemaOptions<T>
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',

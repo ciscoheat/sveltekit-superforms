@@ -10,8 +10,23 @@ import {
 } from './adapters.js';
 import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
 import { memoize } from '$lib/memoize.js';
+import { toJSONSchema as valibotToJSON } from '@gcornut/valibot-json-schema';
+import type { JSONSchema } from '$lib/index.js';
 
-async function validate<T extends BaseSchema | BaseSchemaAsync>(
+type SupportedSchemas = BaseSchema | BaseSchemaAsync;
+type Options = Parameters<typeof valibotToJSON>[0];
+
+const defaultOptions = {
+	strictObjectTypes: true,
+	dateStrategy: 'integer'
+} as const;
+
+/* @__NO_SIDE_EFFECTS__ */
+const valibotToJsonSchema = (options: Options) => {
+	return valibotToJSON({ ...defaultOptions, ...options }) as JSONSchema;
+};
+
+async function validate<T extends SupportedSchemas>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
@@ -31,9 +46,9 @@ async function validate<T extends BaseSchema | BaseSchemaAsync>(
 	};
 }
 
-function _valibot<T extends BaseSchema | BaseSchemaAsync>(
+function _valibot<T extends SupportedSchemas>(
 	schema: T,
-	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
+	options: Omit<Options, 'schema'> | AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T> = {}
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
@@ -41,14 +56,14 @@ function _valibot<T extends BaseSchema | BaseSchemaAsync>(
 		jsonSchema:
 			'jsonSchema' in options
 				? options.jsonSchema
-				: toJsonSchema(options.defaults, options.schemaOptions),
-		defaults: options.defaults
+				: 'defaults' in options
+					? toJsonSchema(options.defaults, options.schemaOptions)
+					: valibotToJsonSchema({ schema: schema as any, ...options }),
+		defaults: 'defaults' in options ? options.defaults : undefined
 	});
 }
 
-function _valibotClient<T extends BaseSchema | BaseSchemaAsync>(
-	schema: T
-): ClientValidationAdapter<Infer<T>> {
+function _valibotClient<T extends SupportedSchemas>(schema: T): ClientValidationAdapter<Infer<T>> {
 	return {
 		superFormValidationLibrary: 'valibot',
 		validate: async (data) => validate(schema, data)

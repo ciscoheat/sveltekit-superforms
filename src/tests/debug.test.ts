@@ -2,8 +2,23 @@
 import { z } from 'zod';
 import { test } from 'vitest';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
+import {
+	object,
+	string,
+	email,
+	minLength,
+	array,
+	integer,
+	number,
+	minValue,
+	date,
+	optional,
+	regex,
+	nullable
+} from 'valibot';
+import { valibot } from '$lib/adapters/valibot.js';
 
 enum Foo {
 	A = 2,
@@ -32,12 +47,27 @@ const schema = z.object({
 	literal: z.literal(true).default(false as true)
 });
 
+/*
 const schema2 = z.object({
 	len: z.string().transform((val) => val.length)
 });
+*/
+
+const valiSchema = object({
+	name: nullable(string(), 'A'),
+	email: string([email()]),
+	tags: array(string([minLength(2)]), [minLength(3)]),
+	score: number([integer(), minValue(0)]),
+	date: optional(date()),
+	nospace: optional(string([regex(/^\S*$/)]))
+});
+
+test.skip('Valibot to JSON Schema', () => {
+	console.dir(valibot(valiSchema).jsonSchema, { depth: 10 });
+});
 
 test.skip('Zod to JSON Schema', () => {
-	console.dir(zodToJsonSchema(schema2), { depth: 10 });
+	console.dir(zod(schema).jsonSchema, { depth: 10 });
 });
 
 test.skip('defaultValues', () => {

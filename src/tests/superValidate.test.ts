@@ -204,7 +204,7 @@ describe('Arktype', () => {
 
 describe('Valibot', () => {
 	const schema = object({
-		name: string(),
+		name: optional(string(), 'Unknown'),
 		email: string([email()]),
 		tags: array(string([minLength(2)]), [minLength(3)]),
 		score: number([integer(), minValue(0)]),
@@ -212,7 +212,13 @@ describe('Valibot', () => {
 		nospace: optional(string([regex(nospacePattern)]))
 	});
 
-	schemaTest(valibot(schema, { defaults }), undefined, 'simple');
+	describe('Introspection', () => {
+		schemaTest(valibot(schema));
+	});
+
+	describe('Defaults', () => {
+		schemaTest(valibot(schema, { defaults }), undefined, 'simple');
+	});
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -338,15 +344,6 @@ function schemaTest(
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full'
 ) {
-	/*
-	if (adapter.superFormValidationLibrary == 'zod') {
-		console.dir(
-			{ $library: adapter.superFormValidationLibrary, ...adapter.jsonSchema },
-			{ depth: 10 }
-		);
-	}
-	*/
-
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
 		//console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);

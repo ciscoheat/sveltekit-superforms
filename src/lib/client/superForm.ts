@@ -540,14 +540,14 @@ export function superForm<
 		);
 	}
 
-	async function Form_clientValidation(event: ChangeEvent | null) {
+	async function Form_clientValidation(event: ChangeEvent | null, force = false) {
 		if (!event || !options.validators) return;
 
-		//console.log('Form_clientValidation', event); //debug
-
-		if (options.validationMethod == 'submit-only') return;
-		if (options.validationMethod == 'onblur' && event.type == 'input') return;
-		if (options.validationMethod == 'oninput' && event.type == 'blur') return;
+		if (!force) {
+			if (options.validationMethod == 'submit-only') return;
+			if (options.validationMethod == 'onblur' && event.type == 'input') return;
+			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
+		}
 
 		const result = await Form_validate();
 
@@ -555,14 +555,16 @@ export function superForm<
 			Form.set(result.data, { taint: 'ignore' });
 		}
 
-		if (options.validationMethod == 'oninput') {
-			return Errors.set(result.errors);
+		if (options.validationMethod == 'oninput' || force) {
+			Errors.set(result.errors);
+			return result;
 		}
 
 		// Wait for tainted, so object errors can be displayed
 		await tick();
-
 		Form__displayNewErrors(result.errors, event);
+
+		return result;
 	}
 
 	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
@@ -1065,9 +1067,14 @@ export function superForm<
 		path?: Path | { update: boolean },
 		opts: ValidateOptions<FormPathType<T, Path>> = {}
 	) {
+		if (!options.validators) {
+			throw new SuperFormError('options.validators must be set to use the validate method.');
+		}
+
 		if (!path || typeof path === 'object') {
 			if (typeof path == 'object' && path.update === true) {
-				Form_clientValidation({ paths: [] });
+				const result = await Form_clientValidation({ paths: [] }, true);
+				if (result) return result;
 			}
 			return Form_validate();
 		}
@@ -1156,7 +1163,7 @@ export function superForm<
 			return rebind(snapshot, snapshot.tainted ?? true);
 		},
 
-		validate: validate,
+		validate,
 
 		allErrors: AllErrors,
 		posted: Posted,

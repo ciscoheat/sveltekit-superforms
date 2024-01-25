@@ -554,6 +554,28 @@ describe('Edge cases', () => {
 		});
 	});
 
+	describe('Boolean with default value true', () => {
+		const schema = z.object({
+			active: z.boolean().default(true)
+		});
+
+		function testBool(value: string, expected: boolean | undefined) {
+			return async () => {
+				const formData = new FormData();
+				formData.set('active', value);
+
+				const form = await superValidate(formData, zod(schema));
+				expect(form.data.active).toBe(expected);
+			};
+		}
+
+		it('Should parse an empty string to false', testBool('', false));
+		it('Should parse "false" to false', testBool('false', false));
+		it('Should parse "true" to true', testBool('true', true));
+		it('Should parse any other value to true', testBool('ok', true));
+		it('Should parse any other value to true', testBool('1', true));
+	});
+
 	describe('Tri-state boolean', () => {
 		const schema = z.object({
 			active: z.boolean().optional()

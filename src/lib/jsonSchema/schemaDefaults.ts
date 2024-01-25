@@ -3,7 +3,7 @@ import type { JSONSchema } from './index.js';
 import { schemaInfo } from './schemaInfo.js';
 import type { SchemaType } from './schemaInfo.js';
 
-export function defaultValues<T extends Record<string, unknown> = Record<string, unknown>>(
+export function defaultValues<T = Record<string, unknown>>(
 	schema: JSONSchema,
 	isOptional = false,
 	path: string[] = []

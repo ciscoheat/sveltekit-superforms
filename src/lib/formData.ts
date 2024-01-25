@@ -242,27 +242,19 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	const [type] = info.types;
 
 	if (!value) {
-		const defaultValue = defaultValues(info.schema, info.isOptional, [key]);
+		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 
-		//console.log(`No FormData for "${key}" (${type}). Default: ${defaultValue}`, info.schema); //debug
-
-		// defaultValue can be returned immediately unless it's boolean, which
-		// means it could have been posted as a checkbox.
-		if (defaultValue !== undefined && type != 'boolean') {
-			return defaultValue;
+		if (type != 'boolean') {
+			const defaultValue = defaultValues<unknown>(info.schema, info.isOptional, [key]);
+			if (defaultValue !== undefined) return defaultValue;
+		} else if (info.isOptional && info.schema.default === true) {
+			// Special case for booleans with default value true
+			return false;
 		}
+
 		if (info.isNullable) return null;
 		if (info.isOptional) return undefined;
 	}
-
-	/*
-	// value can be returned immediately unless it's boolean, which
-	// means it could have been posted as a checkbox.
-	if (!value && type != 'boolean') {
-		//console.log(`No FormData for "${key}" (${type}).`);
-		return info.isNullable ? null : value;
-	}
-	*/
 
 	function typeError() {
 		throw new SchemaError(

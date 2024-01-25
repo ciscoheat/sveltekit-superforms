@@ -8,6 +8,18 @@ import type { JSONSchema } from './index.js';
 import { setPaths } from './traversal.js';
 import { splitPath } from './stringPath.js';
 
+/**
+ * V1 compatibilty. resetForm = false and taintedMessage = true
+ */
+let legacyMode = false;
+
+try {
+	// @ts-expect-error Vite define check
+	if (SUPERFORMS_LEGACY) legacyMode = true;
+} catch {
+	// No legacy mode defined
+}
+
 type ParsedData = {
 	id: string | undefined;
 	posted: boolean;
@@ -149,9 +161,9 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return entry;
 		}
 
-		// TODO: Require allowFiles in v2, or only in legacy mode?
 		if (entry && typeof entry !== 'string') {
-			return options?.allowFiles ? entry : undefined;
+			const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;
+			return allowFiles ? entry : undefined;
 		}
 
 		return parseFormDataEntry(key, entry, info);

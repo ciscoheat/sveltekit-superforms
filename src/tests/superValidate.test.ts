@@ -268,7 +268,6 @@ describe('Zod', () => {
 			email: { required: true },
 			tags: { minlength: 2 },
 			set: { required: true },
-			foo: { required: true },
 			reg1: { pattern: '\\D', required: true },
 			reg: { pattern: 'X', minlength: 3, maxlength: 30, required: true },
 			num: { min: 10, max: 100, step: 5, required: true },

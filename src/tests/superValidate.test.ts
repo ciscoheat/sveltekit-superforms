@@ -267,7 +267,6 @@ describe('Zod', () => {
 		const expected = {
 			email: { required: true },
 			tags: { minlength: 2 },
-			foo: { required: true },
 			set: { required: true },
 			reg1: { pattern: '\\D', required: true },
 			reg: { pattern: 'X', minlength: 3, maxlength: 30, required: true },
@@ -447,8 +446,6 @@ function schemaTest(
 	});
 }
 
-///// File handling /////////////////////////////////////////////////
-
 describe('File handling with the allowFiles option', () => {
 	const schema = z.object({
 		avatar: z.custom<File>().refine((f) => {
@@ -521,6 +518,89 @@ describe('File handling with the allowFiles option', () => {
 		it('should remove the files with the removeFiles function', async () => {
 			fail(400, removeFiles({ form }));
 			expect(form.data.avatar).toBeUndefined();
+		});
+	});
+});
+
+describe('Edge cases', () => {
+	describe('Normal boolean', () => {
+		const schema = z.object({
+			active: z.boolean()
+		});
+
+		async function testBool(value: string, expected: boolean | undefined) {
+			const formData = new FormData();
+			formData.set('active', value);
+
+			const form = await superValidate(formData, zod(schema));
+			expect(form.data.active).toBe(expected);
+		}
+
+		it('Should parse an empty string to false', async () => {
+			testBool('', false);
+		});
+
+		it('Should parse "false" to false', async () => {
+			testBool('false', false);
+		});
+
+		it('Should parse "true" to true', async () => {
+			testBool('true', true);
+		});
+
+		it('Should parse any other value to true', async () => {
+			testBool('ok', true);
+			testBool('1', true);
+		});
+	});
+
+	describe('Tri-state boolean', () => {
+		const schema = z.object({
+			active: z.boolean().optional()
+		});
+
+		async function testBool(value: string, expected: boolean | undefined) {
+			const formData = new FormData();
+			formData.set('active', value);
+
+			const form = await superValidate(formData, zod(schema));
+			expect(form.data.active).toBe(expected);
+		}
+
+		it('Should parse an empty string to undefined', async () => {
+			testBool('', undefined);
+		});
+
+		it('Should parse "false" to false', async () => {
+			testBool('false', false);
+		});
+
+		it('Should parse "true" to true', async () => {
+			testBool('true', true);
+		});
+
+		it('Should parse any other value to true', async () => {
+			testBool('ok', true);
+			testBool('1', true);
+		});
+	});
+
+	describe('Union with same type', () => {
+		const schema = z.object({
+			interval: z.union([z.literal(1), z.literal(5), z.literal(10), z.literal(15)]).default(1)
+		});
+
+		it('should work with FormData', async () => {
+			const formData = new FormData();
+			formData.set('interval', '5');
+
+			const form = await superValidate(formData, zod(schema));
+			expect(form.data.interval).toBe(5);
+		});
+
+		it('should have a default value', async () => {
+			const defaults = defaultValues<z.infer<typeof schema>>(zod(schema).jsonSchema);
+			expect(defaults.interval).toBe(1);
 		});
 	});
 });

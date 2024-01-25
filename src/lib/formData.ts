@@ -240,7 +240,7 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 			return defaultValue;
 		}
 		if (info.isNullable) return null;
-		if (info.isOptional && type != 'boolean') return undefined;
+		if (info.isOptional) return undefined;
 	}
 
 	/*

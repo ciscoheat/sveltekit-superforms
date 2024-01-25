@@ -13,6 +13,7 @@
 		<li><a href="/v2/validate-update">Validate and update</a></li>
 		<li><a href="/v2/submit-enter">Submit on enter</a></li>
 		<li><a href="/v2/boolean-same-union">Boolean and same union</a></li>
+		<li><a href="/v2/letters/asdf">Letter route</a></li>
 	</ul>
 </nav>
 

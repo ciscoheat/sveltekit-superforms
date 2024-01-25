@@ -43,6 +43,7 @@ async function _clientValidation<T extends Record<string, unknown>, M = unknown>
 		data: status.success ? status.data : data,
 		constraints,
 		message: undefined,
-		id: formId
+		id: formId,
+		shape: formShape
 	};
 }

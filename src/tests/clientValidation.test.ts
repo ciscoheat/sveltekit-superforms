@@ -10,7 +10,7 @@ enum Foo {
 
 const schema = z.object({
 	name: z.string().min(5),
-	foo: z.nativeEnum(Foo),
+	foo: z.nativeEnum(Foo).default(Foo.A),
 	arr: z.string().min(10).array().min(3).max(10)
 });
 
@@ -22,7 +22,7 @@ describe('Client-side validation', () => {
 	};
 
 	it('Should work as superValidate', async () => {
-		const form = await clientValidation(zod(schema), data, 'id', {}, false);
+		const form = await clientValidation(zod(schema), data, 'id', {}, false, {});
 
 		expect(form).toEqual({
 			valid: false,
@@ -37,7 +37,8 @@ describe('Client-side validation', () => {
 			data: { name: 'Test', foo: 3, arr: ['A'] },
 			constraints: {},
 			message: undefined,
-			id: 'id'
+			id: 'id',
+			shape: {}
 		});
 	});
 });

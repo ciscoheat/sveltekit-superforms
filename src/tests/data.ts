@@ -10,7 +10,7 @@ export const bigZodSchema = z.object({
 	name: z.union([z.string().default('B'), z.number()]).default('A'),
 	email: z.string().email(),
 	tags: z.string().min(2).array().min(2).default(['A']),
-	foo: z.nativeEnum(Foo),
+	foo: z.nativeEnum(Foo).default(Foo.A),
 	set: z.set(z.string()),
 	reg1: z.string().regex(/\D/).regex(/p/),
 	reg: z.string().regex(/X/).min(3).max(30),
@@ -63,5 +63,5 @@ export const dataTypeForm = z.object({
 	nativeEnumInt: z.nativeEnum(Fruits).default(Fruits.Apple),
 	nativeEnumString: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' }).default('GREEN'),
 	nativeEnumString2: z.nativeEnum(FruitsStr).default(FruitsStr.Banana),
-	zodEnum: z.enum(['a', 'b', 'c'])
+	zodEnum: z.enum(['a', 'b', 'c']).default('a')
 });

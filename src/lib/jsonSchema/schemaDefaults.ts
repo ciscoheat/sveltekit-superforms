@@ -75,7 +75,12 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			if (info.isNullable) return null;
 			if (info.isOptional) return undefined;
 
-			return _defaultValues(info.union[0], isOptional, path);
+			// TODO: Use the first value of the union as default?
+			throw new SchemaError(
+				'Unions must have a default value, or exactly one of the union types must have.',
+				path
+			);
+			//return _defaultValues(info.union[0], isOptional, path);
 		}
 	}
 
@@ -107,7 +112,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	// Enums
 	if (schema.enum) {
-		return schema.enum[0];
+		throw new SchemaError('Enums must have a default value in the schema.', path);
+		//return schema.enum[0];
 	}
 
 	// Basic type

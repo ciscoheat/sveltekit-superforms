@@ -294,8 +294,7 @@ describe('Default values', () => {
 			proxyNumber: { min: 10 },
 			proxyString: { required: true },
 			trimmedString: { required: true },
-			numberArray: { required: true },
-			zodEnum: { required: true }
+			numberArray: { required: true }
 		});
 	});
 

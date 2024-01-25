@@ -1073,7 +1073,8 @@ export function superForm<
 					console.warn(
 						'No form with id ' +
 							notFound +
-							' found on page. If the schema is dynamically generated, setting an id in superValidate may be required. More information: https://superforms.rocks/concepts/multiple-forms/'
+							' found on page. If the schema is dynamically generated or modified in the form action,' +
+							' setting an id in superValidate (in the load function) may be required. More information: https://superforms.rocks/concepts/multiple-forms/'
 					);
 				}
 			})

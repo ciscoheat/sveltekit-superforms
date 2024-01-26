@@ -16,11 +16,11 @@ const defaults = {
 };
 
 export const load = async () => {
-	const form = await superValidate(defaults, valibot(schema, { defaults }), {
+	const form = await superValidate(defaults, valibot(schema), {
 		errors: false,
 		id: 'valibot'
 	});
-	const form2 = await superValidate(defaults, valibot(schema, { defaults }), {
+	const form2 = await superValidate(defaults, valibot(schema), {
 		errors: false,
 		id: 'superforms'
 	});
@@ -31,7 +31,7 @@ export const load = async () => {
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
-		const form = await superValidate(formData, valibot(schema, { defaults }));
+		const form = await superValidate(formData, valibot(schema));
 		form.id = formData.get('id')?.toString() ?? form.id;
 
 		console.log('POST', form);

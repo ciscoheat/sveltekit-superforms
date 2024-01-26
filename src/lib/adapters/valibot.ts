@@ -58,7 +58,8 @@ function _valibot<T extends SupportedSchemas>(
 				? options.jsonSchema
 				: 'defaults' in options
 					? toJsonSchema(options.defaults, options.schemaOptions)
-					: valibotToJsonSchema({ schema: schema as any, ...options }),
+					: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+						valibotToJsonSchema({ schema: schema as any, ...options }),
 		defaults: 'defaults' in options ? options.defaults : undefined
 	});
 }

@@ -125,7 +125,12 @@
 		</div>
 	{/each}
 	<div>
-		Name: <input type="text" name="name" bind:value={$form.name} />
+		Name: <input
+			type="text"
+			aria-invalid={$errors.name ? 'true' : undefined}
+			name="name"
+			bind:value={$form.name}
+		/>
 		{#if $errors.name}<br /><span class="invalid">{$errors.name}</span>{/if}
 	</div>
 

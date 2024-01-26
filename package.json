@@ -96,6 +96,7 @@
 		"svelte": "3.x || 4.x"
 	},
 	"optionalDependencies": {
+		"@gcornut/valibot-json-schema": "^0.0.21",
 		"@sinclair/typebox": "^0.32.13",
 		"@sodaru/yup-to-json-schema": "^2.0.1",
 		"ajv": "^8.12.0",

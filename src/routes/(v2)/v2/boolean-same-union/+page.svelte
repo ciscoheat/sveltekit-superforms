@@ -1,14 +1,10 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
 
 	export let data;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
-		//dataType: 'json',
-		//validators: schema
-	});
+	const { form, errors, tainted, message, enhance } = superForm(data.form);
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />
@@ -46,10 +42,6 @@
 <style lang="scss">
 	form {
 		margin: 2rem 0;
-
-		input {
-			background-color: #dedede;
-		}
 
 		.invalid {
 			color: crimson;

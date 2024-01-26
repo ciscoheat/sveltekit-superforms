@@ -357,7 +357,7 @@ export function superForm<
 		const _initialFormId = options.id ?? form.id;
 		const _currentPage = get(page);
 
-		if (options.warnings?.duplicateId !== false) {
+		if (browser && options.warnings?.duplicateId !== false) {
 			if (!formIds.has(_currentPage)) {
 				formIds.set(_currentPage, new Set([_initialFormId]));
 			} else {

@@ -1,17 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
-	import type { FormOptions } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import { onMount } from 'svelte';
 	import type { SuperValidated, Infer } from '$lib/index.js';
-	import { superform } from '$lib/adapters/superform.js';
 	import { valibotClient } from '$lib/adapters/valibot.js';
 
 	export let data: SuperValidated<Infer<typeof schema>>;
-	export let validator: 'valibot' | 'superforms';
+	export let validator: 'valibot';
 
 	export let output: (string[] | undefined)[] = [];
 	export let validated: SuperValidated<Infer<typeof schema>> | undefined = undefined;
@@ -19,26 +17,13 @@
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 
-	const superFormValidator: FormOptions<Infer<typeof schema>, unknown>['validators'] = superform({
-		name: (name) => {
-			return !name || !name.length ? 'Name is too short' : null;
-		},
-		tags: {
-			id: (id) => (!id || isNaN(id) || id < 3 ? 'Number must be greater than or equal to 3' : null),
-			name: (name) => {
-				return !name || name.length < 2 ? 'Tags must be at least two characters' : null;
-			}
-		}
-	});
-
 	const { form, errors, enhance, message, tainted, validate } = superForm(data, {
 		taintedMessage: null,
 		dataType: 'json',
 		onUpdate(event) {
 			if ($page.url.searchParams.has('cancel')) event.cancel();
 		},
-		defaultValidator: validator == 'valibot' ? 'keep' : 'clear',
-		validators: validator == 'valibot' ? valibotClient(schema) : superFormValidator,
+		validators: valibotClient(schema),
 		flashMessage: {
 			module: flashModule,
 			onError({ result, flashMessage }) {

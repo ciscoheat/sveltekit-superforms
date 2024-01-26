@@ -20,19 +20,14 @@ export const load = async () => {
 		errors: false,
 		id: 'valibot'
 	});
-	const form2 = await superValidate(defaults, valibot(schema), {
-		errors: false,
-		id: 'superforms'
-	});
 
-	return { form, form2 };
+	return { form };
 };
 
 export const actions = {
 	default: async ({ request }) => {
 		const formData = await request.formData();
 		const form = await superValidate(formData, valibot(schema));
-		form.id = formData.get('id')?.toString() ?? form.id;
 
 		console.log('POST', form);
 

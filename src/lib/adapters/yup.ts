@@ -53,7 +53,7 @@ async function validate<T extends Schema>(
 /* @__NO_SIDE_EFFECTS__ */
 function _yup<T extends Schema>(
 	schema: T,
-	options?: JsonSchemaOptions<Infer<T>>
+	options?: JsonSchemaOptions<T>
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'yup',

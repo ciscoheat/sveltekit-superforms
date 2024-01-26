@@ -1027,7 +1027,6 @@ export function superForm<
 				}
 
 				const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
-				let notFound: string[] | null = null;
 
 				if (pageUpdate.form && typeof pageUpdate.form === 'object') {
 					const actionData = pageUpdate.form;
@@ -1035,18 +1034,13 @@ export function superForm<
 					// Check if it is an error result, sent here from formEnhance
 					if (actionData.type == 'error') return;
 
-					const forms = Context_findValidationForms(actionData);
-					notFound = forms.map((f) => f.id);
-
-					for (const newForm of forms) {
+					for (const newForm of Context_findValidationForms(actionData)) {
 						const isInitial = initialForms.has(newForm);
 
 						if (newForm.id !== Data.formId || isInitial) {
-							if (isInitial) notFound = null;
 							continue;
 						}
 
-						notFound = null;
 						// Prevent multiple "posting" that can happen when components are recreated.
 						initialForms.set(newForm, newForm);
 						await Form_updateFromValidation(newForm as SuperValidated<T, M>, untaint);
@@ -1054,28 +1048,15 @@ export function superForm<
 				} else if (pageUpdate.data && typeof pageUpdate.data === 'object') {
 					// It's a page reload, redirect or error/failure,
 					// so don't trigger any events, just update the data.
-					const forms = Context_findValidationForms(pageUpdate.data);
-					notFound = forms.map((f) => f.id);
-					for (const newForm of forms) {
+					for (const newForm of Context_findValidationForms(pageUpdate.data)) {
 						const isInitial = initialForms.has(newForm);
 
 						if (newForm.id !== Data.formId || isInitial) {
-							if (isInitial) notFound = null;
 							continue;
 						}
 
-						notFound = null;
 						rebind(newForm as SuperValidated<T, M>, untaint, undefined, true);
 					}
-				}
-
-				if (notFound) {
-					console.warn(
-						'No form with id ' +
-							notFound +
-							' found on page. If the schema is dynamically generated or modified in the form action,' +
-							' setting an id in superValidate (in the load function) may be required. More information: https://superforms.rocks/concepts/multiple-forms/'
-					);
 				}
 			})
 		);

@@ -2,9 +2,8 @@ import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
-import toSchema from 'to-json-schema';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
-import type { Options as SchemaOptions } from 'to-json-schema';
+import type { Options as SchemaOptions } from './to-json-schema/types.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { SuperFormError } from '$lib/errors.js';
 import type {
@@ -14,7 +13,6 @@ import type {
 	InferIn as InferInSchema
 } from './typeSchema.js';
 
-export type { Options as SchemaOptions } from 'to-json-schema';
 export type { Schema, ValidationIssue, ValidationResult } from './typeSchema.js';
 
 export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
@@ -88,62 +86,3 @@ export function createAdapter<T extends Record<string, unknown>>(
 		id: schemaHash(jsonSchema)
 	};
 }
-
-/**
- * Version of to-json-schema that checks if the object properties are default
- * (empty string, 0, empty array, etc) and sets the required property if not.
- * Also sets additionalProperties to false, and sets undefined or null values on an object to "any".
- * @param object object that should be converted to JSON Schema
- * @param options customize schema options
- * @returns JSON Schema for the object
- * @see https://www.npmjs.com/package/to-json-schema
- * @__NO_SIDE_EFFECTS__
- */
-export const toJsonSchema = (object: Record<string, unknown>, options?: SchemaOptions) => {
-	options = {
-		postProcessFnc(type, schema, value, defaultFunc) {
-			if (schema.properties && options?.required !== false) {
-				schema.required = Object.keys(value).filter((prop) => {
-					if (options?.required === true) return true;
-					const hasValue = value[prop] && (!Array.isArray(value[prop]) || value[prop].length > 0);
-					// If no value, it probably doesn't have a default value and should be required
-					return !hasValue && value[prop] !== undefined && value[prop] !== null;
-				});
-				if (schema.required.length == 0) delete schema.required;
-				return schema;
-			}
-			return defaultFunc(type, schema, value);
-		},
-		objects: {
-			additionalProperties: false,
-			preProcessFnc(obj, defaultFunc) {
-				if (obj && typeof obj == 'object') {
-					const unknownKeys: string[] = [];
-					for (const [key, value] of Object.entries(obj)) {
-						if (value !== undefined && value !== null) continue;
-						unknownKeys.push(key);
-					}
-
-					if (unknownKeys.length) {
-						obj = { ...obj };
-						for (const key of unknownKeys) {
-							delete obj[key];
-						}
-
-						const output = defaultFunc(obj);
-						if (!output.properties) output.properties = {};
-						for (const key of unknownKeys) {
-							output.properties[key] = {};
-						}
-
-						return output;
-					}
-				}
-				return defaultFunc(obj);
-			},
-			...(options?.objects ?? {})
-		},
-		...(options ?? {})
-	};
-	return /* @__PURE__ */ toSchema(object, options) as JSONSchema;
-};

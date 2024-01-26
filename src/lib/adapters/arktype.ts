@@ -1,6 +1,5 @@
 import type { Type } from 'arktype';
 import {
-	toJsonSchema,
 	type ValidationAdapter,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
@@ -10,6 +9,7 @@ import {
 	type ValidationResult
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
+import { simpleSchema } from './simple-schema/index.js';
 
 async function validate<T extends Type>(
 	schema: T,
@@ -38,10 +38,7 @@ function _arktype<T extends Type>(
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
 		defaults: options.defaults,
-		jsonSchema:
-			'jsonSchema' in options
-				? options.jsonSchema
-				: toJsonSchema(options.defaults, options.schemaOptions),
+		jsonSchema: 'jsonSchema' in options ? options.jsonSchema : simpleSchema(options.defaults),
 		async validate(data) {
 			const result = schema(data);
 			if (result.problems == null) {

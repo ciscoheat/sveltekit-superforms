@@ -13,11 +13,13 @@ import { memoize } from '$lib/memoize.js';
 const Email =
 	/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
 
-const fetchModule = /* @__PURE__ */ memoize(async () => {
+async function modules() {
 	const { TypeCompiler } = await import(/* webpackIgnore: true */ '@sinclair/typebox/compiler');
 	const { FormatRegistry } = await import(/* webpackIgnore: true */ '@sinclair/typebox');
 	return { TypeCompiler, FormatRegistry };
-});
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
 
 async function validate<T extends TSchema>(
 	schema: T,

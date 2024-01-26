@@ -1,5 +1,4 @@
 import {
-	toJsonSchema,
 	type ValidationAdapter,
 	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
@@ -9,6 +8,7 @@ import {
 } from './adapters.js';
 import type { Infer, Struct } from 'superstruct/dist/struct.js';
 import { memoize } from '$lib/memoize.js';
+import { toJsonSchema } from './toJsonSchema.js';
 
 async function validate<T extends Struct>(
 	schema: T,

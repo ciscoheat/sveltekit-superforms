@@ -9,23 +9,25 @@ import {
 import type { AnySchema, Schema } from 'yup';
 import { splitPath } from '$lib/stringPath.js';
 import { memoize } from '$lib/memoize.js';
-import { convertSchema } from '@sodaru/yup-to-json-schema';
+import { convertSchema } from './yup-to-json-schema/index.js';
 
-const fetchModule = /* @__PURE__ */ memoize(async () => {
+const modules = async () => {
 	const { ValidationError } = await import(/* webpackIgnore: true */ 'yup');
 	return { ValidationError };
-});
+};
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
 
 /* @__NO_SIDE_EFFECTS__ */
-const yupToJsonSchema = (schema: AnySchema) => {
+function yupToJsonSchema(schema: AnySchema) {
 	return convertSchema(schema, {
-		//@ts-expect-error Incorrect type information, Converters can be partial.
 		converters: {
-			// options.string must return type 'date'. Otherwise, set it manually.
-			date: (desc, options) => options.string(desc, options)
+			date: (desc, options) => {
+				return options.string(desc, options);
+			}
 		}
 	});
-};
+}
 
 async function validate<T extends Schema>(
 	schema: T,

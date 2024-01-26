@@ -1,7 +1,6 @@
 import {
-	toJsonSchema,
+	//toJsonSchema,
 	type ValidationAdapter,
-	type AdapterDefaultOptions,
 	type RequiredJsonSchemaOptions,
 	type Infer,
 	createAdapter,
@@ -48,7 +47,7 @@ async function validate<T extends SupportedSchemas>(
 
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
-	options: Omit<Options, 'schema'> | AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T> = {}
+	options: Omit<Options, 'schema'> | RequiredJsonSchemaOptions<T> = {}
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
@@ -56,10 +55,8 @@ function _valibot<T extends SupportedSchemas>(
 		jsonSchema:
 			'jsonSchema' in options
 				? options.jsonSchema
-				: 'defaults' in options
-					? toJsonSchema(options.defaults, options.schemaOptions)
-					: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-						valibotToJsonSchema({ schema: schema as any, ...options }),
+				: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+					valibotToJsonSchema({ schema: schema as any, ...options }),
 		defaults: 'defaults' in options ? options.defaults : undefined
 	});
 }

@@ -113,7 +113,6 @@
 		"devalue": "^4.3.2",
 		"klona": "^2.0.6",
 		"memoize-weak": "^1.0.2",
-		"to-json-schema": "^0.2.5",
 		"ts-deepmerge": "^6.2.1"
 	},
 	"devDependencies": {
@@ -123,7 +122,6 @@
 		"@sveltejs/vite-plugin-svelte": "^3.0.1",
 		"@types/json-schema": "^7.0.15",
 		"@types/throttle-debounce": "^5.0.2",
-		"@types/to-json-schema": "^0.2.4",
 		"@types/uuid": "^9.0.8",
 		"@typescript-eslint/eslint-plugin": "^6.19.1",
 		"@typescript-eslint/parser": "^6.19.1",

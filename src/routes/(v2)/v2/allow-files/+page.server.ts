@@ -16,7 +16,10 @@ export const actions = {
 		const form = await superValidate(formData, zod(schema), { allowFiles: true });
 		console.log('POST', form);
 
-		if (!form.valid) return fail(400, removeFiles({ form }));
+		if (!form.valid) {
+			form.data.avatar = null;
+			return fail(400, removeFiles({ form }));
+		}
 
 		return message(form, 'Posted OK!');
 	}

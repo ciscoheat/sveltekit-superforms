@@ -676,7 +676,10 @@ export function superForm<
 					!(info.parent instanceof FileList) &&
 					(info.value instanceof File || (browser && info.value instanceof FileList))
 				) {
-					setPaths(data, [info.path], info.value);
+					const dataPath = pathExists(data, info.path);
+					if (!dataPath || !(dataPath.key in dataPath.parent)) {
+						setPaths(data, [info.path], info.value);
+					}
 				}
 			});
 		}

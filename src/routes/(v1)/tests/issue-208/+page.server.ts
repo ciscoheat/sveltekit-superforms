@@ -7,8 +7,8 @@ import { z } from 'zod';
 import { UserType, NumberType } from './UserType.js';
 
 const schema = z.object({
-	type: z.nativeEnum(UserType),
-	number: z.nativeEnum(NumberType)
+	type: z.nativeEnum(UserType).default(UserType.WORKER),
+	number: z.nativeEnum(NumberType).default(NumberType.WORKER)
 });
 
 ///// Load //////////////////////////////////////////////////////////

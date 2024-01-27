@@ -168,16 +168,16 @@ export function Form<T extends Record<string, unknown>, M>(
 	{
 		ErrorTextEvents_addErrorTextListeners();
 
-		const completed = (cancelled: boolean, clearAll = false) => {
-			if (!clearAll) Timers_clear();
+		const completed = (options: { cancelled: boolean; clearAll?: boolean }) => {
+			if (!options.clearAll) Timers_clear();
 			else Timers_clearAll();
 
-			if (!cancelled) setTimeout(Form_scrollToFirstError, 1);
+			if (!options.cancelled) setTimeout(Form_scrollToFirstError, 1);
 		};
 
 		onDestroy(() => {
 			ErrorTextEvents_removeErrorTextListeners();
-			completed(true);
+			completed({ cancelled: true });
 		});
 
 		return {

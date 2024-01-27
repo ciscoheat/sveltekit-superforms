@@ -434,7 +434,11 @@ export function superForm<
 
 				if (Array.isArray(value)) {
 					if (value.length > 0) checkForNestedData(key, value[0]);
-				} else if (!(value instanceof Date)) {
+				} else if (
+					!(value instanceof Date) &&
+					!(value instanceof File) &&
+					!(value instanceof FileList)
+				) {
 					throw new SuperFormError(
 						`Object found in form field "${key}". ` +
 							`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
@@ -707,7 +711,7 @@ export function superForm<
 		resetData.data = { ...resetData.data, ...data };
 		if (id !== undefined) resetData.id = id;
 
-		rebind(resetData, true, message);
+		rebind(resetData, true, message, false);
 	}
 
 	const Form_updateFromActionResult: FormUpdate = async (result, untaint?: boolean) => {
@@ -1262,7 +1266,7 @@ export function superForm<
 				function cancel(resetTimers = true) {
 					cancelled = true;
 					if (resetTimers && htmlForm.isSubmitting()) {
-						htmlForm.completed(true);
+						htmlForm.completed({ cancelled });
 					}
 					return _submitCancel();
 				}
@@ -1467,8 +1471,17 @@ export function superForm<
 									await event(data);
 								}
 
-								if (!cancelled && options.customValidity) {
-									setCustomValidityForm(FormEl, data.form.errors);
+								if (!cancelled) {
+									if (options.customValidity) {
+										setCustomValidityForm(FormEl, data.form.errors);
+									}
+
+									// Special reset case for file inputs
+									if (data.form.valid && options.resetForm) {
+										data.formEl
+											.querySelectorAll<HTMLInputElement>('input[type="file"]')
+											.forEach((e) => (e.value = ''));
+									}
 								}
 							}
 						}
@@ -1539,13 +1552,13 @@ export function superForm<
 					// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
 					// Also fixing an edge case when timers weren't resetted when redirecting to the same route.
 					if (cancelled || result.type != 'redirect') {
-						htmlForm.completed(cancelled);
+						htmlForm.completed({ cancelled });
 					} else {
 						const unsub = navigating.subscribe(($nav) => {
 							if ($nav) return;
 							unsub();
 							if (htmlForm.isSubmitting()) {
-								htmlForm.completed(cancelled, true);
+								htmlForm.completed({ cancelled, clearAll: true });
 							}
 						});
 					}

@@ -9,7 +9,7 @@
 
 	// Doesn't work well with testing client-side validation for files
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
-		//dataType: 'json',
+		resetForm: true,
 		validators: $page.url.searchParams.has('client') ? zod(schema) : undefined
 	});
 </script>

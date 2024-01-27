@@ -14,6 +14,7 @@
 		<li><a href="/v2/submit-enter">Submit on enter</a></li>
 		<li><a href="/v2/boolean-same-union">Boolean and same union</a></li>
 		<li><a href="/v2/letters/asdf">Letter route</a></li>
+		<li><a href="/v2/custom-tainted-dialog">Custom tainted dialog</a></li>
 	</ul>
 </nav>
 

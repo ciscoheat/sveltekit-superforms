@@ -21,7 +21,7 @@ import {
 	type FormPath,
 	type FormPathLeaves
 } from '$lib/stringPath.js';
-import { beforeNavigate, invalidateAll } from '$app/navigation';
+import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
 import { SuperFormError, flattenErrors, updateErrors } from '$lib/errors.js';
 import { clientValidation } from './clientValidation.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
@@ -64,7 +64,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	errorSelector: string;
 	selectErrorText: boolean;
 	stickyNavbar: string;
-	taintedMessage: string | boolean | null;
+	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
 	SPA: true | { failStatus?: number };
 
 	onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
@@ -1009,13 +1009,45 @@ export function superForm<
 	if (browser) {
 		// Tainted check
 		const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
-		beforeNavigate((nav) => {
-			if (options.taintedMessage && !Data.submitting) {
-				if (
-					Tainted_isTainted() &&
-					!window.confirm(options.taintedMessage === true ? defaultMessage : options.taintedMessage)
-				) {
+		let forceRedirection = false;
+		beforeNavigate(async (nav) => {
+			if (options.taintedMessage && !Data.submitting && !forceRedirection) {
+				if (Tainted_isTainted()) {
+					const { taintedMessage } = options;
+
+					// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
 					nav.cancel();
+					// Does not display any dialog on page refresh or closing tab and let the default browser behaviour
+					if (nav.type === 'leave') return;
+
+					const isTaintedFunction = typeof taintedMessage === 'function';
+					const message =
+						isTaintedFunction || taintedMessage === true ? defaultMessage : taintedMessage;
+
+					// - rejected => shouldRedirect = false
+					// - resolved with false => shouldRedirect = false
+					// - resolved with true => shouldRedirect = true
+					const confirmFunction = isTaintedFunction
+						? taintedMessage
+						: () => window.confirm(message);
+
+					let shouldRedirect;
+					try {
+						shouldRedirect = await confirmFunction();
+					} catch {
+						shouldRedirect = false;
+					}
+
+					if (shouldRedirect && nav.to) {
+						try {
+							forceRedirection = true;
+							await goto(nav.to.url, { ...nav.to.params });
+							return;
+						} finally {
+							// Reset forceRedirection for multiple-tainted purpose
+							forceRedirection = false;
+						}
+					}
 				}
 			}
 		});

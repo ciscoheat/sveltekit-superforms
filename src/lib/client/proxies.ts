@@ -5,6 +5,7 @@ import { pathExists, traversePath } from '../traversal.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';
 import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './index.js';
+import type { Prettify } from '$lib/utils.js';
 
 type DefaultOptions = {
 	trueStringValue: string;
@@ -22,13 +23,15 @@ type DefaultOptions = {
 	delimiter?: '.' | ',';
 	empty?: 'null' | 'undefined';
 	emptyIfZero?: boolean;
+	zeroIfEmpty?: boolean;
 	taint?: TaintOption;
 };
 
 const defaultOptions: DefaultOptions = {
 	trueStringValue: 'true',
 	dateFormat: 'iso',
-	emptyIfZero: true
+	emptyIfZero: true,
+	zeroIfEmpty: false
 };
 
 ///// Proxy functions ///////////////////////////////////////////////
@@ -36,7 +39,7 @@ const defaultOptions: DefaultOptions = {
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Pick<DefaultOptions, 'trueStringValue' | 'taint'>
+	options?: Prettify<Pick<DefaultOptions, 'trueStringValue' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'boolean', {
 		...defaultOptions,
@@ -47,7 +50,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 export function intProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'taint'>
+	options?: Prettify<Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'int', {
 		...defaultOptions,
@@ -58,7 +61,9 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'delimiter' | 'taint'>
+	options?: Prettify<
+		Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'delimiter' | 'taint'>
+	>
 ) {
 	return _stringProxy(form, path, 'number', {
 		...defaultOptions,
@@ -70,7 +75,7 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options?: {
-		format: DefaultOptions['dateFormat'];
+		format?: DefaultOptions['dateFormat'];
 		empty?: DefaultOptions['empty'];
 		taint?: TaintOption;
 	}
@@ -136,7 +141,9 @@ function _stringProxy<
 			: value;
 
 		let num: number;
-		if (type == 'number') num = parseFloat(numberToConvert);
+
+		if (!numberToConvert && options.zeroIfEmpty) num = 0;
+		else if (type == 'number') num = parseFloat(numberToConvert);
 		else num = parseInt(numberToConvert, 10);
 
 		if (options.empty !== undefined && ((num === 0 && options.emptyIfZero) || isNaN(num))) {

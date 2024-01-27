@@ -33,3 +33,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `superValidate.options.allowFiles` which makes `setError` and `message` remove files automatically by default. Use `removeFiles` on the returned object in other cases.
 - SuperDebug now displays `File` and `FileList`.
 - All proxies can now take the whole `superForm` object with an extra `taint` option.
+- `zeroIfEmpty` option added to `intProxy` and `numberProxy`, to handle empty text inputs better.

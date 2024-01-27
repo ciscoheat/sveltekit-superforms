@@ -683,16 +683,20 @@ export function superForm<
 		return Form.set(data, options);
 	}
 
-	async function Form_updateFromValidation(form: SuperValidated<T, M>, untaint: boolean) {
-		if (
-			form.valid &&
-			untaint &&
+	function Form_shouldReset(validForm: boolean, successActionResult: boolean) {
+		return (
+			validForm &&
+			successActionResult &&
 			options.resetForm &&
 			(options.resetForm === true || options.resetForm())
-		) {
+		);
+	}
+
+	async function Form_updateFromValidation(form: SuperValidated<T, M>, successResult: boolean) {
+		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
 			Form_reset(form.message);
 		} else {
-			rebind(form, untaint, undefined, true);
+			rebind(form, successResult, undefined, true);
 		}
 
 		// onUpdated may check stores, so need to wait for them to update.
@@ -714,7 +718,7 @@ export function superForm<
 		rebind(resetData, true, message, false);
 	}
 
-	const Form_updateFromActionResult: FormUpdate = async (result, untaint?: boolean) => {
+	const Form_updateFromActionResult: FormUpdate = async (result) => {
 		if (result.type == ('error' as string)) {
 			throw new SuperFormError(
 				`ActionResult of type "${result.type}" cannot be passed to update function.`
@@ -724,9 +728,7 @@ export function superForm<
 		if (result.type == 'redirect') {
 			// All we need to do if redirected is to reset the form.
 			// No events should be triggered because technically we're somewhere else.
-			if (options.resetForm && (options.resetForm === true || options.resetForm())) {
-				Form_reset();
-			}
+			if (Form_shouldReset(true, true)) Form_reset();
 			return;
 		}
 
@@ -745,7 +747,7 @@ export function superForm<
 			if (newForm.id !== Data.formId) continue;
 			await Form_updateFromValidation(
 				newForm as SuperValidated<T, M>,
-				untaint ?? (result.status >= 200 && result.status < 300)
+				result.status >= 200 && result.status < 300
 			);
 		}
 	};
@@ -1030,7 +1032,7 @@ export function superForm<
 					await new Promise((r) => setTimeout(r, 0));
 				}
 
-				const untaint = pageUpdate.status >= 200 && pageUpdate.status < 300;
+				const successResult = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
 				if (pageUpdate.form && typeof pageUpdate.form === 'object') {
 					const actionData = pageUpdate.form;
@@ -1047,7 +1049,7 @@ export function superForm<
 
 						// Prevent multiple "posting" that can happen when components are recreated.
 						initialForms.set(newForm, newForm);
-						await Form_updateFromValidation(newForm as SuperValidated<T, M>, untaint);
+						await Form_updateFromValidation(newForm as SuperValidated<T, M>, successResult);
 					}
 				} else if (pageUpdate.data && typeof pageUpdate.data === 'object') {
 					// It's a page reload, redirect or error/failure,
@@ -1059,7 +1061,7 @@ export function superForm<
 							continue;
 						}
 
-						rebind(newForm as SuperValidated<T, M>, untaint, undefined, true);
+						rebind(newForm as SuperValidated<T, M>, successResult, undefined, true);
 					}
 				}
 			})
@@ -1477,7 +1479,7 @@ export function superForm<
 									}
 
 									// Special reset case for file inputs
-									if (data.form.valid && options.resetForm) {
+									if (Form_shouldReset(data.form.valid, result.type == 'success')) {
 										data.formEl
 											.querySelectorAll<HTMLInputElement>('input[type="file"]')
 											.forEach((e) => (e.value = ''));

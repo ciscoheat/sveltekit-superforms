@@ -109,14 +109,10 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
  * @param field Form field
  * @param type 'number' | 'int' | 'boolean'
  */
-function _stringProxy<
-	T extends Record<string, unknown>,
-	Type extends 'number' | 'int' | 'boolean' | 'date' | 'string',
-	Path extends FormPath<T>
->(
+function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	type: Type,
+	type: 'number' | 'int' | 'boolean' | 'date' | 'string',
 	options: DefaultOptions
 ): Writable<string> {
 	function toValue(value: unknown) {

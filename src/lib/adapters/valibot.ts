@@ -1,18 +1,17 @@
 import {
 	//toJsonSchema,
 	type ValidationAdapter,
-	type RequiredJsonSchemaOptions,
+	type AdapterOptions,
 	type Infer,
 	createAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter,
-	type AdapterDefaultOptions
+	createJsonSchema
 } from './adapters.js';
 import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
 import { memoize } from '$lib/memoize.js';
 import { toJSONSchema as valibotToJSON } from '@gcornut/valibot-json-schema';
 import type { JSONSchema } from '$lib/index.js';
-import { simpleSchema } from './simple-schema/index.js';
 
 type SupportedSchemas = BaseSchema | BaseSchemaAsync;
 type Options = Parameters<typeof valibotToJSON>[0];
@@ -49,18 +48,16 @@ async function validate<T extends SupportedSchemas>(
 
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
-	options: Omit<Options, 'schema'> | AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T> = {}
+	options: Omit<Options, 'schema'> | AdapterOptions<T> = {}
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
 		validate: async (data) => validate(schema, data),
-		jsonSchema:
-			'jsonSchema' in options
-				? options.jsonSchema
-				: 'defaults' in options
-					? simpleSchema(options.defaults)
-					: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-						valibotToJsonSchema({ schema: schema as any, ...options }),
+		jsonSchema: createJsonSchema(
+			options,
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			() => valibotToJsonSchema({ schema: schema as any, ...options })
+		),
 		defaults: 'defaults' in options ? options.defaults : undefined
 	});
 }

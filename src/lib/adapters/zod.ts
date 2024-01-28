@@ -1,7 +1,7 @@
 import type { AnyZodObject, ZodDefault, ZodEffects, ZodUnion } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
-	type JsonSchemaOptions,
+	type AdapterOptions,
 	type ValidationAdapter,
 	type Infer,
 	createAdapter,
@@ -65,7 +65,7 @@ async function validate<T extends ZodValidation<AnyZodObject | ZodObjectUnion<An
 
 function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
 	schema: T,
-	options?: JsonSchemaOptions<T>
+	options?: AdapterOptions<T>
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',

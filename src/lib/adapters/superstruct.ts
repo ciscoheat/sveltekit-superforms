@@ -1,14 +1,14 @@
 import {
 	type ValidationAdapter,
-	type AdapterDefaultOptions,
-	type RequiredJsonSchemaOptions,
 	createAdapter,
 	type ValidationResult,
-	type ClientValidationAdapter
+	type ClientValidationAdapter,
+	createJsonSchema,
+	type RequiredDefaultsOptions,
+	type Infer
 } from './adapters.js';
-import type { Infer, Struct } from 'superstruct/dist/struct.js';
+import type { Struct } from 'superstruct/dist/struct.js';
 import { memoize } from '$lib/memoize.js';
-import { toJsonSchema } from './toJsonSchema.js';
 
 async function validate<T extends Struct>(
 	schema: T,
@@ -30,15 +30,12 @@ async function validate<T extends Struct>(
 
 function _superstruct<T extends Struct>(
 	schema: T,
-	options: AdapterDefaultOptions<T> | RequiredJsonSchemaOptions<T>
+	options: RequiredDefaultsOptions<T>
 ): ValidationAdapter<Infer<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'superstruct',
 		validate: async (data) => validate(schema, data),
-		jsonSchema:
-			'jsonSchema' in options
-				? options.jsonSchema
-				: toJsonSchema(options.defaults, options.schemaOptions),
+		jsonSchema: createJsonSchema(options),
 		defaults: options.defaults
 	});
 }

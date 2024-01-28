@@ -1,6 +1,6 @@
 import {
 	type ValidationAdapter,
-	type JsonSchemaOptions,
+	type AdapterOptions,
 	createAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter
@@ -32,7 +32,7 @@ async function validate<T extends ObjectSchema>(
 /* @__NO_SIDE_EFFECTS__ */
 function _joi<T extends ObjectSchema>(
 	schema: T,
-	options?: JsonSchemaOptions<T>
+	options?: AdapterOptions<T>
 ): ValidationAdapter<Record<string, unknown>> {
 	return createAdapter({
 		superFormValidationLibrary: 'joi',

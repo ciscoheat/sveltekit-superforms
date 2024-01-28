@@ -5,7 +5,7 @@ import type { ValidationErrors } from './superValidate.js';
 import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone } from './utils.js';
-import merge from 'ts-deepmerge';
+import { merge } from 'ts-deepmerge';
 import { schemaInfo } from './jsonSchema/schemaInfo.js';
 import type { ValidationIssue } from './adapters/adapters.js';
 

@@ -11,7 +11,7 @@ import {
 	superValidate,
 	type SuperValidated
 } from '$lib/superValidate.js';
-import merge from 'ts-deepmerge';
+import { merge } from 'ts-deepmerge';
 import { fail } from '@sveltejs/kit';
 import { defaults as schemaDefaults } from '$lib/defaults.js';
 

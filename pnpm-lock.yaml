@@ -104,6 +104,9 @@ devDependencies:
   json-schema-to-ts:
     specifier: ^3.0.0
     version: 3.0.0
+  only-allow:
+    specifier: ^1.2.1
+    version: 1.2.1
   prettier:
     specifier: ^3.2.4
     version: 3.2.4
@@ -2019,6 +2022,13 @@ packages:
       mimic-fn: 4.0.0
     dev: true
 
+  /only-allow@1.2.1:
+    resolution: {integrity: sha512-M7CJbmv7UCopc0neRKdzfoGWaVZC+xC1925GitKH9EAqYFzX9//25Q7oX4+jw0tiCCj+t5l6VZh8UPH23NZkMA==}
+    hasBin: true
+    dependencies:
+      which-pm-runs: 1.1.0
+    dev: true
+
   /optionator@0.9.3:
     resolution: {integrity: sha512-JjCoypp+jKn1ttEFExxhetCKeJt9zhAgAve5FXHixTvFDW/5aEktX9bufBKLRRMdU7bNtpLfcGu94B3cdEJgjg==}
     engines: {node: '>= 0.8.0'}
@@ -2870,6 +2880,11 @@ packages:
       - sugarss
       - supports-color
       - terser
+    dev: true
+
+  /which-pm-runs@1.1.0:
+    resolution: {integrity: sha512-n1brCuqClxfFfq/Rb0ICg9giSZqCS+pLtccdag6C2HyufBrh3fBOiy9nb6ggRMvWOVH5GrdJskj5iGTZNxd7SA==}
+    engines: {node: '>=4'}
     dev: true
 
   /which@2.0.2:

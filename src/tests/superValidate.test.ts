@@ -212,7 +212,13 @@ describe('Valibot', () => {
 		nospace: optional(string([regex(nospacePattern)]))
 	});
 
-	schemaTest(valibot(schema));
+	describe('Introspection', () => {
+		schemaTest(valibot(schema));
+	});
+
+	describe('Defaults', () => {
+		schemaTest(valibot(schema, { defaults }), undefined, 'simple');
+	});
 });
 
 /////////////////////////////////////////////////////////////////////

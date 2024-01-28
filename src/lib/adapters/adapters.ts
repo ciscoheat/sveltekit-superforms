@@ -67,7 +67,7 @@ export type ValidationAdapter<Out extends Record<string, unknown>> = BaseValidat
  * @see {RequiredDefaultsOptions}
  * @__NO_SIDE_EFFECTS__
  */
-export function createJsonSchema(options: Record<string, unknown>, transformer?: () => JSONSchema) {
+export function createJsonSchema(options: object, transformer?: () => JSONSchema) {
 	return 'jsonSchema' in options && options.jsonSchema
 		? options.jsonSchema
 		: 'defaults' in options && options.defaults

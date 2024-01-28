@@ -1,0 +1,14 @@
+diff --git a/src/stringify.js b/src/stringify.js
+index 8ce427e6f6b8573e6aa19db6671191c461e55813..e1b6477e65fe78cea9b442d7826c7abfcdea6a8f 100644
+--- a/src/stringify.js
++++ b/src/stringify.js
+@@ -81,7 +81,8 @@ export function stringify(value, reducers) {
+ 					break;
+ 
+ 				case 'Date':
+-					str = `["Date","${thing.toISOString()}"]`;
++					const isValidDate = !isNaN(thing.getDate())
++					str = `["Date","${isValidDate ? thing.toISOString() : ''}"]`;					
+ 					break;
+ 
+ 				case 'RegExp':

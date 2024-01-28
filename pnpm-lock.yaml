@@ -4,10 +4,15 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  devalue@4.3.2:
+    hash: x45t6tgw6ud4anwrtybrk7bkta
+    path: patches/devalue@4.3.2.patch
+
 dependencies:
   devalue:
     specifier: ^4.3.2
-    version: 4.3.2
+    version: 4.3.2(patch_hash=x45t6tgw6ud4anwrtybrk7bkta)
   klona:
     specifier: ^2.0.6
     version: 2.0.6
@@ -665,7 +670,7 @@ packages:
       '@sveltejs/vite-plugin-svelte': 3.0.1(svelte@4.2.9)(vite@5.0.12)
       '@types/cookie': 0.6.0
       cookie: 0.6.0
-      devalue: 4.3.2
+      devalue: 4.3.2(patch_hash=x45t6tgw6ud4anwrtybrk7bkta)
       esm-env: 1.0.0
       import-meta-resolve: 4.0.0
       kleur: 4.1.5
@@ -1227,8 +1232,9 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /devalue@4.3.2:
+  /devalue@4.3.2(patch_hash=x45t6tgw6ud4anwrtybrk7bkta):
     resolution: {integrity: sha512-KqFl6pOgOW+Y6wJgu80rHpo2/3H07vr8ntR9rkkFIRETewbf5GaYYcakYfiKz89K+sLsuPkQIZaXDMjUObZwWg==}
+    patched: true
 
   /diff-sequences@29.6.3:
     resolution: {integrity: sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==}

@@ -10,7 +10,7 @@ import {
 import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
 import { memoize } from '$lib/memoize.js';
 import { toJSONSchema as valibotToJSON } from '@gcornut/valibot-json-schema';
-import type { JSONSchema } from '$lib/index.js';
+import type { JSONSchema } from '../jsonSchema/index.js';
 
 type SupportedSchemas = BaseSchema | BaseSchemaAsync;
 

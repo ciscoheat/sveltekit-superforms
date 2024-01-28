@@ -1,7 +1,7 @@
 // Taken from https://github.com/lightsofapollo/joi-to-json-schema and converted to ESM
 // TODO: Need more tests
 
-import type { JSONSchema } from '$lib/index.js';
+import type { JSONSchema } from '../../jsonSchema/index.js';
 import type { JSONSchema7TypeName } from 'json-schema';
 
 function assert(condition: unknown, errorMessage: string) {

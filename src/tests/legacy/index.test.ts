@@ -369,14 +369,6 @@ describe('Default values', () => {
 				fruit: [Fruits.Banana, Fruits.Apple],
 				fruitsstring: [FruitsString.Apple, FruitsString.Banana],
 				gender: null
-			},
-			constraints: {
-				fruit: { required: true },
-				fruitsstring: { required: true }
-			},
-			shape: {
-				fruit: {},
-				fruitsstring: {}
 			}
 		});
 	});

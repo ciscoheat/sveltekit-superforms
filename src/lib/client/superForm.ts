@@ -1,4 +1,4 @@
-import { type SuperValidated, type TaintedFields } from '$lib/superValidate.js';
+import type { TaintedFields, SuperFormValidated, SuperValidated } from '$lib/superValidate.js';
 import type { ActionResult, Page, SubmitFunction } from '@sveltejs/kit';
 import {
 	derived,
@@ -33,6 +33,7 @@ import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
 import type { MaybePromise } from '$lib/utils.js';
 import type { ClientValidationAdapter } from '$lib/adapters/adapters.js';
+import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -130,7 +131,7 @@ export type SuperFormSnapshot<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
-> = SuperValidated<T, M> & { tainted: TaintedFields<T> | undefined };
+> = SuperFormValidated<T, M> & { tainted: TaintedFields<T> | undefined };
 
 type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
@@ -153,8 +154,8 @@ export type SuperForm<
 	form: SuperFormData<T>;
 	formId: Writable<string | undefined>;
 	errors: SuperFormErrors<T>;
-	constraints: Writable<SuperValidated<T, M>['constraints']>;
-	message: Writable<SuperValidated<T, M>['message']>;
+	constraints: Writable<InputConstraints<T>>;
+	message: Writable<M | undefined>;
 	tainted: Writable<TaintedFields<T> | undefined>;
 
 	submitting: Readable<boolean>;
@@ -195,7 +196,7 @@ export type ValidateOptions<V> = Partial<{
  */
 export function validateForm<T extends Record<string, unknown>>(path?: {
 	update: boolean;
-}): Promise<SuperValidated<T>>;
+}): Promise<SuperFormValidated<T>>;
 
 /**
  * Validate a specific field in the form.
@@ -346,8 +347,7 @@ export function superForm<
 				valid: false,
 				posted: false,
 				errors: {},
-				data: form as T,
-				constraints: {}
+				data: form as T
 			} satisfies SuperValidated<T, M>;
 		}
 
@@ -396,7 +396,11 @@ export function superForm<
 					initialForms.set(postedData, postedData);
 
 					const pageDataForm = form as SuperValidated<T, M>;
+
+					// Add the missing fields from the page data form
 					form = postedForm as SuperValidated<T, M>;
+					form.constraints = pageDataForm.constraints;
+					form.shape = pageDataForm.shape;
 
 					// Reset the form if option set and form is valid.
 					if (
@@ -464,10 +468,10 @@ export function superForm<
 	const __data = {
 		formId: form.id,
 		form: clone(form.data),
-		constraints: form.constraints,
+		constraints: form.constraints ?? {},
 		posted: form.posted,
 		errors: clone(form.errors),
-		message: form.message,
+		message: clone(form.message),
 		tainted: undefined as TaintedFields<T> | undefined,
 		valid: form.valid,
 		submitting: false,
@@ -533,8 +537,8 @@ export function superForm<
 		}
 	};
 
-	async function Form_validate() {
-		return await clientValidation(
+	async function Form_validate(): Promise<SuperFormValidated<T, M>> {
+		return await clientValidation<T, M>(
 			options.validators,
 			Data.form,
 			Data.formId,
@@ -757,9 +761,10 @@ export function superForm<
 
 	//#endregion
 
-	const Message = writable<M | undefined>(form.message);
-	const Constraints = writable(form.constraints);
-	const Posted = writable(false);
+	const Message = writable<M | undefined>(__data.message);
+	const Constraints = writable(__data.constraints);
+	const Posted = writable(__data.posted);
+	const Shape = writable(__data.shape);
 
 	//#region Errors
 
@@ -942,7 +947,8 @@ export function superForm<
 		Constraints.subscribe((constraints) => (__data.constraints = constraints)),
 		Posted.subscribe((posted) => (__data.posted = posted)),
 		Message.subscribe((message) => (__data.message = message)),
-		Submitting.subscribe((submitting) => (__data.submitting = submitting))
+		Submitting.subscribe((submitting) => (__data.submitting = submitting)),
+		Shape.subscribe((shape) => (__data.shape = shape))
 	];
 
 	function Unsubscriptions_add(func: () => void) {
@@ -988,9 +994,11 @@ export function superForm<
 		Errors.set(form.errors);
 		FormId.set(form.id);
 		Posted.set(form.posted);
+		// Constraints and shape will only be set when they exist.
+		if (form.constraints) Constraints.set(form.constraints);
+		if (form.shape) Shape.set(form.shape);
 		// Only allowed non-subscribe __data access, here in rebind
 		__data.valid = form.valid;
-		__data.shape = form.shape;
 
 		if (options.flashMessage && shouldSyncFlash(options)) {
 			const flash = options.flashMessage.module.getFlash(page);
@@ -1116,7 +1124,7 @@ export function superForm<
 				const result = await Form_clientValidation({ paths: [] }, true);
 				if (result) return result;
 			}
-			return Form_validate();
+			return await Form_validate();
 		}
 
 		if (opts.update === undefined) opts.update = true;
@@ -1334,7 +1342,7 @@ export function superForm<
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
 
-					let validation: SuperValidated<T> | undefined = undefined;
+					let validation: SuperFormValidated<T, M> | undefined = undefined;
 
 					if (!noValidate) {
 						validation = await Form_validate();

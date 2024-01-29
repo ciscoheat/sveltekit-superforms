@@ -173,14 +173,7 @@ describe('Errors', async () => {
 			valid: false,
 			errors: { _errors: ["Can't order more flavours than scoops!"] },
 			data: { scoops: 1, flavours: ['Mint choc chip', 'Raspberry ripple'] },
-			posted: true,
-			constraints: {
-				scoops: { min: 1 },
-				flavours: { minlength: 1 }
-			},
-			shape: {
-				flavours: {}
-			}
+			posted: true
 		});
 	});
 

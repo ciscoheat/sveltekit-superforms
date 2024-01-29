@@ -10,6 +10,14 @@ import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
 
+export type SuperFormValidated<
+	T extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message
+> = SuperValidated<T, Message> & {
+	constraints: InputConstraints<T>;
+};
+
 export type SuperValidated<
 	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,7 +28,7 @@ export type SuperValidated<
 	posted: boolean;
 	errors: ValidationErrors<Out>;
 	data: Out;
-	constraints: InputConstraints<Out>;
+	constraints?: InputConstraints<Out>;
 	message?: Message;
 	shape?: SchemaShape;
 };
@@ -152,12 +160,15 @@ export async function superValidate<
 		valid,
 		posted: parsed.posted,
 		errors: errors as ValidationErrors<Out>,
-		data: outputData as Out,
-		constraints: validator.constraints
+		data: outputData as Out
 	};
 
-	if (Object.keys(validator.shape).length) {
-		output.shape = validator.shape;
+	if (!parsed.posted) {
+		output.constraints = validator.constraints;
+
+		if (Object.keys(validator.shape).length) {
+			output.shape = validator.shape;
+		}
 	}
 
 	return output;

@@ -25,6 +25,9 @@ export const scrollToAndCenter = (
 
 const immediateInputTypes = ['checkbox', 'radio', 'range', 'file'];
 
+/**
+ * Information about a HTML element, for determining when to display errors.
+ */
 export function inputInfo(el: EventTarget | null): {
 	immediate: boolean;
 	multiple: boolean;

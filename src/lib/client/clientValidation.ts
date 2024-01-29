@@ -1,30 +1,30 @@
 import type { FormOptions } from './index.js';
 import { mapErrors } from '../errors.js';
 import { type ValidationResult } from '$lib/adapters/adapters.js';
-import type { SuperValidated, ValidationErrors } from '$lib/superValidate.js';
+import type { SuperFormValidated, ValidationErrors } from '$lib/superValidate.js';
 
 /**
  * Validate form data.
  */
-export async function clientValidation<T extends Record<string, unknown>, M = unknown>(
+export async function clientValidation<T extends Record<string, unknown>, M>(
 	validators: FormOptions<T, M>['validators'],
 	data: T,
 	formId: string,
-	constraints: SuperValidated<T>['constraints'],
+	constraints: SuperFormValidated<T, M>['constraints'],
 	posted: boolean,
-	formShape: SuperValidated<T>['shape']
+	formShape: SuperFormValidated<T, M>['shape']
 ) {
 	return _clientValidation(validators, data, formId, constraints, posted, formShape);
 }
 
-async function _clientValidation<T extends Record<string, unknown>, M = unknown>(
+async function _clientValidation<T extends Record<string, unknown>, M>(
 	validator: FormOptions<T, M>['validators'],
 	data: T,
 	formId: string,
-	constraints: SuperValidated<T>['constraints'],
+	constraints: SuperFormValidated<T, M>['constraints'],
 	posted: boolean,
-	formShape: SuperValidated<T>['shape']
-): Promise<SuperValidated<T>> {
+	formShape: SuperFormValidated<T, M>['shape']
+): Promise<SuperFormValidated<T, M>> {
 	let errors: ValidationErrors<T> = {};
 	let status: ValidationResult<T> = { success: true, data };
 

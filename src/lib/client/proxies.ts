@@ -125,16 +125,19 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 		}
 
 		if (typeof value !== 'string') {
-			throw new SuperFormError('stringProxy received a non-string value.');
+			// Can be undefined due to Proxy in Svelte 5
+			value = '';
 		}
 
-		if (type == 'string') return value;
-		else if (type == 'boolean') return !!value;
-		else if (type == 'date') return new Date(value);
+		const stringValue = value as string;
+
+		if (type == 'string') return stringValue;
+		else if (type == 'boolean') return !!stringValue;
+		else if (type == 'date') return new Date(stringValue);
 
 		const numberToConvert = options.delimiter
-			? (value as string).replace(options.delimiter, '.')
-			: value;
+			? stringValue.replace(options.delimiter, '.')
+			: stringValue;
 
 		let num: number;
 

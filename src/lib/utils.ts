@@ -1,4 +1,4 @@
-import { klona } from 'klona/full';
+import justClone from 'just-clone';
 
 // Thanks to: https://dev.to/tylim88/typescript-numeric-range-type-15a5#comment-22mld
 export type NumericRange<
@@ -11,7 +11,7 @@ export type NumericRange<
 	: NumericRange<START, END, [...ARR, 1], ARR[START] extends undefined ? ACC : ACC | ARR['length']>;
 
 export function clone<T>(data: T): T {
-	return klona(data);
+	return data && typeof data === 'object' ? justClone(data) : data;
 }
 
 export type MaybePromise<T> = T | Promise<T>;

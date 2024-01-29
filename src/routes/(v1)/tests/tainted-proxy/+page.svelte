@@ -17,7 +17,7 @@
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<p>Proxy: {$tainted} - Form: {$formTainted?.user?.name}</p>
+<p>Proxy: {String($tainted)} - Form: {String($formTainted?.user?.name)}</p>
 
 <p>
 	<br />

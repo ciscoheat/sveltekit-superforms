@@ -5,7 +5,9 @@
 
 	export let data: PageData;
 
-	const { form, errors, enhance, message, tainted } = superForm(data.form);
+	const { form, errors, enhance, message, tainted } = superForm(data.form, {
+		taintedMessage: null
+	});
 
 	let menu = ['Cookies and cream', 'Mint choc chip', 'Raspberry ripple'];
 </script>

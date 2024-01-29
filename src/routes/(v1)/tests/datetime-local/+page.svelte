@@ -63,7 +63,7 @@
 	<label>
 		Normal number: <input name="number2" type="number" bind:value={$form.number2} />
 		<span class="value">
-			{$form.number2}
+			{String($form.number2)}
 		</span>
 		{#if $errors.number2}<span class="invalid">{$errors.number2}</span>{/if}
 	</label>

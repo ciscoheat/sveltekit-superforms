@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { page } from '$app/stores';
 	import { schema } from './schema.js';
 	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
 		validators: zod(schema)
 	});
@@ -37,10 +37,15 @@
 		<div class="status error">{$errors._errors}</div>
 	{/if}
 
-	{#each $form.persons as p, i}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{#each $form.persons as _, i}
 		<label>
 			Name:
-			<input name="name" data-invalid={$errors.persons?.[i]?.name} bind:value={p.name} />
+			<input
+				name="name"
+				data-invalid={$errors.persons?.[i]?.name}
+				bind:value={$form.persons[i].name}
+			/>
 			{#if $errors.persons?.[i]?.name}<span class="invalid">{$errors.persons?.[i]?.name}</span>{/if}
 		</label>
 	{/each}

@@ -44,7 +44,7 @@
 <SuperDebug data={$form} />
 
 <h4>
-	{$form.r1.options}-{$form.r1.prev} / {$form.r2.options}-{$form.r2.prev}
+	{$form.r1.options}-{String($form.r1.prev)} / {$form.r2.options}-{String($form.r2.prev)}
 </h4>
 
 <form use:superForm.enhance method="post">

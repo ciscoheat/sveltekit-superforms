@@ -4,15 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  devalue@4.3.2:
-    hash: x45t6tgw6ud4anwrtybrk7bkta
-    path: patches/devalue@4.3.2.patch
-
 dependencies:
   devalue:
     specifier: ^4.3.2
-    version: 4.3.2(patch_hash=x45t6tgw6ud4anwrtybrk7bkta)
+    version: 4.3.2
   klona:
     specifier: ^2.0.6
     version: 2.0.6
@@ -26,7 +21,7 @@ dependencies:
 optionalDependencies:
   '@gcornut/valibot-json-schema':
     specifier: ^0.0.21
-    version: 0.0.21(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.0)(valibot@0.27.0)
+    version: 0.0.21(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.0)(valibot@0.27.1)
   '@sinclair/typebox':
     specifier: ^0.32.13
     version: 0.32.13
@@ -49,8 +44,8 @@ optionalDependencies:
     specifier: ^1.0.3
     version: 1.0.3
   valibot:
-    specifier: ^0.27.0
-    version: 0.27.0
+    specifier: ^0.27.1
+    version: 0.27.1
   yup:
     specifier: ^1.3.3
     version: 1.3.3
@@ -623,7 +618,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@gcornut/valibot-json-schema@0.0.21(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.0)(valibot@0.27.0):
+  /@gcornut/valibot-json-schema@0.0.21(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.0)(valibot@0.27.1):
     resolution: {integrity: sha512-uTuG5WGRudutXNP0nUzzdvYDV6sUHby2kDxbZWSY/IO/vpNu4T6//nRoDB1M2qaf2hmoPtE7iC6X6OT4J4PG3w==}
     hasBin: true
     requiresBuild: true
@@ -636,7 +631,7 @@ packages:
       '@types/json-schema': 7.0.15
       esbuild: 0.20.0
       esbuild-runner: 2.2.2(esbuild@0.20.0)
-      valibot: 0.27.0
+      valibot: 0.27.1
     dev: false
     optional: true
 
@@ -903,7 +898,7 @@ packages:
       '@sveltejs/vite-plugin-svelte': 3.0.2(svelte@4.2.9)(vite@5.0.12)
       '@types/cookie': 0.6.0
       cookie: 0.6.0
-      devalue: 4.3.2(patch_hash=x45t6tgw6ud4anwrtybrk7bkta)
+      devalue: 4.3.2
       esm-env: 1.0.0
       import-meta-resolve: 4.0.0
       kleur: 4.1.5
@@ -1465,9 +1460,8 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /devalue@4.3.2(patch_hash=x45t6tgw6ud4anwrtybrk7bkta):
+  /devalue@4.3.2:
     resolution: {integrity: sha512-KqFl6pOgOW+Y6wJgu80rHpo2/3H07vr8ntR9rkkFIRETewbf5GaYYcakYfiKz89K+sLsuPkQIZaXDMjUObZwWg==}
-    patched: true
 
   /diff-sequences@29.6.3:
     resolution: {integrity: sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==}
@@ -3015,8 +3009,8 @@ packages:
     hasBin: true
     dev: true
 
-  /valibot@0.27.0:
-    resolution: {integrity: sha512-1Wv0FfiosoAYruPhueHJgJtgj18KlUoBaIEeCefCEsohStcJQWp3jL59J8Tj9w8jiuQ3USkZGH8BtzDHDGgdxQ==}
+  /valibot@0.27.1:
+    resolution: {integrity: sha512-k57/5/kMwMjiVP0LUMpa+n4ihSemuXshz1ND4fftKw1bkHZYN/TnHcbjaEie3K7FwAceiOgugLZPjSaNxdygeg==}
     requiresBuild: true
     dev: false
     optional: true

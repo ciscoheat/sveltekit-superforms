@@ -359,7 +359,7 @@ function schemaTest(
 		expect(errors).toEqual(errorCount);
 	}
 
-	function expectConstraints(inputConstraints: InputConstraints<Record<string, unknown>>) {
+	function expectConstraints(inputConstraints?: InputConstraints<Record<string, unknown>>) {
 		switch (adapterType) {
 			case 'simple':
 				expect(inputConstraints).toEqual(simpleConstraints);

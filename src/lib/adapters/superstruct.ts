@@ -17,7 +17,7 @@ async function validate<T extends Struct>(
 	const result = schema.validate(data, { coerce: true });
 	if (result[0] == null) {
 		return {
-			data: result[1],
+			data: result[1] as Infer<T>,
 			success: true
 		};
 	}

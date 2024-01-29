@@ -214,19 +214,7 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 	options?: { taint?: TaintOption }
 ): {
 	path: Path;
-	values: Writable<
-		FormPathType<T, Path> &
-			(
-				| unknown[]
-				| (undefined extends FormPathType<T, Path>
-						? null extends FormPathType<T, Path>
-							? null | undefined
-							: null extends FormPathType<T, Path>
-								? null
-								: undefined
-						: never)
-			)
-	>;
+	values: Writable<FormPathType<T, Path> & unknown[]>;
 	errors: Writable<string[] | undefined>;
 	valueErrors: Writable<ArrayFieldErrors>;
 } {

@@ -40,6 +40,29 @@ describe('Value proxies', () => {
 		expect(get(form).int).toBe(123);
 	});
 
+	test('empty intProxy', async () => {
+		const schema = z.object({
+			int: z.number().int().optional()
+		});
+
+		const superForm = await superValidate(zod(schema));
+		const form = writable(superForm.data);
+
+		const proxy = intProxy(form, 'int', {
+			empty: 'undefined',
+			emptyIfZero: true,
+			transform: (value) => (value ? value * 2 : value)
+		});
+
+		expect(get(form).int).toBe(undefined);
+
+		proxy.set('123');
+		expect(get(form).int).toBe(246);
+
+		proxy.set('');
+		expect(get(form).int).toBe(undefined);
+	});
+
 	test('intProxy with transform', async () => {
 		const schema = z.object({
 			int: z.number().int()

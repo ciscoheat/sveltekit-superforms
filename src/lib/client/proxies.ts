@@ -12,6 +12,9 @@ type ProxyOptions<T extends Record<string, unknown>, Path extends FormPath<T>> =
 	transform?: (value: FormPathType<T, Path>) => FormPathType<T, Path>;
 };
 
+type CorrectProxyType<In, Out, T extends Record<string, unknown>, Path extends FormPath<T>> =
+	NonNullable<FormPathType<T, Path>> extends In ? Writable<Out> : never;
+
 type DefaultOptions<T extends Record<string, unknown>, Path extends FormPath<T>> = {
 	trueStringValue: string;
 	dateFormat:
@@ -50,7 +53,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 	return _stringProxy(form, path, 'boolean', {
 		...defaultOptions,
 		...options
-	}) as FormPathType<T, Path> extends boolean ? Writable<string> : never;
+	}) as CorrectProxyType<boolean, string, T, Path>;
 }
 
 export function intProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
@@ -63,7 +66,7 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 	return _stringProxy(form, path, 'int', {
 		...defaultOptions,
 		...options
-	}) as FormPathType<T, Path> extends number ? Writable<string> : never;
+	}) as CorrectProxyType<number, string, T, Path>;
 }
 
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
@@ -79,7 +82,7 @@ export function numberProxy<T extends Record<string, unknown>, Path extends Form
 	return _stringProxy(form, path, 'number', {
 		...defaultOptions,
 		...options
-	}) as FormPathType<T, Path> extends number ? Writable<string> : never;
+	}) as CorrectProxyType<number, string, T, Path>;
 }
 
 export function dateProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
@@ -96,7 +99,7 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 		...defaultOptions,
 		dateFormat: options?.format ?? 'iso',
 		empty: options?.empty
-	}) as FormPathType<T, Path> extends Date ? Writable<string> : never;
+	}) as CorrectProxyType<Date, string, T, Path>;
 }
 
 export function stringProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
@@ -111,7 +114,7 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
 	return _stringProxy(form, path, 'string', {
 		...defaultOptions,
 		...options
-	}) as FormPathType<T, Path> extends string ? Writable<string> : never;
+	}) as CorrectProxyType<string, string, T, Path>;
 }
 
 ///// Implementation ////////////////////////////////////////////////

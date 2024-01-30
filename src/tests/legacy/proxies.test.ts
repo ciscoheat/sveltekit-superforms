@@ -40,6 +40,25 @@ describe('Value proxies', () => {
 		expect(get(form).int).toBe(123);
 	});
 
+	test('intProxy with transform', async () => {
+		const schema = z.object({
+			int: z.number().int()
+		});
+
+		const superForm = await superValidate(zod(schema));
+		const form = writable(superForm.data);
+
+		const proxy = intProxy(form, 'int', {
+			transform: (value) => value * 2
+		});
+
+		expect(get(form).int).toBe(0);
+
+		proxy.set('123');
+
+		expect(get(form).int).toBe(246);
+	});
+
 	test('numberProxy', async () => {
 		const schema = z.object({
 			number: z.number()
@@ -108,5 +127,17 @@ describe('Field proxies', () => {
 		proxy.set(123);
 		expect(get(proxy)).toBe(123);
 		expect(get(form).test[2]).toBe(123);
+	});
+
+	test('fieldProxy with StringPath and transform', async () => {
+		const superForm = await superValidate(zod(schema));
+		const form = writable(superForm.data);
+
+		const proxy = fieldProxy(form, 'test[2]', { transform: (value) => value * 2 });
+
+		expect(get(proxy)).toBe(2);
+		proxy.set(123);
+		expect(get(proxy)).toBe(246);
+		expect(get(form).test[2]).toBe(246);
 	});
 });

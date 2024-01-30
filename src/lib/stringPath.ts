@@ -62,82 +62,77 @@ export type StringPathArrays<T extends object, Path extends string = ''> = {
 					: never;
 }[Extract<AllKeys<T>, string>];
 
-export type StringPath<
-	T extends object,
-	OnlyArrays extends boolean = false
-> = NonNullable<T> extends (infer U)[]
-	? NonNullable<U> extends object
-		?
-				| (OnlyArrays extends false
-						? `[${number}]`
-						: NonNullable<U> extends unknown[]
+export type StringPath<T extends object, OnlyArrays extends boolean = false> =
+	NonNullable<T> extends (infer U)[]
+		? NonNullable<U> extends object
+			?
+					| (OnlyArrays extends false
 							? `[${number}]`
-							: never)
-				| `[${number}]${NonNullable<U> extends unknown[]
-						? ''
-						: '.'}${NonNullable<U> extends BuiltInObjects
-						? never
-						: StringPath<NonNullable<U>, OnlyArrays> & string}`
-		: `[${number}]`
-	: NonNullable<T> extends object
-		?
-				| (OnlyArrays extends false
-						? AllKeys<T>
-						: {
-								[K in AllKeys<T>]-?: K extends string
-									? NonNullable<T[K]> extends unknown[]
-										? K
-										: never
-									: never;
-							}[AllKeys<T>])
-				| {
-						[K in AllKeys<T>]-?: K extends string
-							? NonNullable<T[K]> extends object
-								? `${K}${NonNullable<T[K]> extends unknown[] ? '' : '.'}${NonNullable<
-										T[K]
-									> extends BuiltInObjects
-										? never
-										: StringPath<NonNullable<T[K]>, OnlyArrays> & string}`
-								: never
-							: never;
-				  }[AllKeys<T>]
-		: never;
+							: NonNullable<U> extends unknown[]
+								? `[${number}]`
+								: never)
+					| `[${number}]${NonNullable<U> extends unknown[]
+							? ''
+							: '.'}${NonNullable<U> extends BuiltInObjects
+							? never
+							: StringPath<NonNullable<U>, OnlyArrays> & string}`
+			: `[${number}]`
+		: NonNullable<T> extends object
+			?
+					| (OnlyArrays extends false
+							? AllKeys<T>
+							: {
+									[K in AllKeys<T>]-?: K extends string
+										? NonNullable<MergeUnion<T>[K]> extends unknown[]
+											? K
+											: never
+										: never;
+								}[AllKeys<T>])
+					| {
+							[K in AllKeys<T>]-?: K extends string
+								? NonNullable<MergeUnion<T>[K]> extends object
+									? `${K}${NonNullable<MergeUnion<T>[K]> extends unknown[] ? '' : '.'}${NonNullable<
+											T[K]
+										> extends BuiltInObjects
+											? never
+											: StringPath<NonNullable<MergeUnion<T>[K]>, OnlyArrays> & string}`
+									: never
+								: never;
+					  }[AllKeys<T>]
+			: never;
 
-export type StringPathLeaves<
-	T extends object,
-	Arr extends string = never
-> = NonNullable<T> extends (infer U)[]
-	? NonNullable<U> extends object
-		?
-				| (Arr extends never ? never : `.${Arr}`)
-				| `[${number}]${NonNullable<U> extends unknown[] ? '' : '.'}${StringPathLeaves<
-						NonNullable<U>,
-						Arr
-				  > &
-						string}`
-		: `[${number}]` | (Arr extends never ? never : `.${Arr}`)
-	: NonNullable<T> extends object
-		?
-				| {
-						// Same as FilterObjects but inlined for better intellisense
-						[K in AllKeys<T>]: NonNullable<T[K]> extends object
-							? NonNullable<T[K]> extends BuiltInObjects
-								? K
-								: never
-							: K;
-				  }[AllKeys<T>]
-				| {
-						[K in AllKeys<T>]-?: K extends string
-							? NonNullable<T[K]> extends object
-								? `${K}${NonNullable<T[K]> extends unknown[] ? '' : '.'}${StringPathLeaves<
-										NonNullable<T[K]>,
-										Arr
-									> &
-										string}`
-								: never
-							: never;
-				  }[AllKeys<T>]
-		: never;
+export type StringPathLeaves<T extends object, Arr extends string = never> =
+	NonNullable<T> extends (infer U)[]
+		? NonNullable<U> extends object
+			?
+					| (Arr extends never ? never : `.${Arr}`)
+					| `[${number}]${NonNullable<U> extends unknown[] ? '' : '.'}${StringPathLeaves<
+							NonNullable<U>,
+							Arr
+					  > &
+							string}`
+			: `[${number}]` | (Arr extends never ? never : `.${Arr}`)
+		: NonNullable<T> extends object
+			?
+					| {
+							[K in AllKeys<T>]: NonNullable<MergeUnion<T>[K]> extends object
+								? NonNullable<MergeUnion<T>[K]> extends BuiltInObjects
+									? K
+									: never
+								: K;
+					  }[AllKeys<T>]
+					| {
+							[K in AllKeys<T>]-?: K extends string
+								? NonNullable<MergeUnion<T>[K]> extends object
+									? `${K}${NonNullable<MergeUnion<T>[K]> extends unknown[] ? '' : '.'}${StringPathLeaves<
+											NonNullable<MergeUnion<T>[K]>,
+											Arr
+										> &
+											string}`
+									: never
+								: never;
+					  }[AllKeys<T>]
+			: never; //{never_error1: T, key: K, value: T[K]}
 
 export type FormPathType<T, P extends string> = P extends keyof T
 	? T[P]

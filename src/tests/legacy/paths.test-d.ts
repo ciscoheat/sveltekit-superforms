@@ -208,6 +208,46 @@ test('Objects with sets', () => {
 	const b3: SetTest = 'numbers.set.size';
 });
 
+test('Unions', () => {
+	const createUserSchema = z.object({
+		email: z.string(),
+		pw: z.string(),
+		both: z.string()
+	});
+
+	const updateUserSchema = createUserSchema.merge(
+		z.object({
+			id: z.string(),
+			both: z.number(),
+			nested: z.object({
+				level2: z.string()
+			})
+		})
+	);
+
+	const unionizedSchema = z.union([createUserSchema, updateUserSchema]);
+
+	type UnionSchema = z.infer<typeof unionizedSchema>;
+	type UnionLeaves = FormPathLeaves<UnionSchema>;
+
+	const email: UnionLeaves = 'email';
+	const pw: UnionLeaves = 'pw';
+	const id: UnionLeaves = 'id';
+	const both: UnionLeaves = 'both';
+
+	// @ts-expect-error incorrect path
+	const nested: UnionLeaves = 'nested';
+	const nestedLevel: UnionLeaves = 'nested.level2';
+
+	// @ts-expect-error incorrect path
+	const error: UnionLeaves = 'nope';
+
+	const a1: FormPathType<UnionSchema, 'both'> = 123;
+	const a2: FormPathType<UnionSchema, 'both'> = '123';
+});
+
+///////////////////////////////////////////////////
+
 // Recursive schema test
 const baseExampleSchema = z.object({
 	name: z.string()

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { zod } from '$lib/adapters/zod.js';
-import { superForm, superValidate, type SuperForm, fieldProxy, setError } from '$lib/index.js';
+import { superValidate, fieldProxy, setError } from '$lib/index.js';
 import type {
 	StringPath,
 	FormPathType,
@@ -9,7 +9,6 @@ import type {
 	FormPathLeaves,
 	FormPath
 } from '$lib/stringPath.js';
-import type { Prettify } from '$lib/utils.js';
 import { writable } from 'svelte/store';
 import { test } from 'vitest';
 import { z } from 'zod';
@@ -39,6 +38,7 @@ type FormData = {
 		}[];
 	};
 };
+
 type FormDataArrays = FormPathArrays<FormData>;
 
 type ObjUnion = {

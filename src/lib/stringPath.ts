@@ -46,6 +46,7 @@ export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
  */
 export type FormPathArrays<T extends object> = string & StringPathArrays<T>;
 
+/*
 export type StringPathArrays<T extends object, Path extends string = ''> = {
 	[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends BuiltInObjects
 		? never
@@ -59,8 +60,11 @@ export type StringPathArrays<T extends object, Path extends string = ''> = {
 					? Path
 					: never;
 }[Extract<AllKeys<T>, string>];
+*/
 
 type Add<Path extends string, Next extends string> = `${Path}${Path extends '' ? '' : '.'}${Next}`;
+
+//type FilterOn<Current, AddIf, Path> = AddIf extends Current ? Path : never;
 
 export type StringPath<
 	T extends object,
@@ -68,27 +72,35 @@ export type StringPath<
 	ObjAppend extends string = never,
 	Path extends string = ''
 > = T extends BuiltInObjects
-	? Path
+	? Filter extends 'leaves' | 'all'
+		? Path
+		: never
 	: T extends (infer U)[]
 		? Path | (U extends object ? StringPath<U, Filter, ObjAppend, `${Path}[${number}]`> : never)
 		: {
 				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
-					?
-							| Add<Path, K>
-							| (NonNullable<T[K]> extends (infer U)[]
-									?
-											| Add<Path, `${K}[${number}]`>
-											| (NonNullable<U> extends object
-													? StringPath<
-															NonNullable<U>,
-															Filter,
-															ObjAppend,
-															Add<Path, `${K}[${number}]`>
-														>
-													: never)
-									: StringPath<NonNullable<T[K]>, Filter, ObjAppend, Add<Path, K>>)
-					: Add<Path, K>;
+					? NonNullable<T[K]> extends (infer U)[]
+						?
+								| (Filter extends 'arrays' | 'all' ? Add<Path, K> : never)
+								| (U extends unknown[]
+										? Filter extends 'arrays' | 'all'
+											? Add<Path, `${K}[${number}]`>
+											: never
+										: Filter extends 'leaves' | 'all'
+											? Add<Path, `${K}[${number}]`>
+											: never)
+								| (NonNullable<U> extends object
+										? StringPath<NonNullable<U>, Filter, ObjAppend, Add<Path, `${K}[${number}]`>>
+										: never)
+						:
+								| (Filter extends 'all' ? Add<Path, K> : never)
+								| StringPath<NonNullable<T[K]>, Filter, ObjAppend, Add<Path, K>>
+					: Filter extends 'leaves' | 'all'
+						? Add<Path, K>
+						: never;
 			}[Extract<AllKeys<T>, string>];
+
+export type StringPathArrays<T extends object> = StringPath<T, 'arrays'>;
 
 /*
 type StringPathOld<T extends object, Filter extends 'arrays' | 'leaves' | 'all' = 'all'> =

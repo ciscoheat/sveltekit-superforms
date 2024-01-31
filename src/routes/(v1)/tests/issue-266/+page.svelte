@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { superform } from '$lib/adapters/superform.js';
+	import { superformClient } from '$lib/adapters/superform.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
@@ -9,7 +9,7 @@
 	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
 		taintedMessage: null,
-		validators: superform({
+		validators: superformClient({
 			business_id: (input) => (input ? undefined : 'Please fill business name first')
 			/*
       // Uncomment for testing purposes, but will fail browser test

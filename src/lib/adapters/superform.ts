@@ -7,7 +7,7 @@ import type { MaybePromise } from '$lib/utils.js';
 // Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
 export type Validators<T extends Record<string, unknown>> = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[P in keyof T]: T extends any
+	[P in keyof T]?: T extends any
 		? T[P] extends Record<string, unknown>
 			? Validators<T[P]>
 			: NonNullable<T[P]> extends (infer A)[]
@@ -22,6 +22,7 @@ export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null 
 
 type Errors = string | string[] | undefined | null;
 
+// TODO: Try to use NoInfer when it's available.
 function _superform<T extends Record<string, unknown>, PartialT extends Partial<T>>(
 	schema: Validators<PartialT>
 ): ClientValidationAdapter<T> {

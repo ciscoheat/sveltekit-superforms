@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superform } from '$lib/adapters/superform.js';
+	import { superformClient } from '$lib/adapters/superform.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
@@ -7,10 +7,10 @@
 
 	let status = '';
 
-	const { form, enhance, errors } = superForm(data.form, {
+	const { form, enhance, errors } = superForm<{ title: string }>(data.form, {
 		SPA: true,
 		resetForm: true,
-		validators: superform({
+		validators: superformClient({
 			title: (value?) =>
 				!value || value.trim().length >= 3 ? null : 'Bitte geben Sie mindestens 3 Zeichen ein'
 		}),

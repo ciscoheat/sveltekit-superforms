@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { type Infer, superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { superformClient } from '$lib/adapters/superform.js';
+	import { schema } from './schema.js';
 
 	export let data: PageData;
 
@@ -10,7 +11,7 @@
 	// @ts-expect-error Clearing data for test purposes
 	data.form.data = {};
 
-	const { form, errors, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm<Infer<typeof schema>>(data.form, {
 		//dataType: 'json',
 		validators: superformClient({
 			age(age) {

@@ -58,80 +58,78 @@ export type TaintOption = boolean | 'untaint' | 'untaint-all';
 // Need to distribute T with "T extends T",
 // since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
-export type FormOptions<T extends Record<string, unknown>, M> = T extends T
-	? Partial<{
-			id: string;
-			applyAction: boolean;
-			invalidateAll: boolean;
-			resetForm: boolean | (() => boolean);
-			scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
-			autoFocusOnError: boolean | 'detect';
-			errorSelector: string;
-			selectErrorText: boolean;
-			stickyNavbar: string;
-			taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
-			SPA: true | { failStatus?: number };
+export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
+	id: string;
+	applyAction: boolean;
+	invalidateAll: boolean;
+	resetForm: boolean | (() => boolean);
+	scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
+	autoFocusOnError: boolean | 'detect';
+	errorSelector: string;
+	selectErrorText: boolean;
+	stickyNavbar: string;
+	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
+	SPA: true | { failStatus?: number };
 
-			onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
-			onResult: (event: {
-				result: ActionResult;
-				formEl: HTMLFormElement;
-				cancel: () => void;
-			}) => MaybePromise<unknown | void>;
-			onUpdate: (event: {
-				form: SuperValidated<T, M>;
-				formEl: HTMLFormElement;
-				cancel: () => void;
-			}) => MaybePromise<unknown | void>;
-			onUpdated: (event: { form: Readonly<SuperValidated<T, M>> }) => MaybePromise<unknown | void>;
-			onError:
-				| 'apply'
-				| ((event: {
-						result: {
-							type: 'error';
-							status?: number;
-							error: App.Error;
-						};
-				  }) => MaybePromise<unknown | void>);
-			dataType: 'form' | 'json';
-			jsonChunkSize: number;
-			validators: ClientValidationAdapter<T> | false;
-			validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
-			defaultValidator: 'keep' | 'clear';
-			customValidity: boolean;
-			clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
-			delayMs: number;
-			timeoutMs: number;
-			multipleSubmits: 'prevent' | 'allow' | 'abort';
-			syncFlashMessage?: boolean;
-			flashMessage: {
-				module: {
-					getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
-					updateFlash(page: Readable<Page>, update?: () => Promise<void>): Promise<boolean>;
+	onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
+	onResult: (event: {
+		result: ActionResult;
+		formEl: HTMLFormElement;
+		cancel: () => void;
+	}) => MaybePromise<unknown | void>;
+	onUpdate: (event: {
+		form: SuperValidated<T, M>;
+		formEl: HTMLFormElement;
+		cancel: () => void;
+	}) => MaybePromise<unknown | void>;
+	onUpdated: (event: { form: Readonly<SuperValidated<T, M>> }) => MaybePromise<unknown | void>;
+	onError:
+		| 'apply'
+		| ((event: {
+				result: {
+					type: 'error';
+					status?: number;
+					error: App.Error;
 				};
-				onError?: (event: {
-					result: {
-						type: 'error';
-						status?: number;
-						error: App.Error;
-					};
-					flashMessage: Writable<App.PageData['flash']>;
-				}) => MaybePromise<unknown | void>;
-				cookiePath?: string;
-				cookieName?: string;
+		  }) => MaybePromise<unknown | void>);
+	dataType: 'form' | 'json';
+	jsonChunkSize: number;
+	validators: ClientValidationAdapter<T> | false;
+	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
+	defaultValidator: 'keep' | 'clear';
+	customValidity: boolean;
+	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
+	delayMs: number;
+	timeoutMs: number;
+	multipleSubmits: 'prevent' | 'allow' | 'abort';
+	syncFlashMessage?: boolean;
+	flashMessage: {
+		module: {
+			getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
+			updateFlash(page: Readable<Page>, update?: () => Promise<void>): Promise<boolean>;
+		};
+		onError?: (event: {
+			result: {
+				type: 'error';
+				status?: number;
+				error: App.Error;
 			};
-			warnings: {
-				duplicateId?: boolean;
-			};
+			flashMessage: Writable<App.PageData['flash']>;
+		}) => MaybePromise<unknown | void>;
+		cookiePath?: string;
+		cookieName?: string;
+	};
+	warnings: {
+		duplicateId?: boolean;
+	};
 
-			/**
-			 * Version 1 compatibilty mode if true.
-			 * Sets resetForm = false and taintedMessage = true.
-			 * Add define: { SUPERFORMS_LEGACY: true } to vite.config.ts to enable globally.
-			 */
-			legacy: boolean;
-		}>
-	: never;
+	/**
+	 * Version 1 compatibilty mode if true.
+	 * Sets resetForm = false and taintedMessage = true.
+	 * Add define: { SUPERFORMS_LEGACY: true } to vite.config.ts to enable globally.
+	 */
+	legacy: boolean;
+}>;
 
 export type SuperFormSnapshot<
 	T extends Record<string, unknown>,

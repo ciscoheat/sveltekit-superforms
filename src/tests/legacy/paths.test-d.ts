@@ -2,7 +2,6 @@
 import { zod } from '$lib/adapters/zod.js';
 import { superValidate, fieldProxy, setError } from '$lib/index.js';
 import type {
-	StringPath,
 	FormPathType,
 	FormPathArrays,
 	FormPathLeaves,
@@ -92,9 +91,9 @@ test('FormPath', () => {
 	const a6e: Arrays = 'names[1]';
 });
 
-type TestUnion = StringPath<ObjUnion>;
+type TestUnion = FormPath<ObjUnion>;
 
-test('StringPath with Union', () => {
+test('FormPath with Union', () => {
 	const t1: TestUnion = 'name';
 	const t2: TestUnion = 'entity';
 	const t3: TestUnion = 'entity.type';
@@ -197,7 +196,7 @@ test('Objects with sets', () => {
 		};
 	};
 
-	type SetTest = StringPath<SetObj>;
+	type SetTest = FormPath<SetObj>;
 
 	const a1: SetTest = 'numbers';
 	const a2: SetTest = 'numbers.set';

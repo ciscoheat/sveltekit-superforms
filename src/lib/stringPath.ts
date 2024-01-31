@@ -32,8 +32,6 @@ export type MergeUnion<T> = {
  * Lists all paths in an object as string accessors.
  */
 export type FormPath<T extends object> = string & StringPath<T>;
-//| FormPathLeaves<T>
-//| FormPathArrays<T>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
@@ -43,7 +41,7 @@ export type FormPathLeaves<T extends object> = string & StringPath<T, 'leaves'>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
- * Similar to the leaves in a node tree, if you look at the object as a tree structure.
+ * Also includes the _errors field for objects and arrays.
  */
 export type FormPathLeavesWithErrors<T extends object> = string &
 	StringPath<T, 'leaves', '_errors'>;
@@ -58,7 +56,7 @@ type Concat<
 	Next extends string
 > = `${Path}${Path extends '' ? '' : '.'}${Next}`;
 
-export type StringPath<
+type StringPath<
 	T extends object,
 	Filter extends 'arrays' | 'leaves' | 'all' = 'all',
 	ObjAppend extends string = never,

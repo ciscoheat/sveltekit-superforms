@@ -140,7 +140,7 @@ describe('Field proxies', () => {
 		test: z.number().array().default([0, 1, 2, 3])
 	});
 
-	test('fieldProxy with StringPath', async () => {
+	test('fieldProxy with FormPath', async () => {
 		const superForm = await superValidate(zod(schema));
 		const form = writable(superForm.data);
 
@@ -152,7 +152,7 @@ describe('Field proxies', () => {
 		expect(get(form).test[2]).toBe(123);
 	});
 
-	test('fieldProxy with StringPath and transform', async () => {
+	test('fieldProxy with FormPath and transform', async () => {
 		const superForm = await superValidate(zod(schema));
 		const form = writable(superForm.data);
 

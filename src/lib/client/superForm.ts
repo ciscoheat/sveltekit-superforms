@@ -55,77 +55,83 @@ export type FormResult<T extends Record<string, unknown> | null> = ActionResult<
 
 export type TaintOption = boolean | 'untaint' | 'untaint-all';
 
-export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
-	id: string;
-	applyAction: boolean;
-	invalidateAll: boolean;
-	resetForm: boolean | (() => boolean);
-	scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
-	autoFocusOnError: boolean | 'detect';
-	errorSelector: string;
-	selectErrorText: boolean;
-	stickyNavbar: string;
-	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
-	SPA: true | { failStatus?: number };
+// Need to distribute T with "T extends T",
+// since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>
+// https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
+export type FormOptions<T extends Record<string, unknown>, M> = T extends T
+	? Partial<{
+			id: string;
+			applyAction: boolean;
+			invalidateAll: boolean;
+			resetForm: boolean | (() => boolean);
+			scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
+			autoFocusOnError: boolean | 'detect';
+			errorSelector: string;
+			selectErrorText: boolean;
+			stickyNavbar: string;
+			taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
+			SPA: true | { failStatus?: number };
 
-	onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
-	onResult: (event: {
-		result: ActionResult;
-		formEl: HTMLFormElement;
-		cancel: () => void;
-	}) => MaybePromise<unknown | void>;
-	onUpdate: (event: {
-		form: SuperValidated<T, M>;
-		formEl: HTMLFormElement;
-		cancel: () => void;
-	}) => MaybePromise<unknown | void>;
-	onUpdated: (event: { form: Readonly<SuperValidated<T, M>> }) => MaybePromise<unknown | void>;
-	onError:
-		| 'apply'
-		| ((event: {
-				result: {
-					type: 'error';
-					status?: number;
-					error: App.Error;
+			onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
+			onResult: (event: {
+				result: ActionResult;
+				formEl: HTMLFormElement;
+				cancel: () => void;
+			}) => MaybePromise<unknown | void>;
+			onUpdate: (event: {
+				form: SuperValidated<T, M>;
+				formEl: HTMLFormElement;
+				cancel: () => void;
+			}) => MaybePromise<unknown | void>;
+			onUpdated: (event: { form: Readonly<SuperValidated<T, M>> }) => MaybePromise<unknown | void>;
+			onError:
+				| 'apply'
+				| ((event: {
+						result: {
+							type: 'error';
+							status?: number;
+							error: App.Error;
+						};
+				  }) => MaybePromise<unknown | void>);
+			dataType: 'form' | 'json';
+			jsonChunkSize: number;
+			validators: ClientValidationAdapter<T> | false;
+			validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
+			defaultValidator: 'keep' | 'clear';
+			customValidity: boolean;
+			clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
+			delayMs: number;
+			timeoutMs: number;
+			multipleSubmits: 'prevent' | 'allow' | 'abort';
+			syncFlashMessage?: boolean;
+			flashMessage: {
+				module: {
+					getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
+					updateFlash(page: Readable<Page>, update?: () => Promise<void>): Promise<boolean>;
 				};
-		  }) => MaybePromise<unknown | void>);
-	dataType: 'form' | 'json';
-	jsonChunkSize: number;
-	validators: ClientValidationAdapter<T> | false;
-	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
-	defaultValidator: 'keep' | 'clear';
-	customValidity: boolean;
-	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
-	delayMs: number;
-	timeoutMs: number;
-	multipleSubmits: 'prevent' | 'allow' | 'abort';
-	syncFlashMessage?: boolean;
-	flashMessage: {
-		module: {
-			getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
-			updateFlash(page: Readable<Page>, update?: () => Promise<void>): Promise<boolean>;
-		};
-		onError?: (event: {
-			result: {
-				type: 'error';
-				status?: number;
-				error: App.Error;
+				onError?: (event: {
+					result: {
+						type: 'error';
+						status?: number;
+						error: App.Error;
+					};
+					flashMessage: Writable<App.PageData['flash']>;
+				}) => MaybePromise<unknown | void>;
+				cookiePath?: string;
+				cookieName?: string;
 			};
-			flashMessage: Writable<App.PageData['flash']>;
-		}) => MaybePromise<unknown | void>;
-		cookiePath?: string;
-		cookieName?: string;
-	};
-	warnings: {
-		duplicateId?: boolean;
-	};
+			warnings: {
+				duplicateId?: boolean;
+			};
 
-	/**
-	 * V1 compatibilty. Sets resetForm = false and taintedMessage = true
-	 * Add define: { SUPERFORMS_LEGACY: true } to vite.config.ts to enable globally.
-	 */
-	legacy: boolean;
-}>;
+			/**
+			 * Version 1 compatibilty mode if true.
+			 * Sets resetForm = false and taintedMessage = true.
+			 * Add define: { SUPERFORMS_LEGACY: true } to vite.config.ts to enable globally.
+			 */
+			legacy: boolean;
+		}>
+	: never;
 
 export type SuperFormSnapshot<
 	T extends Record<string, unknown>,
@@ -145,6 +151,25 @@ type SuperFormErrors<T extends Record<string, unknown>> = {
 	update(this: void, updater: Updater<ValidationErrors<T>>, options?: { force?: boolean }): void;
 	clear: () => void;
 };
+
+type ResetOptions<T extends Record<string, unknown>> = {
+	keepMessage?: boolean;
+	data?: Partial<T>;
+	id?: string;
+};
+
+// Brackets are required: https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
+type Capture<
+	T extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+> = [T] extends [T] ? () => SuperFormSnapshot<T, M> : never;
+
+type Restore<
+	T extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+> = (snapshot: SuperFormSnapshot<T, M>) => void;
 
 export type SuperForm<
 	T extends Record<string, unknown>,
@@ -169,16 +194,10 @@ export type SuperForm<
 
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
 
-	reset: (
-		options?: Partial<{
-			keepMessage: boolean;
-			data: Partial<T>;
-			id: string;
-		}>
-	) => void;
+	reset: (options?: ResetOptions<T>) => void;
 
-	capture: () => SuperFormSnapshot<T, M>;
-	restore: (snapshot: SuperFormSnapshot<T, M>) => void;
+	capture: Capture<T, M>;
+	restore: T extends T ? Restore<T, M> : never;
 
 	validate: typeof validateForm<T>;
 	isTainted: (path?: FormPath<T>) => boolean;
@@ -274,10 +293,9 @@ const defaultFormOptions = {
 	delayMs: 500,
 	timeoutMs: 8000,
 	multipleSubmits: 'prevent',
-	validation: undefined,
 	SPA: undefined,
 	validationMethod: 'auto'
-};
+} satisfies FormOptions<Record<string, unknown>, unknown>;
 
 function multipleFormIdError(id: string | undefined) {
 	return (
@@ -311,9 +329,10 @@ export function superForm<
 	T extends Record<string, unknown> = Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(form: SuperValidated<T, M> | T, options: FormOptions<T, M> = {}): SuperForm<T, M> {
+>(form: SuperValidated<T, M> | T, formOptions?: FormOptions<T, M>): SuperForm<T, M> {
 	// Used in reset
 	let initialForm: SuperValidated<T, M>;
+	let options = formOptions ?? ({} as FormOptions<T, M>);
 
 	{
 		if (options.legacy ?? legacyMode) {
@@ -322,7 +341,7 @@ export function superForm<
 		}
 
 		options = {
-			...(defaultFormOptions as FormOptions<T, M>),
+			...defaultFormOptions,
 			...options
 		};
 
@@ -1207,16 +1226,16 @@ export function superForm<
 			};
 		},
 
-		restore(snapshot: SuperFormSnapshot<T, M>) {
-			return rebind(snapshot, snapshot.tainted ?? true);
-		},
+		restore: ((snapshot: SuperFormSnapshot<T, M>) => {
+			rebind(snapshot, snapshot.tainted ?? true);
+		}) as T extends T ? Restore<T, M> : never,
 
 		validate,
 
 		allErrors: AllErrors,
 		posted: Posted,
 
-		reset(options?) {
+		reset(options?: ResetOptions<T>) {
 			return Form_reset(
 				options?.keepMessage ? Data.message : undefined,
 				options?.data,
@@ -1612,5 +1631,5 @@ export function superForm<
 				return validationResponse;
 			});
 		}
-	};
+	} satisfies SuperForm<T, M>;
 }

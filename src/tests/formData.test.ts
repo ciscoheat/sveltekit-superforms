@@ -1,7 +1,7 @@
 import { describe, it, expect, assert } from 'vitest';
 import { parseFormData } from '$lib/formData.js';
 import { z } from 'zod';
-import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zodToJSONSchema } from '$lib/adapters/zod.js';
 
 enum Foo {
 	A = 2,
@@ -22,7 +22,7 @@ const schema = z.object({
 	extra: z.string().nullable()
 });
 
-const bigJsonSchema = zodToJsonSchema(schema);
+const bigJsonSchema = zodToJSONSchema(schema);
 
 function dataToFormData(data: Record<string, string | number | string[] | number[]>) {
 	const output = new FormData();

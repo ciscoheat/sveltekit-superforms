@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zodToJSONSchema } from '$lib/adapters/zod.js';
 
 export enum Foo {
 	A = 2,
@@ -27,7 +27,7 @@ export const bigZodSchema = z.object({
 	})
 });
 
-export const bigJsonSchema = zodToJsonSchema(bigZodSchema);
+export const bigJsonSchema = zodToJSONSchema(bigZodSchema);
 
 ///// From legacy tests /////
 

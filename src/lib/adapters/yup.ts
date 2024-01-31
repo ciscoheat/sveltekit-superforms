@@ -19,7 +19,7 @@ const modules = async () => {
 const fetchModule = /* @__PURE__ */ memoize(modules);
 
 /* @__NO_SIDE_EFFECTS__ */
-function yupToJsonSchema(schema: AnySchema) {
+export function yupToJSONSchema(schema: AnySchema) {
 	return convertSchema(schema, {
 		converters: {
 			date: (desc, options) => {
@@ -60,7 +60,7 @@ function _yup<T extends Schema>(
 	return createAdapter({
 		superFormValidationLibrary: 'yup',
 		validate: async (data: unknown) => validate(schema, data),
-		jsonSchema: options?.jsonSchema ?? yupToJsonSchema(schema),
+		jsonSchema: options?.jsonSchema ?? yupToJSONSchema(schema),
 		defaults: options?.defaults
 	});
 }

@@ -39,8 +39,6 @@ export const _dataTypeForm = z.object({
 	nativeEnumString2: z.nativeEnum(FruitsStr).default(FruitsStr.Banana)
 });
 
-//console.dir(zodToJsonSchema(_dataTypeForm), { depth: 10 }); //debug
-
 export const load = (async (event) => {
 	const form = await superValidate(event, zod(_dataTypeForm));
 	//console.log('===== load /test ======================================');

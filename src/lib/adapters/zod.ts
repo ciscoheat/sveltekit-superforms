@@ -17,7 +17,7 @@ const defaultOptions: Partial<Options> = {
 } as const;
 
 /* @__NO_SIDE_EFFECTS__ */
-export const zodToJsonSchema = (...params: Parameters<typeof zodToJson>) => {
+export const zodToJSONSchema = (...params: Parameters<typeof zodToJson>) => {
 	params[1] = typeof params[1] == 'object' ? { ...defaultOptions, ...params[1] } : defaultOptions;
 	return zodToJson(...params) as JSONSchema7;
 };
@@ -70,7 +70,7 @@ function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => validate(schema, data),
-		jsonSchema: options?.jsonSchema ?? zodToJsonSchema(schema),
+		jsonSchema: options?.jsonSchema ?? zodToJSONSchema(schema),
 		defaults: options?.defaults
 	});
 }

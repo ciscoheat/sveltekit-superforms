@@ -17,7 +17,7 @@ import { defaults as schemaDefaults } from '$lib/defaults.js';
 
 ///// Adapters //////////////////////////////////////////////////////
 
-import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { z } from 'zod';
 
 import { valibot } from '$lib/adapters/valibot.js';
@@ -265,7 +265,7 @@ describe('Zod', () => {
 		.refine((a) => a);
 
 	it('with defaultValues', () => {
-		const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema));
+		const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJSONSchema(bigZodSchema));
 		expect(values.foo).toEqual(Foo.A);
 	});
 
@@ -281,7 +281,7 @@ describe('Zod', () => {
 			arr: { minlength: 10, required: true },
 			nestedTags: { id: { min: 1 }, name: { minlength: 1, required: true } }
 		};
-		const values = constraints<z.infer<typeof bigZodSchema>>(zodToJsonSchema(bigZodSchema));
+		const values = constraints<z.infer<typeof bigZodSchema>>(zodToJSONSchema(bigZodSchema));
 		expect(values).toEqual(expected);
 	});
 

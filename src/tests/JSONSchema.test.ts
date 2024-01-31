@@ -5,7 +5,7 @@ import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
-import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { SchemaError } from '$lib/errors.js';
@@ -332,7 +332,7 @@ describe('Object shapes', () => {
 	});
 
 	it('should return correct info about nested objects and arrays', () => {
-		expect(schemaShape(zodToJsonSchema(schema))).toStrictEqual({
+		expect(schemaShape(zodToJSONSchema(schema))).toStrictEqual({
 			tags: { names: {}, test: {} }
 		});
 	});

@@ -24,7 +24,7 @@ const defaultOptions = {
 } satisfies ToJSONSchemaOptions;
 
 /* @__NO_SIDE_EFFECTS__ */
-export const valibotToJsonSchema = (options: ToJSONSchemaOptions) => {
+export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return valibotToJSON({ ...defaultOptions, ...(options as any) }) as JSONSchema;
 };
@@ -59,7 +59,7 @@ function _valibot<T extends SupportedSchemas>(
 		jsonSchema: createJsonSchema(
 			options,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			() => valibotToJsonSchema({ schema: schema as any, ...options })
+			() => valibotToJSONSchema({ schema: schema as any, ...options })
 		),
 		defaults: 'defaults' in options ? options.defaults : undefined
 	});

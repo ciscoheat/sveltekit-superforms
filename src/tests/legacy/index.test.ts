@@ -3,7 +3,7 @@ import { assert, expect, test, describe } from 'vitest';
 import { z } from 'zod';
 import { dataTypeForm } from '../data.js';
 import { zod } from '$lib/adapters/zod.js';
-import { zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zodToJSONSchema } from '$lib/adapters/zod.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { stringify } from 'devalue';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
@@ -159,7 +159,7 @@ test('Nullable values', async () => {
 		})
 		.refine((data) => data);
 
-	const output = defaultValues<z.infer<typeof refinedSchema>>(zodToJsonSchema(refinedSchema));
+	const output = defaultValues<z.infer<typeof refinedSchema>>(zodToJSONSchema(refinedSchema));
 	expect(output.scopeId).equals(0);
 	expect(output.name).equals(null);
 
@@ -178,7 +178,7 @@ test('Nullable values', async () => {
 	// If null is passed in and all fields have defaults, return them
 	const extSchema = schema.extend({ scopeId: schema.shape.scopeId.default(10) });
 
-	const output2 = defaultValues<z.infer<typeof extSchema>>(zodToJsonSchema(extSchema));
+	const output2 = defaultValues<z.infer<typeof extSchema>>(zodToJSONSchema(extSchema));
 	expect(output2.scopeId).toEqual(10);
 	expect(output2.name).toBeNull();
 });
@@ -242,7 +242,7 @@ describe('Default values', () => {
 		};
 
 		expect(e1.data).toStrictEqual(expected);
-		expect(defaultValues(zodToJsonSchema(schema))).toStrictEqual(expected);
+		expect(defaultValues(zodToJSONSchema(schema))).toStrictEqual(expected);
 	});
 
 	test('With no entity but different fields', async () => {

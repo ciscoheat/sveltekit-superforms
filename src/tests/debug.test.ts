@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { test } from 'vitest';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import type { JSONSchema } from '$lib/jsonSchema/index.js';
 import {
 	object,
@@ -71,6 +71,6 @@ test.skip('Zod to JSON Schema', () => {
 });
 
 test.skip('defaultValues', () => {
-	const values = defaultValues<z.infer<typeof schema>>(zodToJsonSchema(schema) as JSONSchema);
+	const values = defaultValues<z.infer<typeof schema>>(zodToJSONSchema(schema) as JSONSchema);
 	console.dir(values, { depth: 10 });
 });

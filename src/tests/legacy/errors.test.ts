@@ -1,4 +1,4 @@
-import { zod, zodToJsonSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { setError, superValidate } from '$lib/superValidate.js';
 import { expect, test, describe, assert } from 'vitest';
@@ -219,7 +219,7 @@ describe('Schema errors with arrays and objects', () => {
 	});
 
 	test('Schema shape traversal', () => {
-		expect(schemaShape(zodToJsonSchema(schema))).toStrictEqual({
+		expect(schemaShape(zodToJSONSchema(schema))).toStrictEqual({
 			tags: { names: {}, test: {} }
 		});
 	});

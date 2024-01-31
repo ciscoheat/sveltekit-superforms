@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { zod } from '$lib/adapters/zod.js';
+import { superForm, superValidate, type SuperForm, fieldProxy, setError } from '$lib/index.js';
 import type {
 	StringPath,
 	FormPathType,
@@ -7,6 +9,7 @@ import type {
 	FormPathLeaves,
 	FormPath
 } from '$lib/stringPath.js';
+import { writable } from 'svelte/store';
 import { test } from 'vitest';
 import { z } from 'zod';
 
@@ -208,7 +211,7 @@ test('Objects with sets', () => {
 	const b3: SetTest = 'numbers.set.size';
 });
 
-test('Unions', () => {
+test('Unions', async () => {
 	const createUserSchema = z.object({
 		email: z.string(),
 		pw: z.string(),
@@ -244,6 +247,56 @@ test('Unions', () => {
 
 	const a1: FormPathType<UnionSchema, 'both'> = 123;
 	const a2: FormPathType<UnionSchema, 'both'> = '123';
+});
+
+test('Nested nullable object with optional array', async () => {
+	const schema = z.object({
+		tags: z
+			.object({ name: z.string().min(1) })
+			.nullable()
+			.array()
+			.optional()
+	});
+
+	const person: z.infer<typeof schema> = {
+		tags: [{ name: 'tag1' }, { name: 'tag2' }]
+	};
+
+	const store = writable<z.infer<typeof schema>>({
+		tags: [{ name: 'tag1' }, { name: 'tag2' }]
+	});
+
+	const proxy1 = fieldProxy(store, 'tags');
+	const proxy2 = fieldProxy(store, 'tags[0]');
+	const proxy3 = fieldProxy(store, 'tags[1].name');
+});
+
+test('setError paths', async () => {
+	const schema = z.object({
+		scopeId: z.number().int().min(1),
+		name: z.string().nullable(),
+		object: z.object({ name: z.string() }).optional(),
+		arr: z.string().array().optional(),
+		enumber: z.enum(['test', 'testing']).optional()
+	});
+
+	test('Adding errors with setError', async () => {
+		const output = await superValidate({ scopeId: 3, name: null }, zod(schema));
+
+		setError(output, 'scopeId', 'This should not be displayed.');
+		setError(output, 'scopeId', 'This is an error', { overwrite: true });
+		// @ts-expect-error Invalid path
+		setError(output, 'object', 'Object error');
+		// @ts-expect-error Invalid path
+		setError(output, 'arr', 'Array error');
+		setError(output, 'arr[3]', 'Array item error');
+		setError(output, 'enumber', 'This should be ok');
+		setError(output, 'enumber', 'Still ok');
+		setError(output, 'arr._errors', 'Array-level error');
+		setError(output, '', 'Form-level error that should not be displayed.');
+		setError(output, 'Form-level error', { overwrite: true });
+		setError(output, 'Second form-level error');
+	});
 });
 
 ///////////////////////////////////////////////////

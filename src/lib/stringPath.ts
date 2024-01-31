@@ -19,13 +19,13 @@ export function mergePath(path: (string | number | symbol)[]) {
 type BuiltInObjects = Date | Set<unknown> | File;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AllKeys<T> = T extends any ? keyof T : never;
+export type AllKeys<T> = T extends any ? keyof T : never;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
+export type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
 
 // Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
-type MergeUnion<T> = {
+export type MergeUnion<T> = {
 	[K in AllKeys<T>]: PickType<T, K>;
 };
 
@@ -95,7 +95,7 @@ export type StringPath<T extends object, OnlyArrays extends boolean = false> =
 											T[K]
 										> extends BuiltInObjects
 											? never
-											: StringPath<NonNullable<MergeUnion<T>[K]>, OnlyArrays> & string}`
+											: StringPath<NonNullable<T[K]>, OnlyArrays> & string}`
 									: never
 								: never;
 					  }[AllKeys<T>]
@@ -116,16 +116,18 @@ export type StringPathLeaves<T extends object, Arr extends string = never> =
 			?
 					| {
 							[K in AllKeys<T>]: NonNullable<MergeUnion<T>[K]> extends object
-								? NonNullable<MergeUnion<T>[K]> extends BuiltInObjects
+								? NonNullable<T[K]> extends BuiltInObjects
 									? K
-									: never
+									: NonNullable<T[K]> extends object
+										? never
+										: K
 								: K;
 					  }[AllKeys<T>]
 					| {
 							[K in AllKeys<T>]-?: K extends string
-								? NonNullable<MergeUnion<T>[K]> extends object
-									? `${K}${NonNullable<MergeUnion<T>[K]> extends unknown[] ? '' : '.'}${StringPathLeaves<
-											NonNullable<MergeUnion<T>[K]>,
+								? NonNullable<T[K]> extends object
+									? `${K}${NonNullable<T[K]> extends unknown[] ? '' : '.'}${StringPathLeaves<
+											NonNullable<T[K]>,
 											Arr
 										> &
 											string}`

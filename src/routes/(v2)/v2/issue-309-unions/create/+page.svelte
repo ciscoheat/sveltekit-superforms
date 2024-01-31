@@ -7,6 +7,6 @@
 	const form = superForm(defaults(zod(createUserSchema)), { SPA: true, dataType: 'json' });
 </script>
 
-<a href="/">Back</a>
+<a href="/v2/issue-309-unions">Back</a>
 
 <Form superForm={form} />

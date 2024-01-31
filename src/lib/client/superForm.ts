@@ -188,7 +188,7 @@ export type SuperForm<
 
 	allErrors: Readable<{ path: string; messages: string[] }[]>;
 
-	options: FormOptions<T, M>;
+	options: T extends T ? FormOptions<T, M> : never; // Need this to distribute T so it works with unions
 
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
 
@@ -1208,7 +1208,7 @@ export function superForm<
 		delayed: readonly(Delayed),
 		timeout: readonly(Timeout),
 
-		options,
+		options: options as T extends T ? FormOptions<T, M> : never,
 
 		capture() {
 			return {

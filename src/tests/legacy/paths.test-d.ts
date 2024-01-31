@@ -5,8 +5,8 @@ import type {
 	StringPath,
 	FormPathType,
 	FormPathArrays,
-	StringPathLeaves,
 	FormPathLeaves,
+	FormPathLeavesWithErrors,
 	FormPath
 } from '$lib/stringPath.js';
 import { writable } from 'svelte/store';
@@ -155,7 +155,7 @@ test('FormPathType with union', () => {
 	const n2: FormPathType<ObjUnion, 'nope incorrect'> = 'never';
 });
 
-test('StringPathLeaves', () => {
+test('FormPathLeaves', () => {
 	const o = {
 		test: [1, 2, 3],
 		test2: [[{ date: new Date() }], [{ date: new Date() }, { date: new Date() }]],
@@ -170,9 +170,9 @@ test('StringPathLeaves', () => {
 	};
 
 	// obj.ok should exist even though it's an object (Date)
-	const p: StringPathLeaves<typeof o> = 'test[3]';
+	const p: FormPathLeaves<typeof o> = 'test[3]';
 
-	type ExtraLeaves = StringPathLeaves<typeof o, '_errors'>;
+	type ExtraLeaves = FormPathLeavesWithErrors<typeof o>;
 
 	const a1: ExtraLeaves = 'test._errors';
 	const a2: ExtraLeaves = 'obj.arr._errors';
@@ -187,6 +187,7 @@ test('StringPathLeaves', () => {
 	const a8: ExtraLeaves = 'obj.next[1].level';
 	// @ts-expect-error incorrect path
 	const a9: ExtraLeaves = 'obj.next[1]._errors';
+	const a10: ExtraLeaves = 'test[4]';
 });
 
 test('Objects with sets', () => {
@@ -203,7 +204,7 @@ test('Objects with sets', () => {
 	// @ts-expect-error incorrect path
 	const a3: SetTest = 'numbers.set.size';
 
-	type SetLeaves = StringPathLeaves<SetObj>;
+	type SetLeaves = FormPathLeaves<SetObj>;
 
 	// @ts-expect-error incorrect path
 	const b1: SetLeaves = 'numbers';

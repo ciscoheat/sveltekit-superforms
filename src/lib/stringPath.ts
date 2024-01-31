@@ -39,12 +39,19 @@ export type FormPath<T extends object> = string & StringPath<T>;
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
-export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
+export type FormPathLeaves<T extends object> = string & StringPath<T, 'leaves'>;
+
+/**
+ * List paths in an object as string accessors, but only with non-objects as accessible properties.
+ * Similar to the leaves in a node tree, if you look at the object as a tree structure.
+ */
+export type FormPathLeavesWithErrors<T extends object> = string &
+	StringPath<T, 'leaves', '_errors'>;
 
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object> = string & StringPathArrays<T>;
+export type FormPathArrays<T extends object> = string & StringPath<T, 'arrays'>;
 
 /*
 export type StringPathArrays<T extends object, Path extends string = ''> = {
@@ -76,10 +83,19 @@ export type StringPath<
 		? Path
 		: never
 	: T extends (infer U)[]
-		? Path | (U extends object ? StringPath<U, Filter, ObjAppend, `${Path}[${number}]`> : never)
+		?
+				| (ObjAppend extends string ? Add<Path, ObjAppend> : never)
+				| Path
+				| (U extends object
+						? StringPath<U, Filter, ObjAppend, `${Path}[${number}]`>
+						: Filter extends 'leaves' | 'all'
+							? `${Path}[${number}]`
+							: never)
 		: {
 				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
-					? NonNullable<T[K]> extends (infer U)[]
+					?
+							| (ObjAppend extends string ? Add<Path, ObjAppend> : never)
+							| NonNullable<T[K]> extends (infer U)[]
 						?
 								| (Filter extends 'arrays' | 'all' ? Add<Path, K> : never)
 								| (U extends unknown[]
@@ -99,8 +115,6 @@ export type StringPath<
 						? Add<Path, K>
 						: never;
 			}[Extract<AllKeys<T>, string>];
-
-export type StringPathArrays<T extends object> = StringPath<T, 'arrays'>;
 
 /*
 type StringPathOld<T extends object, Filter extends 'arrays' | 'leaves' | 'all' = 'all'> =

@@ -2,7 +2,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	//import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { superform } from '$lib/adapters/superform.js';
+	import { superformClient } from '$lib/adapters/superform.js';
 
 	export let data: PageData;
 
@@ -12,7 +12,7 @@
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		//dataType: 'json',
-		validators: superform({
+		validators: superformClient({
 			age(age) {
 				if (age === undefined || isNaN(age) || age < 30) return 'At least 30 years, please!';
 			},

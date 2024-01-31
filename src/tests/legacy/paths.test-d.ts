@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { zod } from '$lib/adapters/zod.js';
+import { superValidate, fieldProxy, setError } from '$lib/index.js';
 import type {
-	StringPath,
 	FormPathType,
 	FormPathArrays,
-	StringPathLeaves,
 	FormPathLeaves,
+	FormPathLeavesWithErrors,
 	FormPath
 } from '$lib/stringPath.js';
+import { writable } from 'svelte/store';
 import { test } from 'vitest';
 import { z } from 'zod';
 
@@ -35,6 +37,7 @@ type FormData = {
 		}[];
 	};
 };
+
 type FormDataArrays = FormPathArrays<FormData>;
 
 type ObjUnion = {
@@ -88,9 +91,9 @@ test('FormPath', () => {
 	const a6e: Arrays = 'names[1]';
 });
 
-type TestUnion = StringPath<ObjUnion>;
+type TestUnion = FormPath<ObjUnion>;
 
-test('StringPath with Union', () => {
+test('FormPath with Union', () => {
 	const t1: TestUnion = 'name';
 	const t2: TestUnion = 'entity';
 	const t3: TestUnion = 'entity.type';
@@ -151,7 +154,7 @@ test('FormPathType with union', () => {
 	const n2: FormPathType<ObjUnion, 'nope incorrect'> = 'never';
 });
 
-test('StringPathLeaves', () => {
+test('FormPathLeaves', () => {
 	const o = {
 		test: [1, 2, 3],
 		test2: [[{ date: new Date() }], [{ date: new Date() }, { date: new Date() }]],
@@ -166,9 +169,9 @@ test('StringPathLeaves', () => {
 	};
 
 	// obj.ok should exist even though it's an object (Date)
-	const p: StringPathLeaves<typeof o> = 'test[3]';
+	const p: FormPathLeaves<typeof o> = 'test[3]';
 
-	type ExtraLeaves = StringPathLeaves<typeof o, '_errors'>;
+	type ExtraLeaves = FormPathLeavesWithErrors<typeof o>;
 
 	const a1: ExtraLeaves = 'test._errors';
 	const a2: ExtraLeaves = 'obj.arr._errors';
@@ -183,6 +186,7 @@ test('StringPathLeaves', () => {
 	const a8: ExtraLeaves = 'obj.next[1].level';
 	// @ts-expect-error incorrect path
 	const a9: ExtraLeaves = 'obj.next[1]._errors';
+	const a10: ExtraLeaves = 'test[4]';
 });
 
 test('Objects with sets', () => {
@@ -192,14 +196,14 @@ test('Objects with sets', () => {
 		};
 	};
 
-	type SetTest = StringPath<SetObj>;
+	type SetTest = FormPath<SetObj>;
 
 	const a1: SetTest = 'numbers';
 	const a2: SetTest = 'numbers.set';
 	// @ts-expect-error incorrect path
 	const a3: SetTest = 'numbers.set.size';
 
-	type SetLeaves = StringPathLeaves<SetObj>;
+	type SetLeaves = FormPathLeaves<SetObj>;
 
 	// @ts-expect-error incorrect path
 	const b1: SetLeaves = 'numbers';
@@ -208,7 +212,7 @@ test('Objects with sets', () => {
 	const b3: SetTest = 'numbers.set.size';
 });
 
-test('Unions', () => {
+test('Unions', async () => {
 	const createUserSchema = z.object({
 		email: z.string(),
 		pw: z.string(),
@@ -244,6 +248,56 @@ test('Unions', () => {
 
 	const a1: FormPathType<UnionSchema, 'both'> = 123;
 	const a2: FormPathType<UnionSchema, 'both'> = '123';
+});
+
+test('Nested nullable object with optional array', async () => {
+	const schema = z.object({
+		tags: z
+			.object({ name: z.string().min(1) })
+			.nullable()
+			.array()
+			.optional()
+	});
+
+	const person: z.infer<typeof schema> = {
+		tags: [{ name: 'tag1' }, { name: 'tag2' }]
+	};
+
+	const store = writable<z.infer<typeof schema>>({
+		tags: [{ name: 'tag1' }, { name: 'tag2' }]
+	});
+
+	const proxy1 = fieldProxy(store, 'tags');
+	const proxy2 = fieldProxy(store, 'tags[0]');
+	const proxy3 = fieldProxy(store, 'tags[1].name');
+});
+
+test('setError paths', async () => {
+	const schema = z.object({
+		scopeId: z.number().int().min(1),
+		name: z.string().nullable(),
+		object: z.object({ name: z.string() }).optional(),
+		arr: z.string().array().optional(),
+		enumber: z.enum(['test', 'testing']).optional()
+	});
+
+	test('Adding errors with setError', async () => {
+		const output = await superValidate({ scopeId: 3, name: null }, zod(schema));
+
+		setError(output, 'scopeId', 'This should not be displayed.');
+		setError(output, 'scopeId', 'This is an error', { overwrite: true });
+		// @ts-expect-error Invalid path
+		setError(output, 'object', 'Object error');
+		// @ts-expect-error Invalid path
+		setError(output, 'arr', 'Array error');
+		setError(output, 'arr[3]', 'Array item error');
+		setError(output, 'enumber', 'This should be ok');
+		setError(output, 'enumber', 'Still ok');
+		setError(output, 'arr._errors', 'Array-level error');
+		setError(output, '', 'Form-level error that should not be displayed.');
+		setError(output, 'Form-level error', { overwrite: true });
+		setError(output, 'Second form-level error');
+	});
 });
 
 ///////////////////////////////////////////////////

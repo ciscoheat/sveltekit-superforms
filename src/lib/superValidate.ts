@@ -3,7 +3,7 @@ import { type ActionFailure, fail as realFail, type RequestEvent } from '@svelte
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
 import type { NumericRange } from './utils.js';
-import { splitPath, type StringPathLeaves } from './stringPath.js';
+import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
@@ -229,21 +229,27 @@ export function setError<T extends Record<string, unknown>>(
  * form.valid is automatically set to false.
  *
  * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
- * @param {'' | StringPathLeaves<T, '_errors'>} path Path to the form field. Use an empty string to set a form-level error. Array-level errors can be set by appending "._errors" to the field.
+ * @param {'' | FormPathLeavesWithErrors<T>} path Path to the form field. Use an empty string to set a form-level error. Array-level errors can be set by appending "._errors" to the field.
  * @param {string | string[]} error Error message(s).
  * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
  * @returns fail(status, { form })
  */
-export function setError<T extends Record<string, unknown>>(
+export function setError<
+	T extends Record<string, unknown>,
+	Path extends FormPathLeavesWithErrors<T>
+>(
 	form: SuperValidated<T, unknown>,
-	path: '' | StringPathLeaves<T, '_errors'>,
+	path: '' | Path,
 	error: string | string[],
 	options?: SetErrorOptions
 ): ActionFailure<{ form: SuperValidated<T, unknown> }>;
 
-export function setError<T extends Record<string, unknown>>(
+export function setError<
+	T extends Record<string, unknown>,
+	Path extends FormPathLeavesWithErrors<T>
+>(
 	form: SuperValidated<T, unknown>,
-	path: string | string[] | StringPathLeaves<T, '_errors'>,
+	path: string | string[] | Path,
 	error?: string | string[] | SetErrorOptions,
 	options?: SetErrorOptions
 ): ActionFailure<{ form: SuperValidated<T, unknown> }> {

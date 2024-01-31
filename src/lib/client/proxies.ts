@@ -7,15 +7,14 @@ import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './index.js';
 import type { Prettify } from '$lib/utils.js';
 
-type ProxyOptions<T extends Record<string, unknown>, Path extends FormPath<T>> = {
+type ProxyOptions = {
 	taint?: TaintOption;
-	transform?: (value: FormPathType<T, Path>) => FormPathType<T, Path>;
 };
 
 type CorrectProxyType<In, Out, T extends Record<string, unknown>, Path extends FormPath<T>> =
 	NonNullable<FormPathType<T, Path>> extends In ? Writable<Out> : never;
 
-type DefaultOptions<T extends Record<string, unknown>, Path extends FormPath<T>> = {
+type DefaultOptions = {
 	trueStringValue: string;
 	dateFormat:
 		| 'date'
@@ -33,7 +32,6 @@ type DefaultOptions<T extends Record<string, unknown>, Path extends FormPath<T>>
 	emptyIfZero?: boolean;
 	zeroIfEmpty?: boolean;
 	taint?: TaintOption;
-	transform?: (value: FormPathType<T, Path>) => FormPathType<T, Path>;
 };
 
 const defaultOptions = {
@@ -48,7 +46,7 @@ const defaultOptions = {
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Prettify<Pick<DefaultOptions<T, Path>, 'transform' | 'trueStringValue' | 'taint'>>
+	options?: Prettify<Pick<DefaultOptions, 'trueStringValue' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'boolean', {
 		...defaultOptions,
@@ -59,9 +57,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 export function intProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Prettify<
-		Pick<DefaultOptions<T, Path>, 'transform' | 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'taint'>
-	>
+	options?: Prettify<Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'int', {
 		...defaultOptions,
@@ -73,10 +69,7 @@ export function numberProxy<T extends Record<string, unknown>, Path extends Form
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options?: Prettify<
-		Pick<
-			DefaultOptions<T, Path>,
-			'transform' | 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'delimiter' | 'taint'
-		>
+		Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'delimiter' | 'taint'>
 	>
 ) {
 	return _stringProxy(form, path, 'number', {
@@ -89,10 +82,9 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options?: {
-		format?: DefaultOptions<T, Path>['dateFormat'];
-		empty?: DefaultOptions<T, Path>['empty'];
+		format?: DefaultOptions['dateFormat'];
+		empty?: DefaultOptions['empty'];
 		taint?: TaintOption;
-		transform?: DefaultOptions<T, Path>['transform'];
 	}
 ) {
 	return _stringProxy(form, path, 'date', {
@@ -106,9 +98,8 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options: {
-		empty: NonNullable<DefaultOptions<T, Path>['empty']>;
+		empty: NonNullable<DefaultOptions['empty']>;
 		taint?: TaintOption;
-		transform?: DefaultOptions<T, Path>['transform'];
 	}
 ): Writable<string> {
 	return _stringProxy(form, path, 'string', {
@@ -129,7 +120,7 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	type: 'number' | 'int' | 'boolean' | 'date' | 'string',
-	options: DefaultOptions<T, Path>
+	options: DefaultOptions
 ): Writable<string> {
 	function toValue(value: unknown) {
 		if (!value && options.empty !== undefined && (value !== 0 || options.emptyIfZero)) {
@@ -216,12 +207,12 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 		subscribe: proxy.subscribe,
 		set(val: string) {
 			const newValue = toValue(val) as FormPathType<T, Path>;
-			proxy2.set(options.transform ? options.transform(newValue) : newValue);
+			proxy2.set(newValue);
 		},
 		update(updater) {
 			proxy2.update((f) => {
 				const newValue = toValue(updater(String(f))) as FormPathType<T, Path>;
-				return options.transform ? options.transform(newValue) : newValue;
+				return newValue;
 			});
 		}
 	};
@@ -324,7 +315,7 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	superForm: SuperForm<T, any>,
 	path: Path,
-	options?: ProxyOptions<T, Path>
+	options?: ProxyOptions
 ): {
 	path: Path;
 	value: SuperFieldProxy<FormPathType<T, Path>>;
@@ -392,8 +383,7 @@ type SuperFieldProxy<T> = {
 function updateProxyField<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	obj: T,
 	path: (string | number | symbol)[],
-	updater: Updater<FormPathType<T, Path>>,
-	options: ProxyOptions<T, Path> | undefined
+	updater: Updater<FormPathType<T, Path>>
 ) {
 	const output = traversePath(obj, path, ({ parent, key, value }) => {
 		if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
@@ -401,7 +391,7 @@ function updateProxyField<T extends Record<string, unknown>, Path extends FormPa
 	});
 	if (output) {
 		const newValue = updater(output.value);
-		output.parent[output.key] = options?.transform ? options.transform(newValue) : newValue;
+		output.parent[output.key] = newValue;
 	}
 	return obj;
 }
@@ -409,7 +399,7 @@ function updateProxyField<T extends Record<string, unknown>, Path extends FormPa
 function superFieldProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	superForm: SuperForm<T>,
 	path: Path,
-	baseOptions?: ProxyOptions<T, Path>
+	baseOptions?: ProxyOptions
 ): SuperFieldProxy<FormPathType<T, Path>> {
 	const form = superForm.form;
 	const path2 = splitPath(path);
@@ -424,14 +414,11 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends FormPat
 			const unsub = proxy.subscribe(...params);
 			return () => unsub();
 		},
-		update(upd: Updater<FormPathType<T, Path>>, options?: ProxyOptions<T, Path>) {
-			form.update((data) => updateProxyField(data, path2, upd, options), options ?? baseOptions);
+		update(upd: Updater<FormPathType<T, Path>>, options?: ProxyOptions) {
+			form.update((data) => updateProxyField(data, path2, upd), options ?? baseOptions);
 		},
-		set(value: FormPathType<T, Path>, options?: ProxyOptions<T, Path>) {
-			form.update(
-				(data) => updateProxyField(data, path2, () => value, options),
-				options ?? baseOptions
-			);
+		set(value: FormPathType<T, Path>, options?: ProxyOptions) {
+			form.update((data) => updateProxyField(data, path2, () => value), options ?? baseOptions);
 		}
 	};
 }
@@ -454,7 +441,7 @@ function isSuperForm<T extends Record<string, unknown>>(
 export function fieldProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: ProxyOptions<T, Path>
+	options?: ProxyOptions
 ): Writable<FormPathType<T, Path>> {
 	const path2 = splitPath(path);
 
@@ -473,10 +460,10 @@ export function fieldProxy<T extends Record<string, unknown>, Path extends FormP
 			return () => unsub();
 		},
 		update(upd: Updater<FormPathType<T, Path>>) {
-			form.update((data) => updateProxyField(data, path2, upd, options));
+			form.update((data) => updateProxyField(data, path2, upd));
 		},
 		set(value: FormPathType<T, Path>) {
-			form.update((data) => updateProxyField(data, path2, () => value, options));
+			form.update((data) => updateProxyField(data, path2, () => value));
 		}
 	};
 }

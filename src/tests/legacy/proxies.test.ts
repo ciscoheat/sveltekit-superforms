@@ -50,14 +50,13 @@ describe('Value proxies', () => {
 
 		const proxy = intProxy(form, 'int', {
 			empty: 'undefined',
-			emptyIfZero: true,
-			transform: (value) => (value ? value * 2 : value)
+			emptyIfZero: true
 		});
 
 		expect(get(form).int).toBe(undefined);
 
 		proxy.set('123');
-		expect(get(form).int).toBe(246);
+		expect(get(form).int).toBe(123);
 
 		proxy.set('');
 		expect(get(form).int).toBe(undefined);
@@ -71,15 +70,13 @@ describe('Value proxies', () => {
 		const superForm = await superValidate(zod(schema));
 		const form = writable(superForm.data);
 
-		const proxy = intProxy(form, 'int', {
-			transform: (value) => value * 2
-		});
+		const proxy = intProxy(form, 'int');
 
 		expect(get(form).int).toBe(0);
 
 		proxy.set('123');
 
-		expect(get(form).int).toBe(246);
+		expect(get(form).int).toBe(123);
 	});
 
 	test('numberProxy', async () => {
@@ -140,7 +137,7 @@ describe('Field proxies', () => {
 		test: z.number().array().default([0, 1, 2, 3])
 	});
 
-	test('fieldProxy with StringPath', async () => {
+	test('fieldProxy with FormPath', async () => {
 		const superForm = await superValidate(zod(schema));
 		const form = writable(superForm.data);
 
@@ -150,17 +147,5 @@ describe('Field proxies', () => {
 		proxy.set(123);
 		expect(get(proxy)).toBe(123);
 		expect(get(form).test[2]).toBe(123);
-	});
-
-	test('fieldProxy with StringPath and transform', async () => {
-		const superForm = await superValidate(zod(schema));
-		const form = writable(superForm.data);
-
-		const proxy = fieldProxy(form, 'test[2]', { transform: (value) => value * 2 });
-
-		expect(get(proxy)).toBe(2);
-		proxy.set(123);
-		expect(get(proxy)).toBe(246);
-		expect(get(form).test[2]).toBe(246);
 	});
 });

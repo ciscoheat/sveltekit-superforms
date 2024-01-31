@@ -18,121 +18,86 @@ export function mergePath(path: (string | number | symbol)[]) {
 
 type BuiltInObjects = Date | Set<unknown> | File;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AllKeys<T> = T extends any ? keyof T : never;
+export type AllKeys<T> = T extends T ? keyof T : never;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
+export type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
 
 // Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
-type MergeUnion<T> = {
+export type MergeUnion<T> = {
 	[K in AllKeys<T>]: PickType<T, K>;
 };
 
 /**
  * Lists all paths in an object as string accessors.
  */
-export type FormPath<T extends object> =
-	| (string & StringPath<T>)
-	| FormPathLeaves<T>
-	| FormPathArrays<T>;
+export type FormPath<T extends object> = string & StringPath<T>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
-export type FormPathLeaves<T extends object> = string & StringPathLeaves<T>;
+export type FormPathLeaves<T extends object> = string & StringPath<T, 'leaves'>;
+
+/**
+ * List paths in an object as string accessors, but only with non-objects as accessible properties.
+ * Also includes the _errors field for objects and arrays.
+ */
+export type FormPathLeavesWithErrors<T extends object> = string &
+	StringPath<T, 'leaves', '_errors'>;
 
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object> = string & StringPathArrays<T>;
+export type FormPathArrays<T extends object> = string & StringPath<T, 'arrays'>;
 
-export type StringPathArrays<T extends object, Path extends string = ''> = {
-	[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends BuiltInObjects
-		? never
-		: NonNullable<T[K]> extends (infer U)[]
-			?
-					| `${Path}${Path extends '' ? '' : '.'}${K}`
-					| StringPathArrays<NonNullable<U>, `${Path}${Path extends '' ? '' : '.'}${K}[${number}]`>
-			: NonNullable<T[K]> extends object
-				? StringPathArrays<NonNullable<T[K]>, `${Path}${Path extends '' ? '' : '.'}${K}`>
-				: NonNullable<T> extends unknown[]
-					? Path
-					: never;
-}[Extract<AllKeys<T>, string>];
+type Concat<
+	Path extends string,
+	Next extends string
+> = `${Path}${Path extends '' ? '' : '.'}${Next}`;
 
-export type StringPath<T extends object, OnlyArrays extends boolean = false> =
-	NonNullable<T> extends (infer U)[]
-		? NonNullable<U> extends object
-			?
-					| (OnlyArrays extends false
-							? `[${number}]`
-							: NonNullable<U> extends unknown[]
-								? `[${number}]`
-								: never)
-					| `[${number}]${NonNullable<U> extends unknown[]
-							? ''
-							: '.'}${NonNullable<U> extends BuiltInObjects
-							? never
-							: StringPath<NonNullable<U>, OnlyArrays> & string}`
-			: `[${number}]`
-		: NonNullable<T> extends object
-			?
-					| (OnlyArrays extends false
-							? AllKeys<T>
-							: {
-									[K in AllKeys<T>]-?: K extends string
-										? NonNullable<MergeUnion<T>[K]> extends unknown[]
-											? K
+type StringPath<
+	T extends object,
+	Filter extends 'arrays' | 'leaves' | 'all' = 'all',
+	ObjAppend extends string = never,
+	Path extends string = ''
+> = T extends BuiltInObjects
+	? Filter extends 'leaves' | 'all'
+		? Path
+		: never
+	: T extends (infer U)[]
+		?
+				| (ObjAppend extends string ? Concat<Path, ObjAppend> : never)
+				| (Filter extends 'arrays' | 'all' ? Path : never)
+				| (NonNullable<U> extends object
+						? StringPath<NonNullable<U>, Filter, ObjAppend, `${Path}[${number}]`>
+						: Filter extends 'leaves' | 'all'
+							? `${Path}[${number}]`
+							: never)
+		: {
+				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
+					?
+							| (ObjAppend extends string ? Concat<Path, ObjAppend> : never)
+							| NonNullable<T[K]> extends (infer U)[]
+						?
+								| (Filter extends 'arrays' | 'all' ? Concat<Path, K> : never)
+								| (NonNullable<U> extends unknown[]
+										? Filter extends 'arrays' | 'all'
+											? Concat<Path, `${K}[${number}]`>
 											: never
-										: never;
-								}[AllKeys<T>])
-					| {
-							[K in AllKeys<T>]-?: K extends string
-								? NonNullable<MergeUnion<T>[K]> extends object
-									? `${K}${NonNullable<MergeUnion<T>[K]> extends unknown[] ? '' : '.'}${NonNullable<
-											T[K]
-										> extends BuiltInObjects
-											? never
-											: StringPath<NonNullable<MergeUnion<T>[K]>, OnlyArrays> & string}`
-									: never
-								: never;
-					  }[AllKeys<T>]
-			: never;
-
-export type StringPathLeaves<T extends object, Arr extends string = never> =
-	NonNullable<T> extends (infer U)[]
-		? NonNullable<U> extends object
-			?
-					| (Arr extends never ? never : `.${Arr}`)
-					| `[${number}]${NonNullable<U> extends unknown[] ? '' : '.'}${StringPathLeaves<
-							NonNullable<U>,
-							Arr
-					  > &
-							string}`
-			: `[${number}]` | (Arr extends never ? never : `.${Arr}`)
-		: NonNullable<T> extends object
-			?
-					| {
-							[K in AllKeys<T>]: NonNullable<MergeUnion<T>[K]> extends object
-								? NonNullable<MergeUnion<T>[K]> extends BuiltInObjects
-									? K
-									: never
-								: K;
-					  }[AllKeys<T>]
-					| {
-							[K in AllKeys<T>]-?: K extends string
-								? NonNullable<MergeUnion<T>[K]> extends object
-									? `${K}${NonNullable<MergeUnion<T>[K]> extends unknown[] ? '' : '.'}${StringPathLeaves<
-											NonNullable<MergeUnion<T>[K]>,
-											Arr
-										> &
-											string}`
-									: never
-								: never;
-					  }[AllKeys<T>]
-			: never; //{never_error1: T, key: K, value: T[K]}
+										: Filter extends 'leaves' | 'all'
+											? Concat<Path, `${K}[${number}]`>
+											: never)
+								| (NonNullable<U> extends object
+										? StringPath<NonNullable<U>, Filter, ObjAppend, Concat<Path, `${K}[${number}]`>>
+										: never)
+						:
+								| (Filter extends 'all' ? Concat<Path, K> : never)
+								| StringPath<NonNullable<T[K]>, Filter, ObjAppend, Concat<Path, K>>
+					: Filter extends 'leaves' | 'all'
+						? Concat<Path, K>
+						: never;
+			}[Extract<AllKeys<T>, string>];
 
 export type FormPathType<T, P extends string> = P extends keyof T
 	? T[P]

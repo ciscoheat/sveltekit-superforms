@@ -5,10 +5,8 @@ export const createUserSchema = z.object({
 	pw: z.string()
 });
 
-export const updateUserSchema = createUserSchema.merge(
-	z.object({
-		id: z.string()
-	})
-);
+export const updateUserSchema = createUserSchema.extend({
+	id: z.string()
+});
 
 export const unionizedSchema = z.union([createUserSchema, updateUserSchema]);

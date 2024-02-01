@@ -36,4 +36,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All proxies can now take the whole `superForm` object with an extra `taint` option.
 - `zeroIfEmpty` option added to `intProxy` and `numberProxy`, to handle empty text inputs better.
 - `taintedMessage` can now be an (async) function returning `true` if navigation should happen despite the form being tainted.
-- `onChange` event, that returns a list of modified form fields whenever `$form` is updated.
+- `onChange` event, that returns a list of modified fields whenever `$form` is updated.

@@ -45,7 +45,8 @@ export type {
 	SuperFormEvents,
 	SuperFormSnapshot,
 	ValidateOptions,
-	TaintOption
+	TaintOption,
+	ChangeEvent
 } from './superForm.js';
 
 // Exporting from stringPath also, for convenience in components.

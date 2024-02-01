@@ -92,7 +92,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 					error: App.Error;
 				};
 		  }) => MaybePromise<unknown | void>);
-	onChange: (event: { fields: string[] }) => void;
+	onChange: (event: ChangeEvent) => void;
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
@@ -245,12 +245,24 @@ type ValidationResponse<
 	Invalid extends Record<string, unknown> | undefined = Record<string, any>
 > = { result: ActionResult<Success, Invalid> };
 
-type ChangeEvent = {
+export type ChangeEvent =
+	| {
+			path: string;
+			formEl: HTMLFormElement;
+			target: Element;
+	  }
+	| {
+			target: undefined;
+			paths: string[];
+	  };
+
+type FullChangeEvent = {
 	paths: (string | number | symbol)[][];
 	immediate?: boolean;
 	multiple?: boolean;
 	type?: 'input' | 'blur';
 	formEl?: HTMLFormElement;
+	target?: EventTarget;
 };
 
 type FormDataOptions = Partial<{
@@ -567,19 +579,35 @@ export function superForm<
 		);
 	}
 
-	async function Form_clientValidation(event: ChangeEvent | null, force = false) {
-		if (!event) return;
+	function Form__changeEvent(event: FullChangeEvent) {
+		if (!options.onChange || !event.paths.length || event.type == 'blur') return;
+
+		let changeEvent: ChangeEvent;
+		if (event.type && event.paths.length == 1 && event.formEl && event.target instanceof Element) {
+			changeEvent = {
+				path: event.paths.map(mergePath)[0],
+				formEl: event.formEl,
+				target: event.target
+			};
+		} else {
+			changeEvent = {
+				paths: event.paths.map(mergePath),
+				target: undefined
+			};
+		}
+
+		options.onChange(changeEvent);
+	}
+
+	async function Form_clientValidation(event: FullChangeEvent | null, force = false) {
+		if (event) setTimeout(() => Form__changeEvent(event));
+
+		if (!event || !options.validators) return;
 
 		if (!force) {
 			if (options.validationMethod == 'submit-only') return;
 			if (options.validationMethod == 'onblur' && event.type == 'input') return;
 			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
-		}
-
-		if (options.onChange) {
-			setTimeout(() => {
-				if (options.onChange) options.onChange({ fields: event.paths.map(mergePath) });
-			});
 		}
 
 		if (!options.validators) return;
@@ -602,7 +630,7 @@ export function superForm<
 		return result;
 	}
 
-	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: ChangeEvent) {
+	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: FullChangeEvent) {
 		//console.log('Form__displayNewErrors', errors); //debug
 
 		const { type, immediate, multiple, paths } = event;
@@ -818,19 +846,22 @@ export function superForm<
 
 	//#region NextChange /////
 
-	let NextChange: ChangeEvent | null = null;
+	let NextChange: FullChangeEvent | null = null;
 
-	function NextChange_setHtmlEvent(event: ChangeEvent) {
+	function NextChange_setHtmlEvent(event: FullChangeEvent) {
 		NextChange = event;
 		// Wait for on:input to provide additional information
-		setTimeout(() => Form_clientValidation(NextChange), 0);
+		setTimeout(() => {
+			Form_clientValidation(NextChange);
+		}, 0);
 	}
 
 	function NextChange_additionalEventInformation(
-		event: NonNullable<ChangeEvent['type']>,
+		event: NonNullable<FullChangeEvent['type']>,
 		immediate: boolean,
 		multiple: boolean,
-		formEl: HTMLFormElement
+		formEl: HTMLFormElement,
+		target: EventTarget | undefined
 	) {
 		if (NextChange === null) {
 			NextChange = { paths: [] };
@@ -840,6 +871,7 @@ export function superForm<
 		NextChange.immediate = immediate;
 		NextChange.multiple = multiple;
 		NextChange.formEl = formEl;
+		NextChange.target = target;
 	}
 
 	function NextChange_paths() {
@@ -904,8 +936,6 @@ export function superForm<
 		if (taintOptions == 'ignore') return;
 
 		const paths = comparePaths(newData, Data.form);
-		//console.log("🚀 ~ Tainted_update:", paths) //debug
-
 		if (paths.length) {
 			if (taintOptions === 'untaint-all') {
 				Tainted.state.set(undefined);
@@ -1277,7 +1307,7 @@ export function superForm<
 			// so we can enable the tainted form option.
 			Tainted_enable();
 
-			let lastInputChange: ChangeEvent['paths'] | undefined;
+			let lastInputChange: FullChangeEvent['paths'] | undefined;
 
 			// TODO: Debounce option?
 			async function onInput(e: Event) {
@@ -1286,7 +1316,13 @@ export function superForm<
 				if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
 
 				lastInputChange = NextChange_paths();
-				NextChange_additionalEventInformation('input', info.immediate, info.multiple, FormEl);
+				NextChange_additionalEventInformation(
+					'input',
+					info.immediate,
+					info.multiple,
+					FormEl,
+					e.target ?? undefined
+				);
 			}
 
 			async function onBlur(e: Event) {
@@ -1306,7 +1342,8 @@ export function superForm<
 					immediate: info.multiple,
 					multiple: info.multiple,
 					type: 'blur',
-					formEl: FormEl
+					formEl: FormEl,
+					target: e.target ?? undefined
 				});
 
 				// Clear input change event, now that the field doesn't have focus anymore.

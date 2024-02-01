@@ -14,6 +14,7 @@
 	const { form, errors, message, enhance, tainted } = superForm(data.form, {
 		dataType: 'json',
 		validators: zod(validators),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		validationMethod: ($page.url.searchParams.get('method') ?? undefined) as any
 	});
 </script>

@@ -248,6 +248,7 @@ type ValidationResponse<
 export type ChangeEvent =
 	| {
 			path: string;
+			paths: string[];
 			formEl: HTMLFormElement;
 			target: Element;
 	  }
@@ -583,15 +584,18 @@ export function superForm<
 		if (!options.onChange || !event.paths.length || event.type == 'blur') return;
 
 		let changeEvent: ChangeEvent;
+		const paths = event.paths.map(mergePath);
+
 		if (event.type && event.paths.length == 1 && event.formEl && event.target instanceof Element) {
 			changeEvent = {
-				path: event.paths.map(mergePath)[0],
+				path: paths[0],
+				paths,
 				formEl: event.formEl,
 				target: event.target
 			};
 		} else {
 			changeEvent = {
-				paths: event.paths.map(mergePath),
+				paths,
 				target: undefined
 			};
 		}

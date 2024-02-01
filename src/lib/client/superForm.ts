@@ -92,6 +92,8 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 					error: App.Error;
 				};
 		  }) => MaybePromise<unknown | void>);
+	onChange: (event: { fields: string[] }) => void;
+
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
 	validators: ClientValidationAdapter<T> | false;
@@ -566,13 +568,21 @@ export function superForm<
 	}
 
 	async function Form_clientValidation(event: ChangeEvent | null, force = false) {
-		if (!event || !options.validators) return;
+		if (!event) return;
 
 		if (!force) {
 			if (options.validationMethod == 'submit-only') return;
 			if (options.validationMethod == 'onblur' && event.type == 'input') return;
 			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 		}
+
+		if (options.onChange) {
+			setTimeout(() => {
+				if (options.onChange) options.onChange({ fields: event.paths.map(mergePath) });
+			});
+		}
+
+		if (!options.validators) return;
 
 		const result = await Form_validate();
 

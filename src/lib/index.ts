@@ -45,3 +45,5 @@ export {
 	type FormPathArrays,
 	type FormPathType
 } from './client/index.js';
+
+export { splitPath } from './stringPath.js';

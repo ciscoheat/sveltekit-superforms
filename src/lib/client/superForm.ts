@@ -473,7 +473,7 @@ export function superForm<
 				} else if (
 					!(value instanceof Date) &&
 					!(value instanceof File) &&
-					!(value instanceof FileList)
+					(!browser || !(value instanceof FileList))
 				) {
 					throw new SuperFormError(
 						`Object found in form field "${key}". ` +
@@ -736,7 +736,7 @@ export function superForm<
 		if (options.keepFiles) {
 			traversePaths(Data.form, (info) => {
 				if (
-					!(info.parent instanceof FileList) &&
+					(!browser || !(info.parent instanceof FileList)) &&
 					(info.value instanceof File || (browser && info.value instanceof FileList))
 				) {
 					const dataPath = pathExists(data, info.path);

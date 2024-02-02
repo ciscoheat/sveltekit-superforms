@@ -5,6 +5,7 @@ import { get } from 'svelte/store';
 import { merge } from 'ts-deepmerge';
 import { describe, it, expect, beforeEach, test } from 'vitest';
 import { z } from 'zod';
+import { SuperFormError } from '$lib/errors.js';
 
 const schema = z.object({
 	name: z.string().default('Unknown'),
@@ -237,6 +238,20 @@ describe('fieldProxy with superForm', async () => {
 		expect(get(form.form).score).toBe(100);
 		expect(form.isTainted('score')).toBe(false);
 		expect(form.isTainted()).toBe(false);
+	});
+});
+
+describe('Nested data', () => {
+	it('should make superForm throw an error if dataType is not "json"', async () => {
+		const validated = await superValidate(
+			zod(
+				z.object({
+					nested: z.object({ name: z.string() })
+				})
+			)
+		);
+		expect(() => superForm(validated)).toThrowError(SuperFormError);
+		expect(() => superForm(validated, { dataType: 'json' })).not.toThrowError(SuperFormError);
 	});
 });
 

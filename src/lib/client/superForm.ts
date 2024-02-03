@@ -470,16 +470,22 @@ export function superForm<
 
 				if (Array.isArray(value)) {
 					if (value.length > 0) checkForNestedData(key, value[0]);
-				} else if (
-					!(value instanceof Date) &&
-					!(value instanceof File) &&
-					(!browser || !(value instanceof FileList))
-				) {
-					throw new SuperFormError(
-						`Object found in form field "${key}". ` +
-							`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
-							`More information: https://superforms.rocks/concepts/nested-data`
-					);
+				} else {
+					let isFileList;
+					try {
+						isFileList = browser && value instanceof FileList;
+					} catch {
+						// Catch special environments like Stackblitz
+						isFileList = false;
+					}
+
+					if (!(value instanceof Date) && !(value instanceof File) && !isFileList) {
+						throw new SuperFormError(
+							`Object found in form field "${key}". ` +
+								`Set the dataType option to "json" and add use:enhance to use nested data structures. ` +
+								`More information: https://superforms.rocks/concepts/nested-data`
+						);
+					}
 				}
 			};
 

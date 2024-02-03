@@ -604,7 +604,16 @@ export function superForm<
 	}
 
 	async function Form_clientValidation(event: FullChangeEvent | null, force = false) {
-		if (event) setTimeout(() => Form__changeEvent(event));
+		if (event) {
+			if (!options.validators && options.defaultValidator == 'clear') {
+				Errors.update(($errors) => {
+					setPaths($errors, event.paths, undefined);
+					return $errors;
+				});
+			}
+
+			setTimeout(() => Form__changeEvent(event));
+		}
 
 		if (!event || !options.validators) return;
 
@@ -616,15 +625,7 @@ export function superForm<
 			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 		}
 
-		if (!options.validators) {
-			if (options.defaultValidator == 'clear') {
-				Errors.update(($errors) => {
-					setPaths($errors, event.paths, undefined);
-					return $errors;
-				});
-			}
-			return;
-		}
+		//if (!options.validators) return;
 
 		const result = await Form_validate();
 

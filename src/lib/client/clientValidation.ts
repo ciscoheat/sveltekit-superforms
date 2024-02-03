@@ -28,7 +28,7 @@ async function _clientValidation<T extends Record<string, unknown>, M>(
 	let errors: ValidationErrors<T> = {};
 	let status: ValidationResult<T> = { success: true, data };
 
-	if (validator) {
+	if (typeof validator == 'object') {
 		status = await /* @__PURE__ */ validator.validate(data);
 
 		if (!status.success) {

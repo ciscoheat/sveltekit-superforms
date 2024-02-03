@@ -11,7 +11,6 @@
 
 	const { form, errors, message, tainted, enhance } = superForm(data.form, {
 		dataType: 'json',
-		defaultValidator: 'keep',
 		validators: zod(schema),
 		onError: (event) => {
 			console.log('onError', event);

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Form id cannot be `undefined` anymore, must be `string`. (It's set automatically by default).
 - `flashMessage.onError.message` option in `superForm` renamed to `flashMessage.onError.flashMessage`.
 - `constraints` are now optional in the `SuperValidated` type, and are returned only when loading data, not posting. This is only relevant when you modify constraints before calling `superForm`.
+- Removed the `defaultValidators` option, `'clear'` can now be set directly on `validators` instead.
 
 ### Added
 

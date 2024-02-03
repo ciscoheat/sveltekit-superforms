@@ -41,7 +41,6 @@
 		onUpdate(event) {
 			if ($page.url.searchParams.has('cancel')) event.cancel();
 		},
-		defaultValidator: validator == 'zod' ? 'keep' : 'clear',
 		validators: validator == 'zod' ? zodClient(schema) : superFormValidator,
 		flashMessage: {
 			module: flashModule,

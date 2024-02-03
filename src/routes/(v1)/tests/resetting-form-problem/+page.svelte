@@ -17,7 +17,6 @@
 		autoFocusOnError: true,
 		errorSelector: '[data-invalid]',
 		validators: zod(schema),
-		defaultValidator: 'clear',
 		//resetForm: true,
 		clearOnSubmit: 'none'
 	});

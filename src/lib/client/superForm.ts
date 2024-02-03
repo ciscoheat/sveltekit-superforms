@@ -96,9 +96,8 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: ClientValidationAdapter<T> | false;
+	validators: ClientValidationAdapter<T> | false | 'clear';
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
-	defaultValidator: 'keep' | 'clear';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
 	delayMs: number;
@@ -300,7 +299,6 @@ const defaultFormOptions = {
 	onError: defaultOnError,
 	dataType: 'form',
 	validators: undefined,
-	defaultValidator: 'keep',
 	customValidity: false,
 	clearOnSubmit: 'errors-and-message',
 	delayMs: 500,
@@ -605,7 +603,7 @@ export function superForm<
 
 	async function Form_clientValidation(event: FullChangeEvent | null, force = false) {
 		if (event) {
-			if (!options.validators && options.defaultValidator == 'clear') {
+			if (options.validators == 'clear') {
 				Errors.update(($errors) => {
 					setPaths($errors, event.paths, undefined);
 					return $errors;
@@ -615,7 +613,7 @@ export function superForm<
 			setTimeout(() => Form__changeEvent(event));
 		}
 
-		if (!event || !options.validators) return;
+		if (!event || !options.validators || options.validators == 'clear') return;
 
 		if (!force) {
 			if (options.validationMethod == 'onsubmit' || options.validationMethod == 'submit-only') {

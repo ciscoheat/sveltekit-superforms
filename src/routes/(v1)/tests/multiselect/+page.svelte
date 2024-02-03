@@ -9,8 +9,7 @@
 	const { form, enhance, message, errors, allErrors, tainted } = superForm(data.form, {
 		dataType: 'json',
 		validators: zod(formSchema),
-		validationMethod: 'onblur',
-		defaultValidator: 'clear'
+		validationMethod: 'onblur'
 	});
 
 	$: console.log($allErrors);

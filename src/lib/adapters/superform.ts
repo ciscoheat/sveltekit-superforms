@@ -22,7 +22,6 @@ export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null 
 
 type Errors = string | string[] | undefined | null;
 
-// TODO: Try to use NoInfer when it's available.
 function _superform<T extends Record<string, unknown>, PartialT extends Partial<T>>(
 	schema: Validators<PartialT>
 ): ClientValidationAdapter<T> {
@@ -92,7 +91,6 @@ function _superform<T extends Record<string, unknown>, PartialT extends Partial<
 }
 
 /**
- * @deprecated Use `superformClient` instead.
+ * @deprecated This adapter requires you to do error-prone type checking yourself. If possible, use one of the supported validation libraries instead.
  */
-export const superform = /* @__PURE__ */ memoize(_superform);
-export const superformClient = superform;
+export const superformClient = /* @__PURE__ */ memoize(_superform);

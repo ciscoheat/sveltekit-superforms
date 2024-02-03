@@ -13,7 +13,7 @@
 		: $page.url.searchParams.has('onblur')
 			? 'onblur'
 			: $page.url.searchParams.has('submit-only')
-				? 'submit-only'
+				? 'onsubmit'
 				: 'auto';
 
 	const { form, errors, message, enhance, tainted } = superForm(data.form, {

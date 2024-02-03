@@ -4,7 +4,7 @@
 	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { z } from 'zod';
 	import type { Schema } from './schema.js';
-	import { superform } from '$lib/adapters/superform.js';
+	import { superformClient } from '$lib/adapters/superform.js';
 
 	const defaultData = {
 		tags: [
@@ -32,7 +32,7 @@
 		onUpdated({ form }) {
 			console.log('onUpdated, valid:', form.valid, form);
 		},
-		validators: superform({
+		validators: superformClient({
 			tags: {
 				id: (id?) => (id === undefined || isNaN(id) || id < 3 ? 'Id must be larger than 2' : null),
 				name: (name?) => (!name || name.length < 2 ? 'Tags must be at least two characters' : null)

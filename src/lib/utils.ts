@@ -10,6 +10,8 @@ export type NumericRange<
 	? ACC | START | END
 	: NumericRange<START, END, [...ARR, 1], ARR[START] extends undefined ? ACC : ACC | ARR['length']>;
 
+export type ErrorStatus = NumericRange<400, 599>;
+
 export function clone<T>(data: T): T {
 	return data && typeof data === 'object' ? justClone(data) : data;
 }

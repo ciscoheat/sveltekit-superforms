@@ -1,8 +1,8 @@
 import { traversePath } from './traversal.js';
-import { type ActionFailure, fail as realFail, type RequestEvent } from '@sveltejs/kit';
+import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
-import type { NumericRange } from './utils.js';
+import type { ErrorStatus } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
@@ -184,7 +184,7 @@ export function message<T extends Record<string, unknown>, M>(
 	form: SuperValidated<T, M>,
 	message: M,
 	options?: {
-		status?: NumericRange<400, 599>;
+		status?: ErrorStatus;
 		removeFiles?: boolean;
 	}
 ) {
@@ -195,17 +195,16 @@ export function message<T extends Record<string, unknown>, M>(
 	form.message = message;
 
 	const remove = options?.removeFiles !== false;
-	if (form.valid) return remove ? removeFiles({ form }) : { form };
+	const output = remove ? withFiles({ form }) : { form };
 
-	const func = remove ? failAndRemoveFiles : realFail;
-	return func(options?.status ?? 400, { form });
+	return form.valid ? output : fail(options?.status ?? 400, output);
 }
 
 export const setMessage = message;
 
 type SetErrorOptions = {
 	overwrite?: boolean;
-	status?: NumericRange<400, 599>;
+	status?: ErrorStatus;
 	removeFiles?: boolean;
 };
 
@@ -285,26 +284,18 @@ export function setError<
 
 	form.valid = false;
 
-	const func = options.removeFiles === false ? realFail : failAndRemoveFiles;
-	return func(options.status ?? 400, { form });
+	const output = options.removeFiles === false ? { form } : withFiles({ form });
+	return fail(options.status ?? 400, output);
 }
 
-export function removeFiles<T extends object>(obj: T) {
+export function withFiles<T extends object>(obj: T) {
 	if (typeof obj !== 'object') return obj;
 	for (const key in obj) {
 		const value = obj[key];
 		if (value instanceof File) delete obj[key];
-		else if (value && typeof value === 'object') removeFiles(value);
+		else if (value && typeof value === 'object') withFiles(value);
 	}
 	return obj;
 }
 
-/**
- * @deprecated Use `removeFiles` on the object that should be returned instead.
- */
-export function failAndRemoveFiles<T extends Record<string, unknown> | undefined>(
-	...params: Parameters<typeof realFail<T>>
-) {
-	if (params[1]) params[1] = removeFiles(params[1]);
-	return realFail<T>(...params);
-}
+export const removeFiles = withFiles;

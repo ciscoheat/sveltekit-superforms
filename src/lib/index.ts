@@ -25,8 +25,8 @@ export {
 	message,
 	setMessage,
 	setError,
+	withFiles,
 	removeFiles,
-	failAndRemoveFiles,
 	type SuperValidated,
 	type TaintedFields,
 	type ValidationErrors,
@@ -48,3 +48,5 @@ export {
 } from './client/index.js';
 
 export { splitPath } from './stringPath.js';
+
+export type { ErrorStatus } from './utils.js';

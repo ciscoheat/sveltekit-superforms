@@ -97,7 +97,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
 	validators: ClientValidationAdapter<T> | false;
-	validationMethod: 'auto' | 'oninput' | 'onblur' | 'submit-only';
+	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
 	defaultValidator: 'keep' | 'clear';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -609,12 +609,22 @@ export function superForm<
 		if (!event || !options.validators) return;
 
 		if (!force) {
-			if (options.validationMethod == 'submit-only') return;
+			if (options.validationMethod == 'onsubmit' || options.validationMethod == 'submit-only') {
+				return;
+			}
 			if (options.validationMethod == 'onblur' && event.type == 'input') return;
 			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 		}
 
-		if (!options.validators) return;
+		if (!options.validators) {
+			if (options.defaultValidator == 'clear') {
+				Errors.update(($errors) => {
+					setPaths($errors, event.paths, undefined);
+					return $errors;
+				});
+			}
+			return;
+		}
 
 		const result = await Form_validate();
 

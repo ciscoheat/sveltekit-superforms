@@ -9,8 +9,8 @@ export {
 	message,
 	setMessage,
 	setError,
+	withFiles,
 	removeFiles,
-	failAndRemoveFiles,
 	type SuperValidated,
 	type TaintedFields,
 	type ValidationErrors

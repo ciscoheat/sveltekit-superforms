@@ -5,7 +5,7 @@ import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { defaultValues as adapterDefaults } from '$lib/defaults.js';
 import {
-	removeFiles,
+	withFiles,
 	message,
 	setError,
 	superValidate,
@@ -513,7 +513,7 @@ describe('File handling with the allowFiles option', () => {
 		});
 
 		it('should remove the files with the removeFiles function', async () => {
-			fail(400, removeFiles({ form }));
+			fail(400, withFiles({ form }));
 			expect(form.data.avatar).toBeUndefined();
 		});
 	});

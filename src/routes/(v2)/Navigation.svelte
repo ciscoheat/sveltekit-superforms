@@ -17,6 +17,7 @@
 		<li><a href="/v2/custom-tainted-dialog">Custom tainted dialog</a></li>
 		<li><a href="/v2/issue-309-unions">Schema union</a></li>
 		<li><a href="/v2/on-change-event">onChange event</a></li>
+		<li><a href="/v2/defaults-fail">Nested defaults</a></li>
 	</ul>
 </nav>
 

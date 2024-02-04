@@ -17,7 +17,7 @@ const activeTimers = new Set<() => void>();
  * @DCI-context
  */
 export function Form<T extends Record<string, unknown>, M>(
-	formEl: HTMLFormElement,
+	formElement: HTMLFormElement,
 	timers: {
 		submitting: Writable<boolean>;
 		delayed: Writable<boolean>;
@@ -76,7 +76,7 @@ export function Form<T extends Record<string, unknown>, M>(
 
 	//#region ErrorTextEvents
 
-	const ErrorTextEvents = formEl;
+	const ErrorTextEvents = formElement;
 
 	function ErrorTextEvents__selectText(e: Event) {
 		const target = e.target as HTMLInputElement;
@@ -105,7 +105,7 @@ export function Form<T extends Record<string, unknown>, M>(
 		querySelectorAll: (selector: string) => NodeListOf<HTMLElement>;
 		querySelector: (selector: string) => HTMLElement;
 		dataset: DOMStringMap;
-	} = formEl;
+	} = formElement;
 
 	function Form_shouldAutoFocus(userAgent: string) {
 		if (typeof options.autoFocusOnError === 'boolean') return options.autoFocusOnError;

@@ -15,10 +15,10 @@ export async function updateCustomValidity(validityEl: HTMLElement, errors: stri
 }
 
 export function setCustomValidityForm<T extends Record<string, unknown>, M>(
-	formEl: HTMLFormElement,
+	formElement: HTMLFormElement,
 	errors: SuperValidated<T, M>['errors']
 ) {
-	for (const el of formEl.querySelectorAll<
+	for (const el of formElement.querySelectorAll<
 		HTMLInputElement & HTMLSelectElement & HTMLTextAreaElement & HTMLButtonElement
 	>('input,select,textarea,button')) {
 		if (noCustomValidityDataAttribute in el.dataset) {

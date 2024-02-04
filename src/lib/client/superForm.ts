@@ -74,12 +74,20 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 	onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
 	onResult: (event: {
 		result: ActionResult;
+		/**
+		 * @deprecated Use formElement instead
+		 */
 		formEl: HTMLFormElement;
+		formElement: HTMLFormElement;
 		cancel: () => void;
 	}) => MaybePromise<unknown | void>;
 	onUpdate: (event: {
 		form: SuperValidated<T, M>;
+		/**
+		 * @deprecated Use formElement instead
+		 */
 		formEl: HTMLFormElement;
+		formElement: HTMLFormElement;
 		cancel: () => void;
 	}) => MaybePromise<unknown | void>;
 	onUpdated: (event: { form: Readonly<SuperValidated<T, M>> }) => MaybePromise<unknown | void>;
@@ -248,7 +256,7 @@ export type ChangeEvent =
 	| {
 			path: string;
 			paths: string[];
-			formEl: HTMLFormElement;
+			formElement: HTMLFormElement;
 			target: Element;
 	  }
 	| {
@@ -261,7 +269,7 @@ type FullChangeEvent = {
 	immediate?: boolean;
 	multiple?: boolean;
 	type?: 'input' | 'blur';
-	formEl?: HTMLFormElement;
+	formElement?: HTMLFormElement;
 	target?: EventTarget;
 };
 
@@ -584,11 +592,16 @@ export function superForm<
 		let changeEvent: ChangeEvent;
 		const paths = event.paths.map(mergePath);
 
-		if (event.type && event.paths.length == 1 && event.formEl && event.target instanceof Element) {
+		if (
+			event.type &&
+			event.paths.length == 1 &&
+			event.formElement &&
+			event.target instanceof Element
+		) {
 			changeEvent = {
 				path: paths[0],
 				paths,
-				formEl: event.formEl,
+				formElement: event.formElement,
 				target: event.target
 			};
 		} else {
@@ -655,10 +668,10 @@ export function superForm<
 		const output: Record<string, unknown> = {};
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
 
-		if (options.customValidity && event.formEl) {
+		if (options.customValidity && event.formElement) {
 			for (const path of event.paths) {
 				const name = CSS.escape(mergePath(path));
-				const el = event.formEl.querySelector<HTMLElement>(`[name="${name}"]`);
+				const el = event.formElement.querySelector<HTMLElement>(`[name="${name}"]`);
 				if (el) {
 					const message = 'validationMessage' in el ? String(el.validationMessage) : '';
 					validity.set(path.join(), { el, message });
@@ -873,7 +886,7 @@ export function superForm<
 		event: NonNullable<FullChangeEvent['type']>,
 		immediate: boolean,
 		multiple: boolean,
-		formEl: HTMLFormElement,
+		formElement: HTMLFormElement,
 		target: EventTarget | undefined
 	) {
 		if (NextChange === null) {
@@ -883,7 +896,7 @@ export function superForm<
 		NextChange.type = event;
 		NextChange.immediate = immediate;
 		NextChange.multiple = multiple;
-		NextChange.formEl = formEl;
+		NextChange.formElement = formElement;
 		NextChange.target = target;
 	}
 
@@ -1089,7 +1102,7 @@ export function superForm<
 
 	if (browser) {
 		// Tainted check
-		const defaultMessage = 'Do you want to leave this page? Changes you made may not be saved.';
+		const defaultMessage = 'Leave page? Changes that you made may not be saved.';
 		let forceRedirection = false;
 		beforeNavigate(async (nav) => {
 			if (options.taintedMessage && !Data.submitting && !forceRedirection) {
@@ -1297,7 +1310,7 @@ export function superForm<
 		isTainted: Tainted_isTainted,
 
 		// @DCI-context
-		enhance(FormEl: HTMLFormElement, events?: SuperFormEvents<T, M>) {
+		enhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
 			if (events) {
 				if (events.onError) {
 					if (options.onError === 'apply') {
@@ -1333,7 +1346,7 @@ export function superForm<
 					'input',
 					info.immediate,
 					info.multiple,
-					FormEl,
+					FormElement,
 					e.target ?? undefined
 				);
 			}
@@ -1355,7 +1368,7 @@ export function superForm<
 					immediate: info.multiple,
 					multiple: info.multiple,
 					type: 'blur',
-					formEl: FormEl,
+					formElement: FormElement,
 					target: e.target ?? undefined
 				});
 
@@ -1363,25 +1376,25 @@ export function superForm<
 				lastInputChange = undefined;
 			}
 
-			FormEl.addEventListener('focusout', onBlur);
-			FormEl.addEventListener('input', onInput);
+			FormElement.addEventListener('focusout', onBlur);
+			FormElement.addEventListener('input', onInput);
 
 			onDestroy(() => {
-				FormEl.removeEventListener('focusout', onBlur);
-				FormEl.removeEventListener('input', onInput);
+				FormElement.removeEventListener('focusout', onBlur);
+				FormElement.removeEventListener('input', onInput);
 			});
 
 			///// SvelteKit enhance function //////////////////////////////////
 
 			const htmlForm = HtmlForm(
-				FormEl,
+				FormElement,
 				{ submitting: Submitting, delayed: Delayed, timeout: Timeout },
 				options
 			);
 
 			let currentRequest: AbortController | null;
 
-			return enhance(FormEl, async (submit) => {
+			return enhance(FormElement, async (submit) => {
 				const _submitCancel = submit.cancel;
 
 				let cancelled = false;
@@ -1414,7 +1427,7 @@ export function superForm<
 					// Client validation
 					const noValidate =
 						!options.SPA &&
-						(FormEl.noValidate ||
+						(FormElement.noValidate ||
 							((submit.submitter instanceof HTMLButtonElement ||
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
@@ -1563,7 +1576,8 @@ export function superForm<
 
 					const data = {
 						result,
-						formEl: FormEl,
+						formEl: FormElement,
+						formElement: FormElement,
 						cancel: () => (cancelled = true)
 					};
 
@@ -1585,7 +1599,8 @@ export function superForm<
 
 								const data = {
 									form: newForm as SuperValidated<T>,
-									formEl: FormEl,
+									formEl: FormElement,
+									formElement: FormElement,
 									cancel: () => (cancelled = true)
 								};
 
@@ -1595,12 +1610,12 @@ export function superForm<
 
 								if (!cancelled) {
 									if (options.customValidity) {
-										setCustomValidityForm(FormEl, data.form.errors);
+										setCustomValidityForm(FormElement, data.form.errors);
 									}
 
 									// Special reset case for file inputs
 									if (Form_shouldReset(data.form.valid, result.type == 'success')) {
-										data.formEl
+										data.formElement
 											.querySelectorAll<HTMLInputElement>('input[type="file"]')
 											.forEach((e) => (e.value = ''));
 									}

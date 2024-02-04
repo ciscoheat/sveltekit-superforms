@@ -37,65 +37,100 @@ export type FormPath<T extends object> = string & StringPath<T>;
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
-export type FormPathLeaves<T extends object> = string & StringPath<T, 'leaves'>;
+export type FormPathLeaves<T extends object> = string &
+	StringPath<T, { filter: 'leaves'; objAppend: never; path: '' }>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Also includes the _errors field for objects and arrays.
  */
 export type FormPathLeavesWithErrors<T extends object> = string &
-	StringPath<T, 'leaves', '_errors'>;
+	StringPath<T, { filter: 'leaves'; objAppend: '_errors'; path: '' }>;
 
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object> = string & StringPath<T, 'arrays'>;
+export type FormPathArrays<T extends object> = string &
+	StringPath<T, { filter: 'arrays'; objAppend: never; path: '' }>;
 
 type Concat<
 	Path extends string,
 	Next extends string
 > = `${Path}${Path extends '' ? '' : '.'}${Next}`;
 
+type StringPathOptions = {
+	filter: 'arrays' | 'leaves' | 'all';
+	objAppend: string | never;
+	path: string;
+};
+
 type StringPath<
 	T extends object,
-	Filter extends 'arrays' | 'leaves' | 'all' = 'all',
-	ObjAppend extends string = never,
-	Path extends string = ''
+	Options extends StringPathOptions = {
+		filter: 'all';
+		objAppend: never;
+		path: '';
+	}
 > = T extends BuiltInObjects
-	? Filter extends 'leaves' | 'all'
-		? Path
+	? Options['filter'] extends 'leaves' | 'all'
+		? Options['path']
 		: never
 	: T extends (infer U)[]
 		?
-				| (ObjAppend extends string ? Concat<Path, ObjAppend> : never)
-				| (Filter extends 'arrays' | 'all' ? Path : never)
+				| (Options['objAppend'] extends string
+						? Concat<Options['path'], Options['objAppend']>
+						: never)
+				| (Options['filter'] extends 'arrays' | 'all' ? Options['path'] : never)
 				| (NonNullable<U> extends object
-						? StringPath<NonNullable<U>, Filter, ObjAppend, `${Path}[${number}]`>
-						: Filter extends 'leaves' | 'all'
-							? `${Path}[${number}]`
+						? StringPath<
+								NonNullable<U>,
+								{
+									filter: Options['filter'];
+									objAppend: Options['objAppend'];
+									path: `${Options['path']}[${number}]`;
+								}
+							>
+						: Options['filter'] extends 'leaves' | 'all'
+							? `${Options['path']}[${number}]`
 							: never)
 		: {
 				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
 					?
-							| (ObjAppend extends string ? Concat<Path, ObjAppend> : never)
+							| (Options['objAppend'] extends string
+									? Concat<Options['path'], Options['objAppend']>
+									: never)
 							| NonNullable<T[K]> extends (infer U)[]
 						?
-								| (Filter extends 'arrays' | 'all' ? Concat<Path, K> : never)
+								| (Options['filter'] extends 'arrays' | 'all' ? Concat<Options['path'], K> : never)
 								| (NonNullable<U> extends unknown[]
-										? Filter extends 'arrays' | 'all'
-											? Concat<Path, `${K}[${number}]`>
+										? Options['filter'] extends 'arrays' | 'all'
+											? Concat<Options['path'], `${K}[${number}]`>
 											: never
-										: Filter extends 'leaves' | 'all'
-											? Concat<Path, `${K}[${number}]`>
+										: Options['filter'] extends 'leaves' | 'all'
+											? Concat<Options['path'], `${K}[${number}]`>
 											: never)
 								| (NonNullable<U> extends object
-										? StringPath<NonNullable<U>, Filter, ObjAppend, Concat<Path, `${K}[${number}]`>>
+										? StringPath<
+												NonNullable<U>,
+												{
+													filter: Options['filter'];
+													objAppend: Options['objAppend'];
+													path: Concat<Options['path'], `${K}[${number}]`>;
+												}
+											>
 										: never)
 						:
-								| (Filter extends 'all' ? Concat<Path, K> : never)
-								| StringPath<NonNullable<T[K]>, Filter, ObjAppend, Concat<Path, K>>
-					: Filter extends 'leaves' | 'all'
-						? Concat<Path, K>
+								| (Options['filter'] extends 'all' ? Concat<Options['path'], K> : never)
+								| StringPath<
+										NonNullable<T[K]>,
+										{
+											filter: Options['filter'];
+											objAppend: Options['objAppend'];
+											path: Concat<Options['path'], K>;
+										}
+								  >
+					: Options['filter'] extends 'leaves' | 'all'
+						? Concat<Options['path'], K>
 						: never;
 			}[Extract<AllKeys<T>, string>];
 

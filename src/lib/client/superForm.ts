@@ -53,7 +53,7 @@ export type FormResult<T extends Record<string, unknown> | null> = ActionResult<
 	NonNullable<T>
 >;
 
-export type TaintOption = boolean | 'untaint' | 'untaint-all';
+export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
 
 // Need to distribute T with "T extends T",
 // since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>
@@ -950,7 +950,7 @@ export function superForm<
 
 		const paths = comparePaths(newData, Data.form);
 		if (paths.length) {
-			if (taintOptions === 'untaint-all') {
+			if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
 				Tainted.state.set(undefined);
 			} else {
 				Tainted.state.update((tainted) => {

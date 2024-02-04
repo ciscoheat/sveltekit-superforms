@@ -95,7 +95,7 @@
 					$form.scoops = 3;
 					return $form;
 				},
-				{ taint: 'untaint-all' }
+				{ taint: 'untaint-form' }
 			);
 		}}>Three scoops, untaint all</button
 	>

@@ -4,7 +4,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import { userSchema } from '../users.js';
 	import { zod } from '$lib/adapters/zod.js';
-	import { superform } from '$lib/adapters/superform.js';
+	import { superformClient } from '$lib/adapters/superform.js';
 
 	export let data: PageData;
 
@@ -15,7 +15,7 @@
 						id: userSchema.shape.id.optional()
 					})
 				)
-			: superform({
+			: superformClient({
 					name: (name?: string) => (!name || name.length < 2 ? 'Your name is too short' : null),
 					email: (email?: string) =>
 						!email || !email.includes('@') ? 'Enter a valid email address' : null

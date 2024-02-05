@@ -35,7 +35,8 @@
 {/if}
 
 <form method="POST" use:enhance>
-	{#each $form.children as _child, i}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{#each $form.children as _, i}
 		<p>
 			<label for={`options-${i}`}>Child {i + 1}</label>
 			<select id={`options-${i}`} bind:value={$form.children[i].option}>

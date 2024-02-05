@@ -1194,73 +1194,7 @@ export function superForm<
 		);
 	}
 
-	async function validate<Path extends FormPathLeaves<T>>(
-		path?: Path | { update: boolean },
-		opts: ValidateOptions<FormPathType<T, Path>> = {}
-	) {
-		if (!options.validators) {
-			throw new SuperFormError('options.validators must be set to use the validate method.');
-		}
-
-		if (!path || typeof path === 'object') {
-			if (typeof path == 'object' && path.update === true) {
-				const result = await Form_clientValidation({ paths: [] }, true);
-				if (result) return result;
-			}
-			return await Form_validate();
-		}
-
-		if (opts.update === undefined) opts.update = true;
-		if (opts.taint === undefined) opts.taint = false;
-		if (typeof opts.errors == 'string') opts.errors = [opts.errors];
-
-		let data: T;
-		const splittedPath = splitPath(path);
-
-		if ('value' in opts) {
-			if (opts.update === true || opts.update === 'value') {
-				// eslint-disable-next-line dci-lint/private-role-access
-				Form.update(
-					($form) => {
-						setPaths($form, [splittedPath], opts.value);
-						return $form;
-					},
-					{ taint: opts.taint }
-				);
-				data = Data.form;
-			} else {
-				data = clone(Data.form);
-				setPaths(data, [splittedPath], opts.value);
-			}
-		} else {
-			data = Data.form;
-		}
-
-		const result = await clientValidation(
-			options.validators,
-			data,
-			Data.formId,
-			Data.constraints,
-			false,
-			Data.shape
-		);
-
-		const error = pathExists(result.errors, splittedPath);
-
-		// Replace with custom error, if it exist
-		if (error && error.value && opts.errors) {
-			error.value = opts.errors;
-		}
-
-		if (opts.update === true || opts.update == 'errors') {
-			Errors.update(($errors) => {
-				setPaths($errors, [splittedPath], error?.value);
-				return $errors;
-			});
-		}
-
-		return error?.value;
-	}
+	///// Return the SuperForm object /////////////////////////////////
 
 	return {
 		form: Form,
@@ -1294,7 +1228,73 @@ export function superForm<
 			rebind(snapshot, snapshot.tainted ?? true);
 		}) as T extends T ? Restore<T, M> : never,
 
-		validate,
+		async validate<Path extends FormPathLeaves<T>>(
+			path?: Path | { update: boolean },
+			opts: ValidateOptions<FormPathType<T, Path>> = {}
+		) {
+			if (!options.validators) {
+				throw new SuperFormError('options.validators must be set to use the validate method.');
+			}
+
+			if (!path || typeof path === 'object') {
+				if (typeof path == 'object' && path.update === true) {
+					const result = await Form_clientValidation({ paths: [] }, true);
+					if (result) return result;
+				}
+				return await Form_validate();
+			}
+
+			if (opts.update === undefined) opts.update = true;
+			if (opts.taint === undefined) opts.taint = false;
+			if (typeof opts.errors == 'string') opts.errors = [opts.errors];
+
+			let data: T;
+			const splittedPath = splitPath(path);
+
+			if ('value' in opts) {
+				if (opts.update === true || opts.update === 'value') {
+					// eslint-disable-next-line dci-lint/private-role-access
+					Form.update(
+						($form) => {
+							setPaths($form, [splittedPath], opts.value);
+							return $form;
+						},
+						{ taint: opts.taint }
+					);
+					data = Data.form;
+				} else {
+					data = clone(Data.form);
+					setPaths(data, [splittedPath], opts.value);
+				}
+			} else {
+				data = Data.form;
+			}
+
+			const result = await clientValidation(
+				options.validators,
+				data,
+				Data.formId,
+				Data.constraints,
+				false,
+				Data.shape
+			);
+
+			const error = pathExists(result.errors, splittedPath);
+
+			// Replace with custom error, if it exist
+			if (error && error.value && opts.errors) {
+				error.value = opts.errors;
+			}
+
+			if (opts.update === true || opts.update == 'errors') {
+				Errors.update(($errors) => {
+					setPaths($errors, [splittedPath], error?.value);
+					return $errors;
+				});
+			}
+
+			return error?.value;
+		},
 
 		allErrors: AllErrors,
 		posted: Posted,
@@ -1308,6 +1308,8 @@ export function superForm<
 		},
 
 		isTainted: Tainted_isTainted,
+
+		///// Custom use:enhance ////////////////////////////////////////
 
 		// @DCI-context
 		enhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {

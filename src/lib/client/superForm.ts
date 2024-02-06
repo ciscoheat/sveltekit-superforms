@@ -104,7 +104,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: ClientValidationAdapter<T> | false | 'clear';
+	validators: ClientValidationAdapter<Record<string, unknown>> | false | 'clear';
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';

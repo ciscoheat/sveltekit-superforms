@@ -184,7 +184,7 @@ export type SuperForm<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 > = {
 	form: SuperFormData<T>;
-	formId: Writable<string | undefined>;
+	formId: Writable<string>;
 	errors: SuperFormErrors<T>;
 	constraints: Writable<InputConstraints<T>>;
 	message: Writable<M | undefined>;

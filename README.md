@@ -22,7 +22,7 @@
 # Feature list
 
 - Seamless merging of `PageData` and `ActionData` - Forget about which one to use and how, just focus on your form data.
-- Server- and client-side data validation with your favorite validation library: 💥 Arktype 💥 Joi 💥 TypeBox 💥 Valibot 💥 Yup 💥 Zod 💥.
+- Server- and client-side validation with any of your favorite validation libraries, with more to come: 💥 **Arktype** 💥 **Joi** 💥 **TypeBox** 💥 **Valibot** 💥 **Yup** 💥 **Zod** 💥
 - [Auto-centering and auto-focusing](https://superforms.rocks/concepts/error-handling#usage-client) on invalid form fields.
 - [Tainted form detection](https://superforms.rocks/concepts/tainted), prevents the user from losing data if navigating away from an unsaved form.
 - No JavaScript required as default, but full support for [progressive enhancement](https://superforms.rocks/concepts/enhance).
@@ -40,7 +40,7 @@
 
 # Get started
 
-Follow the get started tutorial on the website to get a hands-on introduction to Superforms: https://superforms.rocks/get-started
+Follow the Get started tutorial on the website to get a hands-on introduction to Superforms: https://superforms.rocks/get-started
 
 You can also watch this excellent introduction video to see what's possible: https://www.youtube.com/watch?v=MiKzH3kcVfs
 

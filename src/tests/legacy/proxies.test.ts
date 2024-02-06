@@ -16,100 +16,121 @@ describe('Value proxies', () => {
 
 		const proxy = booleanProxy(form, 'bool');
 
-		expect(get(form).bool).toBe(false);
+		expect(get(form).bool).toStrictEqual(false);
 
 		proxy.set('true');
 
-		expect(get(form).bool).toBe(true);
+		expect(get(form).bool).toStrictEqual(true);
 	});
 
-	test('intProxy', async () => {
-		const schema = z.object({
-			int: z.number().int()
+	describe('intProxy', () => {
+		test('default behavior', async () => {
+			const schema = z.object({
+				int: z.number().int()
+			});
+
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
+
+			const proxy = intProxy(form, 'int');
+
+			expect(get(form).int).toStrictEqual(0);
+
+			proxy.set('123');
+
+			expect(get(form).int).toStrictEqual(123);
 		});
 
-		const superForm = await superValidate(zod(schema));
-		const form = writable(superForm.data);
+		test('with empty string as default', async () => {
+			const schema = z.object({
+				int: z
+					.number()
+					.int()
+					.default('' as unknown as number)
+			});
 
-		const proxy = intProxy(form, 'int');
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
 
-		expect(get(form).int).toBe(0);
+			const proxy = intProxy(form, 'int');
 
-		proxy.set('123');
+			expect(get(proxy)).toStrictEqual('');
+			expect(get(form).int).toStrictEqual(0);
 
-		expect(get(form).int).toBe(123);
+			proxy.set('123');
+
+			expect(get(proxy)).toStrictEqual('123');
+			expect(get(form).int).toStrictEqual(123);
+		});
 	});
 
-	test('empty intProxy', async () => {
-		const schema = z.object({
-			int: z.number().int().optional()
+	describe('numberProxy', () => {
+		test('default behavior', async () => {
+			const schema = z.object({
+				number: z.number()
+			});
+
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
+
+			const proxy = numberProxy(form, 'number');
+
+			expect(get(form).number).toStrictEqual(0);
+
+			proxy.set('123.5');
+			expect(get(form).number).toStrictEqual(123.5);
+
+			proxy.set('');
+			expect(get(form).number).toStrictEqual(NaN);
 		});
 
-		const superForm = await superValidate(zod(schema));
-		const form = writable(superForm.data);
+		test('with empty: zero', async () => {
+			const schema = z.object({
+				number: z.number()
+			});
 
-		const proxy = intProxy(form, 'int', {
-			empty: 'undefined',
-			emptyIfZero: true
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
+
+			const proxy = numberProxy(form, 'number', { empty: 'zero' });
+
+			expect(get(proxy)).toStrictEqual('0');
+			expect(get(form).number).toStrictEqual(0);
+			proxy.set('');
+			expect(get(form).number).toStrictEqual(0);
 		});
 
-		expect(get(form).int).toBe(undefined);
+		test('with empty: undefined', async () => {
+			const schema = z.object({
+				number: z.number().optional()
+			});
 
-		proxy.set('123');
-		expect(get(form).int).toBe(123);
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
 
-		proxy.set('');
-		expect(get(form).int).toBe(undefined);
-	});
+			const proxy = numberProxy(form, 'number', { empty: 'undefined' });
 
-	test('intProxy with transform', async () => {
-		const schema = z.object({
-			int: z.number().int()
+			expect(get(proxy)).toStrictEqual('');
+			expect(get(form).number).toStrictEqual(undefined);
+			proxy.set('');
+			expect(get(form).number).toBeUndefined();
 		});
 
-		const superForm = await superValidate(zod(schema));
-		const form = writable(superForm.data);
+		test('with empty: null', async () => {
+			const schema = z.object({
+				number: z.number().nullable()
+			});
 
-		const proxy = intProxy(form, 'int');
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
 
-		expect(get(form).int).toBe(0);
+			const proxy = numberProxy(form, 'number', { empty: 'null' });
 
-		proxy.set('123');
-
-		expect(get(form).int).toBe(123);
-	});
-
-	test('numberProxy', async () => {
-		const schema = z.object({
-			number: z.number()
+			expect(get(proxy)).toStrictEqual('');
+			expect(get(form).number).toStrictEqual(null);
+			proxy.set('');
+			expect(get(form).number).toStrictEqual(null);
 		});
-
-		const superForm = await superValidate(zod(schema));
-		const form = writable(superForm.data);
-
-		const proxy = numberProxy(form, 'number');
-
-		expect(get(form).number).toBe(0);
-
-		proxy.set('123.5');
-		expect(get(form).number).toBe(123.5);
-
-		proxy.set('');
-		expect(get(form).number).toBe(NaN);
-	});
-
-	test('numberProxy with empty settings', async () => {
-		const schema = z.object({
-			number: z.number()
-		});
-
-		const superForm = await superValidate(zod(schema));
-		const form = writable(superForm.data);
-
-		const proxy = numberProxy(form, 'number', { zeroIfEmpty: true });
-
-		proxy.set('');
-		expect(get(form).number).toBe(0);
 	});
 
 	test('dateProxy', async () => {
@@ -143,9 +164,9 @@ describe('Field proxies', () => {
 
 		const proxy = fieldProxy(form, 'test[2]');
 
-		expect(get(proxy)).toBe(2);
+		expect(get(proxy)).toStrictEqual(2);
 		proxy.set(123);
-		expect(get(proxy)).toBe(123);
-		expect(get(form).test[2]).toBe(123);
+		expect(get(proxy)).toStrictEqual(123);
+		expect(get(form).test[2]).toStrictEqual(123);
 	});
 });

@@ -28,18 +28,14 @@ type DefaultOptions = {
 		| 'time-local'
 		| 'iso';
 	delimiter?: '.' | ',';
-	empty?: 'null' | 'undefined';
-	emptyIfZero?: boolean;
-	zeroIfEmpty?: boolean;
+	empty?: 'null' | 'undefined' | 'zero';
 	taint?: TaintOption;
 };
 
 const defaultOptions = {
 	trueStringValue: 'true',
-	dateFormat: 'iso',
-	emptyIfZero: true,
-	zeroIfEmpty: false
-} as const;
+	dateFormat: 'iso'
+} satisfies DefaultOptions;
 
 ///// Proxy functions ///////////////////////////////////////////////
 
@@ -57,7 +53,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 export function intProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Prettify<Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'taint'>>
+	options?: Prettify<Pick<DefaultOptions, 'empty' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'int', {
 		...defaultOptions,
@@ -68,9 +64,7 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Prettify<
-		Pick<DefaultOptions, 'empty' | 'emptyIfZero' | 'zeroIfEmpty' | 'delimiter' | 'taint'>
-	>
+	options?: Prettify<Pick<DefaultOptions, 'empty' | 'delimiter' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'number', {
 		...defaultOptions,
@@ -83,7 +77,7 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 	path: Path,
 	options?: {
 		format?: DefaultOptions['dateFormat'];
-		empty?: DefaultOptions['empty'];
+		empty?: Exclude<DefaultOptions['empty'], 'zero'>;
 		taint?: TaintOption;
 	}
 ) {
@@ -98,7 +92,7 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options: {
-		empty: NonNullable<DefaultOptions['empty']>;
+		empty: NonNullable<Exclude<DefaultOptions['empty'], 'zero'>>;
 		taint?: TaintOption;
 	}
 ): Writable<string> {
@@ -123,8 +117,8 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 	options: DefaultOptions
 ): Writable<string> {
 	function toValue(value: unknown) {
-		if (!value && options.empty !== undefined && (value !== 0 || options.emptyIfZero)) {
-			return options.empty === 'null' ? null : undefined;
+		if (!value && options.empty !== undefined) {
+			return options.empty === 'null' ? null : options.empty === 'zero' ? 0 : undefined;
 		}
 
 		if (typeof value === 'number') {
@@ -148,18 +142,16 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 
 		let num: number;
 
-		if (!numberToConvert && options.zeroIfEmpty) num = 0;
+		if (numberToConvert === '' && options.empty == 'zero') num = 0;
 		else if (type == 'number') num = parseFloat(numberToConvert);
 		else num = parseInt(numberToConvert, 10);
-
-		if (options.empty !== undefined && ((num === 0 && options.emptyIfZero) || isNaN(num))) {
-			return options.empty == 'null' ? null : undefined;
-		}
 
 		return num;
 	}
 
-	const proxy2 = isSuperForm(form, options)
+	const isSuper = isSuperForm(form, options);
+
+	const proxy2 = isSuper
 		? superFieldProxy(form, path, { taint: options.taint })
 		: fieldProxy(form, path);
 
@@ -169,8 +161,15 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 		if (type == 'string') {
 			return value as string;
 		} else if (type == 'int' || type == 'number') {
-			const num = value as number;
-			return isNaN(num) ? '' : String(num);
+			if (value === '') {
+				// Special case for empty string values in number proxies
+				// Set the value to 0, to conform to the type.
+				proxy2.set(0 as FormPathType<T, Path>, isSuper ? { taint: false } : undefined);
+			}
+			const num = value;
+			if (typeof num === 'number' && isNaN(num)) return '';
+			//if (options.emptyIfZero && !num) return '';
+			return String(num);
 		} else if (type == 'date') {
 			const date = value as unknown as Date;
 			if (isNaN(date as unknown as number)) return '';

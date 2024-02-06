@@ -244,13 +244,21 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 	if (!value) {
 		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 
-		if (type != 'boolean') {
-			const defaultValue = defaultValues<unknown>(info.schema, info.isOptional, [key]);
-			if (defaultValue !== undefined) return defaultValue;
-		} else if (info.isOptional && info.schema.default === true) {
-			// Special case for booleans with default value true
+		// Special case for booleans with default value true
+		if (type == 'boolean' && info.isOptional && info.schema.default === true) {
 			return false;
 		}
+
+		// Special case for numbers/integers with default value empty string
+		// (for input field placeholders to show)
+		/*
+		if ((type == 'number' || type == 'integer') && info.schema.default === '') {
+			return 0;
+		}
+		*/
+
+		const defaultValue = defaultValues<unknown>(info.schema, info.isOptional, [key]);
+		if (defaultValue !== undefined) return defaultValue;
 
 		if (info.isNullable) return null;
 		if (info.isOptional) return undefined;

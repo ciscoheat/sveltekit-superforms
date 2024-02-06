@@ -76,6 +76,17 @@ describe('Tainted', () => {
 		expect(form.isTainted('tags[0]')).toBe(true);
 	});
 
+	it('Should be able to check tainted with the tainted store', () => {
+		expect(form.isTainted()).toBe(false);
+		expect(form.isTainted({ name: true })).toBe(true);
+		expect(form.isTainted(undefined)).toBe(false);
+
+		tainted.set({ name: true });
+		expect(form.isTainted(get(tainted))).toBe(true);
+		// true since the real store is tainted:
+		expect(form.isTainted(undefined)).toBe(true);
+	});
+
 	describe('When not tainting', () => {
 		it("Should not set field to undefined if field isn't tainted", () => {
 			expect(get(tainted)).toBeUndefined();

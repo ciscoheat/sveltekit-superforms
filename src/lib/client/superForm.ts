@@ -207,7 +207,7 @@ export type SuperForm<
 	restore: T extends T ? Restore<T, M> : never;
 
 	validate: typeof validateForm<T>;
-	isTainted: (path?: FormPath<T>) => boolean;
+	isTainted: (path?: FormPath<T> | TaintedFields<T>) => boolean;
 };
 
 export type ValidateOptions<V> = Partial<{
@@ -933,7 +933,8 @@ export function superForm<
 		return !!field && field.key in field.parent;
 	}
 
-	function Tainted_isTainted(path?: FormPath<T>): boolean {
+	function Tainted_isTainted(path?: FormPath<T> | TaintedFields<T>): boolean {
+		if (typeof path === 'object') return Tainted__isObjectTainted(path);
 		if (!Data.tainted) return false;
 		if (!path) return Tainted__isObjectTainted(Data.tainted);
 

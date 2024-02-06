@@ -131,6 +131,62 @@ describe('Value proxies', () => {
 			proxy.set('');
 			expect(get(form).number).toStrictEqual(null);
 		});
+
+		test('with empty: zero and empty string as default', async () => {
+			const schema = z.object({
+				int: z.number().int()
+			});
+
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
+
+			const proxy = intProxy(form, 'int', { empty: 'zero', initiallyEmptyIfZero: true });
+
+			expect(get(proxy)).toStrictEqual('');
+			expect(get(form).int).toStrictEqual(0);
+
+			proxy.set('123');
+			expect(get(proxy)).toStrictEqual('123');
+			expect(get(form).int).toStrictEqual(123);
+
+			proxy.set('');
+			expect(get(proxy)).toStrictEqual('');
+			expect(get(form).int).toStrictEqual(0);
+
+			form.set({ int: 456 });
+			expect(get(proxy)).toStrictEqual('456');
+			expect(get(form).int).toStrictEqual(456);
+
+			form.set({ int: 0 });
+			expect(get(proxy)).toStrictEqual('0');
+			expect(get(form).int).toStrictEqual(0);
+		});
+
+		test('with empty: zero and initial value set', async () => {
+			const schema = z.object({
+				int: z.number().int().default(123)
+			});
+
+			const superForm = await superValidate(zod(schema));
+			const form = writable(superForm.data);
+
+			const proxy = intProxy(form, 'int', { empty: 'zero', initiallyEmptyIfZero: true });
+
+			expect(get(proxy)).toStrictEqual('123');
+			expect(get(form).int).toStrictEqual(123);
+
+			proxy.set('');
+			expect(get(proxy)).toStrictEqual('');
+			expect(get(form).int).toStrictEqual(0);
+
+			form.set({ int: 456 });
+			expect(get(proxy)).toStrictEqual('456');
+			expect(get(form).int).toStrictEqual(456);
+
+			form.set({ int: 0 });
+			expect(get(proxy)).toStrictEqual('0');
+			expect(get(form).int).toStrictEqual(0);
+		});
 	});
 
 	test('dateProxy', async () => {

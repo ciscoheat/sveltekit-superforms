@@ -97,7 +97,10 @@
 	);
 
 	const proxyBool = booleanProxy(theForm, 'bool', { trueStringValue: '1' });
-	const proxyNumber = intProxy(form, 'proxyNumber');
+	const proxyNumber = intProxy(theForm, 'proxyNumber', {
+		empty: 'zero',
+		initiallyEmptyIfZero: true
+	});
 	const proxyDate = dateProxy(form, 'date', {
 		format: 'datetime-local'
 	});
@@ -223,6 +226,7 @@
 	<input
 		type="text"
 		name="proxyNumber"
+		placeholder="A number"
 		data-invalid={$errors.proxyNumber}
 		bind:value={$proxyNumber}
 	/>

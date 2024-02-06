@@ -29,6 +29,7 @@ type DefaultOptions = {
 		| 'iso';
 	delimiter?: '.' | ',';
 	empty?: 'null' | 'undefined' | 'zero';
+	initiallyEmptyIfZero?: boolean;
 	taint?: TaintOption;
 };
 
@@ -53,7 +54,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 export function intProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Prettify<Pick<DefaultOptions, 'empty' | 'taint'>>
+	options?: Prettify<Pick<DefaultOptions, 'empty' | 'initiallyEmptyIfZero' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'int', {
 		...defaultOptions,
@@ -64,7 +65,7 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
-	options?: Prettify<Pick<DefaultOptions, 'empty' | 'delimiter' | 'taint'>>
+	options?: Prettify<Pick<DefaultOptions, 'empty' | 'delimiter' | 'initiallyEmptyIfZero' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'number', {
 		...defaultOptions,
@@ -151,11 +152,26 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 
 	const isSuper = isSuperForm(form, options);
 
-	const proxy2 = isSuper
+	const realProxy = isSuper
 		? superFieldProxy(form, path, { taint: options.taint })
 		: fieldProxy(form, path);
 
-	const proxy: Readable<string> = derived(proxy2, (value: unknown) => {
+	let updatedValue: string | null = null;
+	let initialized = false;
+
+	const proxy: Readable<string> = derived(realProxy, (value: unknown) => {
+		if (!initialized) {
+			initialized = true;
+			if (options.initiallyEmptyIfZero && !value) return '';
+		}
+
+		// Prevent proxy updating itself
+		if (updatedValue !== null) {
+			const current = updatedValue;
+			updatedValue = null;
+			return current;
+		}
+
 		if (value === undefined || value === null) return '';
 
 		if (type == 'string') {
@@ -164,12 +180,11 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 			if (value === '') {
 				// Special case for empty string values in number proxies
 				// Set the value to 0, to conform to the type.
-				proxy2.set(0 as FormPathType<T, Path>, isSuper ? { taint: false } : undefined);
+				realProxy.set(0 as FormPathType<T, Path>, isSuper ? { taint: false } : undefined);
 			}
-			const num = value;
-			if (typeof num === 'number' && isNaN(num)) return '';
-			//if (options.emptyIfZero && !num) return '';
-			return String(num);
+
+			if (typeof value === 'number' && isNaN(value)) return '';
+			return String(value);
 		} else if (type == 'date') {
 			const date = value as unknown as Date;
 			if (isNaN(date as unknown as number)) return '';
@@ -205,12 +220,14 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 	return {
 		subscribe: proxy.subscribe,
 		set(val: string) {
-			const newValue = toValue(val) as FormPathType<T, Path>;
-			proxy2.set(newValue);
+			updatedValue = val;
+			const newValue = toValue(updatedValue) as FormPathType<T, Path>;
+			realProxy.set(newValue);
 		},
 		update(updater) {
-			proxy2.update((f) => {
-				const newValue = toValue(updater(String(f))) as FormPathType<T, Path>;
+			realProxy.update((f) => {
+				updatedValue = updater(String(f));
+				const newValue = toValue(updatedValue) as FormPathType<T, Path>;
 				return newValue;
 			});
 		}

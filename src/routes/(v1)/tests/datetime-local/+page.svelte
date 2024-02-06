@@ -28,8 +28,7 @@
 	});
 
 	const emptyZero = numberProxy(form, 'emptyZero', {
-		empty: 'undefined',
-		emptyIfZero: false
+		empty: 'undefined'
 	});
 </script>
 

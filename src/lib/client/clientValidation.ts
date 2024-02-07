@@ -12,9 +12,18 @@ export async function clientValidation<T extends Record<string, unknown>, M>(
 	formId: string,
 	constraints: SuperFormValidated<T, M>['constraints'],
 	posted: boolean,
-	formShape: SuperFormValidated<T, M>['shape']
+	formShape: SuperFormValidated<T, M>['shape'],
+	recheckValidData = true
 ) {
-	return _clientValidation(validators, data, formId, constraints, posted, formShape);
+	return _clientValidation(
+		validators,
+		data,
+		formId,
+		constraints,
+		posted,
+		formShape,
+		recheckValidData
+	);
 }
 
 async function _clientValidation<T extends Record<string, unknown>, M>(
@@ -23,16 +32,28 @@ async function _clientValidation<T extends Record<string, unknown>, M>(
 	formId: string,
 	constraints: SuperFormValidated<T, M>['constraints'],
 	posted: boolean,
-	formShape: SuperFormValidated<T, M>['shape']
+	formShape: SuperFormValidated<T, M>['shape'],
+	recheckValidData: boolean
 ): Promise<SuperFormValidated<T, M>> {
 	let errors: ValidationErrors<T> = {};
-	let status: ValidationResult<T> = { success: true, data };
+	let status: ValidationResult<Record<string, unknown>> = { success: true, data };
 
 	if (typeof validator == 'object') {
 		status = await /* @__PURE__ */ validator.validate(data);
 
 		if (!status.success) {
 			errors = mapErrors(status.issues, validator.shape ?? formShape ?? {}) as ValidationErrors<T>;
+		} else if (recheckValidData) {
+			// need to make an additional validation, in case the data has been transformed
+			return _clientValidation(
+				validator,
+				status.data as T,
+				formId,
+				constraints,
+				posted,
+				formShape,
+				false // Otherwise, infinite loop
+			);
 		}
 	}
 
@@ -40,7 +61,7 @@ async function _clientValidation<T extends Record<string, unknown>, M>(
 		valid: status.success,
 		posted,
 		errors,
-		data: status.success ? status.data : data,
+		data: status.success ? (status.data as T) : data,
 		constraints,
 		message: undefined,
 		id: formId,

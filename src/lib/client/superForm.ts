@@ -636,11 +636,10 @@ export function superForm<
 			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 		}
 
-		//if (!options.validators) return;
-
 		const result = await Form_validate();
 
-		if (result.valid) {
+		// TODO: Add option for always setting result.data
+		if (result.valid && (event.immediate || event.type != 'input')) {
 			Form.set(result.data, { taint: 'ignore' });
 		}
 

@@ -9,7 +9,7 @@
 
 	let SPA = $page.url.searchParams.has('SPA') || undefined;
 
-	const { form, errors, message, enhance, validate } = superForm(data.form, {
+	const { form, errors, message, enhance, validate, validateForm } = superForm(data.form, {
 		SPA,
 		taintedMessage: null,
 		validators: zod(schema),
@@ -21,7 +21,7 @@
 	let customCheck = '';
 
 	async function validateCheck() {
-		const result = (await validate()).data;
+		const result = (await validateForm()).data;
 		customCheck = `${result.name} - ${result.email} - ${await validate('email')}`;
 	}
 </script>

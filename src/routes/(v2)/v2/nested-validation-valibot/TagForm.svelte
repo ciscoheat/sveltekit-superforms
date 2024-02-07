@@ -17,7 +17,7 @@
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 
-	const { form, errors, enhance, message, tainted, validate } = superForm(data, {
+	const { form, errors, enhance, message, tainted, validateForm, validate } = superForm(data, {
 		taintedMessage: null,
 		dataType: 'json',
 		onUpdate(event) {
@@ -39,7 +39,7 @@
 	onMount(async () => {
 		if (!testMode) return;
 
-		validated = await validate();
+		validated = await validateForm();
 
 		await validate('tags[0].name', {
 			value: 'p',

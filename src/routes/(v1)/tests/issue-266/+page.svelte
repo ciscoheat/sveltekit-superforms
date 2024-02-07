@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { superformClient } from '$lib/adapters/superform.js';
-	import { superForm } from '$lib/client/index.js';
+	import { superForm, type Infer } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { schema } from './schema.js';
 
 	export let data;
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
 		taintedMessage: null,
-		validators: superformClient({
+		validators: superformClient<Infer<typeof schema>>({
 			business_id: (input) => (input ? undefined : 'Please fill business name first')
 			/*
       // Uncomment for testing purposes, but will fail browser test

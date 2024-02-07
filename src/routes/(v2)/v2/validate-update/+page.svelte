@@ -5,13 +5,13 @@
 
 	export let data;
 
-	const { form, errors, message, enhance, validate } = superForm(data.form, {
+	const { form, errors, message, enhance, validateForm } = superForm(data.form, {
 		validators: zod(schema)
 		//dataType: 'json',
 	});
 
 	async function checkAndValidate() {
-		console.log(await validate({ update: true }));
+		console.log(await validateForm({ update: true }));
 	}
 </script>
 

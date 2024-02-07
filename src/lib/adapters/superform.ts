@@ -4,7 +4,8 @@ import type { ClientValidationAdapter, ValidationIssue } from './adapters.js';
 import type { MaybePromise } from '$lib/utils.js';
 
 // Cannot be a SuperStruct due to Property having to be passed on.
-// Deep recursive problem fixed thanks to https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
+// Deep recursive problem fixed thanks to
+// https://www.angularfix.com/2022/01/why-am-i-getting-instantiation-is.html
 export type Validators<T extends Record<string, unknown>> = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[P in keyof T]?: T extends any
@@ -22,8 +23,8 @@ export type Validator<V> = (value?: V) => MaybePromise<string | string[] | null 
 
 type Errors = string | string[] | undefined | null;
 
-function _superform<T extends Record<string, unknown>, PartialT extends Partial<T>>(
-	schema: Validators<PartialT>
+function _superform<T extends Record<string, unknown>, T2 extends Partial<T> = Partial<T>>(
+	schema: Validators<T2>
 ): ClientValidationAdapter<T> {
 	return {
 		superFormValidationLibrary: 'superform',

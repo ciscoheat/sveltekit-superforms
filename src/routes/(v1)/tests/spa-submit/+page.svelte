@@ -7,17 +7,19 @@
 
 	let status = '';
 
-	const { form, enhance, errors } = superForm<{ title: string }>(data.form, {
+	const { form, enhance, errors, validateForm } = superForm(data.form, {
 		SPA: true,
 		resetForm: true,
 		validators: superformClient({
 			title: (value?) =>
 				!value || value.trim().length >= 3 ? null : 'Bitte geben Sie mindestens 3 Zeichen ein'
 		}),
-		onUpdate: ({ form }) => {
+		onUpdate: async ({ form }) => {
 			if (form.valid) {
 				// send data;
 				status = 'OK';
+				const result = await validateForm();
+				console.log(result.data.title);
 			} else {
 				status = 'Not valid';
 			}

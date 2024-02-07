@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { type Infer, superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import { superformClient } from '$lib/adapters/superform.js';
+	import type { schema } from './schema.js';
 
 	export let data: PageData;
 
@@ -11,7 +12,7 @@
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		//dataType: 'json',
-		validators: superformClient({
+		validators: superformClient<Infer<typeof schema>>({
 			age(age) {
 				if (age === undefined || isNaN(age) || age < 30) return 'At least 30 years, please!';
 			},

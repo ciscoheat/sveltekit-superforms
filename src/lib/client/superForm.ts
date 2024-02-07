@@ -22,8 +22,7 @@ import {
 	type FormPathLeaves
 } from '$lib/stringPath.js';
 import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
-import { SuperFormError, flattenErrors, updateErrors } from '$lib/errors.js';
-import { clientValidation } from './clientValidation.js';
+import { SuperFormError, flattenErrors, mapErrors, updateErrors } from '$lib/errors.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
@@ -32,7 +31,11 @@ import { Form as HtmlForm } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
 import type { MaybePromise } from '$lib/utils.js';
-import type { ClientValidationAdapter } from '$lib/adapters/adapters.js';
+import type {
+	ClientValidationAdapter,
+	ValidationAdapter,
+	ValidationResult
+} from '$lib/adapters/adapters.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
@@ -58,7 +61,11 @@ export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
 // Need to distribute T with "T extends T",
 // since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
-export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
+export type FormOptions<
+	T extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	M = any
+> = Partial<{
 	id: string;
 	applyAction: boolean;
 	invalidateAll: boolean;
@@ -104,7 +111,7 @@ export type FormOptions<T extends Record<string, unknown>, M> = Partial<{
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: ClientValidationAdapter<Record<string, unknown>> | false | 'clear';
+	validators: ClientValidationAdapter<T> | ValidationAdapter<Partial<T>> | false | 'clear';
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -200,39 +207,29 @@ export type SuperForm<
 	options: T extends T ? FormOptions<T, M> : never; // Need this to distribute T so it works with unions
 
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
-
+	isTainted: (path?: FormPath<T> | TaintedFields<T>) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
 
 	capture: Capture<T, M>;
 	restore: T extends T ? Restore<T, M> : never;
 
-	validate: typeof validateForm<T>;
-	isTainted: (path?: FormPath<T> | TaintedFields<T>) => boolean;
+	validate: <Path extends FormPathLeaves<T>>(
+		path: Path,
+		opts?: ValidateOptions<FormPathType<T, Path>, T>
+	) => Promise<string[] | undefined>;
+	validateForm: <Schema extends Partial<T> = T>(opts?: {
+		update?: boolean;
+		schema?: ValidationAdapter<Schema>;
+	}) => Promise<SuperFormValidated<T>>;
 };
 
-export type ValidateOptions<V> = Partial<{
-	value: V;
-	update: boolean | 'errors' | 'value';
-	taint: TaintOption;
-	errors: string | string[];
-}>;
-
-/**
- * Validate current form data.
- */
-export function validateForm<T extends Record<string, unknown>>(path?: {
-	update: boolean;
-}): Promise<SuperFormValidated<T>>;
-
-/**
- * Validate a specific field in the form.
- */
-export function validateForm<
+/*
+function deprecatedValidate<
 	T extends Record<string, unknown>,
 	Path extends FormPathLeaves<T> = FormPathLeaves<T>
 >(path: Path, opts?: ValidateOptions<FormPathType<T, Path>>): Promise<string[] | undefined>;
 
-export function validateForm<
+function deprecatedValidate<
 	T extends Record<string, unknown>,
 	Path extends FormPathLeaves<T> = FormPathLeaves<T>
 >(path?: Path, opts?: ValidateOptions<FormPathType<T, Path>>) {
@@ -241,6 +238,15 @@ export function validateForm<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return { path, opts } as any;
 }
+*/
+
+export type ValidateOptions<Value, T extends Record<string, unknown>> = Partial<{
+	value: Value;
+	update: boolean | 'errors' | 'value';
+	taint: TaintOption;
+	errors: string | string[];
+	schema: ValidationAdapter<Partial<T>>;
+}>;
 
 type ValidationResponse<
 	Success extends Record<string, unknown> | undefined = Record<
@@ -381,7 +387,7 @@ export function superForm<
 
 		if (!Context_isValidationObject(form)) {
 			form = {
-				id: '',
+				id: options.id ?? '',
 				valid: false,
 				posted: false,
 				errors: {},
@@ -575,15 +581,43 @@ export function superForm<
 		}
 	};
 
-	async function Form_validate(): Promise<SuperFormValidated<T, M>> {
-		return await clientValidation<T, M>(
-			options.validators,
-			Data.form,
-			Data.formId,
-			Data.constraints,
-			false,
-			Data.shape
-		);
+	async function Form_validate<Schema extends Partial<T>>(
+		opts: { adapter?: ValidationAdapter<Schema>; recheckValidData?: boolean; formData?: T } = {
+			recheckValidData: true
+		}
+	): Promise<SuperFormValidated<T, M>> {
+		const dataToValidate = opts.formData ?? Data.form;
+
+		let errors: ValidationErrors<T> = {};
+		let status: ValidationResult<Record<string, unknown>> = { success: true, data: dataToValidate };
+		const validator = opts.adapter ?? options.validators;
+
+		if (typeof validator == 'object') {
+			status = await /* @__PURE__ */ validator.validate(dataToValidate);
+
+			if (!status.success) {
+				errors = mapErrors(
+					status.issues,
+					validator.shape ?? Data.shape ?? {}
+				) as ValidationErrors<T>;
+			} else if (opts.recheckValidData) {
+				// need to make an additional validation, in case the data has been transformed
+				return Form_validate({ ...opts, recheckValidData: false });
+			}
+		}
+
+		const data: T = status.success ? { ...dataToValidate, ...status.data } : dataToValidate;
+
+		return {
+			valid: status.success,
+			posted: false,
+			errors,
+			data,
+			constraints: Data.constraints,
+			message: undefined,
+			id: Data.formId,
+			shape: Data.shape
+		};
 	}
 
 	function Form__changeEvent(event: FullChangeEvent) {
@@ -614,7 +648,14 @@ export function superForm<
 		options.onChange(changeEvent);
 	}
 
-	async function Form_clientValidation(event: FullChangeEvent | null, force = false) {
+	/**
+	 * Make a client-side validation, updating the form data if successful.
+	 */
+	async function Form_clientValidation(
+		event: FullChangeEvent | null,
+		force = false,
+		adapter?: ValidationAdapter<Partial<T>>
+	) {
 		if (event) {
 			if (options.validators == 'clear') {
 				Errors.update(($errors) => {
@@ -636,7 +677,7 @@ export function superForm<
 			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
 		}
 
-		const result = await Form_validate();
+		const result = await Form_validate({ adapter });
 
 		// TODO: Add option for always setting result.data
 		if (result.valid && (event.immediate || event.type != 'input')) {
@@ -656,13 +697,8 @@ export function superForm<
 	}
 
 	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: FullChangeEvent) {
-		//console.log('Form__displayNewErrors', errors); //debug
-
 		const { type, immediate, multiple, paths } = event;
 		const previous = Data.errors;
-
-		// TODO: What to do with a programmatic change event?
-		//const isProgrammaticEvent = !type;
 
 		const output: Record<string, unknown> = {};
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
@@ -1229,19 +1265,11 @@ export function superForm<
 		}) as T extends T ? Restore<T, M> : never,
 
 		async validate<Path extends FormPathLeaves<T>>(
-			path?: Path | { update: boolean },
-			opts: ValidateOptions<FormPathType<T, Path>> = {}
+			path: Path,
+			opts: ValidateOptions<FormPathType<T, Path>, T> = {}
 		) {
 			if (!options.validators) {
 				throw new SuperFormError('options.validators must be set to use the validate method.');
-			}
-
-			if (!path || typeof path === 'object') {
-				if (typeof path == 'object' && path.update === true) {
-					const result = await Form_clientValidation({ paths: [] }, true);
-					if (result) return result;
-				}
-				return await Form_validate();
 			}
 
 			if (opts.update === undefined) opts.update = true;
@@ -1270,15 +1298,7 @@ export function superForm<
 				data = Data.form;
 			}
 
-			const result = await clientValidation(
-				options.validators,
-				data,
-				Data.formId,
-				Data.constraints,
-				false,
-				Data.shape
-			);
-
+			const result = await Form_validate({ formData: data });
 			const error = pathExists(result.errors, splittedPath);
 
 			// Replace with custom error, if it exist
@@ -1294,6 +1314,22 @@ export function superForm<
 			}
 
 			return error?.value;
+		},
+
+		async validateForm<P extends Partial<T> = T>(
+			opts: { update?: boolean; schema?: ValidationAdapter<P> } = {}
+		): Promise<SuperFormValidated<T, M>> {
+			if (!options.validators && !opts.schema) {
+				throw new SuperFormError(
+					'options.validators or the schema option must be set to use the validateForm method.'
+				);
+			}
+
+			const result = opts.update
+				? await Form_clientValidation({ paths: [] }, true, opts.schema)
+				: Form_validate({ adapter: opts.schema });
+
+			return result || Form_validate({ adapter: opts.schema });
 		},
 
 		allErrors: AllErrors,

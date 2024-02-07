@@ -5,11 +5,13 @@ import { schema } from './schema.js';
 import type { Actions, PageServerLoad } from './$types.js';
 import { zod } from '$lib/adapters/zod.js';
 import { userSchema, users } from './users.js';
+import { z } from 'zod';
 
 const db = users();
+const union = z.union([schema, userSchema]);
 
 export const load: PageServerLoad = async () => {
-	const form = await superValidate(db[0], zod(userSchema));
+	const form = await superValidate(db[0], zod(union));
 	return { form };
 };
 

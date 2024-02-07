@@ -19,6 +19,8 @@
 		<li><a href="/v2/on-change-event">onChange event</a></li>
 		<li><a href="/v2/defaults-fail">Nested defaults</a></li>
 		<li><a href="/v2/validators-clear">Clear validators</a></li>
+		<li><a href="/v2/dynamic-validators">Dynamic validators</a></li>
+		<li><a href="/v2/trim-fields">Trim fields</a></li>
 	</ul>
 </nav>
 

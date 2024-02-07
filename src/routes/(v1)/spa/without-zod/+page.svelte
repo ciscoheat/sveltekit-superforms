@@ -32,7 +32,7 @@
 		onUpdated({ form }) {
 			console.log('onUpdated, valid:', form.valid, form);
 		},
-		validators: superformClient({
+		validators: superformClient<z.infer<Schema>>({
 			tags: {
 				id: (id?) => (id === undefined || isNaN(id) || id < 3 ? 'Id must be larger than 2' : null),
 				name: (name?) => (!name || name.length < 2 ? 'Tags must be at least two characters' : null)

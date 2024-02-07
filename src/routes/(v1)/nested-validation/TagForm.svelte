@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { superForm } from '$lib/client/index.js';
+	import { type Infer, superForm } from '$lib/client/index.js';
 	import type { FormOptions } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
@@ -21,8 +21,8 @@
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 
-	const superFormValidator: FormOptions<z.infer<typeof schema>, unknown>['validators'] =
-		superformClient({
+	const superFormValidator: FormOptions<Infer<typeof schema>, unknown>['validators'] =
+		superformClient<Infer<typeof schema>>({
 			name: (name) => {
 				return !name || !name.length ? 'Name is too short' : null;
 			},
@@ -35,7 +35,7 @@
 			}
 		});
 
-	const { form, errors, enhance, message, tainted, validate } = superForm(data, {
+	const { form, errors, enhance, message, tainted, validate, validateForm } = superForm(data, {
 		taintedMessage: null,
 		dataType: 'json',
 		onUpdate(event) {
@@ -57,7 +57,7 @@
 	onMount(async () => {
 		if (!testMode) return;
 
-		validated = await validate();
+		validated = await validateForm();
 
 		await validate('tags[0].name', {
 			value: 'p',

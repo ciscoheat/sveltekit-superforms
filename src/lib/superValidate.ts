@@ -37,23 +37,15 @@ export type ValidationErrors<Out extends Record<string, unknown>> = {
 	_errors?: string[];
 } & SuperStructArray<Out, string[], { _errors?: string[] }>;
 
-export type SuperValidateSyncData<In extends Record<string, unknown>> =
-	| Partial<In>
-	| null
-	| undefined;
-
-export type SuperValidateSyncOptions<Out extends Record<string, unknown>> = Pick<
-	SuperValidateOptions<Out>,
-	'id' | 'defaults' | 'jsonSchema'
->;
-
 type SuperValidateData<In extends Record<string, unknown>> =
 	| RequestEvent
 	| Request
 	| FormData
 	| URLSearchParams
 	| URL
-	| SuperValidateSyncData<In>;
+	| Partial<In>
+	| null
+	| undefined;
 
 export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<{
 	errors: boolean;

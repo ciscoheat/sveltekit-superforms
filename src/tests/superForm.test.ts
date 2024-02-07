@@ -229,15 +229,13 @@ describe('Validate', () => {
 
 		expect(
 			await form.validate('score', {
-				value:
-					"unfortunately passing a string won't cause a type error due to no partial type inference," +
-					"but it will produce an error so that's fine."
+				value: 'test' as unknown as number
 			})
 		).toEqual(['Expected number, received string']);
 
 		expect(await form.validate('score', { value: 1 })).toBeUndefined();
 
-		expect((await form.validate()).data).toEqual(get(form.form));
+		expect((await form.validateForm()).data).toEqual(get(form.form));
 	});
 });
 

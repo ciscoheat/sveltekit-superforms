@@ -700,7 +700,7 @@ export function superForm<
 			}
 
 			// Immediate, non-multiple input should display the errors
-			if (immediate && !multiple) return addError();
+			if (immediate && !multiple && isEventError) return addError();
 
 			// Special case for multiple, which should display errors on blur
 			// or if any error has existed previously. Tricky UX.

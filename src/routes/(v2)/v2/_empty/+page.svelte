@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
+	//import { zod } from '$lib/adapters/zod.js'
+	//import { schema } from './schema.js';
 
 	export let data;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+		taintedMessage: false
 		//dataType: 'json',
-		//validators: schema
+		//validators: zod(schema)
 	});
 </script>
 
@@ -17,8 +19,20 @@
 
 <form method="POST" use:enhance>
 	<label>
-		Name: <input name="name" bind:value={$form.name} />
+		Name: <input
+			name="name"
+			bind:value={$form.name}
+			aria-invalid={$errors.name ? 'true' : undefined}
+		/>
 		{#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+	</label>
+	<label>
+		Email: <input
+			name="email"
+			bind:value={$form.email}
+			aria-invalid={$errors.email ? 'true' : undefined}
+		/>
+		{#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
 	</label>
 	<div>
 		<button>Submit</button>

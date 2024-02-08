@@ -23,7 +23,6 @@ export type ValidationLibrary =
 	| 'custom'
 	| 'joi'
 	| 'superform'
-	| 'superstruct'
 	| 'typebox'
 	| 'valibot'
 	| 'yup'

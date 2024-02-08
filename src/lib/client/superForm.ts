@@ -718,8 +718,13 @@ export function superForm<
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
 
-			const joinedPath = error.path.join();
-			const isEventError = error.value && paths.map((path) => path.join()).includes(joinedPath);
+			let joinedPath = error.path.join('.');
+			if (joinedPath.endsWith('._errors')) {
+				joinedPath = joinedPath.substring(0, -8);
+			}
+			const isEventError =
+				error.value &&
+				paths.map((path) => path.join('.')).some((path) => path.startsWith(joinedPath));
 
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug

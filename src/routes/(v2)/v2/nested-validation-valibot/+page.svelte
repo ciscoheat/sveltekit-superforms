@@ -6,8 +6,8 @@
 
 	export let data: PageData;
 
-	let output: (string[] | undefined)[];
-	let validated: SuperValidated<Infer<typeof schema>> | undefined;
+	let output: (string[] | undefined)[] = [];
+	let validated: SuperValidated<Infer<typeof schema>> | undefined = undefined;
 </script>
 
 <h2>Nested forms</h2>
@@ -20,7 +20,7 @@
 
 <pre style="margin-top:3rem;" id="valibot">
 Valibot validate:
-{#if output}{output.join('\n')}{/if}
+{#if output.length}{output.join('\n')}{/if}
 </pre>
 
 <pre style="margin-top:3rem;" id="valibot-full">

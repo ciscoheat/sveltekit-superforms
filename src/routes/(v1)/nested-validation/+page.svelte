@@ -8,11 +8,11 @@
 
 	export let data: PageData;
 
-	let output: (string[] | undefined)[];
-	let output2: (string[] | undefined)[];
+	let output: (string[] | undefined)[] = [];
+	let output2: (string[] | undefined)[] = [];
 
-	let validated: SuperValidated<z.infer<typeof schema>> | undefined;
-	let validated2: SuperValidated<z.infer<typeof schema>> | undefined;
+	let validated: SuperValidated<z.infer<typeof schema>> | undefined = undefined;
+	let validated2: SuperValidated<z.infer<typeof schema>> | undefined = undefined;
 </script>
 
 <h2>Nested forms</h2>
@@ -31,12 +31,12 @@
 
 <pre style="margin-top:3rem;" id="zod">
 Zod validate:
-{#if output}{output.join('\n')}{/if}
+{#if output.length}{output.join('\n')}{/if}
 </pre>
 
 <pre style="margin-top:3rem;" id="superforms">
 Superforms validate:
-{#if output2}{output2.join('\n')}{/if}
+{#if output2.length}{output2.join('\n')}{/if}
 </pre>
 
 <pre style="margin-top:3rem;" id="zod-full">

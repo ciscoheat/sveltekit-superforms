@@ -21,6 +21,7 @@
 		<li><a href="/v2/validators-clear">Clear validators</a></li>
 		<li><a href="/v2/dynamic-validators">Dynamic validators</a></li>
 		<li><a href="/v2/trim-fields">Trim fields</a></li>
+		<li><a href="/v2/redirect">Redirect</a></li>
 	</ul>
 </nav>
 

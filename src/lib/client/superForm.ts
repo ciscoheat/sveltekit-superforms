@@ -1731,7 +1731,7 @@ export function superForm<
 					} else {
 						const unsub = navigating.subscribe(($nav) => {
 							if ($nav) return;
-							unsub();
+							if (unsub) unsub();
 							if (htmlForm.isSubmitting()) {
 								htmlForm.completed({ cancelled, clearAll: true });
 							}

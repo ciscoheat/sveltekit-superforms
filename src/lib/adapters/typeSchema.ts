@@ -1,11 +1,11 @@
-import type { SchemaObject } from 'ajv';
+import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
 import type { Type } from 'arktype';
 import type { AnySchema } from 'joi';
-import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
 import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
 /*
+import type { SchemaObject } from 'ajv';
 import type { Type as Type$1 } from '@deepkit/type';
 import type { Schema as Schema$1 } from '@effect/schema/Schema';
 import type { Any, OutputOf, TypeOf } from 'io-ts';
@@ -50,10 +50,6 @@ type ValidationResult<TOutput = any> =
 			success: false;
 			issues: Array<ValidationIssue>;
 	  };
-
-interface AjvResolver extends Resolver {
-	base: SchemaObject;
-}
 
 interface ArkTypeResolver extends Resolver {
 	base: Type;
@@ -106,6 +102,10 @@ interface ZodResolver extends Resolver {
 }
 
 /*
+interface AjvResolver extends Resolver {
+	base: SchemaObject;
+}
+
 interface DeepkitResolver extends Resolver {
   base: Type$1;
 }
@@ -141,7 +141,6 @@ interface SuperstructResolver extends Resolver {
 */
 
 type Registry = {
-	ajv: AjvResolver;
 	arktype: ArkTypeResolver;
 	custom: CustomResolver;
 	joi: JoiResolver;
@@ -150,6 +149,7 @@ type Registry = {
 	yup: YupResolver;
 	zod: ZodResolver;
 	/*
+		ajv: AjvResolver;
     deepkit: DeepkitResolver;
     effect: EffectResolver;
     'io-ts': IoTsResolver;

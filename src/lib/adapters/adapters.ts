@@ -19,7 +19,6 @@ export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
 export type InferIn<T extends Schema> = NonNullable<InferInSchema<T>>;
 
 export type ValidationLibrary =
-	| 'ajv'
 	| 'arktype'
 	| 'custom'
 	| 'joi'

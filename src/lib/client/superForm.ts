@@ -1725,13 +1725,15 @@ export function superForm<
 					}
 
 					// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
-					// Also fixing an edge case when timers weren't resetted when redirecting to the same route.
 					if (cancelled || result.type != 'redirect') {
 						htmlForm.completed({ cancelled });
 					} else {
 						const unsub = navigating.subscribe(($nav) => {
 							if ($nav) return;
-							if (unsub) unsub();
+							// Timeout required when applyAction is false
+							setTimeout(() => {
+								if (unsub) unsub();
+							});
 							if (htmlForm.isSubmitting()) {
 								htmlForm.completed({ cancelled, clearAll: true });
 							}

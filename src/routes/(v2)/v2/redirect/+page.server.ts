@@ -1,7 +1,7 @@
 import { zod } from '$lib/adapters/zod.js';
 import { superValidate } from '$lib/server/index.js';
 import { schema } from './schema.js';
-import { redirect } from '@sveltejs/kit';
+import { VERSION, redirect } from '@sveltejs/kit';
 
 export const load = async () => {
 	const form = await superValidate(zod(schema));
@@ -10,6 +10,7 @@ export const load = async () => {
 
 export const actions = {
 	default: async () => {
-		throw redirect(303, '/');
+		if (VERSION.startsWith('2')) redirect(303, '/');
+		else throw redirect(303, '/');
 	}
 };

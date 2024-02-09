@@ -24,6 +24,10 @@
 
 	const { values } = arrayProxy(pageForm, 'people', { taint: false });
 
+	// Type check
+	const firstValue: string = $values[0].firstName;
+	console.log(firstValue);
+
 	function addPerson() {
 		$values = [...$values, { firstName: '', lastName: '' }];
 	}

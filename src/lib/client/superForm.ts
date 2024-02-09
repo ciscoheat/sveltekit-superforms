@@ -1737,7 +1737,11 @@ export function superForm<
 							if ($nav) return;
 							// Timeout required when applyAction is false
 							setTimeout(() => {
-								if (unsub) unsub();
+								try {
+									if (unsub) unsub();
+								} catch {
+									// If component is already destroyed?
+								}
 							});
 							if (htmlForm.isSubmitting()) {
 								htmlForm.completed({ cancelled, clearAll: true });

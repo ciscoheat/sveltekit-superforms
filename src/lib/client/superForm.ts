@@ -650,6 +650,10 @@ export function superForm<
 
 	/**
 	 * Make a client-side validation, updating the form data if successful.
+	 * @param event A change event, from html input or programmatically
+	 * @param force Is true if called from validateForm with update: true
+	 * @param adapter ValidationAdapter, if called from validateForm with schema set
+	 * @returns SuperValidated, or undefined if options prevented validation.
 	 */
 	async function Form_clientValidation(
 		event: FullChangeEvent | null,
@@ -684,29 +688,37 @@ export function superForm<
 			Form.set(result.data, { taint: 'ignore' });
 		}
 
-		if (options.validationMethod == 'oninput' || force) {
+		/*
+		if (force) {
 			Errors.set(result.errors);
 			return result;
 		}
+		*/
 
 		// Wait for tainted, so object errors can be displayed
 		await tick();
-		Form__displayNewErrors(result.errors, event);
+		Form__displayNewErrors(result.errors, event, force);
 
 		return result;
 	}
 
-	async function Form__displayNewErrors(errors: ValidationErrors<T>, event: FullChangeEvent) {
+	async function Form__displayNewErrors(
+		errors: ValidationErrors<T>,
+		event: FullChangeEvent,
+		force: boolean
+	) {
 		const { type, immediate, multiple, paths } = event;
 		const previous = Data.errors;
 
 		const output: Record<string, unknown> = {};
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
 
-		if (options.customValidity && event.formElement) {
+		const formElement = event.formElement ?? EnhancedForm;
+
+		if (options.customValidity && formElement) {
 			for (const path of event.paths) {
 				const name = CSS.escape(mergePath(path));
-				const el = event.formElement.querySelector<HTMLElement>(`[name="${name}"]`);
+				const el = formElement.querySelector<HTMLElement>(`[name="${name}"]`);
 				if (el) {
 					const message = 'validationMessage' in el ? String(el.validationMessage) : '';
 					validity.set(path.join(), { el, message });
@@ -722,9 +734,6 @@ export function superForm<
 			if (joinedPath.endsWith('._errors')) {
 				joinedPath = joinedPath.substring(0, -8);
 			}
-			const isEventError =
-				error.value &&
-				paths.map((path) => path.join('.')).some((path) => path.startsWith(joinedPath));
 
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
@@ -735,10 +744,19 @@ export function superForm<
 
 					if (message != error.value) {
 						updateCustomValidity(el, error.value);
+						// Only need one error to display
 						validity.clear();
 					}
 				}
 			}
+
+			if (force) return addError();
+
+			const isEventError =
+				error.value &&
+				paths.map((path) => path.join('.')).some((path) => path.startsWith(joinedPath));
+
+			if (isEventError && options.validationMethod == 'oninput') return addError();
 
 			// Immediate, non-multiple input should display the errors
 			if (immediate && !multiple && isEventError) return addError();
@@ -1090,6 +1108,9 @@ export function superForm<
 		($errors: ValidationErrors<T> | undefined) => ($errors ? flattenErrors($errors) : [])
 	);
 
+	// Used for options.customValidity to display errors, even if programmatically set
+	let EnhancedForm: HTMLFormElement | undefined;
+
 	///// End of Roles //////////////////////////////////////////////////////////
 
 	// Need to clear this and set it again when use:enhance has run, to avoid showing the
@@ -1354,6 +1375,8 @@ export function superForm<
 
 		// @DCI-context
 		enhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
+			EnhancedForm = FormElement;
+
 			if (events) {
 				if (events.onError) {
 					if (options.onError === 'apply') {
@@ -1425,6 +1448,7 @@ export function superForm<
 			onDestroy(() => {
 				FormElement.removeEventListener('focusout', onBlur);
 				FormElement.removeEventListener('input', onInput);
+				EnhancedForm = undefined;
 			});
 
 			///// SvelteKit enhance function //////////////////////////////////

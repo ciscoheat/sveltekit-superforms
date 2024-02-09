@@ -22,6 +22,7 @@
 		<li><a href="/v2/dynamic-validators">Dynamic validators</a></li>
 		<li><a href="/v2/trim-fields">Trim fields</a></li>
 		<li><a href="/v2/redirect">Redirect w/o applyAction</a></li>
+		<li><a href="/v2/oninput-errors">oninput error display</a></li>
 	</ul>
 </nav>
 

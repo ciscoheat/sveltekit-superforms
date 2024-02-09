@@ -68,7 +68,7 @@ TEST SCHEMA TEMPLATE:
 | name    | string   | no       |                         | "Unknown" |
 | email   | string   | yes      | email format            |           |
 | tags    | string[] | yes      | array >= 3, string >= 2 |           |
-| score   | number   | yes      | integer                 |           |
+| score   | number   | yes      | integer, >= 0           |           |
 | date    | Date     | no       |                         |           |
 | nospace | string   | no       | pattern /^\S*$/         |           |
 */

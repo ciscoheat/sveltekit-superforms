@@ -64,7 +64,8 @@ export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
 export type FormOptions<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = any
+	M = any,
+	In extends Record<string, unknown> = T
 > = Partial<{
 	id: string;
 	applyAction: boolean;
@@ -111,7 +112,11 @@ export type FormOptions<
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	validators: ClientValidationAdapter<T> | ValidationAdapter<Partial<T>> | false | 'clear';
+	validators:
+		| ClientValidationAdapter<T, In>
+		| ValidationAdapter<Partial<T>, Record<string, unknown>>
+		| false
+		| 'clear';
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -215,37 +220,24 @@ export type SuperForm<
 
 	validate: <Path extends FormPathLeaves<T>>(
 		path: Path,
-		opts?: ValidateOptions<FormPathType<T, Path>, T>
+		opts?: ValidateOptions<FormPathType<T, Path>, Partial<T>, Record<string, unknown>>
 	) => Promise<string[] | undefined>;
-	validateForm: <Schema extends Partial<T> = T>(opts?: {
+	validateForm: <Out extends Partial<T> = T, In extends Partial<T> = Out>(opts?: {
 		update?: boolean;
-		schema?: ValidationAdapter<Schema>;
+		schema?: ValidationAdapter<Out, In>;
 	}) => Promise<SuperFormValidated<T>>;
 };
 
-/*
-function deprecatedValidate<
-	T extends Record<string, unknown>,
-	Path extends FormPathLeaves<T> = FormPathLeaves<T>
->(path: Path, opts?: ValidateOptions<FormPathType<T, Path>>): Promise<string[] | undefined>;
-
-function deprecatedValidate<
-	T extends Record<string, unknown>,
-	Path extends FormPathLeaves<T> = FormPathLeaves<T>
->(path?: Path, opts?: ValidateOptions<FormPathType<T, Path>>) {
-	// See the validate function inside superForm for implementation.
-	throw new SuperFormError('validateForm can only be used as superForm.validate.');
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return { path, opts } as any;
-}
-*/
-
-export type ValidateOptions<Value, T extends Record<string, unknown>> = Partial<{
+export type ValidateOptions<
+	Value,
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+> = Partial<{
 	value: Value;
 	update: boolean | 'errors' | 'value';
 	taint: TaintOption;
 	errors: string | string[];
-	schema: ValidationAdapter<Partial<T>>;
+	schema: ValidationAdapter<Out, In>;
 }>;
 
 type ValidationResponse<
@@ -1293,7 +1285,7 @@ export function superForm<
 
 		async validate<Path extends FormPathLeaves<T>>(
 			path: Path,
-			opts: ValidateOptions<FormPathType<T, Path>, T> = {}
+			opts: ValidateOptions<FormPathType<T, Path>, Partial<T>, Record<string, unknown>> = {}
 		) {
 			if (!options.validators) {
 				throw new SuperFormError('options.validators must be set to use the validate method.');

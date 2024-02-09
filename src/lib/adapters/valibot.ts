@@ -4,6 +4,7 @@ import {
 	type ValidationAdapter,
 	type AdapterOptions,
 	type Infer,
+	type InferIn,
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
@@ -52,7 +53,7 @@ async function validate<T extends SupportedSchemas>(
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
 	options: Omit<ToJSONSchemaOptions, 'schema'> | AdapterOptions<T> = {}
-): ValidationAdapter<Infer<T>> {
+): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
 		validate: async (data) => validate(schema, data),
@@ -65,7 +66,9 @@ function _valibot<T extends SupportedSchemas>(
 	});
 }
 
-function _valibotClient<T extends SupportedSchemas>(schema: T): ClientValidationAdapter<Infer<T>> {
+function _valibotClient<T extends SupportedSchemas>(
+	schema: T
+): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'valibot',
 		validate: async (data) => validate(schema, data)

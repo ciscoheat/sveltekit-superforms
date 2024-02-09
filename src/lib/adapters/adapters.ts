@@ -38,19 +38,29 @@ export type RequiredDefaultsOptions<T extends Schema> = {
 	jsonSchema?: JSONSchema;
 };
 
-export type ClientValidationAdapter<Out extends Record<string, unknown>> = {
+export type ClientValidationAdapter<
+	Out extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	In extends Record<string, unknown> = Out
+> = {
 	superFormValidationLibrary: ValidationLibrary;
 	validate: (data: unknown) => Promise<ValidationResult<Out>>;
 	shape?: SchemaShape;
 };
 
-type BaseValidationAdapter<Out extends Record<string, unknown>> = ClientValidationAdapter<Out> & {
+type BaseValidationAdapter<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown> = Out
+> = ClientValidationAdapter<Out, In> & {
 	jsonSchema: JSONSchema;
 	defaults?: Out;
 	constraints?: InputConstraints<Out>;
 };
 
-export type ValidationAdapter<Out extends Record<string, unknown>> = BaseValidationAdapter<Out> & {
+export type ValidationAdapter<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown> = Out
+> = BaseValidationAdapter<Out, In> & {
 	defaults: Out;
 	constraints: InputConstraints<Out>;
 	shape: SchemaShape;
@@ -78,10 +88,10 @@ export function createJsonSchema(options: object, transformer?: () => JSONSchema
 }
 
 /* @__NO_SIDE_EFFECTS__ */
-export function createAdapter<T extends Record<string, unknown>>(
-	adapter: BaseValidationAdapter<T>,
-	jsonSchema?: JSONSchema
-): ValidationAdapter<T> {
+export function createAdapter<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+>(adapter: BaseValidationAdapter<Out, In>, jsonSchema?: JSONSchema): ValidationAdapter<Out, In> {
 	if (!adapter || !('superFormValidationLibrary' in adapter)) {
 		throw new SuperFormError(
 			'Superforms v2 requires a validation adapter for the schema. ' +

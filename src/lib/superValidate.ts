@@ -64,9 +64,10 @@ export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<
 export async function superValidate<
 	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	Message = App.Superforms.Message extends never ? any : App.Superforms.Message
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = Out
 >(
-	adapter: ValidationAdapter<Out>,
+	adapter: ValidationAdapter<Out, In>,
 	options?: SuperValidateOptions<Out>
 ): Promise<SuperValidated<Out, Message>>;
 
@@ -77,7 +78,7 @@ export async function superValidate<
 	In extends Record<string, unknown> = Out
 >(
 	data: SuperValidateData<In>,
-	adapter: ValidationAdapter<Out>,
+	adapter: ValidationAdapter<Out, In>,
 	options?: SuperValidateOptions<Out>
 ): Promise<SuperValidated<Out, M>>;
 
@@ -92,8 +93,8 @@ export async function superValidate<
 	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	In extends Record<string, unknown> = Out
 >(
-	data: ValidationAdapter<Out> | SuperValidateData<In>,
-	adapter?: ValidationAdapter<Out> | SuperValidateData<In> | SuperValidateOptions<Out>,
+	data: ValidationAdapter<Out, In> | SuperValidateData<In>,
+	adapter?: ValidationAdapter<Out, In> | SuperValidateData<In> | SuperValidateOptions<Out>,
 	options?: SuperValidateOptions<Out>
 ): Promise<SuperValidated<Out, Message>> {
 	if (data && 'superFormValidationLibrary' in data) {
@@ -102,7 +103,7 @@ export async function superValidate<
 		data = undefined;
 	}
 
-	const validator = adapter as ValidationAdapter<Out>;
+	const validator = adapter as ValidationAdapter<Out, In>;
 
 	const defaults = options?.defaults ?? validator.defaults;
 	const jsonSchema = validator.jsonSchema;

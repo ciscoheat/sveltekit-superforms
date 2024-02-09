@@ -3,6 +3,7 @@ import {
 	type ValidationAdapter,
 	type RequiredDefaultsOptions,
 	type Infer,
+	type InferIn,
 	createAdapter,
 	type ClientValidationAdapter,
 	type ValidationResult,
@@ -33,7 +34,7 @@ async function validate<T extends Type>(
 function _arktype<T extends Type>(
 	schema: T,
 	options: RequiredDefaultsOptions<T>
-): ValidationAdapter<Infer<T>> {
+): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
 		defaults: options.defaults,
@@ -57,7 +58,7 @@ function _arktype<T extends Type>(
 	});
 }
 
-function _arktypeClient<T extends Type>(schema: T): ClientValidationAdapter<Infer<T>> {
+function _arktypeClient<T extends Type>(schema: T): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'arktype',
 		validate: async (data) => validate(schema, data)

@@ -2,6 +2,7 @@ import {
 	type ValidationAdapter,
 	createAdapter,
 	type Infer,
+	type InferIn,
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
@@ -51,7 +52,7 @@ async function validate<T extends TSchema>(
 	};
 }
 
-function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
+function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'typebox',
 		validate: async (data: unknown) => validate(schema, data),
@@ -59,7 +60,9 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>> {
 	});
 }
 
-function _typeboxClient<T extends TSchema>(schema: T): ClientValidationAdapter<Infer<T>> {
+function _typeboxClient<T extends TSchema>(
+	schema: T
+): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'typebox',
 		validate: async (data) => validate(schema, data)

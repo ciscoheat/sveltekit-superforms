@@ -4,6 +4,7 @@ import {
 	type AdapterOptions,
 	type ValidationAdapter,
 	type Infer,
+	type InferIn,
 	createAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter
@@ -66,7 +67,7 @@ async function validate<T extends ZodValidation<AnyZodObject | ZodObjectUnion<An
 function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
 	schema: T,
 	options?: AdapterOptions<T>
-): ValidationAdapter<Infer<T>> {
+): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => validate(schema, data),
@@ -77,7 +78,7 @@ function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject
 
 function _zodClient<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
 	schema: T
-): ClientValidationAdapter<Infer<T>> {
+): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => validate(schema, data)

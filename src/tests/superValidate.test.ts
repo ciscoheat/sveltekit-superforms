@@ -32,7 +32,8 @@ import {
 	minValue,
 	date,
 	optional,
-	regex
+	regex,
+	transform
 } from 'valibot';
 
 //import { ajv } from '$lib/adapters/ajv.js';
@@ -335,12 +336,66 @@ describe('Zod', () => {
 	schemaTest(zod(schema));
 });
 
+///// Common ////////////////////////////////////////////////////////
+
+describe('Schema In/Out transformations', () => {
+	it('does not fully work with Zod', async () => {
+		const schema = z.object({
+			len: z
+				.string()
+				.transform((n) => n.length)
+				.refine((n) => n < 100, 'Length can be max 100.')
+		});
+
+		// Zod adapter cannot infer Out type as number, but at least the type is ok.
+		// @ts-expect-error Using schema Out type as In - Not allowed
+		const fail = await superValidate({ len: 123 }, zod(schema));
+		expect(fail.valid).toBe(false);
+		expect(fail.data).toEqual({ len: '' });
+		// Wanted: expect(fail.data).toBe({ len: 0 });
+
+		// Workaround
+		// @ts-expect-error Using schema Out type as In - Not allowed
+		const fail2 = await superValidate({ len: 123 }, zod(schema, { defaults: { len: 0 } }));
+		expect(fail2.valid).toBe(false);
+		// Type will pass through, since it's the same as the default.
+		expect(fail2.data).toEqual({ len: 123 });
+
+		const form = await superValidate({ len: 'abcde' }, zod(schema));
+		expect(form.valid).toBe(true);
+		expect(form.data.len).toBe(5);
+	});
+
+	it('does not fully work with Valibot', async () => {
+		const schema = object({
+			len: transform(string(), (s) => s.length)
+		});
+
+		// @ts-expect-error Using schema Out type as In - Not allowed
+		const fail = await superValidate({ len: 123 }, valibot(schema));
+		expect(fail.valid).toBe(false);
+		expect(fail.data).toEqual({ len: '' });
+		// Wanted: expect(fail.data).toBe({ len: 0 });
+
+		// @ts-expect-error Using schema Out type as In - Not allowed
+		const fail2 = await superValidate({ len: 123 }, valibot(schema, { defaults: { len: 0 } }));
+		expect(fail2.valid).toBe(false);
+		// Type will pass through, since it's the same as the default.
+		expect(fail2.data).toEqual({ len: 123 });
+
+		const form = await superValidate({ len: 'abcde' }, valibot(schema));
+		const num: number = form.data.len; // Type check
+		expect(form.valid).toBe(true);
+		expect(num).toBe(5);
+	});
+});
+
 ///// Test function for all validation libraries ////////////////////
 
 type ErrorFields = ('email' | 'date' | 'nospace' | 'tags' | 'tags[1]')[];
 
 function schemaTest(
-	adapter: ValidationAdapter<Record<string, unknown>>,
+	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full'
 ) {

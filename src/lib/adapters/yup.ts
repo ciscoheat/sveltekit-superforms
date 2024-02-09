@@ -2,6 +2,7 @@ import {
 	type AdapterOptions,
 	type ValidationAdapter,
 	type Infer,
+	type InferIn,
 	createAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter
@@ -56,7 +57,7 @@ async function validate<T extends Schema>(
 function _yup<T extends Schema>(
 	schema: T,
 	options?: AdapterOptions<T>
-): ValidationAdapter<Infer<T>> {
+): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'yup',
 		validate: async (data: unknown) => validate(schema, data),
@@ -65,7 +66,7 @@ function _yup<T extends Schema>(
 	});
 }
 
-function _yupClient<T extends Schema>(schema: T): ClientValidationAdapter<Infer<T>> {
+function _yupClient<T extends Schema>(schema: T): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'yup',
 		validate: async (data) => validate(schema, data)

@@ -112,8 +112,8 @@ devDependencies:
     specifier: 5.0.0-next.50
     version: 5.0.0-next.50
   svelte-check:
-    specifier: ^3.6.3
-    version: 3.6.3(postcss@8.4.35)(sass@1.70.0)(svelte@5.0.0-next.50)
+    specifier: ^3.6.4
+    version: 3.6.4(postcss@8.4.35)(sass@1.70.0)(svelte@5.0.0-next.50)
   sveltekit-flash-message:
     specifier: ^2.4.1
     version: 2.4.1(@sveltejs/kit@2.5.0)(svelte@5.0.0-next.50)
@@ -912,7 +912,7 @@ packages:
       sade: 1.8.1
       semver: 7.6.0
       svelte: 5.0.0-next.50
-      svelte2tsx: 0.7.0(svelte@5.0.0-next.50)(typescript@5.3.3)
+      svelte2tsx: 0.7.1(svelte@5.0.0-next.50)(typescript@5.3.3)
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -1143,7 +1143,7 @@ packages:
   /@vitest/spy@1.2.2:
     resolution: {integrity: sha512-k9Gcahssw8d7X3pSLq3e3XEu/0L78mUkCjivUqCQeXJm9clfXR/Td8+AP+VC1O6fKPIDLcHDTAmBOINVuv6+7g==}
     dependencies:
-      tinyspy: 2.2.0
+      tinyspy: 2.2.1
     dev: true
 
   /@vitest/utils@1.2.2:
@@ -2660,8 +2660,8 @@ packages:
       has-flag: 4.0.0
     dev: true
 
-  /svelte-check@3.6.3(postcss@8.4.35)(sass@1.70.0)(svelte@5.0.0-next.50):
-    resolution: {integrity: sha512-Q2nGnoysxUnB9KjnjpQLZwdjK62DHyW6nuH/gm2qteFnDk0lCehe/6z8TsIvYeKjC6luKaWxiNGyOcWiLLPSwA==}
+  /svelte-check@3.6.4(postcss@8.4.35)(sass@1.70.0)(svelte@5.0.0-next.50):
+    resolution: {integrity: sha512-mY/dqucqm46p72M8yZmn81WPZx9mN6uuw8UVfR3ZKQeLxQg5HDGO3HHm5AZuWZPYNMLJ+TRMn+TeN53HfQ/vsw==}
     hasBin: true
     peerDependencies:
       svelte: ^3.55.0 || ^4.0.0-next.0 || ^4.0.0 || ^5.0.0-next.0
@@ -2762,8 +2762,8 @@ packages:
       typescript: 5.3.3
     dev: true
 
-  /svelte2tsx@0.7.0(svelte@5.0.0-next.50)(typescript@5.3.3):
-    resolution: {integrity: sha512-qAelcydnmuiDvD1HsrWi23RWx24RZTKRv6n4JaGC/pkoJfbLkJPQT2wa1qN0ZyfKTNLSyoj2FW9z62l/AUzUNA==}
+  /svelte2tsx@0.7.1(svelte@5.0.0-next.50)(typescript@5.3.3):
+    resolution: {integrity: sha512-0lKa6LrqJxRan0bDmBd/uFsVzYSXnoFUDaczaH0znke/XI79oy1JjFaF51J9EsOvpn8lXPlrUc3n/MA/ORNxBg==}
     peerDependencies:
       svelte: ^3.55 || ^4.0.0-next.0 || ^4.0 || ^5.0.0-next.0
       typescript: ^4.9.4 || ^5.0.0
@@ -2842,8 +2842,8 @@ packages:
     engines: {node: '>=14.0.0'}
     dev: true
 
-  /tinyspy@2.2.0:
-    resolution: {integrity: sha512-d2eda04AN/cPOR89F7Xv5bK/jrQEhmcLFe6HFldoeO9AJtps+fqEnh486vnT/8y4bw38pSyxDcTCAq+Ks2aJTg==}
+  /tinyspy@2.2.1:
+    resolution: {integrity: sha512-KYad6Vy5VDWV4GH3fjpseMQ/XU2BhIYP7Vzd0LG44qRWm/Yt2WCOTicFdvmgo6gWaqooMQCawTtILVQJupKu7A==}
     engines: {node: '>=14.0.0'}
     dev: true
 

@@ -789,8 +789,9 @@ export function superForm<
 				// New object errors should be displayed on blur events,
 				// or the (parent) path is or has been tainted.
 				if (
-					type == 'blur' &&
-					Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>)
+					options.validationMethod == 'oninput' ||
+					(type == 'blur' &&
+						Tainted_hasBeenTainted(mergePath(error.path.slice(0, -1)) as FormPath<T>))
 				) {
 					return addError();
 				}

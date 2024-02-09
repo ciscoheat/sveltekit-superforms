@@ -1,4 +1,4 @@
-export type { ValidationAdapter } from './adapters.js';
+export type { ValidationAdapter, Infer, InferIn } from './adapters.js';
 
 export { arktype, arktypeClient } from './arktype.js';
 export { joi, joiClient } from './joi.js';

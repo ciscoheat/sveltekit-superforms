@@ -3,8 +3,17 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { zod } from '$lib/adapters/zod.js';
 	import { step1, step2, step3 } from './schema.js';
+	import { z } from 'zod';
 
 	let { data } = $props();
+
+	const invalidSchema = z.object({
+		nope: z.number()
+	});
+
+	const invalidSchema2 = z.object({
+		name: z.string().nullable()
+	});
 
 	const steps = [zod(step1), zod(step2), zod(step3)];
 
@@ -16,6 +25,13 @@
 			if (form.valid) step = 1;
 		}
 	});
+
+	// @ts-expect-error Type check
+	options.validators = zod(invalidSchema);
+	// @ts-expect-error Type check
+	options.validators = zod(invalidSchema2);
+	// Reset back to original
+	options.validators = steps[0];
 
 	let step = $state(1);
 

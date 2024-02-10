@@ -85,6 +85,8 @@ describe('Tainted', () => {
 		expect(form.isTainted(get(tainted))).toBe(true);
 		// true since the real store is tainted:
 		expect(form.isTainted(undefined)).toBe(true);
+
+		expect(form.isTainted(get(tainted)?.name)).toBe(true);
 	});
 
 	describe('When not tainting', () => {

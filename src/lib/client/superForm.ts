@@ -214,7 +214,7 @@ export type SuperForm<
 	options: T extends T ? FormOptions<T, M> : never; // Need this to distribute T so it works with unions
 
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
-	isTainted: (path?: FormPath<T> | TaintedFields<T>) => boolean;
+	isTainted: (path?: FormPath<T> | TaintedFields<T> | boolean) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
 
 	capture: Capture<T, M>;
@@ -1010,7 +1010,10 @@ export function superForm<
 		return !!field && field.key in field.parent;
 	}
 
-	function Tainted_isTainted(path?: FormPath<T> | TaintedFields<Record<string, unknown>>): boolean {
+	function Tainted_isTainted(
+		path?: FormPath<T> | TaintedFields<Record<string, unknown>> | boolean
+	): boolean {
+		if (typeof path === 'boolean') return path;
 		if (typeof path === 'object') return Tainted__isObjectTainted(path);
 		if (!Data.tainted) return false;
 		if (!path) return Tainted__isObjectTainted(Data.tainted);

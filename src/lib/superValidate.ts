@@ -13,15 +13,19 @@ import type { SchemaShape } from './jsonSchema/schemaShape.js';
 export type SuperFormValidated<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	Message = App.Superforms.Message extends never ? any : App.Superforms.Message
-> = SuperValidated<T, Message> & {
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	In extends Record<string, unknown> = T
+> = SuperValidated<T, Message, In> & {
 	constraints: InputConstraints<T>;
 };
 
 export type SuperValidated<
 	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	Message = App.Superforms.Message extends never ? any : App.Superforms.Message
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	In extends Record<string, unknown> = Out
 > = {
 	id: string;
 	valid: boolean;
@@ -69,7 +73,7 @@ export async function superValidate<
 >(
 	adapter: ValidationAdapter<Out, In>,
 	options?: SuperValidateOptions<Out>
-): Promise<SuperValidated<Out, Message>>;
+): Promise<SuperValidated<Out, Message, In>>;
 
 export async function superValidate<
 	Out extends Record<string, unknown>,
@@ -80,7 +84,7 @@ export async function superValidate<
 	data: SuperValidateData<In>,
 	adapter: ValidationAdapter<Out, In>,
 	options?: SuperValidateOptions<Out>
-): Promise<SuperValidated<Out, M>>;
+): Promise<SuperValidated<Out, M, In>>;
 
 /**
  * Validates a schema for data validation and usage in superForm.
@@ -96,7 +100,7 @@ export async function superValidate<
 	data: ValidationAdapter<Out, In> | SuperValidateData<In>,
 	adapter?: ValidationAdapter<Out, In> | SuperValidateData<In> | SuperValidateOptions<Out>,
 	options?: SuperValidateOptions<Out>
-): Promise<SuperValidated<Out, Message>> {
+): Promise<SuperValidated<Out, Message, In>> {
 	if (data && 'superFormValidationLibrary' in data) {
 		options = adapter as SuperValidateOptions<Out>;
 		adapter = data;
@@ -148,7 +152,7 @@ export async function superValidate<
 		outputData = dataWithDefaults;
 	}
 
-	const output: SuperValidated<Out, Message> = {
+	const output: SuperValidated<Out, Message, In> = {
 		id: parsed.id ?? options?.id ?? validator.id,
 		valid,
 		posted: parsed.posted,
@@ -173,8 +177,8 @@ export async function superValidate<
  * Sends a message with a form, with an optional HTTP status code that will set
  * form.valid to false if status >= 400. A status lower than 400 cannot be sent.
  */
-export function message<T extends Record<string, unknown>, M>(
-	form: SuperValidated<T, M>,
+export function message<T extends Record<string, unknown>, M, In extends Record<string, unknown>>(
+	form: SuperValidated<T, M, In>,
 	message: M,
 	options?: {
 		status?: ErrorStatus;
@@ -210,11 +214,11 @@ type SetErrorOptions = {
  * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
  * @returns fail(status, { form })
  */
-export function setError<T extends Record<string, unknown>>(
-	form: SuperValidated<T, unknown>,
+export function setError<T extends Record<string, unknown>, M, In extends Record<string, unknown>>(
+	form: SuperValidated<T, M, In>,
 	error: string | string[],
 	options?: SetErrorOptions
-): ActionFailure<{ form: SuperValidated<T, unknown> }>;
+): ActionFailure<{ form: SuperValidated<T, M, In> }>;
 
 /**
  * Sets an error for a form field or array field.
@@ -228,23 +232,27 @@ export function setError<T extends Record<string, unknown>>(
  */
 export function setError<
 	T extends Record<string, unknown>,
-	Path extends FormPathLeavesWithErrors<T>
+	Path extends FormPathLeavesWithErrors<T>,
+	M,
+	In extends Record<string, unknown>
 >(
-	form: SuperValidated<T, unknown>,
+	form: SuperValidated<T, M, In>,
 	path: '' | Path,
 	error: string | string[],
 	options?: SetErrorOptions
-): ActionFailure<{ form: SuperValidated<T, unknown> }>;
+): ActionFailure<{ form: SuperValidated<T, M, In> }>;
 
 export function setError<
 	T extends Record<string, unknown>,
-	Path extends FormPathLeavesWithErrors<T>
+	Path extends FormPathLeavesWithErrors<T>,
+	M,
+	In extends Record<string, unknown>
 >(
-	form: SuperValidated<T, unknown>,
+	form: SuperValidated<T, M, In>,
 	path: string | string[] | Path,
 	error?: string | string[] | SetErrorOptions,
 	options?: SetErrorOptions
-): ActionFailure<{ form: SuperValidated<T, unknown> }> {
+): ActionFailure<{ form: SuperValidated<T, M, In> }> {
 	// Unify signatures
 	if (error == undefined || (typeof error !== 'string' && !Array.isArray(error))) {
 		options = error;

@@ -1,4 +1,4 @@
-import type { SuperValidated } from '$lib/client/index.js';
+import type { ValidationErrors } from '$lib/client/index.js';
 import { splitPath } from '$lib/stringPath.js';
 import { traversePath } from '$lib/traversal.js';
 
@@ -14,9 +14,9 @@ export async function updateCustomValidity(validityEl: HTMLElement, errors: stri
 	setCustomValidity(validityEl as HTMLInputElement, errors);
 }
 
-export function setCustomValidityForm<T extends Record<string, unknown>, M>(
+export function setCustomValidityForm(
 	formElement: HTMLFormElement,
-	errors: SuperValidated<T, M>['errors']
+	errors: ValidationErrors<Record<string, unknown>>
 ) {
 	for (const el of formElement.querySelectorAll<
 		HTMLInputElement & HTMLSelectElement & HTMLTextAreaElement & HTMLButtonElement

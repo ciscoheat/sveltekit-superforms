@@ -90,7 +90,7 @@ export type FormOptions<
 		cancel: () => void;
 	}) => MaybePromise<unknown | void>;
 	onUpdate: (event: {
-		form: SuperValidated<T, M>;
+		form: SuperValidated<T, M, In>;
 		/**
 		 * @deprecated Use formElement instead
 		 */
@@ -98,7 +98,7 @@ export type FormOptions<
 		formElement: HTMLFormElement;
 		cancel: () => void;
 	}) => MaybePromise<unknown | void>;
-	onUpdated: (event: { form: Readonly<SuperValidated<T, M>> }) => MaybePromise<unknown | void>;
+	onUpdated: (event: { form: Readonly<SuperValidated<T, M, In>> }) => MaybePromise<unknown | void>;
 	onError:
 		| 'apply'
 		| ((event: {
@@ -112,8 +112,9 @@ export type FormOptions<
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
+	// TODO: Use NoInfer<T> on ClientValidationAdapter when available
 	validators:
-		| ClientValidationAdapter<T, In>
+		| ClientValidationAdapter<Partial<T>, Record<string, unknown>>
 		| ValidationAdapter<Partial<T>, Record<string, unknown>>
 		| false
 		| 'clear';
@@ -155,8 +156,9 @@ export type FormOptions<
 export type SuperFormSnapshot<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
-> = SuperFormValidated<T, M> & { tainted: TaintedFields<T> | undefined };
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
+> = SuperFormValidated<T, M, In> & { tainted: TaintedFields<T> | undefined };
 
 type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
@@ -218,14 +220,22 @@ export type SuperForm<
 	capture: Capture<T, M>;
 	restore: T extends T ? Restore<T, M> : never;
 
-	validate: <Path extends FormPathLeaves<T>>(
+	validate: <
+		Out extends Partial<T> = T,
+		Path extends FormPathLeaves<T> = FormPathLeaves<T>,
+		In extends Record<string, unknown> = Record<string, unknown>
+	>(
 		path: Path,
-		opts?: ValidateOptions<FormPathType<T, Path>, Partial<T>, Record<string, unknown>>
+		opts?: ValidateOptions<FormPathType<T, Path>, Out, In>
 	) => Promise<string[] | undefined>;
-	validateForm: <Out extends Partial<T> = T, In extends Partial<T> = Out>(opts?: {
+
+	validateForm: <
+		Out extends Partial<T> = T,
+		In extends Record<string, unknown> = Record<string, unknown>
+	>(opts?: {
 		update?: boolean;
 		schema?: ValidationAdapter<Out, In>;
-	}) => Promise<SuperFormValidated<T>>;
+	}) => Promise<SuperFormValidated<T, M, In>>;
 };
 
 export type ValidateOptions<
@@ -282,7 +292,10 @@ type FormUpdate = (
 ) => Promise<void>;
 
 const formIds = new WeakMap<Page, Set<string | undefined>>();
-const initialForms = new WeakMap<object, SuperValidated<Record<string, unknown>, unknown>>();
+const initialForms = new WeakMap<
+	object,
+	SuperValidated<Record<string, unknown>, unknown, Record<string, unknown>>
+>();
 
 const defaultOnError = (event: { result: { error: unknown } }) => {
 	console.warn('Unhandled Superform error, use onError event to handle it:', event.result.error);
@@ -345,11 +358,12 @@ try {
 export function superForm<
 	T extends Record<string, unknown> = Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(form: SuperValidated<T, M> | T, formOptions?: FormOptions<T, M>): SuperForm<T, M> {
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
+>(form: SuperValidated<T, M, In> | T, formOptions?: FormOptions<T, M, In>): SuperForm<T, M> {
 	// Used in reset
-	let initialForm: SuperValidated<T, M>;
-	let options = formOptions ?? ({} as FormOptions<T, M>);
+	let initialForm: SuperValidated<T, M, In>;
+	let options = formOptions ?? ({} as FormOptions<T, M, In>);
 
 	{
 		if (options.legacy ?? legacyMode) {
@@ -384,10 +398,10 @@ export function superForm<
 				posted: false,
 				errors: {},
 				data: form as T
-			} satisfies SuperValidated<T, M>;
+			} satisfies SuperValidated<T, M, In>;
 		}
 
-		form = form as SuperValidated<T, M>;
+		form = form as SuperValidated<T, M, In>;
 
 		// Check multiple id's
 		const _initialFormId = options.id ?? form.id;
@@ -414,7 +428,7 @@ export function superForm<
 		if (!initialForms.has(form)) {
 			initialForms.set(form, clone(form));
 		}
-		initialForm = initialForms.get(form) as SuperValidated<T, M>;
+		initialForm = initialForms.get(form) as SuperValidated<T, M, In>;
 
 		if (typeof initialForm.valid !== 'boolean') {
 			throw new SuperFormError(
@@ -431,10 +445,10 @@ export function superForm<
 					// Prevent multiple "posting" that can happen when components are recreated.
 					initialForms.set(postedData, postedData);
 
-					const pageDataForm = form as SuperValidated<T, M>;
+					const pageDataForm = form as SuperValidated<T, M, In>;
 
 					// Add the missing fields from the page data form
-					form = postedForm as SuperValidated<T, M>;
+					form = postedForm as SuperValidated<T, M, In>;
 					form.constraints = pageDataForm.constraints;
 					form.shape = pageDataForm.shape;
 
@@ -577,7 +591,7 @@ export function superForm<
 		opts: { adapter?: ValidationAdapter<Schema>; recheckValidData?: boolean; formData?: T } = {
 			recheckValidData: true
 		}
-	): Promise<SuperFormValidated<T, M>> {
+	): Promise<SuperFormValidated<T, M, In>> {
 		const dataToValidate = opts.formData ?? Data.form;
 
 		let errors: ValidationErrors<T> = {};
@@ -831,7 +845,7 @@ export function superForm<
 		);
 	}
 
-	async function Form_updateFromValidation(form: SuperValidated<T, M>, successResult: boolean) {
+	async function Form_updateFromValidation(form: SuperValidated<T, M, In>, successResult: boolean) {
 		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
 			Form_reset(form.message);
 		} else {
@@ -885,7 +899,7 @@ export function superForm<
 		for (const newForm of forms) {
 			if (newForm.id !== Data.formId) continue;
 			await Form_updateFromValidation(
-				newForm as SuperValidated<T, M>,
+				newForm as SuperValidated<T, M, In>,
 				result.status >= 200 && result.status < 300
 			);
 		}
@@ -984,7 +998,7 @@ export function superForm<
 		return !!field && field.key in field.parent;
 	}
 
-	function Tainted_isTainted(path?: FormPath<T> | TaintedFields<T>): boolean {
+	function Tainted_isTainted(path?: FormPath<T> | TaintedFields<Record<string, unknown>>): boolean {
 		if (typeof path === 'object') return Tainted__isObjectTainted(path);
 		if (!Data.tainted) return false;
 		if (!path) return Tainted__isObjectTainted(Data.tainted);
@@ -1112,7 +1126,7 @@ export function superForm<
 
 	// Role rebinding
 	function rebind(
-		form: SuperValidated<T, M>,
+		form: SuperValidated<T, M, In>,
 		untaint: TaintedFields<T> | boolean,
 		message?: M,
 		keepFiles?: boolean
@@ -1230,7 +1244,7 @@ export function superForm<
 
 						// Prevent multiple "posting" that can happen when components are recreated.
 						initialForms.set(newForm, newForm);
-						await Form_updateFromValidation(newForm as SuperValidated<T, M>, successResult);
+						await Form_updateFromValidation(newForm as SuperValidated<T, M, In>, successResult);
 					}
 				} else if (pageUpdate.data && typeof pageUpdate.data === 'object') {
 					// It's a page reload, redirect or error/failure,
@@ -1242,7 +1256,7 @@ export function superForm<
 							continue;
 						}
 
-						rebind(newForm as SuperValidated<T, M>, successResult, undefined, true);
+						rebind(newForm as SuperValidated<T, M, In>, successResult, undefined, true);
 					}
 				}
 			})
@@ -1337,7 +1351,7 @@ export function superForm<
 
 		async validateForm<P extends Partial<T> = T>(
 			opts: { update?: boolean; schema?: ValidationAdapter<P> } = {}
-		): Promise<SuperFormValidated<T, M>> {
+		): Promise<SuperFormValidated<T, M, In>> {
 			if (!options.validators && !opts.schema) {
 				throw new SuperFormError(
 					'options.validators or the schema option must be set to use the validateForm method.'
@@ -1492,7 +1506,7 @@ export function superForm<
 								submit.submitter instanceof HTMLInputElement) &&
 								submit.submitter.formNoValidate));
 
-					let validation: SuperFormValidated<T, M> | undefined = undefined;
+					let validation: SuperFormValidated<T, M, In> | undefined = undefined;
 
 					if (!noValidate) {
 						validation = await Form_validate();
@@ -1658,7 +1672,7 @@ export function superForm<
 								if (newForm.id !== Data.formId) continue;
 
 								const data = {
-									form: newForm as SuperValidated<T>,
+									form: newForm as SuperValidated<T, M, In>,
 									formEl: FormElement,
 									formElement: FormElement,
 									cancel: () => (cancelled = true)

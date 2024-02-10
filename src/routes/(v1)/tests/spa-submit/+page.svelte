@@ -10,7 +10,7 @@
 	const { form, enhance, errors, validateForm } = superForm(data.form, {
 		SPA: true,
 		resetForm: true,
-		validators: superformClient({
+		validators: superformClient<{ title: string }>({
 			title: (value?) =>
 				!value || value.trim().length >= 3 ? null : 'Bitte geben Sie mindestens 3 Zeichen ein'
 		}),

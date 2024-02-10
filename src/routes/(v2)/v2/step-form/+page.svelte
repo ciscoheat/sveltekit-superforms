@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { zod } from '$lib/adapters/zod.js';
+	import { zod, zodClient } from '$lib/adapters/zod.js';
 	import { step1, step2, step3 } from './schema.js';
 	import { z } from 'zod';
 
@@ -15,7 +15,7 @@
 		name: z.string().nullable()
 	});
 
-	const steps = [zod(step1), zod(step2), zod(step3)];
+	const steps = [zodClient(step1), zod(step2), zod(step3)];
 
 	const { form, errors, tainted, message, enhance, options, validateForm } = superForm(data.form, {
 		taintedMessage: false,

@@ -112,7 +112,7 @@ export type FormOptions<
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
-	// TODO: Use NoInfer<T> on ClientValidationAdapter when available
+	// TODO: Use NoInfer<T> on ClientValidationAdapter when available, so T can be used instead of Partial<T>
 	validators:
 		| ClientValidationAdapter<Partial<T>, Record<string, unknown>>
 		| ValidationAdapter<Partial<T>, Record<string, unknown>>
@@ -364,12 +364,16 @@ export function superForm<
 	// Used in reset
 	let initialForm: SuperValidated<T, M, In>;
 	let options = formOptions ?? ({} as FormOptions<T, M, In>);
+	// To check if a full validator is used when switching options.validators dynamically
+	let initialValidator: FormOptions<T, M, In>['validators'] | undefined = undefined;
 
 	{
 		if (options.legacy ?? legacyMode) {
 			if (options.resetForm === undefined) options.resetForm = false;
 			if (options.taintedMessage === undefined) options.taintedMessage = true;
 		}
+
+		initialValidator = options.validators;
 
 		options = {
 			...defaultFormOptions,
@@ -599,6 +603,14 @@ export function superForm<
 		const validator = opts.adapter ?? options.validators;
 
 		if (typeof validator == 'object') {
+			// Checking for full validation with the jsonSchema field (doesn't exist in client validators).
+			if (validator != initialValidator && !('jsonSchema' in validator)) {
+				throw new SuperFormError(
+					'Client validation adapter found in options.validators. ' +
+						'A full adapter must be used when changing validators dynamically.'
+				);
+			}
+
 			status = await /* @__PURE__ */ validator.validate(dataToValidate);
 
 			if (!status.success) {

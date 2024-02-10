@@ -75,12 +75,10 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			if (info.isNullable) return null;
 			if (info.isOptional) return undefined;
 
-			// TODO: Use the first value of the union as default?
 			throw new SchemaError(
 				'Unions must have a default value, or exactly one of the union types must have.',
 				path
 			);
-			//return _defaultValues(info.union[0], isOptional, path);
 		}
 	}
 
@@ -130,7 +128,6 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	return defaultValue(formatType, schema.enum);
 }
 
-// TODO: Handle conversion better, since it also depends on other props in the schema. (see schemaTypes)
 function formatDefaultValue(type: SchemaType, value: unknown) {
 	switch (type) {
 		case 'set':

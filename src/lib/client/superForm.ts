@@ -701,17 +701,10 @@ export function superForm<
 
 		const result = await Form_validate({ adapter });
 
-		// TODO: Add option for always setting result.data
+		// TODO: Add option for always setting result.data?
 		if (result.valid && (event.immediate || event.type != 'input')) {
 			Form.set(result.data, { taint: 'ignore' });
 		}
-
-		/*
-		if (force) {
-			Errors.set(result.errors);
-			return result;
-		}
-		*/
 
 		// Wait for tainted, so object errors can be displayed
 		await tick();

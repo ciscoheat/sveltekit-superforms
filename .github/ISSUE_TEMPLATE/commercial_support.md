@@ -1,15 +1,15 @@
 ---
-name: Bug report
-about: When something doesn't work as expected
+name: Commercial support
+about: When you need help with Superforms for a commercial project
 title: ''
-labels: bug
+labels: support
 assignees: ''
 ---
 
-- [ ] Before posting an issue, read the [FAQ](https://superforms.rocks/faq) and search the previous issues.
+- [ ] I have within a month made a donation proportionally to the current profit of the project or the company I work for, on the [Superforms website](https://superforms.rocks/support).
 
 **Description**
-A clear and concise description of what the bug is, and, unless obvious, what you expected instead.
+A description of your question. It's also helpful, but not required, if you can tell something about what kind of answer you expect.
 
 **If applicable, a MRE**
 Use one of these stackblitz templates to create a minimal reproducible example that you can link to here:

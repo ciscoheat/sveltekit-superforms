@@ -321,6 +321,7 @@ describe('Zod', () => {
 			score: 1,
 			stats: NaN
 		});
+		expect(form.errors).toEqual({ stats: ['Expected number, received nan'] });
 
 		formData.set('stats', '2');
 
@@ -331,6 +332,15 @@ describe('Zod', () => {
 			score: 1,
 			stats: 2
 		});
+
+		const name: string = form2.data.name;
+		// @ts-expect-error Testing catchall type
+		const notAString: string = form2.data.extra;
+		const num: number = form2.data.stats;
+
+		name;
+		notAString;
+		num;
 	});
 
 	schemaTest(zod(schema));

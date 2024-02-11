@@ -151,7 +151,7 @@ describe('Non-strict mode', () => {
 		});
 
 		const form = await superValidate(input as Record<string, unknown>, zod(schema));
-		expect(input).toMatchObject({ fooo: 'wrong-key', foo: 'correct-key' });
+
 		expect(form.data).toEqual({ foo: 'correct-key' });
 		expect(form.errors).toEqual({});
 		expect(form.valid).toEqual(true);

@@ -13,9 +13,9 @@ type ModeTest = {
 };
 
 describe('Strict mode', () => {
-	/*
 	test('Should remove keys not part of the schema', async () => {
 		const input = { fooo: 'wrong-key', foo: 'correct-key' };
+
 		const schema = z.object({
 			foo: z.string()
 		});
@@ -23,15 +23,13 @@ describe('Strict mode', () => {
 		const form = await superValidate(input as Record<string, unknown>, zod(schema), {
 			strict: true
 		});
-		expect(input).toMatchObject({ fooo: 'wrong-key', foo: 'correct-key' });
+
 		expect(form.data).toEqual({ foo: 'correct-key' });
 		expect(form.errors).toEqual({});
 		expect(form.valid).toEqual(true);
 	});
-	*/
 
 	const strictTests = [
-		/*
 		{
 			name: 'Should be invalid if foo is not present in object',
 			schema: z.object({
@@ -66,7 +64,6 @@ describe('Strict mode', () => {
 			valid: true,
 			errors: {}
 		},
-		*/
 		{
 			name: 'Should be invalid if key is mispelled',
 			schema: z.object({
@@ -82,8 +79,7 @@ describe('Strict mode', () => {
 			errors: {
 				foo: ['Required']
 			}
-		}
-		/*
+		},
 		{
 			name: 'Should work with number',
 			schema: z.object({
@@ -142,13 +138,11 @@ describe('Strict mode', () => {
 				foo: ['Required']
 			}
 		}
-		*/
 	];
 
 	testMode(strictTests, true);
 });
 
-/*
 describe('Non-strict mode', () => {
 	test('Should remove keys not part of the schema', async () => {
 		const input = { fooo: 'wrong-key', foo: 'correct-key' };
@@ -258,7 +252,6 @@ describe('Non-strict mode', () => {
 
 	testMode(nonStrictTests, false);
 });
-*/
 
 function testMode(tests: ModeTest[], strict: boolean) {
 	for (const { name, input, schema, valid, expected, errors } of tests) {

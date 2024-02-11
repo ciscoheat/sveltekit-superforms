@@ -5,24 +5,24 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0-alpha.1] - 2024-01-10
+## [2.0.0] - 2024-02-11
 
 ### Removed
 
-- `superForm.fields`
-- `fields` options for setting tainted.
-- `message` parameter in `onError` event.
+- `superForm.fields` was a rarely used and lesser version of `formFieldProxy`, switch to that instead.
+- Removed `fields` options when setting tainted status.
+- Remvoed `message` parameter in `onError` event, use `$message` directly instead.
 
 ### Changed
 
-- Adapters required, `superValidate(zod(schema))` instead of `superValidate(schema)`. If type parameters are used, it must now be wrapped with `z.infer` for Zod schemas.
-- Default `superForm` options now follow SvelteKit more closely: `resetForm: true` and `taintedMessage: false` is default now. Add `define: { SUPERFORMS_LEGACY: true }` in `vite.config.ts` to keep the old behavior.
+- Adapters required for validation! Import from `sveltekit-superforms/adapters` and use `superValidate(zod(schema))` instead of `superValidate(schema)`. If type parameters are used, it must now be wrapped with `Infer` for schemas.
+- Default `superForm` options now follow SvelteKit more closely: `resetForm: true` and `taintedMessage: false` are default now. Add `define: { SUPERFORMS_LEGACY: true }` in `vite.config.ts` to keep the old behavior.
 - `superValidateSync` is renamed to `defaults`. It returns [default values](https://superforms.rocks/default-values/) for the schema, and **does no validation anymore**. Use `+page.ts` if initial validation is required, as described on the [SPA page](https://superforms.rocks/concepts/spa#using-pagets-instead-of-pageserverts).
 - `arrayProxy`: `fieldErrors` renamed to `valueErrors`.
 - Enums must have an explicit default value in the schema.
 - Numeric enums cannot be parsed with their string values anymore.
 - Superform validator functions, previously just an object with functions, requires the `superformClient` adapter. The input for the validator functions can now be `undefined`.
-- If `superValidate` is called with just the schema, the default values aren't validated (i.e. no side-effects for default values).
+- If `superValidate` is called with just the schema, the default values aren't validated (i.e. no side-effects for default values) unless `errors` is set to `true`.
 - Properties with default values don't have `required` in their constraints anymore.
 - Form id cannot be `undefined` anymore, must be `string`. (Set automatically by default now).
 - `flashMessage.onError.message` option in `superForm` renamed to `flashMessage.onError.flashMessage`.
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support for unions in schemas. Unions must have an explicit default value, and multi-type unions can only be used with `dataType: 'json'` set.
+- Support for unions in schemas. A union must have an explicit default value, and multi-type unions can only be used with `dataType: 'json'` set.
 - Added `superForm.isTainted(path?)` and `superForm.isTainted($tainted)` for better [tainted fields check](https://superforms.rocks/concepts/tainted/).
 - [File upload support](https://superforms.rocks/concepts/files/)! Use `withFiles` when returning in form actions: `return withFiles({ form })`.
 - [SuperDebug](https://superforms.rocks/super-debug/) now displays `File` and `FileList`.

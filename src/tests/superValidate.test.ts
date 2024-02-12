@@ -352,14 +352,14 @@ describe('Zod', () => {
 
 describe("vine", () => {
 	const schema = Vine.object(({
-		name: Vine.string().optional(),
+		name: Vine.string().parse(v => {v ?? 'Unknown'}).optional(),
 		email: Vine.string().email(),
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
 		date: Vine.date().optional(),
 		noSpace: Vine.string().regex(nospacePattern).optional()
 	}))
-	schemaTest(vine(schema, { defaults }), ['email', 'date', 'nospace', 'tags'])
+	schemaTest(vine(schema, { defaults }))
 })
 
 ///// Common ////////////////////////////////////////////////////////

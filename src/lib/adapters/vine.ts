@@ -6,7 +6,9 @@ import {
 	createAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter,
-    type ValidationIssue
+    type ValidationIssue,
+    createJsonSchema,
+    type RequiredDefaultsOptions
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
 import { Vine, errors,  } from "@vinejs/vine"
@@ -39,11 +41,11 @@ async function validate<T extends SchemaTypes>(schema:T, data:unknown): Promise<
     }
 }
 
-function _vine<T extends SchemaTypes>(schema:T): ValidationAdapter<Infer<T>, InferIn<T>> {
+function _vine<T extends SchemaTypes>(schema:T, options: RequiredDefaultsOptions<T>): ValidationAdapter<Infer<T>, InferIn<T>> {
     return createAdapter({
         superFormValidationLibrary:"vine",
         validate: async(data: unknown) => validate(schema, data),
-        jsonSchema: schema
+        jsonSchema: createJsonSchema(options)
     })
 }
 
@@ -54,5 +56,5 @@ function _vineClient<T extends SchemaTypes>(schema:T): ClientValidationAdapter<I
     }
 }
 
-export const typebox = /* @__PURE__ */ memoize(_vine);
-export const typeboxClient = /* @__PURE__ */ memoize(_vineClient);
+export const vine = /* @__PURE__ */ memoize(_vine);
+export const vineClient = /* @__PURE__ */ memoize(_vineClient);

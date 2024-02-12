@@ -57,7 +57,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	const isMultiTypeUnion = () => {
 		if (!info.union || info.union.length < 2) return false;
 		if (info.union.some((i) => i.enum)) return true;
-		console.log(info.union, info.types, _multiType); //debug
+
 		if (!_multiType) {
 			_multiType = new Set(
 				info.types.map((i) => {

@@ -359,7 +359,8 @@ describe("vine", () => {
 		date: Vine.date().optional(),
 		noSpace: Vine.string().regex(nospacePattern).optional()
 	}))
-	schemaTest(vine(schema, { defaults }))
+	const adapter = vine(schema, {defaults})
+	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
 })
 
 ///// Common ////////////////////////////////////////////////////////

@@ -688,3 +688,49 @@ describe('Edge cases', () => {
 		});
 	});
 });
+
+describe('Array validation', () => {
+	describe('should return an empty array as default when dataType is json', () => {
+		const schema = z.object({
+			testArray: z.object({ foo: z.string() }).array(),
+			nested: z.object({
+				arr: z.object({ foo: z.string() }).array()
+			})
+		});
+
+		it('with the default values', async () => {
+			const form = await superValidate(zod(schema));
+			expect(form.errors.testArray?._errors).toBeUndefined();
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+
+		it('when passing data directly', async () => {
+			const form = await superValidate({ testArray: undefined }, zod(schema), { errors: true });
+
+			expect(form.errors.testArray?._errors).toEqual(['Required']);
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+
+		it('when passing an empty object', async () => {
+			const form = await superValidate({}, zod(schema), { errors: true });
+
+			expect(form.errors.testArray).toBeUndefined();
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+
+		it('when passing undefined', async () => {
+			const form = await superValidate(undefined, zod(schema), { errors: true });
+
+			expect(form.errors.testArray).toBeUndefined();
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+	});
+});

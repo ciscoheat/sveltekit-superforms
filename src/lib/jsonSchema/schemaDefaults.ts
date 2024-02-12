@@ -108,10 +108,9 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return objectDefaults;
 	}
 
-	// Enums
+	// Enums, return the first value so it can be a required field
 	if (schema.enum) {
-		throw new SchemaError('Enums must have a default value in the schema.', path);
-		//return schema.enum[0];
+		return schema.enum[0];
 	}
 
 	// Basic type

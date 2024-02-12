@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Array data was set to `undefined` when `dataType: 'json'` was set.
+- Enums can now be required again, as they don't need an explicit default value anymore. If no default value exists, the first enum value will be used.
+- Empty arrays were set to `undefined` for `dataType: 'json'`.
 
 ## [2.0.0] - 2024-02-11
 

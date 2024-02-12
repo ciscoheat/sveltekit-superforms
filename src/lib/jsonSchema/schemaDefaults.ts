@@ -53,6 +53,21 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		}
 	}
 
+	let _multiType: Set<string>;
+	const isMultiTypeUnion = () => {
+		if (!info.union || info.union.length < 2) return false;
+		if (info.union.some((i) => i.enum)) return true;
+		console.log(info.union, info.types, _multiType); //debug
+		if (!_multiType) {
+			_multiType = new Set(
+				info.types.map((i) => {
+					return ['integer', 'unix-time'].includes(i) ? 'number' : i;
+				})
+			);
+		}
+		return _multiType.size > 1;
+	};
+
 	// Check unions first, so default values can take precedence over nullable and optional
 	if (!objectDefaults && info.union) {
 		const singleDefault = info.union.filter(
@@ -65,20 +80,17 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 				'Only one default value can exist in a union, or set a default value for the whole union.',
 				path
 			);
-		} else if (info.union.length > 1) {
-			throw new SchemaError(
-				'Unions must have a default value, or exactly one of the union types must have.',
-				path
-			);
 		} else {
 			// Null takes priority over undefined
 			if (info.isNullable) return null;
 			if (info.isOptional) return undefined;
 
-			throw new SchemaError(
-				'Unions must have a default value, or exactly one of the union types must have.',
-				path
-			);
+			if (isMultiTypeUnion()) {
+				throw new SchemaError(
+					'Multi-type unions must have a default value, or exactly one of the union types must have.',
+					path
+				);
+			}
 		}
 	}
 
@@ -114,7 +126,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	}
 
 	// Basic type
-	if (info.types.length > 1) {
+	if (isMultiTypeUnion()) {
 		throw new SchemaError('Default values cannot have more than one type.', path);
 	} else if (info.types.length == 0) {
 		//console.warn('No type or format for property:', path); //debug

@@ -374,6 +374,28 @@ describe('Zod', () => {
 		});
 	});
 
+	it('should not require a default value for single type unions', () => {
+		const schema = z.object({
+			letter: z.union([z.literal('a'), z.literal('b')]),
+			num: z.union([z.number().int().negative(), z.number()])
+		});
+
+		const adapter = zod(schema);
+		expect(adapter.defaults).toEqual({ letter: 'a', num: 0 });
+		expect(adapter.constraints.letter?.required).toBe(true);
+		expect(adapter.constraints.num?.required).toBe(true);
+	});
+
+	it('should not require a default value for enums', () => {
+		const schema = z.object({
+			letter: z.enum(['a', 'b', 'c'])
+		});
+
+		const adapter = zod(schema);
+		expect(adapter.defaults.letter).toBe('a');
+		expect(adapter.constraints.letter?.required).toBe(true);
+	});
+
 	schemaTest(zod(schema));
 });
 

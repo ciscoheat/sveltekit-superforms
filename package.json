@@ -101,7 +101,8 @@
 		"svelte": "3.x || 4.x || >=5.0.0-next.51",
 		"valibot": "^0.28.1",
 		"yup": "^1.3.3",
-		"zod": "^3.22.4"
+		"zod": "^3.22.4",
+		"@vinejs/vine": "^1.7.1"
 	},
 	"peerDependenciesMeta": {
 		"@sinclair/typebox": {
@@ -124,6 +125,9 @@
 		},
 		"zod": {
 			"optional": true
+		},
+		"@vinejs/vine": {
+			"optional": true
 		}
 	},
 	"optionalDependencies": {
@@ -136,6 +140,7 @@
 		"valibot": "^0.28.1",
 		"yup": "^1.3.3",
 		"zod": "^3.22.4",
+		"@vinejs/vine": "^1.7.1",
 		"zod-to-json-schema": "^3.22.4"
 	},
 	"dependencies": {

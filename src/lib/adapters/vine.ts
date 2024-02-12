@@ -1,5 +1,4 @@
 import {
-	type AdapterOptions,
 	type ValidationAdapter,
 	type Infer,
 	type InferIn,

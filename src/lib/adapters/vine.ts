@@ -16,19 +16,19 @@ import type { SchemaTypes } from '@vinejs/vine/types';
 
 async function validate<T extends SchemaTypes>(schema:T, data:unknown): Promise<ValidationResult<Infer<T>>> {
     let res = null;
+    const vine = new Vine()
     try {
-        const output = await new Vine().validate({schema, data})
+        const output = await vine.validate({schema, data})
         res = {
             success:true,
             data: output as Infer<T>
         }
     } catch (e) {
         if (e instanceof errors.E_VALIDATION_ERROR) {
-            console.log(e.messages)
             res = {
                 success:false,
                 issues: e.messages.map((m) => ({
-                    path: m.field as string,
+                    path: [m.field as string],
                     message: m.message as string
                 })) as Array<ValidationIssue>
             }

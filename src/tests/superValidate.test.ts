@@ -352,7 +352,7 @@ describe('Zod', () => {
 
 describe("vine", () => {
 	const schema = Vine.object(({
-		name: Vine.string().parse(v => {v ?? 'Unknown'}).optional(),
+		name: Vine.string().parse(v => v ?? 'Unknown'),
 		email: Vine.string().email(),
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
@@ -360,7 +360,7 @@ describe("vine", () => {
 		noSpace: Vine.string().regex(nospacePattern).optional()
 	}))
 	const adapter = vine(schema, {defaults})
-	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
+	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple', true);
 })
 
 ///// Common ////////////////////////////////////////////////////////
@@ -424,8 +424,11 @@ type ErrorFields = ('email' | 'date' | 'nospace' | 'tags' | 'tags[1]')[];
 function schemaTest(
 	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
-	adapterType: 'full' | 'simple' = 'full'
+	adapterType: 'full' | 'simple' = 'full',
+	dateAsString: boolean = false
 ) {
+	const validD = {...validData, date: dateAsString ? "2024-01-01" : validData.date}
+	
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
 		//console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
@@ -459,6 +462,8 @@ function schemaTest(
 		);
 		return merge(filteredDefaults, invalidData);
 	}
+
+
 
 	it('with schema only', async () => {
 		const output = await superValidate(adapter);
@@ -494,11 +499,11 @@ function schemaTest(
 	});
 
 	it('with valid test data', async () => {
-		const output = await superValidate(validData, adapter);
+		const output = await superValidate(validD, adapter);
 		expect(output.errors).toEqual({});
 		expect(output.valid).toEqual(true);
-		expect(output.data).not.toBe(validData);
-		expect(output.data).toEqual(validData);
+		expect(output.data).not.toBe(validD);
+		expect(output.data).toEqual({...validD, date: dateAsString ? new Date(validD.date) : validD.date});
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
 	});

@@ -237,14 +237,14 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPath<T
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ArrayFieldErrors = any[];
 
-export function arrayProxy<T extends Record<string, unknown>, Path extends FormPathArrays<T>>(
+export function arrayProxy<T extends Record<string, unknown>, Path extends FormPathArrays<T>, Values extends unknown[]>(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	superForm: SuperForm<T, any>,
 	path: Path,
 	options?: { taint?: TaintOption }
 ): {
 	path: Path;
-	values: Writable<FormPathType<T, Path> & unknown[]>;
+	values: Writable<FormPathType<T, Path> & Values>;
 	errors: Writable<string[] | undefined>;
 	valueErrors: Writable<ArrayFieldErrors>;
 } {

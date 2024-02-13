@@ -5,6 +5,19 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Default values are now applied properly for single-type unions, even a mix of integers and numbers.
+
+## [2.1.0] - 2024-02-12
+
+### Fixed
+
+- Enums can now be required again, as they don't need an explicit default value anymore. If no explicit default value exists, the first enum value will be used.
+- Empty arrays were set to `undefined` when using `dataType: 'json'`.
+
 ## [2.0.0] - 2024-02-11
 
 ### Removed

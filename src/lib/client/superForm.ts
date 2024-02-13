@@ -1597,6 +1597,7 @@ export function superForm<
 									return data.set(undefined);
 								} else if (
 									Array.isArray(data.value) &&
+									data.value.length &&
 									data.value.every((v) => v instanceof File)
 								) {
 									const key = '__superform_files_' + mergePath(data.path);

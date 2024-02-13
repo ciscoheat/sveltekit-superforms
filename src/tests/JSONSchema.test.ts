@@ -123,7 +123,7 @@ describe('Default values', () => {
 		});
 	});
 
-	it('should map default values for enums to the first enum value', () => {
+	it('should use the default value for enums if set', () => {
 		enum Fruits {
 			Apple = 2,
 			Banana = 3
@@ -136,7 +136,6 @@ describe('Default values', () => {
 
 		const schema = {
 			type: 'object',
-			required: ['nativeEnumInt', 'nativeEnumString', 'nativeEnumString2'],
 			properties: {
 				nativeEnumInt: {
 					type: 'number',
@@ -160,6 +159,43 @@ describe('Default values', () => {
 			nativeEnumInt: 2,
 			nativeEnumString: 'GREEN',
 			nativeEnumString2: 'Banana'
+		});
+	});
+
+	it('should map default values for enums to the first enum value', () => {
+		enum Fruits {
+			Apple = 2,
+			Banana = 3
+		}
+
+		enum FruitsStr {
+			Apple = 'Apple',
+			Banana = 'Banana'
+		}
+
+		const schema = {
+			type: 'object',
+			required: ['nativeEnumInt', 'nativeEnumString', 'nativeEnumString2'],
+			properties: {
+				nativeEnumInt: {
+					type: 'number',
+					enum: Object.keys(Fruits).map(parseInt)
+				},
+				nativeEnumString: {
+					type: 'string',
+					enum: ['GRAY', 'GREEN']
+				},
+				nativeEnumString2: {
+					type: 'string',
+					enum: Object.values(FruitsStr)
+				}
+			}
+		} satisfies JSONSchema7;
+
+		expect(defaultValues(schema)).toEqual({
+			nativeEnumInt: 2,
+			nativeEnumString: 'GRAY',
+			nativeEnumString2: 'Apple'
 		});
 	});
 

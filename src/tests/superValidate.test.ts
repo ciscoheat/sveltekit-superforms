@@ -21,20 +21,7 @@ import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { z } from 'zod';
 
 import { valibot } from '$lib/adapters/valibot.js';
-import {
-	object,
-	string,
-	email,
-	minLength,
-	array,
-	integer,
-	number,
-	minValue,
-	date,
-	optional,
-	regex,
-	transform
-} from 'valibot';
+import * as v from 'valibot';
 
 //import { ajv } from '$lib/adapters/ajv.js';
 //import type { JSONSchema } from '$lib/jsonSchema/index.js';
@@ -206,13 +193,13 @@ describe('Arktype', () => {
 /////////////////////////////////////////////////////////////////////
 
 describe('Valibot', () => {
-	const schema = object({
-		name: optional(string(), 'Unknown'),
-		email: string([email()]),
-		tags: array(string([minLength(2)]), [minLength(3)]),
-		score: number([integer(), minValue(0)]),
-		date: optional(date()),
-		nospace: optional(string([regex(nospacePattern)]))
+	const schema = v.object({
+		name: v.optional(v.string(), 'Unknown'),
+		email: v.string([v.email()]),
+		tags: v.array(v.string([v.minLength(2)]), [v.minLength(3)]),
+		score: v.number([v.integer(), v.minValue(0)]),
+		date: v.optional(v.date()),
+		nospace: v.optional(v.string([v.regex(nospacePattern)]))
 	});
 
 	describe('Introspection', () => {
@@ -221,6 +208,26 @@ describe('Valibot', () => {
 
 	describe('Defaults', () => {
 		schemaTest(valibot(schema, { defaults }), undefined, 'simple');
+	});
+
+	it('should produce a required enum if no default', () => {
+		const schema = v.object({
+			enum: v.picklist(['a', 'b', 'c']),
+			enumDef: v.optional(v.picklist(['a', 'b', 'c']), 'b')
+		});
+
+		const adapter = valibot(schema);
+		expect(adapter.jsonSchema.required).toEqual(['enum']);
+		expect(adapter.defaults).toEqual({
+			enum: 'a',
+			enumDef: 'b'
+		});
+
+		// Change defaults
+		adapter.defaults.enum = '' as 'a';
+
+		const a2 = valibot(schema);
+		expect(a2.defaults.enum).toBe('');
 	});
 });
 
@@ -345,6 +352,52 @@ describe('Zod', () => {
 		num;
 	});
 
+	it('should produce a required enum if no default', () => {
+		enum Fruits {
+			Apple = 7,
+			Banana = 8
+		}
+
+		const schema = z.object({
+			nativeEnumInt: z.nativeEnum(Fruits),
+			nativeEnumString: z.nativeEnum({ GRAY: 'GRAY', GREEN: 'GREEN' }).default('GREEN'),
+			enum: z.enum(['a', 'b', 'c']),
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			enumDef: z.enum(['a', 'b', 'c']).default('' as any)
+		});
+
+		const adapter = zod(schema);
+		expect(adapter.jsonSchema.required).toEqual(['nativeEnumInt', 'enum', 'enumDef']);
+		expect(adapter.defaults).toEqual({
+			nativeEnumInt: Fruits.Apple,
+			nativeEnumString: 'GREEN',
+			enum: 'a',
+			enumDef: ''
+		});
+	});
+
+	it('should not require a default value for single type unions', () => {
+		const schema = z.object({
+			letter: z.union([z.literal('a'), z.literal('b')]),
+			num: z.union([z.number().int().negative(), z.number()])
+		});
+
+		const adapter = zod(schema);
+		expect(adapter.defaults).toEqual({ letter: 'a', num: 0 });
+		expect(adapter.constraints.letter?.required).toBe(true);
+		expect(adapter.constraints.num?.required).toBe(true);
+	});
+
+	it('should not require a default value for enums', () => {
+		const schema = z.object({
+			letter: z.enum(['a', 'b', 'c'])
+		});
+
+		const adapter = zod(schema);
+		expect(adapter.defaults.letter).toBe('a');
+		expect(adapter.constraints.letter?.required).toBe(true);
+	});
+
 	schemaTest(zod(schema));
 });
 
@@ -394,8 +447,8 @@ describe('Schema In/Out transformations', () => {
 	});
 
 	it('does not fully work with Valibot', async () => {
-		const schema = object({
-			len: transform(string(), (s) => s.length)
+		const schema = v.object({
+			len: v.transform(v.string(), (s) => s.length)
 		});
 
 		// @ts-expect-error Using schema Out type as In - Not allowed
@@ -702,6 +755,52 @@ describe('Edge cases', () => {
 		it('should have a default value', async () => {
 			const defaults = defaultValues<z.infer<typeof schema>>(zod(schema).jsonSchema);
 			expect(defaults.interval).toBe(1);
+		});
+	});
+});
+
+describe('Array validation', () => {
+	describe('should return an empty array as default when dataType is json', () => {
+		const schema = z.object({
+			testArray: z.object({ foo: z.string() }).array(),
+			nested: z.object({
+				arr: z.object({ foo: z.string() }).array()
+			})
+		});
+
+		it('with the default values', async () => {
+			const form = await superValidate(zod(schema));
+			expect(form.errors.testArray?._errors).toBeUndefined();
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+
+		it('when passing data directly', async () => {
+			const form = await superValidate({ testArray: undefined }, zod(schema), { errors: true });
+
+			expect(form.errors.testArray?._errors).toEqual(['Required']);
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+
+		it('when passing an empty object', async () => {
+			const form = await superValidate({}, zod(schema), { errors: true });
+
+			expect(form.errors.testArray).toBeUndefined();
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
+		});
+
+		it('when passing undefined', async () => {
+			const form = await superValidate(undefined, zod(schema), { errors: true });
+
+			expect(form.errors.testArray).toBeUndefined();
+			expect(form.data.testArray).toEqual([]);
+			expect(form.errors.nested?.arr?._errors).toBeUndefined();
+			expect(form.data.nested.arr).toEqual([]);
 		});
 	});
 });

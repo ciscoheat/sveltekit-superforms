@@ -1,52 +1,62 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
+	import SuperDebug from '$lib/client/SuperDebug.svelte';
+
+	import { schemaStep1, schemaStep2 } from './schema.js';
 
 	export let data;
 
-	const { form, formId, errors, message, capture, restore, enhance } = superForm(data.form, {
-		// Don't reset between steps!
-		resetForm: false
+	const schemas = [zod(schemaStep1), zod(schemaStep2)];
+	let step = 1;
+
+	const { form, errors, message, enhance, validateForm, options } = superForm(data.form, {
+		resetForm: true,
+		// Client-side validation
+		validators: schemas[0],
+		// No need for name attributes or hidden fields with dataType: 'json'
+		dataType: 'json',
+		async onSubmit({ cancel }) {
+			// If on last step, make a normal request, otherwise
+			// cancel server request (let client-side handle it)
+			if (isLastStep) return;
+			else cancel();
+
+			const result = await validateForm({ update: true });
+			if (result.valid) step = step + 1;
+		},
+
+		async onUpdated({ form }) {
+			if (isLastStep && form.valid) step = 1;
+		}
 	});
 
-	// Snapshots takes care of navigating back
-	export const snapshot = { capture, restore };
-
-	$: step = $message?.step ?? 1;
+	$: options.validators = schemas[step - 1];
+	$: isLastStep = step == schemas.length;
 </script>
 
-{#if $message?.text}
+{#if $message}
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
-		{$message.text}
+		{$message}
 	</div>
 {/if}
 
 <h3>Step {step}</h3>
 
-<form method="POST">
-	<!-- Separate step counter (not part of schema) -->
-	<input type="hidden" name="step" bind:value={step} />
-	<!-- Need this, since use:enhance is not added to the form and schemas are switching between steps: -->
-	<input type="hidden" name="__superform_id" bind:value={$formId} />
+<form method="POST" use:enhance>
 	{#if step == 1}
 		<label>
 			Name<br />
-			<input
-				name="name"
-				type="text"
-				aria-invalid={$errors.name ? 'true' : undefined}
-				bind:value={$form.name}
-			/>
+			<input aria-invalid={$errors.name ? 'true' : undefined} bind:value={$form.name} />
 			{#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
 		</label>
-		<button>Next</button>
+		<button>Next step</button>
 	{:else}
-		<input type="hidden" name="name" bind:value={$form.name} />
 		<p>Hello {$form.name}, just one more step!</p>
 		<label>
 			Email<br />
 			<input
-				name="email"
 				type="email"
 				aria-invalid={$errors.email ? 'true' : undefined}
 				bind:value={$form.email}
@@ -57,6 +67,8 @@
 		<button>Submit</button>
 	{/if}
 </form>
+
+<SuperDebug data={$form} />
 
 <hr />
 <p><a target="_blank" href="https://superforms.rocks/">Created with Superforms for SvelteKit</a></p>

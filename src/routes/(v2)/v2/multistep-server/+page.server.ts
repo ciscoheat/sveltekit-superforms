@@ -7,9 +7,11 @@ import type { Actions } from './$types.js';
 type Message = { step: number; text?: string };
 
 const steps = [zod(schemaStep1), zod(schemaStep2)] as const;
+const lastStep = steps[1];
 
 export const load = async () => {
-	const form = await superValidate<Infer<typeof schemaStep2>, Message>(steps[1]);
+	// Create form with last step, so all default values gets populated
+	const form = await superValidate<Infer<typeof schemaStep2>, Message>(lastStep);
 	return { form };
 };
 
@@ -32,7 +34,7 @@ export const actions = {
 		// TODO: Do something with the validated form.data
 
 		// Reset the form by hand, as resetForm is false on the client
-		form.data = defaultValues(steps[0]);
+		form.data = defaultValues(lastStep);
 		return message(form, { text: 'Form posted successfully!', step: 1 });
 	}
 } satisfies Actions;

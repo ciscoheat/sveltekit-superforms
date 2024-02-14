@@ -480,8 +480,8 @@ function schemaTest(
 	adapterType: 'full' | 'simple' = 'full',
 	dateAsString: boolean = false
 ) {
-	const validD = {...validData, date: dateAsString ? "2024-01-01" : validData.date}
-	
+	const validD = { ...validData, date: dateAsString ? '2024-01-01' : validData.date };
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
 		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
@@ -556,7 +556,10 @@ function schemaTest(
 		expect(output.errors).toEqual({});
 		expect(output.valid).toEqual(true);
 		expect(output.data).not.toBe(validD);
-		expect(output.data).toEqual({...validD, date: dateAsString ? new Date(validD.date) : validD.date});
+		expect(output.data).toEqual({
+			...validD,
+			date: dateAsString ? new Date(validD.date + 'T00:00:00') : validD.date
+		});
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
 	});

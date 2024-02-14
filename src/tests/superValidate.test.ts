@@ -1,5 +1,5 @@
 import { describe, it, expect, assert, beforeEach } from 'vitest';
-import type { ValidationAdapter } from '$lib/adapters/index.js';
+import type { Infer, ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
@@ -43,8 +43,8 @@ import {
 	array as yupArray,
 	date as yupDate
 } from 'yup';
-import {vine} from "$lib/adapters/vine.js"
-import Vine from "@vinejs/vine"
+import { vine } from '$lib/adapters/vine.js';
+import Vine from '@vinejs/vine';
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 
@@ -403,18 +403,23 @@ describe('Zod', () => {
 
 /////////////////////////////////////////////////////////////////////
 
-describe("vine", () => {
-	const schema = Vine.object(({
-		name: Vine.string().parse(v => v ?? 'Unknown'),
+describe('vine', () => {
+	const schema = Vine.object({
+		name: Vine.string()
+			.parse((v) => v ?? 'Unknown')
+			.optional(),
 		email: Vine.string().email(),
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
-		date: Vine.date().parse(v => v ?? undefined),
+		date: Vine.date()
+			.parse((v) => v ?? undefined)
+			.optional(),
 		nospace: Vine.string().regex(nospacePattern).optional()
-	}))
-	const adapter = vine(schema, {defaults})
-	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple', true);
-})
+	});
+	type T = Infer<typeof schema>;
+	const adapter = vine(schema, { defaults });
+	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', true);
+});
 
 ///// Common ////////////////////////////////////////////////////////
 
@@ -515,8 +520,6 @@ function schemaTest(
 		);
 		return merge(filteredDefaults, invalidData);
 	}
-
-
 
 	it('with schema only', async () => {
 		const output = await superValidate(adapter);

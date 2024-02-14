@@ -177,7 +177,11 @@ export async function superValidate<
  * Sends a message with a form, with an optional HTTP status code that will set
  * form.valid to false if status >= 400. A status lower than 400 cannot be sent.
  */
-export function message<T extends Record<string, unknown>, M, In extends Record<string, unknown>>(
+export function message<
+	M,
+	T extends Record<string, unknown> = Record<string, unknown>,
+	In extends Record<string, unknown> = Record<string, unknown>
+>(
 	form: SuperValidated<T, M, In>,
 	message: M,
 	options?: {

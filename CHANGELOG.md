@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The inferred type parameters were swapped in `message`, it can now be used to specify the message type.
+
 ### Fixed
 
 - Default values are now applied properly for single-type unions, even a mix of integers and numbers.

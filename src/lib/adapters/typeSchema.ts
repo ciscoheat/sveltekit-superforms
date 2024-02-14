@@ -16,6 +16,13 @@ import type { Runtype, Static } from 'runtypes';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
 */
 
+type Replace<T, From, To> =
+	NonNullable<T> extends From
+		? To | Exclude<T, From>
+		: NonNullable<T> extends object
+			? { [K in keyof T]: Replace<T[K], From, To> }
+			: T;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IfDefined<T> = any extends T ? never : T;
 type UnknownIfNever<T> = [T] extends [never] ? unknown : T;
@@ -105,7 +112,9 @@ interface ZodResolver extends Resolver {
 
 interface VineResolver extends Resolver {
 	base: SchemaTypes;
-	input: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
+	input: this['schema'] extends SchemaTypes
+		? Replace<VineInfer<this['schema']>, Date, string>
+		: never;
 	output: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
 }
 

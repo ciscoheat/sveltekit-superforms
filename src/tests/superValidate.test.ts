@@ -1,5 +1,5 @@
 import { describe, it, expect, assert, beforeEach } from 'vitest';
-import type { Infer, ValidationAdapter } from '$lib/adapters/index.js';
+import type { ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
@@ -416,8 +416,17 @@ describe('vine', () => {
 			.optional(),
 		nospace: Vine.string().regex(nospacePattern).optional()
 	});
-	type T = Infer<typeof schema>;
+
 	const adapter = vine(schema, { defaults });
+
+	it('should accept string as input for inferred Date fields', async () => {
+		const date = '2024-02-14';
+		const form = await superValidate({ ...validData, date }, adapter);
+
+		const realDate: Date | undefined = form.data.date;
+		expect(realDate).toEqual(new Date(date + 'T00:00:00'));
+	});
+
 	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', true);
 });
 

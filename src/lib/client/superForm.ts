@@ -592,9 +592,7 @@ export function superForm<
 	};
 
 	async function Form_validate<Schema extends Partial<T>>(
-		opts: { adapter?: ValidationAdapter<Schema>; recheckValidData?: boolean; formData?: T } = {
-			recheckValidData: true
-		}
+		opts: { adapter?: ValidationAdapter<Schema>; recheckValidData?: boolean; formData?: T } = {}
 	): Promise<SuperFormValidated<T, M, In>> {
 		const dataToValidate = opts.formData ?? Data.form;
 
@@ -618,7 +616,7 @@ export function superForm<
 					status.issues,
 					validator.shape ?? Data.shape ?? {}
 				) as ValidationErrors<T>;
-			} else if (opts.recheckValidData) {
+			} else if (opts.recheckValidData !== false) {
 				// need to make an additional validation, in case the data has been transformed
 				return Form_validate({ ...opts, recheckValidData: false });
 			}

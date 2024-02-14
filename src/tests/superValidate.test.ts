@@ -484,7 +484,7 @@ function schemaTest(
 	
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
-		console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
+		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
 
 		if (errors.includes('nospace')) expect(errorMessages.nospace).toBeTruthy();
 		if (errors.includes('email')) expect(errorMessages.email).toBeTruthy();

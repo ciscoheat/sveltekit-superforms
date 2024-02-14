@@ -410,7 +410,7 @@ describe("vine", () => {
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
 		date: Vine.date().optional(),
-		noSpace: Vine.string().regex(nospacePattern).optional()
+		nospace: Vine.string().regex(nospacePattern).optional()
 	}))
 	const adapter = vine(schema, {defaults})
 	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple', true);

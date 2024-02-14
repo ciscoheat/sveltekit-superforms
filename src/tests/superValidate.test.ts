@@ -409,7 +409,7 @@ describe("vine", () => {
 		email: Vine.string().email(),
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
-		date: Vine.date().optional(),
+		date: Vine.date().parse(v => v ?? undefined),
 		nospace: Vine.string().regex(nospacePattern).optional()
 	}))
 	const adapter = vine(schema, {defaults})
@@ -484,7 +484,7 @@ function schemaTest(
 	
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
-		//console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
+		console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
 
 		if (errors.includes('nospace')) expect(errorMessages.nospace).toBeTruthy();
 		if (errors.includes('email')) expect(errorMessages.email).toBeTruthy();

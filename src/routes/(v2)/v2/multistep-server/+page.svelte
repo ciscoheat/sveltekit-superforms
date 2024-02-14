@@ -4,7 +4,7 @@
 
 	export let data;
 
-	const { form, formId, errors, message, capture, restore, enhance } = superForm(data.form, {
+	const { form, formId, errors, message, capture, restore /*, enhance*/ } = superForm(data.form, {
 		// Don't reset between steps!
 		resetForm: false
 	});

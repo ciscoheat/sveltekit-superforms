@@ -101,78 +101,18 @@ export function Form<T extends Record<string, unknown>, M>(
 
 	//#region Form
 
-	const Form: {
-		querySelectorAll: (selector: string) => NodeListOf<HTMLElement>;
-		querySelector: (selector: string) => HTMLElement;
-		dataset: DOMStringMap;
-	} = formElement;
-
-	function Form_shouldAutoFocus(userAgent: string) {
-		if (typeof options.autoFocusOnError === 'boolean') return options.autoFocusOnError;
-		else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
-	}
-
-	const Form_scrollToFirstError = async () => {
-		if (options.scrollToError == 'off') return;
-
-		const selector = options.errorSelector;
-		if (!selector) return;
-
-		// Wait for form to update with errors
-		await tick();
-
-		// Scroll to first form message, if not visible
-		let el: HTMLElement | null;
-		el = Form.querySelector(selector) as HTMLElement | null;
-		if (!el) return;
-		// Find underlying element if it is a FormGroup element
-		el = el.querySelector(selector) ?? el;
-
-		const nav = options.stickyNavbar
-			? (document.querySelector(options.stickyNavbar) as HTMLElement)
-			: null;
-
-		if (typeof options.scrollToError != 'string') {
-			el.scrollIntoView(options.scrollToError);
-		} else if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
-			scrollToAndCenter(el, undefined, options.scrollToError);
-		}
-
-		// Don't focus on the element if on mobile, it will open the keyboard
-		// and probably hide the error message.
-		if (!Form_shouldAutoFocus(navigator.userAgent)) return;
-
-		let focusEl;
-		focusEl = el;
-
-		if (!['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)) {
-			focusEl = focusEl.querySelector<HTMLElement>(
-				'input:not([type="hidden"]):not(.flatpickr-input), select, textarea'
-			);
-		}
-
-		if (focusEl) {
-			try {
-				focusEl.focus({ preventScroll: true });
-				if (options.selectErrorText && focusEl.tagName == 'INPUT') {
-					(focusEl as HTMLInputElement).select();
-				}
-			} catch (err) {
-				// Some hidden inputs like from flatpickr cannot be focused.
-			}
-		}
-	};
+	const Form = formElement;
 
 	//#endregion
 
 	{
 		ErrorTextEvents_addErrorTextListeners();
 
-		const completed = (options: { cancelled: boolean; clearAll?: boolean }) => {
-			if (!options.clearAll) Timers_clear();
+		const completed = (opts: { cancelled: boolean; clearAll?: boolean }) => {
+			if (!opts.clearAll) Timers_clear();
 			else Timers_clearAll();
 
-			if (!options.cancelled) setTimeout(Form_scrollToFirstError, 1);
+			if (!opts.cancelled) setTimeout(() => scrollToFirstError(Form, options), 1);
 		};
 
 		onDestroy(() => {
@@ -188,10 +128,69 @@ export function Form<T extends Record<string, unknown>, M>(
 			completed,
 
 			scrollToFirstError() {
-				setTimeout(Form_scrollToFirstError, 1);
+				setTimeout(() => scrollToFirstError(Form, options), 1);
 			},
 
 			isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed
 		};
 	}
 }
+
+export const scrollToFirstError = async <T extends Record<string, unknown>, M>(
+	Form: HTMLFormElement,
+	options: FormOptions<T, M>
+) => {
+	if (options.scrollToError == 'off') return;
+
+	const selector = options.errorSelector;
+	if (!selector) return;
+
+	// Wait for form to update with errors
+	await tick();
+
+	// Scroll to first form message, if not visible
+	let el: HTMLElement | null;
+	el = Form.querySelector(selector) as HTMLElement | null;
+	if (!el) return;
+	// Find underlying element if it is a FormGroup element
+	el = el.querySelector(selector) ?? el;
+
+	const nav = options.stickyNavbar
+		? (document.querySelector(options.stickyNavbar) as HTMLElement)
+		: null;
+
+	if (typeof options.scrollToError != 'string') {
+		el.scrollIntoView(options.scrollToError);
+	} else if (!isElementInViewport(el, nav?.offsetHeight ?? 0)) {
+		scrollToAndCenter(el, undefined, options.scrollToError);
+	}
+
+	function Form_shouldAutoFocus(userAgent: string) {
+		if (typeof options.autoFocusOnError === 'boolean') return options.autoFocusOnError;
+		else return !/iPhone|iPad|iPod|Android/i.test(userAgent);
+	}
+
+	// Don't focus on the element if on mobile, it will open the keyboard
+	// and probably hide the error message.
+	if (!Form_shouldAutoFocus(navigator.userAgent)) return;
+
+	let focusEl;
+	focusEl = el;
+
+	if (!['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA'].includes(focusEl.tagName)) {
+		focusEl = focusEl.querySelector<HTMLElement>(
+			'input:not([type="hidden"]):not(.flatpickr-input), select, textarea'
+		);
+	}
+
+	if (focusEl) {
+		try {
+			focusEl.focus({ preventScroll: true });
+			if (options.selectErrorText && focusEl.tagName == 'INPUT') {
+				(focusEl as HTMLInputElement).select();
+			}
+		} catch (err) {
+			// Some hidden inputs like from flatpickr cannot be focused.
+		}
+	}
+};

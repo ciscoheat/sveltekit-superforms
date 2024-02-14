@@ -27,7 +27,7 @@ import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, enhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
 import { inputInfo } from './elements.js';
-import { Form as HtmlForm } from './form.js';
+import { Form as HtmlForm, scrollToFirstError } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
 import type { MaybePromise } from '$lib/utils.js';
@@ -736,6 +736,8 @@ export function superForm<
 			}
 		}
 
+		let addedError = false;
+
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
 
@@ -746,6 +748,7 @@ export function superForm<
 
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
+				addedError = true;
 				setPaths(output, [error.path], error.value);
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
@@ -818,6 +821,13 @@ export function superForm<
 		});
 
 		Errors.set(output as ValidationErrors<T>);
+
+		if (addedError && EnhancedForm) {
+			// Focus on first error field
+			setTimeout(() => {
+				if (EnhancedForm) scrollToFirstError(EnhancedForm, options);
+			}, 1);
+		}
 	}
 
 	function Form_set(data: T, options: FormDataOptions = {}) {

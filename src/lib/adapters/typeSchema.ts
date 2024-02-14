@@ -4,7 +4,7 @@ import type { AnySchema } from 'joi';
 import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
-import type { SchemaTypes } from '@vinejs/vine/types';
+import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -105,6 +105,8 @@ interface ZodResolver extends Resolver {
 
 interface VineResolver extends Resolver {
 	base: SchemaTypes;
+	input: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
+	output: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
 }
 
 /*

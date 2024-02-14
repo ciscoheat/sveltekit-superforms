@@ -4,6 +4,8 @@ import type { AnySchema } from 'joi';
 import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
+import type { SchemaTypes } from '@vinejs/vine/types';
+
 /*
 import type { SchemaObject } from 'ajv';
 import type { Type as Type$1 } from '@deepkit/type';
@@ -101,6 +103,10 @@ interface ZodResolver extends Resolver {
 	output: this['schema'] extends ZodSchema ? output<this['schema']> : never;
 }
 
+interface VineResolver extends Resolver {
+	base: SchemaTypes
+}
+
 /*
 interface AjvResolver extends Resolver {
 	base: SchemaObject;
@@ -148,6 +154,7 @@ type Registry = {
 	valibot: ValibotResolver;
 	yup: YupResolver;
 	zod: ZodResolver;
+	vine: VineResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;

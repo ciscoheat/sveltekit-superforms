@@ -1,7 +1,5 @@
 import {
 	type ValidationAdapter,
-	type Infer,
-	type InferIn,
 	createAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter,
@@ -16,20 +14,20 @@ import type { SchemaTypes } from '@vinejs/vine/types';
 async function validate<T extends SchemaTypes>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Record<string, unknown>>> {
 	let res = null;
 	const vine = new Vine();
 	try {
 		const output = await vine.validate({ schema, data });
 		res = {
 			success: true,
-			data: output as Infer<T>
+			data: output as Record<string, unknown>
 		};
 	} catch (e) {
 		if (e instanceof errors.E_VALIDATION_ERROR) {
 			res = {
 				success: false,
-				issues: e.messages.map((m) => ({
+				issues: e.messages.map((m: { field: string; message: string; }) => ({
 					path: [m.field as string],
 					message: m.message as string
 				})) as Array<ValidationIssue>
@@ -39,14 +37,14 @@ async function validate<T extends SchemaTypes>(
 		if (res === null) {
 			return { success: false, issues: [] };
 		}
-		return res as ValidationResult<Infer<T>>;
+		return res as ValidationResult<Record<string, unknown>>;
 	}
 }
 
 function _vine<T extends SchemaTypes>(
 	schema: T,
 	options: RequiredDefaultsOptions<T>
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+): ValidationAdapter<Record<string, unknown>> {
 	return createAdapter({
 		superFormValidationLibrary: 'vine',
 		validate: async (data: unknown) => validate(schema, data),
@@ -57,7 +55,7 @@ function _vine<T extends SchemaTypes>(
 
 function _vineClient<T extends SchemaTypes>(
 	schema: T
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<Record<string, unknown>> {
 	return {
 		superFormValidationLibrary: 'vine',
 		validate: async (data) => validate(schema, data)

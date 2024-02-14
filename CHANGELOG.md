@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Autofocus is now set when using `validateForm({ update: true })`.
 - Default values are now applied properly for single-type unions, even a mix of integers and numbers.
+- SuperStruct types, `$errors` primarily, didn't handle nested data properly.
 
 ### Changed
 

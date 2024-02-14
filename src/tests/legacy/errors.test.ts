@@ -299,3 +299,48 @@ test('Error on posting nested data in dataType form mode', async () => {
 		/\[registration\] Object type found./
 	);
 });
+
+test('Nested errors in an optional object', async () => {
+	const optionalNestedSchemaNoDefault = z.object({
+		a: z.string(),
+		nested: z.object({ b: z.string() }).optional()
+	});
+
+	const form = await superValidate(zod(optionalNestedSchemaNoDefault));
+	form.data.a = '';
+
+	// Type checking
+	const err: string[] | undefined = form.errors.nested?.b;
+	const b: string | undefined = form.data.nested?.b;
+
+	expect(err).toBeUndefined();
+	expect(b).toBeUndefined();
+});
+
+test('Nested errors in an optional object', async () => {
+	// Typescript error when assigning $form.nested = undefined (not considered as optional)
+	const optionalNestedSchemaWithDefaultValue = z.object({
+		a: z.string(),
+		nested: z
+			.object({ b: z.string() })
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			.default(undefined as any)
+			.optional()
+	});
+
+	const form = await superValidate(zod(optionalNestedSchemaWithDefaultValue));
+
+	// Type checking
+	form.data.a = '';
+
+	const err: string[] | undefined = form.errors.nested?.b;
+
+	if (form.data.nested) {
+		const b: string | undefined = form.data.nested.b;
+		expect(b).toBeUndefined();
+	}
+
+	expect(err).toBeUndefined();
+
+	expect(form.data.nested).toBeUndefined();
+});

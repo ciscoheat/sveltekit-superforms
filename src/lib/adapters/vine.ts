@@ -44,7 +44,8 @@ function _vine<T extends SchemaTypes>(schema:T, options: RequiredDefaultsOptions
     return createAdapter({
         superFormValidationLibrary:"vine",
         validate: async(data: unknown) => validate(schema, data),
-        jsonSchema: createJsonSchema(options)
+        jsonSchema: createJsonSchema(options),
+        defaults: options.defaults
     })
 }
 

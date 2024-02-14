@@ -1,25 +1,30 @@
 import {
-	type ValidationAdapter,
 	createAdapter,
+	createJsonSchema,
+	type ValidationAdapter,
 	type ValidationResult,
 	type ClientValidationAdapter,
-	type ValidationIssue,
-	createJsonSchema,
 	type RequiredDefaultsOptions,
 	type Infer,
 	type InferIn
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
-import { Vine, errors } from '@vinejs/vine';
 import type { SchemaTypes } from '@vinejs/vine/types';
+
+async function modules() {
+	const { Vine, errors } = await import(/* webpackIgnore: true */ '@vinejs/vine');
+	return { Vine, errors };
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
 
 async function validate<T extends SchemaTypes>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
-	const vine = new Vine();
+	const { Vine, errors } = await fetchModule();
 	try {
-		const output = await vine.validate({ schema, data });
+		const output = await new Vine().validate({ schema, data });
 		return {
 			success: true,
 			data: output as Infer<T>
@@ -29,9 +34,9 @@ async function validate<T extends SchemaTypes>(
 			return {
 				success: false,
 				issues: e.messages.map((m: { field: string; message: string }) => ({
-					path: [m.field as string],
-					message: m.message as string
-				})) as Array<ValidationIssue>
+					path: m.field.split('.'),
+					message: m.message
+				}))
 			};
 		} else {
 			return { success: false, issues: [] };

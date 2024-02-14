@@ -104,7 +104,7 @@ interface ZodResolver extends Resolver {
 }
 
 interface VineResolver extends Resolver {
-	base: SchemaTypes
+	base: SchemaTypes;
 }
 
 /*

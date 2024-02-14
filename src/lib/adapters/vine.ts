@@ -27,7 +27,7 @@ async function validate<T extends SchemaTypes>(
 		if (e instanceof errors.E_VALIDATION_ERROR) {
 			res = {
 				success: false,
-				issues: e.messages.map((m: { field: string; message: string; }) => ({
+				issues: e.messages.map((m: { field: string; message: string }) => ({
 					path: [m.field as string],
 					message: m.message as string
 				})) as Array<ValidationIssue>

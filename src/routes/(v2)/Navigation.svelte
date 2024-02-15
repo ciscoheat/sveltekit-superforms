@@ -25,6 +25,7 @@
 		<li><a href="/v2/oninput-errors">oninput error display</a></li>
 		<li><a href="/v2/multistep-client">Multi-step client</a></li>
 		<li><a href="/v2/multistep-server">Multi-step server</a></li>
+		<li><a href="/v2/issue-345">Checkbox crash</a></li>
 	</ul>
 </nav>
 

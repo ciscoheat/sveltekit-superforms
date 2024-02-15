@@ -405,15 +405,11 @@ describe('Zod', () => {
 
 describe('vine', () => {
 	const schema = Vine.object({
-		name: Vine.string()
-			.parse((v) => v ?? 'Unknown')
-			.optional(),
+		name: Vine.string().optional(),
 		email: Vine.string().email(),
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
-		date: Vine.date()
-			.parse((v) => v ?? undefined)
-			.optional(),
+		date: Vine.date().optional(),
 		nospace: Vine.string().regex(nospacePattern).optional()
 	});
 

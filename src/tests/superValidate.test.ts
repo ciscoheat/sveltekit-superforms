@@ -43,6 +43,8 @@ import {
 	array as yupArray,
 	date as yupDate
 } from 'yup';
+import { vine } from '$lib/adapters/vine.js';
+import Vine from '@vinejs/vine';
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 
@@ -399,6 +401,31 @@ describe('Zod', () => {
 	schemaTest(zod(schema));
 });
 
+/////////////////////////////////////////////////////////////////////
+
+describe('vine', () => {
+	const schema = Vine.object({
+		name: Vine.string().optional(),
+		email: Vine.string().email(),
+		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
+		score: Vine.number().min(0),
+		date: Vine.date().optional(),
+		nospace: Vine.string().regex(nospacePattern).optional()
+	});
+
+	const adapter = vine(schema, { defaults });
+
+	it('should accept string as input for inferred Date fields', async () => {
+		const date = '2024-02-14';
+		const form = await superValidate({ ...validData, date }, adapter);
+
+		const realDate: Date | undefined = form.data.date;
+		expect(realDate).toEqual(new Date(date + 'T00:00:00'));
+	});
+
+	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', true);
+});
+
 ///// Common ////////////////////////////////////////////////////////
 
 describe('Schema In/Out transformations', () => {
@@ -460,11 +487,14 @@ type ErrorFields = ('email' | 'date' | 'nospace' | 'tags' | 'tags[1]')[];
 function schemaTest(
 	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
-	adapterType: 'full' | 'simple' = 'full'
+	adapterType: 'full' | 'simple' = 'full',
+	dateAsString: boolean = false
 ) {
+	const validD = { ...validData, date: dateAsString ? '2024-01-01' : validData.date };
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
-		//console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
+		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
 
 		if (errors.includes('nospace')) expect(errorMessages.nospace).toBeTruthy();
 		if (errors.includes('email')) expect(errorMessages.email).toBeTruthy();
@@ -530,11 +560,14 @@ function schemaTest(
 	});
 
 	it('with valid test data', async () => {
-		const output = await superValidate(validData, adapter);
+		const output = await superValidate(validD, adapter);
 		expect(output.errors).toEqual({});
 		expect(output.valid).toEqual(true);
-		expect(output.data).not.toBe(validData);
-		expect(output.data).toEqual(validData);
+		expect(output.data).not.toBe(validD);
+		expect(output.data).toEqual({
+			...validD,
+			date: dateAsString ? new Date(validD.date + 'T00:00:00') : validD.date
+		});
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
 	});

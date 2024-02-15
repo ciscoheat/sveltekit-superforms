@@ -1,6 +1,5 @@
 <script lang="ts" context="module">
 	type UnknownRecord = Record<string, unknown>;
-
 	type T = UnknownRecord;
 </script>
 
@@ -11,9 +10,12 @@
 	import CheckboxComponent from './CheckboxComponent.svelte';
 	export let form: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
+	export let description: string;
 
-	const { value, errors } = formFieldProxy(form, field);
-	$: boolValue = value as Writable<boolean>;
+	const { value } = formFieldProxy(form, field);
+	// Cannot use $: in Svelte 4, must be const:
+	const boolValue = value as Writable<boolean>;
 </script>
 
 <CheckboxComponent bind:checked={$boolValue} />
+{description}

@@ -2,14 +2,14 @@
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
-	import CheckboxComponent from './CheckboxComponent.svelte';
+	//import CheckboxComponent from './CheckboxComponent.svelte';
 	import CheckboxField from './CheckboxField.svelte';
 
 	export let data;
 
 	const form = superForm(data.form, { taintedMessage: false });
 
-	const { form: formStore, errors, message, constraints, enhance } = form;
+	const { form: formStore, message, enhance } = form;
 </script>
 
 <SuperDebug data={$formStore} />
@@ -23,10 +23,10 @@
 {/if}
 
 <form method="POST" use:enhance>
-	<CheckboxComponent bind:checked={$formStore.checkbox} />
+	<!-- CheckboxComponent bind:checked={$formStore.checkbox} /-->
 
 	<!-- Comment the above line, uncomment this line, and reload to cause the failure on SSR (infinite loop). -->
-	<!-- CheckboxField {form} field="checkbox" description="checkbox" / -->
+	<CheckboxField {form} field="checkbox" description="checkbox" />
 
 	<button>Submit</button>
 </form>

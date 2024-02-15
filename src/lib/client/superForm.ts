@@ -736,8 +736,6 @@ export function superForm<
 			}
 		}
 
-		let addedError = false;
-
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
 
@@ -748,7 +746,6 @@ export function superForm<
 
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
-				addedError = true;
 				setPaths(output, [error.path], error.value);
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
@@ -821,13 +818,6 @@ export function superForm<
 		});
 
 		Errors.set(output as ValidationErrors<T>);
-
-		if (addedError && EnhancedForm) {
-			// Focus on first error field
-			setTimeout(() => {
-				if (EnhancedForm) scrollToFirstError(EnhancedForm, options);
-			}, 1);
-		}
 	}
 
 	function Form_set(data: T, options: FormDataOptions = {}) {
@@ -1366,7 +1356,11 @@ export function superForm<
 		},
 
 		async validateForm<P extends Partial<T> = T>(
-			opts: { update?: boolean; schema?: ValidationAdapter<P> } = {}
+			opts: {
+				update?: boolean;
+				schema?: ValidationAdapter<P>;
+				focusOnError?: boolean;
+			} = {}
 		): Promise<SuperFormValidated<T, M, In>> {
 			if (!options.validators && !opts.schema) {
 				throw new SuperFormError(
@@ -1377,6 +1371,17 @@ export function superForm<
 			const result = opts.update
 				? await Form_clientValidation({ paths: [] }, true, opts.schema)
 				: Form_validate({ adapter: opts.schema });
+
+			if (opts.update && EnhancedForm) {
+				// Focus on first error field
+				setTimeout(() => {
+					if (EnhancedForm)
+						scrollToFirstError(EnhancedForm, {
+							...options,
+							scrollToError: opts.focusOnError === false ? 'off' : options.scrollToError
+						});
+				}, 1);
+			}
 
 			return result || Form_validate({ adapter: opts.schema });
 		},

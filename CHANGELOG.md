@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - [VineJS](https://vinejs.dev/) adapter!
+- Added `focusOnError` option to `validateForm`, default `true`.
 
 ### Fixed
 

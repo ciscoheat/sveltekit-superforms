@@ -11,7 +11,7 @@ export const load = async () => {
 
 export const actions = {
 	default: async ({ request }) => {
-		await new Promise((r) => setTimeout(r, 12000));
+		await new Promise((r) => setTimeout(r, 9000));
 		const form = await superValidate(request, zod(schema));
 
 		if (!form.valid) return fail(400, { form });

@@ -6,7 +6,7 @@
 
 	const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
 		delayMs: 4000,
-		timeoutMs: 8000
+		timeoutMs: 7000
 	});
 </script>
 

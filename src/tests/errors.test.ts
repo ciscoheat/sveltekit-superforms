@@ -110,3 +110,13 @@ describe('Mapping defaults to invalid data', () => {
 		});
 	});
 });
+
+describe('The ValidationErrors type', () => {
+	it('should work as expected', () => {
+		const data = { name: '' };
+		const name = 'name' as keyof typeof data;
+		const errors: ValidationErrors<typeof data> = {};
+		const test: string[] = errors[name] ?? [];
+		expect(test).toEqual([]);
+	});
+});

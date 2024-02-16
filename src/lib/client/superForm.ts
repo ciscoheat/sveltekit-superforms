@@ -235,6 +235,7 @@ export type SuperForm<
 	>(opts?: {
 		update?: boolean;
 		schema?: ValidationAdapter<Out, In>;
+		focusOnError?: boolean;
 	}) => Promise<SuperFormValidated<T, M, In>>;
 };
 

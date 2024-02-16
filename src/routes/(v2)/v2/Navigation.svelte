@@ -1,5 +1,35 @@
 <script lang="ts">
-	export let testDirs: string[];
+	const testDirs = [
+		'allow-files',
+		'array-proxy',
+		'boolean-same-union',
+		'catchall',
+		'custom-tainted-dialog',
+		'defaults-fail',
+		'dynamic-validators',
+		'empty-enum',
+		'issue-309-unions',
+		'issue-332-arrays',
+		'issue-337-checkboxes',
+		'issue-345',
+		'letters',
+		'multiple-files',
+		'multistep-client',
+		'multistep-server',
+		'nested-files',
+		'nested-validation-valibot',
+		'on-change-event',
+		'oninput-errors',
+		'posted',
+		'redirect',
+		'step-form',
+		'submit-enter',
+		'trim-fields',
+		'unions',
+		'validate',
+		'validate-update',
+		'validators-clear'
+	];
 </script>
 
 <nav class="flex-list">

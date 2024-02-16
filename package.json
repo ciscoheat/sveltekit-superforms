@@ -155,6 +155,7 @@
 		"@sveltejs/package": "^2.2.6",
 		"@sveltejs/vite-plugin-svelte": "^3.0.2",
 		"@types/json-schema": "^7.0.15",
+		"@types/node": "^20.11.19",
 		"@types/throttle-debounce": "^5.0.2",
 		"@types/uuid": "^9.0.8",
 		"@typescript-eslint/eslint-plugin": "^6.21.0",

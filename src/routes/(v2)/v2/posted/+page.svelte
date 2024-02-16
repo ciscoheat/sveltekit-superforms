@@ -5,18 +5,21 @@
 
 	export let data;
 
-	const { form, errors, posted, enhance } = superForm(data.form, {
+	const { form, errors, posted, enhance, reset } = superForm(data.form, {
+		resetForm: true,
 		taintedMessage: false
 	});
 </script>
 
 <SuperDebug data={{ $posted, $form }} />
 
-<h3>Superforms testing ground - Zod</h3>
+<h3>Testing posted store</h3>
+
+<h5>POSTED:{String($posted)}</h5>
 
 {#if $posted}
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
-		Form posted!
+		{#if $page.status >= 400}Form failed{:else}Form posted!{/if}
 	</div>
 {/if}
 
@@ -39,6 +42,7 @@
 	</label>
 
 	<button>Submit</button>
+	<button style="background-color:brown" type="button" on:click={() => reset()}>Reset</button>
 </form>
 
 <hr />

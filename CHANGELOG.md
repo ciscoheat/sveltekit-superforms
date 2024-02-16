@@ -5,12 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.1] - 2024-02-16
 
 ### Fixed
 
 - Added `focusOnError` option to `SuperForm.validateForm` type (it was only in the implementation).
 - Enums could not be detected as an invalid value if the posted value was an empty string, instead it defaulted to the enum first value.
+- `$posted` was reset by mistake to `false` after posting, when `resetForm` option was true.
 
 ## [2.2.0] - 2024-02-15
 

@@ -851,7 +851,7 @@ export function superForm<
 
 	async function Form_updateFromValidation(form: SuperValidated<T, M, In>, successResult: boolean) {
 		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
-			Form_reset(form.message);
+			Form_reset({ message: form.message, posted: true });
 		} else {
 			rebind(form, successResult, undefined, true);
 		}
@@ -867,12 +867,14 @@ export function superForm<
 		}
 	}
 
-	function Form_reset(message?: M, data?: Partial<T>, id?: string) {
+	function Form_reset(
+		opts: { message?: M; data?: Partial<T>; id?: string; posted?: boolean } = {}
+	) {
 		const resetData = clone(initialForm);
-		resetData.data = { ...resetData.data, ...data };
-		if (id !== undefined) resetData.id = id;
+		resetData.data = { ...resetData.data, ...opts.data };
+		if (opts.id !== undefined) resetData.id = opts.id;
 
-		rebind(resetData, true, message, false);
+		rebind(resetData, true, opts.message, false, opts.posted);
 	}
 
 	const Form_updateFromActionResult: FormUpdate = async (result) => {
@@ -885,7 +887,7 @@ export function superForm<
 		if (result.type == 'redirect') {
 			// All we need to do if redirected is to reset the form.
 			// No events should be triggered because technically we're somewhere else.
-			if (Form_shouldReset(true, true)) Form_reset();
+			if (Form_shouldReset(true, true)) Form_reset({ posted: true });
 			return;
 		}
 
@@ -1136,7 +1138,8 @@ export function superForm<
 		form: SuperValidated<T, M, In>,
 		untaint: TaintedFields<T> | boolean,
 		message?: M,
-		keepFiles?: boolean
+		keepFiles?: boolean,
+		posted?: boolean
 	) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
 
@@ -1152,7 +1155,7 @@ export function superForm<
 		Message.set(message);
 		Errors.set(form.errors);
 		FormId.set(form.id);
-		Posted.set(form.posted);
+		Posted.set(posted ?? form.posted);
 		// Constraints and shape will only be set when they exist.
 		if (form.constraints) Constraints.set(form.constraints);
 		if (form.shape) Shape.set(form.shape);
@@ -1391,11 +1394,11 @@ export function superForm<
 		posted: Posted,
 
 		reset(options?: ResetOptions<T>) {
-			return Form_reset(
-				options?.keepMessage ? Data.message : undefined,
-				options?.data,
-				options?.id
-			);
+			return Form_reset({
+				message: options?.keepMessage ? Data.message : undefined,
+				data: options?.data,
+				id: options?.id
+			});
 		},
 
 		isTainted: Tainted_isTainted,

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Added `focusOnError` option to `SuperForm.validateForm` type (it was only in the implementation).
+- Enums could not be detected as an invalid value if the posted value was an empty string, instead it defaulted to the enum first value.
 
 ## [2.2.0] - 2024-02-15
 

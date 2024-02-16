@@ -820,3 +820,62 @@ describe('Array validation', () => {
 		});
 	});
 });
+
+describe('Enum validation', () => {
+	const fishes = ['trout', 'tuna', 'shark'] as const;
+
+	const schema = z.object({
+		fish: z.enum(fishes),
+		moreFish: z.enum(fishes)
+	});
+
+	const schema2 = schema.extend({
+		fish: schema.shape.fish.nullable(),
+		moreFish: schema.shape.moreFish.optional()
+	});
+
+	describe('With FormData', () => {
+		it('should not return the default first enum value when an empty string is posted', async () => {
+			const formData = new FormData();
+			const adapter = zod(schema);
+			const form = await superValidate(formData, adapter);
+			assert(form.valid);
+			expect(form.data).toEqual({ fish: 'trout', moreFish: 'trout' });
+
+			formData.set('fish', '');
+			const form2 = await superValidate(formData, adapter);
+			assert(!form2.valid);
+			expect(form2.data).toEqual({ fish: '', moreFish: 'trout' });
+			expect(form2.errors.fish?.[0]).toMatch(/^Invalid enum value\./);
+		});
+
+		it('should still work with undefined or nullable', async () => {
+			const formData = new FormData();
+			const adapter = zod(schema2);
+			const form = await superValidate(formData, adapter);
+			assert(form.valid);
+			expect(form.data).toEqual({ fish: null, moreFish: undefined });
+
+			formData.set('fish', '');
+			const form2 = await superValidate(formData, adapter);
+			assert(form2.valid);
+			expect(form2.data).toEqual({ fish: null, moreFish: undefined });
+		});
+	});
+
+	describe('With data objects', () => {
+		it('should add the default enum value if field does not exist', async () => {
+			const adapter = zod(schema);
+			const form = await superValidate({}, adapter);
+			assert(form.valid);
+			expect(form.data).toEqual({ fish: 'trout', moreFish: 'trout' });
+		});
+
+		it('should add the default null/undefined if field does not exist', async () => {
+			const adapter = zod(schema2);
+			const form = await superValidate({}, adapter);
+			assert(form.valid);
+			expect(form.data).toEqual({ fish: null, moreFish: undefined });
+		});
+	});
+});

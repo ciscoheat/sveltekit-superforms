@@ -249,15 +249,15 @@ function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unkno
 			return false;
 		}
 
-		// Special case for numbers/integers with default value empty string
-		// (for input field placeholders to show)
-		/*
-		if ((type == 'number' || type == 'integer') && info.schema.default === '') {
-			return 0;
-		}
-		*/
-
 		const defaultValue = defaultValues<unknown>(info.schema, info.isOptional, [key]);
+
+		// Special case for empty posted enums, then the empty value should be returned,
+		// otherwise even a required field will get a default value, resulting in that
+		// posting missing enum values must use strict mode.
+		if (info.schema.enum && defaultValue !== null && defaultValue !== undefined) {
+			return value;
+		}
+
 		if (defaultValue !== undefined) return defaultValue;
 
 		if (info.isNullable) return null;

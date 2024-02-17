@@ -4,12 +4,9 @@
 	import SuperForm from './Form.svelte';
 	import TextField from './TextField.svelte';
 	import { zod } from '$lib/adapters/zod.js';
-	import type { Snippet } from 'svelte';
 
 	let visible = $state(true);
 	let { data } = $props();
-
-	type MsgType = { status: number; text: string };
 </script>
 
 <h3>Multiple componentized Forms</h3>

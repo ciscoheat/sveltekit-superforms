@@ -3,6 +3,6 @@
 	export let data;
 </script>
 
-<Navigation testDirs={data.testDirs} />
+<Navigation />
 
 <slot />

@@ -24,6 +24,7 @@
 		'redirect',
 		'step-form',
 		'submit-enter',
+		'submit-json',
 		'trim-fields',
 		'unions',
 		'validate',

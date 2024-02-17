@@ -79,7 +79,12 @@ export type FormOptions<
 	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
 	SPA: true | { failStatus?: number };
 
-	onSubmit: (...params: Parameters<SubmitFunction>) => MaybePromise<unknown | void>;
+	submitOnlyTainted: boolean;
+	onSubmit: (
+		input: Parameters<SubmitFunction>[0] & {
+			jsonData: (data: Record<string, unknown>) => void;
+		}
+	) => MaybePromise<unknown | void>;
 	onResult: (event: {
 		result: ActionResult;
 		/**
@@ -593,12 +598,16 @@ export function superForm<
 	};
 
 	async function Form_validate<Schema extends Partial<T>>(
-		opts: { adapter?: ValidationAdapter<Schema>; recheckValidData?: boolean; formData?: T } = {}
+		opts: {
+			adapter?: ValidationAdapter<Schema>;
+			recheckValidData?: boolean;
+			formData?: Record<string, unknown>;
+		} = {}
 	): Promise<SuperFormValidated<T, M, In>> {
 		const dataToValidate = opts.formData ?? Data.form;
 
 		let errors: ValidationErrors<T> = {};
-		let status: ValidationResult<Record<string, unknown>> = { success: true, data: dataToValidate };
+		let status: ValidationResult<Partial<T>>;
 		const validator = opts.adapter ?? options.validators;
 
 		if (typeof validator == 'object') {
@@ -621,9 +630,11 @@ export function superForm<
 				// need to make an additional validation, in case the data has been transformed
 				return Form_validate({ ...opts, recheckValidData: false });
 			}
+		} else {
+			status = { success: true, data: {} };
 		}
 
-		const data: T = status.success ? { ...dataToValidate, ...status.data } : dataToValidate;
+		const data: T = { ...Data.form, ...dataToValidate, ...(status.success ? status.data : {}) };
 
 		return {
 			valid: status.success,
@@ -1493,9 +1504,20 @@ export function superForm<
 
 			let currentRequest: AbortController | null;
 
-			return enhance(FormElement, async (submit) => {
-				const _submitCancel = submit.cancel;
+			return enhance(FormElement, async (submitParams) => {
+				let jsonData: Record<string, unknown> | undefined = undefined;
 
+				const submit = {
+					...submitParams,
+					jsonData(data: Record<string, unknown>) {
+						if (options.dataType !== 'json') {
+							throw new SuperFormError("options.dataType must be set to 'json' to use jsonData.");
+						}
+						jsonData = data;
+					}
+				};
+
+				const _submitCancel = submit.cancel;
 				let cancelled = false;
 				function cancel(resetTimers = true) {
 					cancelled = true;
@@ -1534,7 +1556,7 @@ export function superForm<
 					let validation: SuperFormValidated<T, M, In> | undefined = undefined;
 
 					if (!noValidate) {
-						validation = await Form_validate();
+						validation = await Form_validate({ formData: jsonData });
 
 						if (!validation.valid) {
 							cancel(false);
@@ -1585,7 +1607,7 @@ export function superForm<
 
 						if (options.SPA) {
 							cancel(false);
-							if (!validation) validation = await Form_validate();
+							if (!validation) validation = await Form_validate({ formData: jsonData });
 
 							const validationResult = { ...validation, posted: true };
 
@@ -1601,12 +1623,12 @@ export function superForm<
 
 							setTimeout(() => validationResponse({ result }), 0);
 						} else if (options.dataType === 'json') {
-							if (!validation) validation = await Form_validate();
+							if (!validation) validation = await Form_validate({ formData: jsonData });
 
 							const postData = clone(validation.data);
 
-							// Move files to form data, since they cannot be serialized
-							// will be reassembled in superValidate.
+							// Move files to form data, since they cannot be serialized.
+							// Will be reassembled in superValidate.
 							traversePaths(postData, (data) => {
 								if (data.value instanceof File) {
 									const key = '__superform_file_' + mergePath(data.path);

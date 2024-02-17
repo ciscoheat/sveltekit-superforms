@@ -1,11 +1,14 @@
 <script lang="ts">
+	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
+	import { schema } from './schema.js';
 
 	export let data;
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		taintedMessage: false,
 		dataType: 'json',
+		validators: zod(schema),
 		onSubmit({ jsonData }) {
 			jsonData({ ...$form, email: 'no-email' });
 		}

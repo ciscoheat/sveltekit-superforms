@@ -58,6 +58,11 @@ export type FormResult<T extends Record<string, unknown> | null> = ActionResult<
 
 export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
 
+type ValidatorsOption<T extends Record<string, unknown>> =
+	| ValidationAdapter<Partial<T>, Record<string, unknown>>
+	| false
+	| 'clear';
+
 // Need to distribute T with "T extends T",
 // since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
@@ -82,7 +87,16 @@ export type FormOptions<
 	submitOnlyTainted: boolean;
 	onSubmit: (
 		input: Parameters<SubmitFunction>[0] & {
+			/**
+			 * If dataType: 'json' is set, send this data instead of $form when posting,
+			 * and client-side validation for $form passes.
+			 * @param data An object that can be serialized with devalue.
+			 */
 			jsonData: (data: Record<string, unknown>) => void;
+			/**
+			 * Override client validation temporarily for this form submission.
+			 */
+			validators: (validators: Exclude<ValidatorsOption<T>, 'clear'>) => void;
 		}
 	) => MaybePromise<unknown | void>;
 	onResult: (event: {
@@ -118,11 +132,7 @@ export type FormOptions<
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
 	// TODO: Use NoInfer<T> on ClientValidationAdapter when available, so T can be used instead of Partial<T>
-	validators:
-		| ClientValidationAdapter<Partial<T>, Record<string, unknown>>
-		| ValidationAdapter<Partial<T>, Record<string, unknown>>
-		| false
-		| 'clear';
+	validators: ClientValidationAdapter<Partial<T>, Record<string, unknown>> | ValidatorsOption<T>;
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -597,9 +607,9 @@ export function superForm<
 		}
 	};
 
-	async function Form_validate<Schema extends Partial<T>>(
+	async function Form_validate(
 		opts: {
-			adapter?: ValidationAdapter<Schema>;
+			adapter?: FormOptions<T, M>['validators'];
 			recheckValidData?: boolean;
 			formData?: Record<string, unknown>;
 		} = {}
@@ -1506,6 +1516,7 @@ export function superForm<
 
 			return enhance(FormElement, async (submitParams) => {
 				let jsonData: Record<string, unknown> | undefined = undefined;
+				let validationAdapter = options.validators;
 
 				const submit = {
 					...submitParams,
@@ -1514,6 +1525,9 @@ export function superForm<
 							throw new SuperFormError("options.dataType must be set to 'json' to use jsonData.");
 						}
 						jsonData = data;
+					},
+					validators(adapter: Exclude<ValidatorsOption<T>, 'clear'>) {
+						validationAdapter = adapter;
 					}
 				};
 
@@ -1555,8 +1569,13 @@ export function superForm<
 
 					let validation: SuperFormValidated<T, M, In> | undefined = undefined;
 
+					const validateForm = async () => {
+						// Validate with onSubmit.jsonData() or (default) Form.data
+						return await Form_validate({ adapter: validationAdapter });
+					};
+
 					if (!noValidate) {
-						validation = await Form_validate({ formData: jsonData });
+						validation = await validateForm();
 
 						if (!validation.valid) {
 							cancel(false);
@@ -1607,7 +1626,7 @@ export function superForm<
 
 						if (options.SPA) {
 							cancel(false);
-							if (!validation) validation = await Form_validate({ formData: jsonData });
+							if (!validation) validation = await validateForm();
 
 							const validationResult = { ...validation, posted: true };
 
@@ -1623,9 +1642,9 @@ export function superForm<
 
 							setTimeout(() => validationResponse({ result }), 0);
 						} else if (options.dataType === 'json') {
-							if (!validation) validation = await Form_validate({ formData: jsonData });
+							if (!validation) validation = await validateForm();
 
-							const postData = clone(validation.data);
+							const postData = clone(jsonData ?? validation.data);
 
 							// Move files to form data, since they cannot be serialized.
 							// Will be reassembled in superValidate.

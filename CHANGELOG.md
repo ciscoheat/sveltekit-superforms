@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `onSubmit.submitJsonData`, to override what's being submitted, when dataType is set to `'json'` and validation succeeds for `$form`.
+- `onSubmit.jsonData`, to override what's being submitted, when dataType is set to `'json'` and validation succeeds for `$form`.
 - `onSubmit.validators`, to temporarily override validators for the current submission.
 
 ## [2.2.1] - 2024-02-16

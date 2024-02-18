@@ -84,7 +84,6 @@ export type FormOptions<
 	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
 	SPA: true | { failStatus?: number };
 
-	submitOnlyTainted: boolean;
 	onSubmit: (
 		input: Parameters<SubmitFunction>[0] & {
 			/**

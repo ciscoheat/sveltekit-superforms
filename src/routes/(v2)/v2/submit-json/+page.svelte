@@ -9,7 +9,8 @@
 		taintedMessage: false,
 		dataType: 'json',
 		validators: zod(schema),
-		onSubmit({ jsonData }) {
+		onSubmit({ jsonData, validators, formData }) {
+			if (formData.has('skip')) validators(false);
 			jsonData({ ...$form, email: 'no-email' });
 		}
 	});
@@ -35,6 +36,7 @@
 		{#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
 	</label>
 	<div>
+		<input type="checkbox" name="skip" /> Skip client-side validation<br />
 		<button>Submit</button>
 	</div>
 </form>

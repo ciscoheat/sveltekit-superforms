@@ -74,6 +74,8 @@ describe('Tainted', () => {
 
 		expect(form.isTainted('tags')).toBe(true);
 		expect(form.isTainted('tags[0]')).toBe(true);
+		//@ts-expect-error Testing non-existing tainted field
+		expect(form.isTainted('non-existing')).toBe(false);
 	});
 
 	it('Should be able to check tainted with the tainted store', () => {

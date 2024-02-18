@@ -1569,7 +1569,6 @@ export function superForm<
 					let validation: SuperFormValidated<T, M, In> | undefined = undefined;
 
 					const validateForm = async () => {
-						// Validate with onSubmit.jsonData() or (default) Form.data
 						return await Form_validate({ adapter: validationAdapter });
 					};
 

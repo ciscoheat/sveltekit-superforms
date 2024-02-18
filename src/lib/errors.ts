@@ -6,7 +6,7 @@ import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/s
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone } from './utils.js';
 import { merge } from 'ts-deepmerge';
-import { schemaInfo } from './jsonSchema/schemaInfo.js';
+import { schemaInfo, type SchemaType } from './jsonSchema/schemaInfo.js';
 import type { ValidationIssue } from './adapters/adapters.js';
 
 export class SuperFormError extends Error {
@@ -185,10 +185,15 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 			return dataValue;
 		}
 
+		const dateTypes: SchemaType[] = ['unix-time', 'Date', 'date'];
+
 		for (const schemaType of types) {
 			const defaultTypeValue = defaultValue(schemaType, undefined);
 
-			const sameType = typeof dataValue === typeof defaultTypeValue;
+			const sameType =
+				typeof dataValue === typeof defaultTypeValue ||
+				(dateTypes.includes(schemaType) && dataValue instanceof Date);
+
 			const sameExistance = sameType && (dataValue === null) === (defaultTypeValue === null);
 
 			if (sameType && sameExistance) {

@@ -27,6 +27,7 @@
 		'submit-json',
 		'trim-fields',
 		'unions',
+		'valibot-dates',
 		'validate',
 		'validate-update',
 		'validators-clear'

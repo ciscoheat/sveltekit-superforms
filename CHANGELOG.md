@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Dates were set to `undefined` when posting invalid data.
+
 ### Added
 
 - `onSubmit.submitJsonData`, to override what's being submitted, when dataType is set to `'json'` and validation succeeds for `$form`.

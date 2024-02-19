@@ -2,7 +2,7 @@ import { SuperFormError, SchemaError } from './errors.js';
 import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7Definition } from 'json-schema';
-import { schemaInfo, type SchemaInfo } from './jsonSchema/schemaInfo.js';
+import { schemaInfo, type SchemaInfo, type SchemaType } from './jsonSchema/schemaInfo.js';
 import { defaultValues } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './index.js';
 import { setPaths } from './traversal.js';
@@ -166,7 +166,18 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return allowFiles && (entry.size || entry.name) ? entry : undefined;
 		}
 
-		return parseFormDataEntry(key, entry, info);
+		if (info.types.length > 1) {
+			throw new SchemaError(
+				'FormData parsing failed: ' +
+					'Multiple types are only supported when the dataType option for superForm is set to "json".' +
+					'Types found: ' +
+					info.types,
+				key
+			);
+		}
+
+		const [type] = info.types;
+		return parseFormDataEntry(key, entry, type ?? 'any', info);
 	}
 
 	const defaultPropertyType =
@@ -228,19 +239,12 @@ function _parseFormData<T extends Record<string, unknown>>(
 	return output;
 }
 
-function parseFormDataEntry(key: string, value: string, info: SchemaInfo): unknown {
-	if (info.types.length != 1) {
-		throw new SchemaError(
-			'FormData parsing failed: ' +
-				'Multiple types are only supported when the dataType option for superForm is set to "json".' +
-				'Types found: ' +
-				info.types,
-			key
-		);
-	}
-
-	const [type] = info.types;
-
+function parseFormDataEntry(
+	key: string,
+	value: string,
+	type: Exclude<SchemaType, 'null'>,
+	info: SchemaInfo
+): unknown {
 	if (!value) {
 		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 

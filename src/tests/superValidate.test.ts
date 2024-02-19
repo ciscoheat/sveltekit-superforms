@@ -615,6 +615,60 @@ describe('File handling with the allowFiles option', () => {
 		});
 	});
 
+	describe('Handling non-existing files', () => {
+		const schema = z.object({
+			image: z
+				.custom<File>((f) => f instanceof File, 'Please upload a file.')
+				.refine((f) => {
+					return f instanceof File && f.size <= 1000;
+				}, 'Max 1Kb upload size.')
+		});
+
+		describe('Non-nullable schema', () => {
+			it('should not accept a non-existing file', async () => {
+				const formData = new FormData();
+				const adapter = zod(schema);
+				expect(adapter.defaults.image).toBeUndefined();
+
+				const form = await superValidate(formData, adapter, { allowFiles: true });
+				assert(!form.valid);
+				expect(form.errors.image).toEqual(['Please upload a file.']);
+			});
+
+			it('should not accept an empty posted value', async () => {
+				const formData = new FormData();
+				formData.set('image', '');
+				const form = await superValidate(formData, zod(schema), { allowFiles: true });
+
+				assert(!form.valid);
+				expect(form.errors.image).toEqual(['Please upload a file.']);
+			});
+		});
+
+		describe('Nullable schema', () => {
+			const schemaNullable = schema.extend({
+				image: schema.shape.image.nullable()
+			});
+
+			it('should accept a non-existing file', async () => {
+				const formData = new FormData();
+				const form = await superValidate(formData, zod(schemaNullable), { allowFiles: true });
+
+				assert(form.valid);
+				expect(form.data.image).toBeNull();
+			});
+
+			it('should accept an empty posted value', async () => {
+				const formData = new FormData();
+				formData.set('image', '');
+				const form = await superValidate(formData, zod(schemaNullable), { allowFiles: true });
+
+				assert(form.valid);
+				expect(form.data.image).toBeNull();
+			});
+		});
+	});
+
 	it('should allow files if specified as an option', async () => {
 		const formData = new FormData();
 		formData.set('avatar', new Blob(['A'.repeat(100)]));

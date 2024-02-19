@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Nullable fields weren't always detected in JSON Schemas.
 - Constraints weren't added when using default values for an adapter with introspection.
 
 ## [2.3.0] - 2024-02-18

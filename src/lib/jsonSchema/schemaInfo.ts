@@ -26,6 +26,10 @@ export type SchemaInfo = {
 
 const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
 
+/**
+ * Normalizes the different kind of schema variations (anyOf, union, const null, etc)
+ * to figure out the field type, optional, nullable, etc.
+ */
 export function schemaInfo(
 	schema: JSONSchema7Definition,
 	isOptional: boolean,
@@ -53,7 +57,7 @@ export function schemaInfo(
 				) as { [key: string]: JSONSchema7 })
 			: undefined;
 
-	const union = unionInfo(schema)?.filter((u) => u.type !== 'null');
+	const union = unionInfo(schema)?.filter((u) => u.type !== 'null' && u.const !== null);
 
 	return {
 		types: types.filter((s) => s !== 'null') as SchemaInfo['types'],
@@ -75,7 +79,7 @@ function schemaTypes(
 		throw new SchemaError('Schema cannot be defined as boolean', path);
 	}
 
-	let types: SchemaType[] = [];
+	let types: SchemaType[] = schema.const === null ? ['null'] : [];
 
 	if (schema.type) {
 		types = Array.isArray(schema.type) ? schema.type : [schema.type];

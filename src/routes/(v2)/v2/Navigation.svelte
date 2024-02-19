@@ -29,10 +29,11 @@
 		'trim-fields',
 		'unions',
 		'valibot-dates',
+		'valibot-nullable',
 		'validate',
 		'validate-update',
 		'validators-clear'
-	];
+	].sort();
 </script>
 
 <nav class="flex-list">

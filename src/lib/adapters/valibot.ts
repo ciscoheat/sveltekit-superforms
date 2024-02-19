@@ -15,8 +15,11 @@ import {
 	toJSONSchema as valibotToJSON
 } from '@gcornut/valibot-json-schema';
 import type { JSONSchema } from '../jsonSchema/index.js';
+import type { Prettify } from '$lib/utils.js';
 
 type SupportedSchemas = BaseSchema | BaseSchemaAsync;
+
+type SchemaConfig = NonNullable<Parameters<typeof safeParseAsync>[2]>;
 
 const defaultOptions = {
 	strictObjectTypes: true,
@@ -32,9 +35,10 @@ export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
 
 async function validate<T extends SupportedSchemas>(
 	schema: T,
-	data: unknown
+	data: unknown,
+	config?: SchemaConfig
 ): Promise<ValidationResult<Infer<T>>> {
-	const result = await safeParseAsync(schema, data);
+	const result = await safeParseAsync(schema, data, config);
 	if (result.success) {
 		return {
 			data: result.output as Infer<T>,
@@ -52,11 +56,16 @@ async function validate<T extends SupportedSchemas>(
 
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
-	options: Omit<ToJSONSchemaOptions, 'schema'> | AdapterOptions<T> = {}
+	options: Prettify<
+		Omit<ToJSONSchemaOptions, 'schema'> &
+			AdapterOptions<T> & {
+				config?: SchemaConfig;
+			}
+	> = {}
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
-		validate: async (data) => validate(schema, data),
+		validate: async (data) => validate(schema, data, options?.config),
 		jsonSchema: createJsonSchema(
 			options,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any

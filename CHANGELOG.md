@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `config` option to Valibot adapter, for the [SchemaConfig](https://valibot.dev/api/SchemaConfig/) type.
+
 ### Fixed
 
 - Constraints weren't added when using default values for an adapter with introspection.

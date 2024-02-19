@@ -210,6 +210,14 @@ describe('Valibot', () => {
 		schemaTest(valibot(schema, { defaults }), undefined);
 	});
 
+	it('should work with the config options', async () => {
+		const adapter = valibot(schema, { config: { abortEarly: true } });
+		const form = await superValidate({ email: 'no-email', score: -100 }, adapter);
+		assert(!form.valid);
+		expect(Object.keys(form.errors).length).toBe(1);
+		expect(form.errors.email).toMatch(/^Invalid email/);
+	});
+
 	it('should produce a required enum if no default', () => {
 		const schema = v.object({
 			enum: v.picklist(['a', 'b', 'c']),

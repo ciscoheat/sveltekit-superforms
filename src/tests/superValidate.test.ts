@@ -53,14 +53,15 @@ import { splitPath } from '$lib/stringPath.js';
 /* 
 TEST SCHEMA TEMPLATE:
 
-| field   | type     | required | constraints             | default   |
+| field   | type     | opt/null | constraints             | default   |
 | ------- | -------- | -------- | ----------------------- | --------- |
-| name    | string   | no       |                         | "Unknown" |
+| name    | string   | opt      |                         | "Unknown" |
 | email   | string   | yes      | email format            |           |
 | tags    | string[] | yes      | array >= 3, string >= 2 |           |
 | score   | number   | yes      | integer, >= 0           |           |
-| date    | Date     | no       |                         |           |
-| nospace | string   | no       | pattern /^\S*$/         |           |
+| date    | Date     | opt      |                         |           |
+| nospace | string   | opt      | pattern /^\S*$/         |           |
+| extra   | string   | null     |                         |           |
 */
 
 /**
@@ -73,7 +74,8 @@ const validData = {
 	tags: ['Ok 1', 'Ok 2', 'Ok 3'],
 	score: 10,
 	date: new Date('2024-01-01'),
-	nospace: 'Abc'
+	nospace: 'Abc',
+	extra: null
 };
 
 /**
@@ -93,7 +95,8 @@ const defaults = {
 	tags: [] as string[],
 	score: 0,
 	date: undefined,
-	nospace: undefined
+	nospace: undefined,
+	extra: null
 };
 
 /**
@@ -129,6 +132,7 @@ const simpleConstraints = {
 	tags: {
 		required: true
 	}
+	// TODO: extra should be required here too
 };
 
 const nospacePattern = /^\S*$/;
@@ -142,7 +146,8 @@ describe('Yup', () => {
 		tags: yupArray().of(yupString().min(2)).min(3).required(),
 		score: yupNumber().integer().min(0).required(),
 		date: yupDate(),
-		nospace: yupString().matches(nospacePattern)
+		nospace: yupString().matches(nospacePattern),
+		extra: yupString().nullable()
 	});
 
 	schemaTest(yup(schema));
@@ -155,7 +160,8 @@ describe('Joi', () => {
 		tags: Joi.array().items(Joi.string().min(2)).min(3).required(),
 		score: Joi.number().integer().min(0).required(),
 		date: Joi.date(),
-		nospace: Joi.string().pattern(nospacePattern)
+		nospace: Joi.string().pattern(nospacePattern),
+		extra: Joi.string().allow(null)
 	});
 
 	schemaTest(joi(schema));
@@ -168,7 +174,8 @@ describe('TypeBox', () => {
 		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
 		score: Type.Integer({ minimum: 0 }),
 		date: Type.Optional(Type.Date()),
-		nospace: Type.Optional(Type.String({ pattern: '^\\S*$' }))
+		nospace: Type.Optional(Type.String({ pattern: '^\\S*$' })),
+		extra: Type.Union([Type.String(), Type.Null()])
 	});
 
 	schemaTest(typebox(schema));
@@ -183,7 +190,8 @@ describe('Arktype', () => {
 		tags: '(string>=2)[]>=3',
 		score: 'integer>=0',
 		'date?': 'Date',
-		'nospace?': nospacePattern
+		'nospace?': nospacePattern,
+		extra: 'string|null'
 	});
 
 	const adapter = arktype(schema, { defaults });
@@ -199,11 +207,13 @@ describe('Valibot', () => {
 		tags: v.array(v.string([v.minLength(2)]), [v.minLength(3)]),
 		score: v.number([v.integer(), v.minValue(0)]),
 		date: v.optional(v.date()),
-		nospace: v.optional(v.string([v.regex(nospacePattern)]))
+		nospace: v.optional(v.string([v.regex(nospacePattern)])),
+		extra: v.nullable(v.string())
 	});
 
 	describe('Introspection', () => {
 		schemaTest(valibot(schema));
+		//console.dir(valibot(schema).jsonSchema, { depth: 10 });
 	});
 
 	describe('Defaults', () => {
@@ -276,7 +286,8 @@ describe('Zod', () => {
 			tags: z.string().min(2).array().min(3),
 			score: z.number().int().min(0),
 			date: z.date().optional(),
-			nospace: z.string().regex(nospacePattern).optional()
+			nospace: z.string().regex(nospacePattern).optional(),
+			extra: z.string().nullable()
 		})
 		.refine((a) => a)
 		.refine((a) => a)
@@ -418,7 +429,8 @@ describe('vine', () => {
 		tags: Vine.array(Vine.string().minLength(2)).minLength(3),
 		score: Vine.number().min(0),
 		date: Vine.date().optional(),
-		nospace: Vine.string().regex(nospacePattern).optional()
+		nospace: Vine.string().regex(nospacePattern).optional(),
+		extra: Vine.string().nullable()
 	});
 
 	const adapter = vine(schema, { defaults });

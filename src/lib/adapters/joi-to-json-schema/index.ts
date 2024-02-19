@@ -2,7 +2,7 @@
 // TODO: Need more tests
 
 import type { JSONSchema } from '../../jsonSchema/index.js';
-import type { JSONSchema7TypeName } from 'json-schema';
+import type { JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 
 function assert(condition: unknown, errorMessage: string) {
 	if (!condition) throw new Error(errorMessage);
@@ -293,6 +293,18 @@ export default function convert(joi: Record<string, any>, transformer?: Transfor
 
 	if (transformer) {
 		result = transformer(result, joi as Joi);
+	}
+
+	if (joi._valids?._values && joi._valids._values.size && !joi._flags.allowOnly) {
+		const constants = Array.from(joi._valids._values).map((v) => ({
+			const: v
+		})) as JSONSchema7Definition[];
+
+		if (result.anyOf) {
+			result.anyOf = [...constants, ...result.anyOf];
+		} else {
+			result = { anyOf: [...constants, result] };
+		}
 	}
 
 	return result;

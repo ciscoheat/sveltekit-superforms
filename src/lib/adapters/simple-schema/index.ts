@@ -28,7 +28,7 @@ export function simpleSchema(value: unknown): JSONSchema {
 					),
 					required: Object.keys(obj).filter(
 						(key) =>
-							(!obj[key] && obj[key] !== undefined) ||
+							(!obj[key] && obj[key] !== undefined && obj[key] !== null) ||
 							(Array.isArray(obj[key]) && !(obj[key] as unknown[]).length)
 					),
 					additionalProperties: false

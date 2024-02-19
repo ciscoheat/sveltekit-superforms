@@ -7,7 +7,7 @@
 	import type { SuperForm } from '$lib/client/index.js';
 	import { arrayProxy } from '$lib/client/index.js';
 
-	export let form: SuperForm<T, unknown>;
+	export let form: SuperForm<T>;
 	export let field: FormPathArrays<T>;
 	export let options: { value: string; label: string }[];
 	export let label = '';

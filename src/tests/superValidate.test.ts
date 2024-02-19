@@ -207,7 +207,7 @@ describe('Valibot', () => {
 	});
 
 	describe('Defaults', () => {
-		schemaTest(valibot(schema, { defaults }), undefined, 'simple');
+		schemaTest(valibot(schema, { defaults }), undefined);
 	});
 
 	it('should produce a required enum if no default', () => {

@@ -79,7 +79,7 @@ export type ValidationAdapter<
 export function createJsonSchema(options: object, transformer?: () => JSONSchema) {
 	return 'jsonSchema' in options && options.jsonSchema
 		? options.jsonSchema
-		: 'defaults' in options && options.defaults
+		: !transformer && 'defaults' in options && options.defaults
 			? simpleSchema(options.defaults)
 			: transformer
 				? /* @__PURE__ */ transformer()

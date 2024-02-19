@@ -1,5 +1,5 @@
 import { describe, it, expect, assert, beforeEach } from 'vitest';
-import type { ValidationAdapter } from '$lib/adapters/index.js';
+import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
@@ -877,5 +877,27 @@ describe('Enum validation', () => {
 			assert(form.valid);
 			expect(form.data).toEqual({ fish: null, moreFish: undefined });
 		});
+	});
+});
+
+describe('Customized superValidate', () => {
+	type SuperParams<T extends Record<string, unknown>> = Parameters<typeof superValidate<T>>;
+	type ZodSchema = Parameters<typeof zod>[0];
+
+	function zodValidate<T extends ZodSchema, M>(
+		data: SuperParams<InferIn<T>>[0],
+		schema: T,
+		options?: SuperParams<Infer<T>>[2]
+	) {
+		return superValidate<Infer<T>, M, InferIn<T>>(data, zod(schema), options);
+	}
+
+	const zodSchema = z.object({
+		num: z.number().int()
+	});
+
+	it('Should be type-safe', async () => {
+		const v = await zodValidate(null, zodSchema);
+		expect(v.data.num).toBe(0);
 	});
 });

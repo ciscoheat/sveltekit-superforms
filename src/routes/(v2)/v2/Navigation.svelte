@@ -4,6 +4,7 @@
 		'array-proxy',
 		'boolean-same-union',
 		'catchall',
+		'components',
 		'custom-tainted-dialog',
 		'defaults-fail',
 		'dynamic-validators',

@@ -7,7 +7,7 @@
 	import type { FormPathLeaves } from '$lib/index.js';
 	import { dateProxy, formFieldProxy, type SuperForm } from '$lib/client/index.js';
 
-	export let form: SuperForm<T, unknown>;
+	export let form: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
 	export let type:
 		| 'text'

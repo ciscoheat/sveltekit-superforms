@@ -37,6 +37,7 @@ import type {
 	ValidationResult
 } from '$lib/adapters/adapters.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import { fieldProxy, type ProxyOptions } from './proxies.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -126,7 +127,7 @@ export type FormOptions<
 					error: App.Error;
 				};
 		  }) => MaybePromise<unknown | void>);
-	onChange: (event: ChangeEvent) => void;
+	onChange: (event: ChangeEvent<T>) => void;
 
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
@@ -276,16 +277,28 @@ type ValidationResponse<
 	Invalid extends Record<string, unknown> | undefined = Record<string, any>
 > = { result: ActionResult<Success, Invalid> };
 
-export type ChangeEvent =
+export type ChangeEvent<T extends Record<string, unknown>> =
 	| {
-			path: string;
-			paths: string[];
+			path: FormPath<T>;
+			paths: FormPath<T>[];
 			formElement: HTMLFormElement;
 			target: Element;
+			set: <Path extends FormPath<T>>(
+				path: Path,
+				value: FormPathType<T, Path>,
+				options?: ProxyOptions
+			) => void;
+			get: <Path extends FormPath<T>>(path: Path) => FormPathType<T, Path>;
 	  }
 	| {
 			target: undefined;
-			paths: string[];
+			paths: FormPath<T>[];
+			set: <Path extends FormPath<T>>(
+				path: Path,
+				value: FormPathType<T, Path>,
+				options?: ProxyOptions
+			) => void;
+			get: <Path extends FormPath<T>>(path: Path) => FormPathType<T, Path>;
 	  };
 
 type FullChangeEvent = {
@@ -661,8 +674,8 @@ export function superForm<
 	function Form__changeEvent(event: FullChangeEvent) {
 		if (!options.onChange || !event.paths.length || event.type == 'blur') return;
 
-		let changeEvent: ChangeEvent;
-		const paths = event.paths.map(mergePath);
+		let changeEvent: ChangeEvent<T>;
+		const paths = event.paths.map(mergePath) as FormPath<T>[];
 
 		if (
 			event.type &&
@@ -674,12 +687,26 @@ export function superForm<
 				path: paths[0],
 				paths,
 				formElement: event.formElement,
-				target: event.target
+				target: event.target,
+				set(path, value, options?) {
+					// Casting trick to make it think it's a SuperForm
+					fieldProxy({ form: Form } as SuperForm<T>, path, options).set(value);
+				},
+				get(path) {
+					return get(fieldProxy(Form, path));
+				}
 			};
 		} else {
 			changeEvent = {
 				paths,
-				target: undefined
+				target: undefined,
+				set(path, value, options?) {
+					// Casting trick to make it think it's a SuperForm
+					fieldProxy({ form: Form } as SuperForm<T>, path, options).set(value);
+				},
+				get(path) {
+					return get(fieldProxy(Form, path));
+				}
 			};
 		}
 

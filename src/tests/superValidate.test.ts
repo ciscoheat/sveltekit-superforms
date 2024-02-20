@@ -132,7 +132,6 @@ const simpleConstraints = {
 	tags: {
 		required: true
 	}
-	// TODO: extra should be required here too
 };
 
 const nospacePattern = /^\S*$/;

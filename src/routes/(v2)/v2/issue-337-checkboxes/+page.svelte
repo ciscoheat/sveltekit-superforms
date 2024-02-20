@@ -2,17 +2,23 @@
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import CheckBox from './CheckBox.svelte';
-	//import { zod } from '$lib/adapters/zod.js'
-	//import { schema } from './schema.js';
 
 	export let data;
 
 	const theForm = superForm(data.form, {
 		taintedMessage: false,
-		onChange({ paths }) {
+		onChange({ paths, set, get }) {
+			for (const path of paths) {
+				if (path == 'accept') {
+					set('extra', 12, { taint: false });
+				} else if (path == 'extra') {
+					if (get(path) == 12) {
+						set('extra', 123, { taint: false });
+					}
+				}
+			}
 			console.log(paths);
 		}
-		//dataType: 'json',
 	});
 
 	const { form, errors, tainted, message, enhance } = theForm;
@@ -21,6 +27,10 @@
 <SuperDebug data={{ $form, $errors, $tainted }} />
 
 {#if $message}<h4>{$message}</h4>{/if}
+
+<p>Extra:{$form.extra}</p>
+
+<p>Tainted:{Boolean($tainted?.extra)}</p>
 
 <form method="POST" use:enhance>
 	<div>Accept: <CheckBox form={theForm} field="accept" /></div>

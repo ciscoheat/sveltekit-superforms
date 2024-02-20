@@ -7,7 +7,7 @@ import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './index.js';
 import type { Prettify } from '$lib/utils.js';
 
-type ProxyOptions = {
+export type ProxyOptions = {
 	taint?: TaintOption;
 };
 

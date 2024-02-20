@@ -445,7 +445,7 @@ export function superForm<
 		 * This also means that it needs to be set here, before it's cloned further below.
 		 */
 		if (!initialForms.has(form)) {
-			initialForms.set(form, clone(form));
+			initialForms.set(form, form);
 		}
 		initialForm = initialForms.get(form) as SuperValidated<T, M, In>;
 

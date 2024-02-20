@@ -268,6 +268,40 @@ describe('Nested data', () => {
 	});
 });
 
+describe('Modifying initial data for updating reset', () => {
+	it('should reset based on the new data', async () => {
+		const validated = await superValidate(
+			zod(
+				z.object({
+					name: z.string(),
+					number: z.number().positive()
+				})
+			)
+		);
+
+		const firstData = { name: '', number: 0 };
+
+		const { form, reset } = superForm(validated);
+		expect(get(form)).toEqual(firstData);
+
+		const newData = { name: 'Test', number: 123 };
+		form.set(newData);
+		expect(get(form)).toEqual(newData);
+
+		reset();
+		expect(get(form)).toEqual(firstData);
+
+		// Update initial data
+		validated.data.name = 'A';
+		validated.data.number = 1;
+
+		expect(get(form)).toEqual(firstData);
+
+		reset();
+		expect(get(form)).toEqual({ name: 'A', number: 1 });
+	});
+});
+
 ///// mockSvelte.ts (must be copy/pasted here) ////////////////////////////////
 
 import { vi } from 'vitest';

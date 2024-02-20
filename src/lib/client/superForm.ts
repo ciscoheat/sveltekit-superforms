@@ -1458,7 +1458,7 @@ export function superForm<
 
 			if (!form) {
 				throw new SuperFormError(
-					'use:enhance must be added to the form to use submit, or pass a HTMLElement inside the form as an argument.'
+					'use:enhance must be added to the form to use submit, or pass a HTMLElement inside the form (or the form itself) as an argument.'
 				);
 			}
 

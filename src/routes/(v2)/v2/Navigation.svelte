@@ -33,7 +33,8 @@
 		'validate',
 		'validate-update',
 		'validators-clear',
-		'submit-prog'
+		'submit-prog',
+		'modify-reset'
 	].sort();
 </script>
 

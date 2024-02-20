@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `submit` method for `superForm`, a convenience instead of using [requestSubmit](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/requestSubmit). Requires `use:enhance` or that a `HTMLElement` inside the form is passed as an argument.
+
 ### Fixed
 
 - Initial data was dereferenced after calling `superForm`, so it wasn't possible to update it when using `reset`.

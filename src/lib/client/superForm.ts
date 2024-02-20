@@ -230,6 +230,7 @@ export type SuperForm<
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
 	isTainted: (path?: FormPath<T> | TaintedFields<T> | boolean) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
+	submit: (submitter?: HTMLButtonElement | HTMLInputElement | null) => void;
 
 	capture: Capture<T, M>;
 	restore: T extends T ? Restore<T, M> : never;
@@ -1419,6 +1420,27 @@ export function superForm<
 				data: options?.data,
 				id: options?.id
 			});
+		},
+
+		submit(submitter?: HTMLElement | null) {
+			const form = EnhancedForm
+				? EnhancedForm
+				: submitter
+					? submitter.closest<HTMLFormElement>('form')
+					: undefined;
+
+			if (!form) {
+				throw new SuperFormError(
+					'use:enhance must be added to the form to use submit, or pass a HTMLElement inside the form as an argument.'
+				);
+			}
+
+			const isSubmitButton =
+				submitter &&
+				((submitter instanceof HTMLButtonElement && submitter.type == 'submit') ||
+					(submitter instanceof HTMLInputElement && ['submit', 'image'].includes(submitter.type)));
+
+			form.requestSubmit(isSubmitButton ? submitter : undefined);
 		},
 
 		isTainted: Tainted_isTainted,

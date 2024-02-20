@@ -32,7 +32,8 @@
 		'valibot-nullable',
 		'validate',
 		'validate-update',
-		'validators-clear'
+		'validators-clear',
+		'submit-prog'
 	].sort();
 </script>
 

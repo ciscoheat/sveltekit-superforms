@@ -1,0 +1,4 @@
+{
+	"extends": "./tsconfig.json",
+	"exclude": ["src/routes/(v2)/v2/components/**"]
+}

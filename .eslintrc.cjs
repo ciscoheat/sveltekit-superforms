@@ -10,7 +10,8 @@ module.exports = {
 	parser: '@typescript-eslint/parser',
 	plugins: ['@typescript-eslint'],
 	rules: {
-		'dci-lint/literal-role-contracts': 'off'
+		'dci-lint/literal-role-contracts': 'off',
+		'no-console': ['error', { allow: ['warn'] }]
 	},
 	parserOptions: {
 		sourceType: 'module',

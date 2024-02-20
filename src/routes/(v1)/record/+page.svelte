@@ -2,13 +2,12 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schemas.js';
 
 	export let data: PageData;
 
 	let postedData: Record<string, number>;
 
-	const { form, errors, enhance, options } = superForm(data.form, {
+	const { form, enhance, options } = superForm(data.form, {
 		dataType: 'json',
 		onUpdated({ form }) {
 			postedData = form.data.data;

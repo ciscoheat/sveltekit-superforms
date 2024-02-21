@@ -268,7 +268,7 @@ export function setError<
 
 	const errArr = Array.isArray(error) ? error : [error];
 
-	if (!form.errors) form.errors = {};
+	if (!form.errors) form.errors = {} as ValidationErrors<T>;
 
 	if (path === null || path === '') {
 		if (!form.errors._errors) form.errors._errors = [];

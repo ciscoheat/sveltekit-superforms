@@ -1,4 +1,10 @@
-export type SuperStructArray<T extends Record<string, unknown>, Data, ArrayData = unknown> = {
+import type { Prettify } from './utils.js';
+
+export type SuperStructArray<
+	T extends Record<string, unknown>,
+	Data,
+	ArrayData = unknown
+> = Prettify<{
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[Property in keyof T]?: T extends any
 		? NonNullable<T[Property]> extends Record<string, unknown>
@@ -13,17 +19,19 @@ export type SuperStructArray<T extends Record<string, unknown>, Data, ArrayData 
 						>
 				: Data
 		: never;
-};
-
-export type SuperStruct<T extends Record<string, unknown>, Data> = Partial<{
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[Property in keyof T]: T extends any
-		? NonNullable<T[Property]> extends Record<string, unknown>
-			? SuperStruct<NonNullable<T[Property]>, Data>
-			: NonNullable<T[Property]> extends (infer A)[]
-				? NonNullable<A> extends Record<string, unknown>
-					? SuperStruct<NonNullable<A>, Data>
-					: Data
-				: Data
-		: never;
 }>;
+
+export type SuperStruct<T extends Record<string, unknown>, Data> = Prettify<
+	Partial<{
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		[Property in keyof T]: T extends any
+			? NonNullable<T[Property]> extends Record<string, unknown>
+				? SuperStruct<NonNullable<T[Property]>, Data>
+				: NonNullable<T[Property]> extends (infer A)[]
+					? NonNullable<A> extends Record<string, unknown>
+						? SuperStruct<NonNullable<A>, Data>
+						: Data
+					: Data
+			: never;
+	}>
+>;

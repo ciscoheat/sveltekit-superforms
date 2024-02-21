@@ -36,7 +36,8 @@
 		'submit-prog',
 		'modify-reset',
 		'index-errors',
-		'onchange-target'
+		'onchange-target',
+		'issue-356'
 	].sort();
 </script>
 

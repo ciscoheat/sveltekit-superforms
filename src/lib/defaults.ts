@@ -1,11 +1,11 @@
-import { type ValidationAdapter } from './adapters/adapters.js';
+import type { ValidationAdapter, ClientValidationAdapter } from './adapters/adapters.js';
 import type { SuperValidateOptions, SuperValidated } from './superValidate.js';
 
 type SuperSchemaData<T extends Record<string, unknown>> = Partial<T> | null | undefined;
 
 type SuperSchemaOptions<T extends Record<string, unknown>> = Pick<
 	SuperValidateOptions<T>,
-	'id' | 'defaults' | 'jsonSchema'
+	'id' | 'defaults'
 >;
 
 export function defaults<
@@ -29,26 +29,37 @@ export function defaults<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message
 >(
-	defaults: SuperSchemaData<T> | ValidationAdapter<T>,
-	adapter?: ValidationAdapter<T> | SuperSchemaOptions<T>,
+	defaults: T,
+	adapter: ClientValidationAdapter<T>,
+	options?: SuperSchemaOptions<T>
+): SuperValidated<T, M>;
+
+export function defaults<
+	T extends Record<string, unknown>,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+>(
+	data: SuperSchemaData<T> | ValidationAdapter<T> | T,
+	adapter?: ValidationAdapter<T> | ClientValidationAdapter<T> | SuperSchemaOptions<T>,
 	options?: SuperSchemaOptions<T>
 ): SuperValidated<T, M> {
-	if (defaults && 'superFormValidationLibrary' in defaults) {
-		options = adapter;
-		adapter = defaults;
-		defaults = null;
+	if (data && 'superFormValidationLibrary' in data) {
+		options = adapter as SuperSchemaOptions<T>;
+		adapter = data;
+		data = null;
 	}
 
 	const validator = adapter as ValidationAdapter<T>;
 	const optionDefaults = options?.defaults ?? validator.defaults;
 
 	return {
-		id: options?.id ?? validator.id,
+		id: options?.id ?? validator.id ?? '',
 		valid: false,
 		posted: false,
 		errors: {},
-		data: { ...optionDefaults, ...defaults },
-		constraints: validator.constraints
+		data: { ...optionDefaults, ...data },
+		constraints: validator.constraints,
+		shape: validator.shape
 	};
 }
 

@@ -424,7 +424,7 @@ export function superForm<
 			);
 		}
 
-		if (!Context_isValidationObject(form)) {
+		if (Context_isValidationObject(form) === false) {
 			form = {
 				id: options.id ?? '',
 				valid: false,
@@ -584,7 +584,8 @@ export function superForm<
 	}
 
 	/**
-	 * Return false if object isn't a validation object, otherwise the form id.
+	 * Return false if object isn't a validation object, otherwise the form id,
+	 * which can be an empty string, so always check with === false
 	 */
 	function Context_isValidationObject(object: unknown): string | false {
 		if (!object || typeof object !== 'object') return false;

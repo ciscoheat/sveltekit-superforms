@@ -449,6 +449,10 @@
 		overflow: hidden;
 	}
 
+	.super-debug--pre {
+		overflow-x: auto;
+	}
+
 	.super-debug--collapse {
 		display: block;
 		width: 100%;
@@ -560,8 +564,8 @@
 	}
 
 	.super-debug pre::-webkit-scrollbar {
-		width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1.25rem));
-		height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1.25rem));
+		width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1rem));
+		height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1rem));
 	}
 
 	.super-debug pre::-webkit-scrollbar-track {

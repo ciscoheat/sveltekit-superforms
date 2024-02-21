@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Type for `onChange.paths` wasn't strongly typed to `FormPath`.
 - Initial data was dereferenced after calling `superForm`, so it wasn't possible to update it when using `reset`.
-- `FormOptions` type required one type parameter that should've been defaulted to `Record<string, unknown>`.
+- `FormOptions` type required a type parameter that should've been defaulted to `Record<string, unknown>`.
 
 ## [2.4.0] - 2024-02-20
 

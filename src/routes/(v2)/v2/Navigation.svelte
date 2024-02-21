@@ -35,7 +35,8 @@
 		'validators-clear',
 		'submit-prog',
 		'modify-reset',
-		'index-errors'
+		'index-errors',
+		'onchange-target'
 	].sort();
 </script>
 

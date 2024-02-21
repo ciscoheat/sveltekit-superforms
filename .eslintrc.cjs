@@ -10,8 +10,7 @@ module.exports = {
 	parser: '@typescript-eslint/parser',
 	plugins: ['@typescript-eslint'],
 	rules: {
-		'dci-lint/literal-role-contracts': 'off',
-		'no-console': ['error', { allow: ['warn'] }]
+		'dci-lint/literal-role-contracts': 'off'
 	},
 	parserOptions: {
 		sourceType: 'module',
@@ -29,6 +28,12 @@ module.exports = {
 			parser: 'svelte-eslint-parser',
 			parserOptions: {
 				parser: '@typescript-eslint/parser'
+			}
+		},
+		{
+			files: ['src/lib/**'],
+			rules: {
+				'no-console': ['error', { allow: ['warn'] }]
 			}
 		}
 	]

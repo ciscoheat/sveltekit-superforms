@@ -22,13 +22,17 @@ const raw = {
 
 type FormTypeOk = typeof raw;
 
+/*
 type FormType = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	name: any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	email: any;
 	days: z.ZodArray<z.ZodNumber, 'atleastone'>;
 };
+*/
 
-const schema = z.object<FormType>({
+const schema = z.object<FormTypeOk>({
 	name: z.string().min(1),
 	email: z.string().email(),
 	days: z.number().min(0).max(6).array().nonempty()

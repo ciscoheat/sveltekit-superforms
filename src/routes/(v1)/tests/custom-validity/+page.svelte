@@ -6,6 +6,7 @@
 
 	export let data;
 
+	// eslint-disable-next-line svelte/valid-compile, @typescript-eslint/no-explicit-any
 	const validationMethod = ($page.url.searchParams.get('method') as any) ?? 'auto';
 
 	const { form, errors, message, enhance } = superForm(data.form, {

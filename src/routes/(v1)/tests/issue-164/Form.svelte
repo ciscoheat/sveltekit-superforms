@@ -3,7 +3,9 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { onMount } from 'svelte';
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	export let data: any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	export let cancel: any;
 
 	console.log('init:', data.data);

@@ -18,6 +18,7 @@
 <h5>POSTED:{String($posted)}</h5>
 
 {#if $posted}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
 		{#if $page.status >= 400}Form failed{:else}Form posted!{/if}
 	</div>

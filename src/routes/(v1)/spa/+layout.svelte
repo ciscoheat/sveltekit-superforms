@@ -10,6 +10,7 @@
 
 <h2>Superforms SPA</h2>
 
+<!-- eslint-disable-next-line svelte/valid-compile -->
 <p>Page status: {$page.status}</p>
 
 <slot />

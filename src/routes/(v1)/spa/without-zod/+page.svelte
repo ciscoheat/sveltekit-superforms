@@ -23,6 +23,7 @@
 		SPA: { failStatus: 401 },
 		dataType: 'json',
 		onUpdate({ form, cancel }) {
+			// eslint-disable-next-line svelte/valid-compile
 			if ($page.url.searchParams.has('cancel')) cancel();
 			else if (form.valid) {
 				form.message = 'Successful!';

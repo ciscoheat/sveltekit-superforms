@@ -2,8 +2,6 @@
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
-	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 

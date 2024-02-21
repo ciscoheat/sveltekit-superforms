@@ -8,6 +8,7 @@
 		taintedMessage: false
 	});
 
+	// eslint-disable-next-line svelte/valid-compile
 	const isEnhanced = $page.url.searchParams.has('enhance');
 	const enhanced = isEnhanced ? enhance : () => {};
 </script>

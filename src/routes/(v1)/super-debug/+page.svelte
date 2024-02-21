@@ -162,6 +162,7 @@
 	<section>
 		<h4>SuperDebug displaying $page data</h4>
 		<p>Svelte's <code>$page</code> data in all its glory.</p>
+		<!-- eslint-disable-next-line svelte/valid-compile -->
 		<SuperDebug label="$page data" data={$page} collapsible />
 	</section>
 

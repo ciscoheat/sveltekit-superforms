@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { formFieldProxy, superForm, type SuperForm } from '$lib/client/index.js';
+	import { formFieldProxy, superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import type { schema } from './utils.js';
 
 	export let data;
 
@@ -19,6 +18,7 @@
 <h3>Superforms testing ground</h3>
 
 {#if $message}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
 		{$message.type}: {$message.text}
 	</div>

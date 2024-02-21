@@ -2,31 +2,12 @@
 	import type { PageData } from './$types.js';
 	import { superForm } from '$lib/client/index.js';
 	import { basicSchema } from './schema.js';
-	import { page } from '$app/stores';
-	//import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { debounce } from 'throttle-debounce';
 	import spinner from './tadpole.svg?raw';
 	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
 	let checking = false;
-
-	async function checkUsername(username: string, resolve: (result: string | null) => void) {
-		checking = true;
-		const body = new FormData();
-		body.set('username', username);
-
-		const response = await fetch(new URL('/tests/delayed-validation/username', $page.url), {
-			method: 'POST',
-			body
-		});
-
-		resolve(response.status == 200 ? null : 'This username is taken.');
-		checking = false;
-	}
-
-	const throttledUsername = debounce(300, checkUsername);
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
@@ -48,6 +29,7 @@
 	<label for="username">Username</label>
 	<input type="text" name="username" data-invalid={$errors.username} bind:value={$form.username} />
 	{#if checking}
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 		{@html spinner}
 	{:else if 'username' in $errors}
 		<span class="invalid">

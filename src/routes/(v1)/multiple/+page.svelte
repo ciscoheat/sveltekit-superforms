@@ -22,6 +22,7 @@
 <SuperDebug data={{ $formId, $form, $secondFormId, $secondform }} />
 
 {#if $message}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<h4 class:error={$page.status >= 400} class="first message">
 		{$message.message}
 	</h4>

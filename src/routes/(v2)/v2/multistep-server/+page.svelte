@@ -16,6 +16,7 @@
 </script>
 
 {#if $message?.text}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
 		{$message.text}
 	</div>

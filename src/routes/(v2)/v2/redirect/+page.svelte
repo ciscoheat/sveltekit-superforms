@@ -4,6 +4,7 @@
 
 	export let data;
 
+	// eslint-disable-next-line svelte/valid-compile
 	const applyAction = $page.url.searchParams.has('apply');
 
 	const { message, enhance, submitting } = superForm(data.form, {

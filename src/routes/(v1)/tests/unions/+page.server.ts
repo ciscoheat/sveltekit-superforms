@@ -1,9 +1,7 @@
 import type { Actions, PageServerLoad } from './$types.js';
 import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
-
-//import type { z } from 'zod';
-import { schema, schema2 } from './schemas.js';
+import { schema } from './schemas.js';
 
 export const load = (async () => {
 	const form = await superValidate(zod(schema));

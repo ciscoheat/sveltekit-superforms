@@ -10,6 +10,7 @@
 		let current = options[0];
 		return z
 			.object({
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				options: z.enum(options).default(options[0] as any),
 				prev: z.string().optional()
 			})

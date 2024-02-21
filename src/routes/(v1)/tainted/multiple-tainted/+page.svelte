@@ -21,6 +21,7 @@
 	}
 
 	async function resetTainted() {
+		// eslint-disable-next-line svelte/valid-compile
 		if ($page.url.searchParams.has('timeout')) {
 			setTimeout(untaint);
 			message = 'timeout';

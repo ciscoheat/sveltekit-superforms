@@ -21,6 +21,7 @@
 <h3>Superforms testing ground</h3>
 
 {#if $message}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
 		{$message}
 	</div>

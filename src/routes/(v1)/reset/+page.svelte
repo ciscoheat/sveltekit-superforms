@@ -11,6 +11,7 @@
 	let resets = 0;
 
 	const superF: SuperForm<z.infer<typeof schema>> = superForm(data.form, {
+		// eslint-disable-next-line svelte/valid-compile
 		resetForm: $page.url.searchParams.has('function')
 			? () => {
 					console.log('Reset...');

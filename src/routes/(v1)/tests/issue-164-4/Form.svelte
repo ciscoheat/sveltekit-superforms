@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
-	import { createEventDispatcher, onDestroy } from 'svelte';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { createEventDispatcher } from 'svelte';
 	import { get } from 'svelte/store';
 
 	const dispatch = createEventDispatcher();

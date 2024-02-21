@@ -5,8 +5,6 @@
 
 	export let data: PageData;
 
-	let status: boolean | undefined = undefined;
-
 	const { form, enhance } = superForm(data.form, {
 		dataType: 'json',
 		taintedMessage: null

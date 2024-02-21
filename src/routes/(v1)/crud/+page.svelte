@@ -24,6 +24,7 @@
 </div>
 
 {#if $message}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<h3 class:invalid={$page.status >= 400}>{$message}</h3>
 {/if}
 

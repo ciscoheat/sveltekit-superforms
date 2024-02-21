@@ -2,6 +2,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import { page } from '$app/stores';
 
+	// eslint-disable-next-line svelte/valid-compile
 	const { form, enhance, message, formId } = superForm($page.data.fooForm, {
 		taintedMessage: null,
 		resetForm: true,

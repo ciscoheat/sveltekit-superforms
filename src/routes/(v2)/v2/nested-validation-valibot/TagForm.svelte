@@ -14,6 +14,7 @@
 	export let output: (string[] | undefined)[] = [];
 	export let validated: SuperValidated<Infer<typeof schema>> | undefined = undefined;
 
+	// eslint-disable-next-line svelte/valid-compile
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 

@@ -5,7 +5,7 @@
 
 	export let data: PageData;
 
-	const { form, errors, enhance, message, formId } = superForm(data.loginForm, {
+	const { form, errors, enhance, message } = superForm(data.loginForm, {
 		invalidateAll: false
 	});
 
@@ -13,8 +13,7 @@
 		form: registerForm,
 		errors: registerErrors,
 		enhance: registerEnhance,
-		message: registerMessage,
-		formId: registerFormId
+		message: registerMessage
 	} = superForm(data.registerForm, {
 		invalidateAll: false
 	});

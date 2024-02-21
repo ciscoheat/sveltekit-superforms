@@ -37,6 +37,8 @@
 			lockPassword = false;
 		} else lockPassword = true;
 	});
+
+	console.log(lockEmail, lockName, lockPassword);
 </script>
 
 <SuperDebug data={$form} />

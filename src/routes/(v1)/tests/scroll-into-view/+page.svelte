@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { schema } from './schema.js';
 
 	export let data: PageData;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance } = superForm(data.form, {
 		scrollToError: { behavior: 'smooth', block: 'center', inline: 'center' },
 		taintedMessage: null
 	});

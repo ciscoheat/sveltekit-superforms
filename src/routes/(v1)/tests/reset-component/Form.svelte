@@ -39,4 +39,5 @@
 
 <br />
 
+<!-- eslint-disable-next-line svelte/valid-compile -->
 <SuperDebug data={{ $form, $errors, 'page.form': $page.form?.form }} />

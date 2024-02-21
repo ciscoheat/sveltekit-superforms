@@ -8,6 +8,7 @@
 	let dialog: HTMLDialogElement;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+		// eslint-disable-next-line svelte/valid-compile
 		taintedMessage: $page.url.searchParams.has('text')
 			? 'Are you sure??'
 			: () => {

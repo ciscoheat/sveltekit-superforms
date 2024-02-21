@@ -12,6 +12,7 @@
 		taintedMessage: null
 	});
 
+	// eslint-disable-next-line svelte/valid-compile
 	$: editing = $page.params.viewOrEdit === 'edit';
 
 	const gotoView = async () => {

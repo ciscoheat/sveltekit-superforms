@@ -20,6 +20,7 @@
 		}
 	});
 
+	// eslint-disable-next-line svelte/valid-compile
 	$: action = $page.url.searchParams.has('throw-hooks-error') ? '?throw-hooks-error' : '';
 </script>
 

@@ -10,6 +10,8 @@
 		onChange({ paths, set, get }) {
 			for (const path of paths) {
 				if (path == 'accept') {
+					// @ts-expect-error Type error
+					set('extra', 'a string', { taint: false });
 					set('extra', 12, { taint: false });
 				} else if (path == 'extra') {
 					if (get(path) == 12) {

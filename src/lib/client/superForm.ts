@@ -68,7 +68,7 @@ type ValidatorsOption<T extends Record<string, unknown>> =
 // since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
 export type FormOptions<
-	T extends Record<string, unknown>,
+	T extends Record<string, unknown> = Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = any,
 	In extends Record<string, unknown> = T
@@ -354,7 +354,7 @@ const defaultFormOptions = {
 	multipleSubmits: 'prevent',
 	SPA: undefined,
 	validationMethod: 'auto'
-} satisfies FormOptions<Record<string, unknown>, unknown>;
+} satisfies FormOptions;
 
 function multipleFormIdError(id: string | undefined) {
 	return (

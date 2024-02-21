@@ -1,5 +1,5 @@
 import { zod } from '$lib/adapters/zod.js';
-import { fieldProxy, superForm, type SuperForm } from '$lib/client/index.js';
+import { fieldProxy, superForm, type FormOptions, type SuperForm } from '$lib/client/index.js';
 import { superValidate, type SuperValidated } from '$lib/superValidate.js';
 import { get } from 'svelte/store';
 import { merge } from 'ts-deepmerge';
@@ -299,6 +299,27 @@ describe('Modifying initial data for updating reset', () => {
 
 		reset();
 		expect(get(form)).toEqual({ name: 'A', number: 1 });
+	});
+});
+
+describe('FormOptions', () => {
+	it('should work with default type parameters', async () => {
+		const opts: FormOptions = {
+			delayMs: 800,
+			dataType: 'json'
+		};
+
+		const validated = await superValidate(
+			zod(
+				z.object({
+					name: z.string()
+				})
+			)
+		);
+
+		const form = superForm(validated, opts);
+		const delay: number | undefined = form.options.delayMs;
+		expect(delay).toBe(800);
 	});
 });
 

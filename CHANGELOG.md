@@ -5,7 +5,7 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.5.0] - 2024-02-21
 
 ### Added
 
@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Type parameter was missing in `ChangeEvent`, which should be of the inferred schema type.
 - Type for `onChange.paths` wasn't strongly typed to `FormPath`.
 - Initial data was dereferenced after calling `superForm`, so it wasn't possible to update it when using `reset`.
 - `FormOptions` type required a type parameter that should've been defaulted to `Record<string, unknown>`.

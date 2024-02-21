@@ -231,7 +231,7 @@ export type SuperForm<
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
 	isTainted: (path?: FormPath<T> | TaintedFields<T> | boolean) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
-	submit: (submitter?: HTMLButtonElement | HTMLInputElement | null) => void;
+	submit: (submitter?: HTMLElement | null) => void;
 
 	capture: Capture<T, M>;
 	restore: T extends T ? Restore<T, M> : never;

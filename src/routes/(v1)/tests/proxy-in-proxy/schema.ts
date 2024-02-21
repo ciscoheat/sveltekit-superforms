@@ -1,5 +1,5 @@
 import { z } from 'zod';
 
 export const schema = z.object({
-  date: z.date()
+	date: z.date()
 });

@@ -1,9 +1,9 @@
 export enum UserType {
-  WORKER = 'worker',
-  MANAGER = 'manager'
+	WORKER = 'worker',
+	MANAGER = 'manager'
 }
 
 export enum NumberType {
-  WORKER = 1,
-  MANAGER = 10
+	WORKER = 1,
+	MANAGER = 10
 }

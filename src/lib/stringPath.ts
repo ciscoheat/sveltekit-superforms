@@ -51,8 +51,8 @@ export type FormPathLeavesWithErrors<T extends object, Type = never> = string &
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object> = string &
-	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: never }>;
+export type FormPathArrays<T extends object, Type = never> = string &
+	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
 
 type Concat<
 	Path extends string,
@@ -71,8 +71,15 @@ type If<
 	Pred extends keyof StringPathOptions,
 	Subj,
 	Then,
-	Else = never
-> = Options[Pred] extends Subj ? Then : Else;
+	Else = never,
+	Value = unknown
+> = Options[Pred] extends Subj
+	? Options['type'] extends never
+		? Then
+		: Value extends Options['type']
+			? Then
+			: never
+	: Else;
 
 type StringPath<
 	T extends object,
@@ -86,8 +93,8 @@ type StringPath<
 	? If<Options, 'filter', 'leaves' | 'all', Options['path']>
 	: T extends (infer U)[]
 		?
-				| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>>
-				| If<Options, 'filter', 'arrays' | 'all', Options['path']>
+				| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>, never, T>
+				| If<Options, 'filter', 'arrays' | 'all', Options['path'], never, T>
 				| (NonNullable<U> extends object
 						? StringPath<
 								NonNullable<U>,
@@ -98,26 +105,37 @@ type StringPath<
 									type: Options['type'];
 								}
 							>
-						: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`>)
+						: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`, never, T>)
 		: {
 				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
 					?
-							| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>>
+							| If<
+									Options,
+									'objAppend',
+									string,
+									Concat<Options['path'], Options['objAppend']>,
+									never,
+									T[K]
+							  >
 							| NonNullable<T[K]> extends (infer U)[]
 						?
-								| If<Options, 'filter', 'arrays' | 'all', Concat<Options['path'], K>>
+								| If<Options, 'filter', 'arrays' | 'all', Concat<Options['path'], K>, never, T[K]>
 								| (NonNullable<U> extends unknown[]
 										? If<
 												Options,
 												'filter',
 												'arrays' | 'all',
-												Concat<Options['path'], `${K}[${number}]`>
+												Concat<Options['path'], `${K}[${number}]`>,
+												never,
+												T[K]
 											>
 										: If<
 												Options,
 												'filter',
 												'leaves' | 'all',
-												Concat<Options['path'], `${K}[${number}]`>
+												Concat<Options['path'], `${K}[${number}]`>,
+												never,
+												U
 											>)
 								| (NonNullable<U> extends object
 										? StringPath<
@@ -131,7 +149,7 @@ type StringPath<
 											>
 										: never)
 						:
-								| If<Options, 'filter', 'all', Concat<Options['path'], K>>
+								| If<Options, 'filter', 'all', Concat<Options['path'], K>, never, T[K]>
 								| StringPath<
 										NonNullable<T[K]>,
 										{
@@ -141,7 +159,7 @@ type StringPath<
 											type: Options['type'];
 										}
 								  >
-					: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>>;
+					: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>, never, T[K]>;
 			}[Extract<AllKeys<T>, string>];
 
 export type FormPathType<T, P extends string> = P extends keyof T

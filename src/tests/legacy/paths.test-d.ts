@@ -38,8 +38,6 @@ type FormData = {
 	};
 };
 
-type FormDataArrays = FormPathArrays<FormData>;
-
 type ObjUnion = {
 	name: string;
 	entity: { type: 'person'; DOB: Date } | { type: 'corporate'; taxId: string };
@@ -298,6 +296,28 @@ test('setError paths', async () => {
 		setError(output, 'Form-level error', { overwrite: true });
 		setError(output, 'Second form-level error');
 	});
+});
+
+test('FormPath with type narrowing, simple types', () => {
+	type Numbers = FormPath<Obj, number>;
+
+	const t1: Numbers = 'points';
+	const t2: Numbers = 'tags[2].id';
+	const t3: Numbers = 'tags[2].parents[3]';
+
+	// @ts-expect-error incorrect path
+	const nested: Numbers = 'name';
+});
+
+test('FormPath with type narrowing, arrays', () => {
+	type NameArrays = FormPath<Obj, string[]>;
+
+	const t1: NameArrays = 'names';
+
+	// @ts-expect-error incorrect path
+	const i1: NameArrays = 'tags[2].id';
+	// @ts-expect-error incorrect path
+	const i2: NameArrays = 'tags';
 });
 
 ///////////////////////////////////////////////////

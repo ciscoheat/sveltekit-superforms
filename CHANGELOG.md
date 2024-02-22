@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Type narrowing for `FormPath` and its relatives, to filter the paths based on a specific type, like `FormPath<T, Date>`.
+
 ### Fixed
 
 - `defaults` didn't generate correct `SuperValidated` data, making `superForm` confused. Also fixed type signature and removed the `jsonSchema` option that wasn't applicable.

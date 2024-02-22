@@ -31,27 +31,28 @@ export type MergeUnion<T> = {
 /**
  * Lists all paths in an object as string accessors.
  */
-export type FormPath<T extends object> = string & StringPath<T>;
+export type FormPath<T extends object, Type = never> = string &
+	StringPath<T, { filter: 'all'; objAppend: never; path: ''; type: Type }>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
-export type FormPathLeaves<T extends object> = string &
-	StringPath<T, { filter: 'leaves'; objAppend: never; path: '' }>;
+export type FormPathLeaves<T extends object, Type = never> = string &
+	StringPath<T, { filter: 'leaves'; objAppend: never; path: ''; type: Type }>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Also includes the _errors field for objects and arrays.
  */
-export type FormPathLeavesWithErrors<T extends object> = string &
-	StringPath<T, { filter: 'leaves'; objAppend: '_errors'; path: '' }>;
+export type FormPathLeavesWithErrors<T extends object, Type = never> = string &
+	StringPath<T, { filter: 'leaves'; objAppend: '_errors'; path: ''; type: Type }>;
 
 /**
  * List all arrays in an object as string accessors.
  */
 export type FormPathArrays<T extends object> = string &
-	StringPath<T, { filter: 'arrays'; objAppend: never; path: '' }>;
+	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: never }>;
 
 type Concat<
 	Path extends string,
@@ -62,7 +63,16 @@ type StringPathOptions = {
 	filter: 'arrays' | 'leaves' | 'all';
 	objAppend: string | never;
 	path: string;
+	type: unknown | never;
 };
+
+type If<
+	Options extends StringPathOptions,
+	Pred extends keyof StringPathOptions,
+	Subj,
+	Then,
+	Else = never
+> = Options[Pred] extends Subj ? Then : Else;
 
 type StringPath<
 	T extends object,
@@ -70,17 +80,14 @@ type StringPath<
 		filter: 'all';
 		objAppend: never;
 		path: '';
+		type: never;
 	}
 > = T extends BuiltInObjects
-	? Options['filter'] extends 'leaves' | 'all'
-		? Options['path']
-		: never
+	? If<Options, 'filter', 'leaves' | 'all', Options['path']>
 	: T extends (infer U)[]
 		?
-				| (Options['objAppend'] extends string
-						? Concat<Options['path'], Options['objAppend']>
-						: never)
-				| (Options['filter'] extends 'arrays' | 'all' ? Options['path'] : never)
+				| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>>
+				| If<Options, 'filter', 'arrays' | 'all', Options['path']>
 				| (NonNullable<U> extends object
 						? StringPath<
 								NonNullable<U>,
@@ -88,27 +95,30 @@ type StringPath<
 									filter: Options['filter'];
 									objAppend: Options['objAppend'];
 									path: `${Options['path']}[${number}]`;
+									type: Options['type'];
 								}
 							>
-						: Options['filter'] extends 'leaves' | 'all'
-							? `${Options['path']}[${number}]`
-							: never)
+						: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`>)
 		: {
 				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
 					?
-							| (Options['objAppend'] extends string
-									? Concat<Options['path'], Options['objAppend']>
-									: never)
+							| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>>
 							| NonNullable<T[K]> extends (infer U)[]
 						?
-								| (Options['filter'] extends 'arrays' | 'all' ? Concat<Options['path'], K> : never)
+								| If<Options, 'filter', 'arrays' | 'all', Concat<Options['path'], K>>
 								| (NonNullable<U> extends unknown[]
-										? Options['filter'] extends 'arrays' | 'all'
-											? Concat<Options['path'], `${K}[${number}]`>
-											: never
-										: Options['filter'] extends 'leaves' | 'all'
-											? Concat<Options['path'], `${K}[${number}]`>
-											: never)
+										? If<
+												Options,
+												'filter',
+												'arrays' | 'all',
+												Concat<Options['path'], `${K}[${number}]`>
+											>
+										: If<
+												Options,
+												'filter',
+												'leaves' | 'all',
+												Concat<Options['path'], `${K}[${number}]`>
+											>)
 								| (NonNullable<U> extends object
 										? StringPath<
 												NonNullable<U>,
@@ -116,22 +126,22 @@ type StringPath<
 													filter: Options['filter'];
 													objAppend: Options['objAppend'];
 													path: Concat<Options['path'], `${K}[${number}]`>;
+													type: Options['type'];
 												}
 											>
 										: never)
 						:
-								| (Options['filter'] extends 'all' ? Concat<Options['path'], K> : never)
+								| If<Options, 'filter', 'all', Concat<Options['path'], K>>
 								| StringPath<
 										NonNullable<T[K]>,
 										{
 											filter: Options['filter'];
 											objAppend: Options['objAppend'];
 											path: Concat<Options['path'], K>;
+											type: Options['type'];
 										}
 								  >
-					: Options['filter'] extends 'leaves' | 'all'
-						? Concat<Options['path'], K>
-						: never;
+					: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>>;
 			}[Extract<AllKeys<T>, string>];
 
 export type FormPathType<T, P extends string> = P extends keyof T

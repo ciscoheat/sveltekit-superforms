@@ -68,12 +68,12 @@ type StringPathOptions = {
 
 type If<
 	Options extends StringPathOptions,
-	Subj extends keyof StringPathOptions,
-	Pred,
+	Pred extends keyof Options,
+	Subj,
 	Then,
 	Else = never,
 	Value = unknown
-> = Options[Subj] extends Pred
+> = Options[Pred] extends Subj
 	? Options['type'] extends never
 		? Then
 		: Value extends Options['type']

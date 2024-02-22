@@ -8,6 +8,7 @@ export const _schema = z.object({
 });
 
 export const load = async () => {
+	console.log('+page.ts load');
 	const form = await superValidate(zod(_schema));
 	return { form };
 };

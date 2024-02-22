@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `defaults` didn't generate correct `SuperValidated` data, making `superForm` confused. Also fixed type signature and removed the `jsonSchema` option that wasn't applicable.
+- A successful `PageData` result from `invalidateAll` was overwritten by the `ActionData` result.
 
 ## [2.5.0] - 2024-02-21
 

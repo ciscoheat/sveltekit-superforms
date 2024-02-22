@@ -902,7 +902,7 @@ export function superForm<
 		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
 			Form_reset({ message: form.message, posted: true });
 		} else {
-			rebind(form, successResult, undefined, true);
+			rebind({ form, untaint: successResult, keepFiles: true });
 		}
 
 		// onUpdated may check stores, so need to wait for them to update.
@@ -923,7 +923,13 @@ export function superForm<
 		resetData.data = { ...resetData.data, ...opts.data };
 		if (opts.id !== undefined) resetData.id = opts.id;
 
-		rebind(resetData, true, opts.message, false, opts.posted);
+		rebind({
+			form: resetData,
+			untaint: true,
+			message: opts.message,
+			keepFiles: false,
+			posted: opts.posted
+		});
 	}
 
 	const Form_updateFromActionResult: FormUpdate = async (result) => {
@@ -1183,28 +1189,28 @@ export function superForm<
 	options.taintedMessage = undefined;
 
 	// Role rebinding
-	function rebind(
-		form: SuperValidated<T, M, In>,
-		untaint: TaintedFields<T> | boolean,
-		message?: M,
-		keepFiles?: boolean,
-		posted?: boolean
-	) {
+	function rebind(opts: {
+		form: SuperValidated<T, M, In>;
+		untaint: TaintedFields<T> | boolean;
+		message?: M;
+		keepFiles?: boolean;
+		posted?: boolean;
+	}) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
+		const form = opts.form;
+		const message = opts.message ?? form.message;
 
-		if (untaint) {
-			Tainted_set(typeof untaint === 'boolean' ? undefined : untaint, form.data);
+		if (opts.untaint) {
+			Tainted_set(typeof opts.untaint === 'boolean' ? undefined : opts.untaint, form.data);
 		}
-
-		message = message ?? form.message;
 
 		// Form data is not tainted when rebinding.
 		// Prevents object errors from being revalidated after rebind.
-		Form_set(form.data, { taint: 'ignore', keepFiles });
+		Form_set(form.data, { taint: 'ignore', keepFiles: opts.keepFiles });
 		Message.set(message);
 		Errors.set(form.errors);
 		FormId.set(form.id);
-		Posted.set(posted ?? form.posted);
+		Posted.set(opts.posted ?? form.posted);
 		// Constraints and shape will only be set when they exist.
 		if (form.constraints) Constraints.set(form.constraints);
 		if (form.shape) Shape.set(form.shape);
@@ -1277,8 +1283,6 @@ export function superForm<
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(
 			page.subscribe(async (pageUpdate) => {
-				if (!options.applyAction) return;
-
 				// Strange timing issue in SPA mode forces a wait here,
 				// otherwise errors will appear even if the form is valid
 				// when pressing enter to submit the form (not when clicking a submit button!)
@@ -1288,7 +1292,7 @@ export function superForm<
 
 				const successResult = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
-				if (pageUpdate.form && typeof pageUpdate.form === 'object') {
+				if (options.applyAction && pageUpdate.form && typeof pageUpdate.form === 'object') {
 					const actionData = pageUpdate.form;
 
 					// Check if it is an error result, sent here from formEnhance
@@ -1315,7 +1319,11 @@ export function superForm<
 							continue;
 						}
 
-						rebind(newForm as SuperValidated<T, M, In>, successResult, undefined, true);
+						rebind({
+							form: newForm as SuperValidated<T, M, In>,
+							untaint: successResult,
+							keepFiles: true
+						});
 					}
 				}
 			})
@@ -1353,7 +1361,7 @@ export function superForm<
 		},
 
 		restore: ((snapshot: SuperFormSnapshot<T, M>) => {
-			rebind(snapshot, snapshot.tainted ?? true);
+			rebind({ form: snapshot, untaint: snapshot.tainted ?? true });
 		}) as T extends T ? Restore<T, M> : never,
 
 		async validate<Path extends FormPathLeaves<T>>(
@@ -1822,7 +1830,7 @@ export function superForm<
 									// This will trigger the page subscription in superForm,
 									// which will in turn call Data_update.
 									await applyAction(result);
-								} else {
+								} else if (result.type !== 'success' || !options.invalidateAll) {
 									// Call Data_update directly to trigger events
 									await Form_updateFromActionResult(result);
 								}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ValidationAdapter, ClientValidationAdapter } from './adapters/adapters.js';
 import type { SuperValidateOptions, SuperValidated } from './superValidate.js';
 
@@ -9,47 +10,50 @@ type SuperSchemaOptions<T extends Record<string, unknown>> = Pick<
 >;
 
 export function defaults<
-	T extends Record<string, unknown>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
->(adapter: ValidationAdapter<T>, options?: SuperSchemaOptions<T>): SuperValidated<T, M>;
+	Out extends Record<string, unknown>,
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = Out
+>(
+	adapter: ValidationAdapter<Out, In>,
+	options?: SuperSchemaOptions<Out>
+): SuperValidated<Out, M, In>;
 
 export function defaults<
-	T extends Record<string, unknown>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	Out extends Record<string, unknown>,
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = Out
 >(
-	defaults: SuperSchemaData<T>,
-	adapter: ValidationAdapter<T>,
-	options?: SuperSchemaOptions<T>
-): SuperValidated<T, M>;
+	defaults: SuperSchemaData<Out>,
+	adapter: ValidationAdapter<Out, In>,
+	options?: SuperSchemaOptions<Out>
+): SuperValidated<Out, M, In>;
 
 export function defaults<
-	T extends Record<string, unknown>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	Out extends Record<string, unknown>,
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = Out
 >(
-	defaults: T,
-	adapter: ClientValidationAdapter<T>,
-	options?: SuperSchemaOptions<T>
-): SuperValidated<T, M>;
+	defaults: Out,
+	adapter: ClientValidationAdapter<Out, In>,
+	options?: SuperSchemaOptions<Out>
+): SuperValidated<Out, M, In>;
 
 export function defaults<
-	T extends Record<string, unknown>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	Out extends Record<string, unknown>,
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = Out
 >(
-	data: SuperSchemaData<T> | ValidationAdapter<T> | T,
-	adapter?: ValidationAdapter<T> | ClientValidationAdapter<T> | SuperSchemaOptions<T>,
-	options?: SuperSchemaOptions<T>
-): SuperValidated<T, M> {
+	data: SuperSchemaData<Out> | ValidationAdapter<Out, In> | Out,
+	adapter?: ValidationAdapter<Out, In> | ClientValidationAdapter<Out, In> | SuperSchemaOptions<Out>,
+	options?: SuperSchemaOptions<Out>
+): SuperValidated<Out, M, In> {
 	if (data && 'superFormValidationLibrary' in data) {
-		options = adapter as SuperSchemaOptions<T>;
+		options = adapter as SuperSchemaOptions<Out>;
 		adapter = data;
 		data = null;
 	}
 
-	const validator = adapter as ValidationAdapter<T>;
+	const validator = adapter as ValidationAdapter<Out, In>;
 	const optionDefaults = options?.defaults ?? validator.defaults;
 
 	return {
@@ -63,6 +67,8 @@ export function defaults<
 	};
 }
 
-export function defaultValues<T extends Record<string, unknown>>(adapter: ValidationAdapter<T>): T {
+export function defaultValues<T extends Record<string, unknown>>(
+	adapter: ValidationAdapter<T, Record<string, unknown>>
+): T {
 	return adapter.defaults;
 }

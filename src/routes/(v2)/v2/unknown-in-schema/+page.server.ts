@@ -1,12 +1,16 @@
 import { zod } from '$lib/adapters/zod.js';
 import { message, superValidate } from '$lib/server/index.js';
-import { anySchema, schema } from './schema.js';
+import { anySchema, schema, userSchema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = async () => {
 	const form = await superValidate(zod(schema));
 	const anyForm = await superValidate(zod(anySchema));
-	return { form, anyForm };
+	const userForm = await superValidate(
+		{ name: 'some name', options: [{ color: 'option-1-color', value: 'option-1' }] },
+		zod(userSchema)
+	);
+	return { form, anyForm, userForm };
 };
 
 export const actions = {

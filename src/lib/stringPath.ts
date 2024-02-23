@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function splitPath(path: string) {
 	return path
 		.toString()
@@ -20,7 +21,6 @@ type BuiltInObjects = Date | Set<unknown> | File;
 
 export type AllKeys<T> = T extends T ? keyof T : never;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
 
 // Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
@@ -31,27 +31,27 @@ export type MergeUnion<T> = {
 /**
  * Lists all paths in an object as string accessors.
  */
-export type FormPath<T extends object, Type = never> = string &
+export type FormPath<T extends object, Type = any> = string &
 	StringPath<T, { filter: 'all'; objAppend: never; path: ''; type: Type }>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
-export type FormPathLeaves<T extends object, Type = never> = string &
+export type FormPathLeaves<T extends object, Type = any> = string &
 	StringPath<T, { filter: 'leaves'; objAppend: never; path: ''; type: Type }>;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Also includes the _errors field for objects and arrays.
  */
-export type FormPathLeavesWithErrors<T extends object, Type = never> = string &
+export type FormPathLeavesWithErrors<T extends object, Type = any> = string &
 	StringPath<T, { filter: 'leaves'; objAppend: '_errors'; path: ''; type: Type }>;
 
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object, Type = never> = string &
+export type FormPathArrays<T extends object, Type = any> = string &
 	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
 
 type Concat<
@@ -63,7 +63,7 @@ type StringPathOptions = {
 	filter: 'arrays' | 'leaves' | 'all';
 	objAppend: string | never;
 	path: string;
-	type: unknown | never;
+	type: any;
 };
 
 type If<

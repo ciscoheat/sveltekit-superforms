@@ -39,7 +39,8 @@
 		'onchange-target',
 		'issue-356',
 		'issue-358',
-		'issue-360'
+		'issue-360',
+		'unknown-in-schema'
 	].sort();
 </script>
 

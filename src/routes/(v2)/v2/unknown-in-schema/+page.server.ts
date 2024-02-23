@@ -1,11 +1,12 @@
 import { zod } from '$lib/adapters/zod.js';
 import { message, superValidate } from '$lib/server/index.js';
-import { schema } from './schema.js';
+import { anySchema, schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = async () => {
 	const form = await superValidate(zod(schema));
-	return { form };
+	const anyForm = await superValidate(zod(anySchema));
+	return { form, anyForm };
 };
 
 export const actions = {

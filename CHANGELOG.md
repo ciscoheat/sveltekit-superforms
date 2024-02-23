@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `defaults` didn't generate correct `SuperValidated` data, making `superForm` confused. Also fixed type signature and removed the `jsonSchema` option that wasn't applicable.
 - A successful `PageData` result from `invalidateAll` was overwritten by the `ActionData` result.
 - Using `goto` in events didn't work when the target page redirected.
-- `FormPathLeaves` didn't handle fields with type `unknown`.
+- `FormPath` and `FormPathLeaves` didn't handle fields with type `unknown` and `any`.
 
 ## [2.5.0] - 2024-02-21
 

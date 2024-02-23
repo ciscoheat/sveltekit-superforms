@@ -54,6 +54,9 @@ export type FormPathLeavesWithErrors<T extends object, Type = any> = string &
 export type FormPathArrays<T extends object, Type = any> = string &
 	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
 
+// Thanks to https://stackoverflow.com/a/77451367/70894
+type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
+
 type Concat<
 	Path extends string,
 	Next extends string
@@ -148,24 +151,26 @@ type StringPath<
 												}
 											>
 										: never)
-						:
-								| If<
-										Options,
-										'filter',
-										'all',
-										Concat<Options['path'], K>,
-										unknown extends T[K] ? Concat<Options['path'], K> : never,
-										T[K]
-								  >
-								| StringPath<
-										NonNullable<T[K]>,
-										{
-											filter: Options['filter'];
-											objAppend: Options['objAppend'];
-											path: Concat<Options['path'], K>;
-											type: Options['type'];
-										}
-								  >
+						: IsAny<T[K]> extends true
+							? Concat<Options['path'], K>
+							:
+									| If<
+											Options,
+											'filter',
+											'all',
+											Concat<Options['path'], K>,
+											unknown extends T[K] ? Concat<Options['path'], K> : never,
+											T[K]
+									  >
+									| StringPath<
+											NonNullable<T[K]>,
+											{
+												filter: Options['filter'];
+												objAppend: Options['objAppend'];
+												path: Concat<Options['path'], K>;
+												type: Options['type'];
+											}
+									  >
 					: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>, never, T[K]>;
 			}[Extract<AllKeys<T>, string>];
 

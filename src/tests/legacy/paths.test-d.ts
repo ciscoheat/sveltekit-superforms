@@ -339,6 +339,28 @@ test('FormPath with unknown type', () => {
 	const t3: FPA = 'homePlanet';
 });
 
+test('FormPath with any type', () => {
+	const schema = z.object({
+		name: z.string(),
+		age: z.any()
+	});
+
+	type FP = FormPath<z.infer<typeof schema>>;
+	type FPL = FormPathLeaves<z.infer<typeof schema>>;
+	type FPA = FormPathArrays<z.infer<typeof schema>>;
+
+	const t1: FP = 'age';
+	const t11: FP = 'age[3]';
+	const t2: FPL = 'age';
+	const t21: FPL = 'age[3]';
+	const t3: FPA = 'age';
+
+	// @ts-expect-error Invalid path
+	const f1: FP = 'nope';
+	// @ts-expect-error Invalid path
+	const f2: FPA = 'age[3]';
+});
+
 ///////////////////////////////////////////////////
 
 // Recursive schema test

@@ -6,12 +6,10 @@
 
 	export let data;
 
-	const form = superForm(data.form, {
-		taintedMessage: false
-		//dataType: 'json',
-		//validators: zod(schema)
-	});
+	const form = superForm(data.form, { taintedMessage: false });
+	const anyForm = superForm(data.anyForm, { taintedMessage: false });
 </script>
 
 <FormCmptAge {form} field="age" />
 <FormCmptAge {form} field="homePlanet" />
+<FormCmptAge form={anyForm} field="age" />

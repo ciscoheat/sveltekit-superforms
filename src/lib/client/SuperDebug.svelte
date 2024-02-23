@@ -198,7 +198,7 @@
 				if (value instanceof Error) {
 					return '#}E#' + `${value.name}: ${value.message || value.cause || '(No error message)'}`;
 				}
-				if (typeof this === 'object' && this[key] instanceof File) {
+				if (browser && typeof this === 'object' && this[key] instanceof File) {
 					return fileToJSON(this[key]);
 				}
 				if (browser && typeof this === 'object' && this[key] instanceof FileList) {

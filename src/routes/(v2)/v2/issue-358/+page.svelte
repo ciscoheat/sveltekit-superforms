@@ -8,13 +8,13 @@
 	// eslint-disable-next-line svelte/valid-compile
 	const resetForm = $page.url.searchParams.has('reset');
 
-	const { form, errors, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance, reset, tainted } = superForm(data.form, {
 		invalidateAll: 'force',
 		resetForm
 	});
 </script>
 
-<SuperDebug data={$form} />
+<SuperDebug data={{ $form, $tainted }} />
 
 <h3>Superforms testing ground - Zod</h3>
 
@@ -43,6 +43,7 @@
 	</label>
 
 	<button>Submit</button>
+	<button type="button" on:click={() => reset()} style="background-color: darkred">Reset</button>
 </form>
 
 <hr />

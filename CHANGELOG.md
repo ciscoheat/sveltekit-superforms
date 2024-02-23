@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Type narrowing for `FormPath` and its relatives, to filter the paths based on a specific type, like `FormPath<T, Date>`.
 - Proxy types: `FieldProxy`, `FormFieldProxy` and `ArrayProxy`.
-- `invalidateAll` option `force`, to always use the load function form data, instead of the one returned from the form action. Useful when updating the form data partially, to ensure that the data is refreshed from the server.
+- `invalidateAll` option `force`, to always use the load function form data, instead of the one returned from the form action. Useful when updating the form data partially, to ensure that the data is refreshed from the server. It also bases the `reset` function on the latest load function value returned.
 
 ### Fixed
 

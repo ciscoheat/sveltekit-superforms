@@ -1327,6 +1327,10 @@ export function superForm<
 							continue;
 						}
 
+						if (options.invalidateAll === 'force') {
+							initialForm.data = newForm.data as T;
+						}
+
 						rebind({
 							form: newForm as SuperValidated<T, M, In>,
 							untaint: successResult,

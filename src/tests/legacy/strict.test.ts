@@ -29,6 +29,38 @@ describe('Strict mode', () => {
 		expect(form.valid).toEqual(true);
 	});
 
+	describe('Should not allow missing boolean fields', () => {
+		test('With FormData', async () => {
+			const formData = new FormData();
+
+			const schema = z.object({
+				enabled: z.boolean()
+			});
+
+			const form = await superValidate(formData, zod(schema), {
+				strict: true
+			});
+
+			expect(form.valid).toBe(false);
+			expect(form.errors).toEqual({ enabled: ['Required'] });
+		});
+
+		test('With an object', async () => {
+			const data = {};
+
+			const schema = z.object({
+				enabled: z.boolean()
+			});
+
+			const form = await superValidate(data, zod(schema), {
+				strict: true
+			});
+
+			expect(form.valid).toBe(false);
+			expect(form.errors).toEqual({ enabled: ['Required'] });
+		});
+	});
+
 	const strictTests = [
 		{
 			name: 'Should be invalid if foo is not present in object',

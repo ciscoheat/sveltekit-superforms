@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A successful `PageData` result from `invalidateAll` was overwritten by the `ActionData` result.
 - Using `goto` in events didn't work when the target page redirected.
 - `FormPath` and `FormPathLeaves` didn't handle fields with type `unknown` and `any`.
+- Missing boolean fields were valid in strict mode.
 
 ## [2.5.0] - 2024-02-21
 

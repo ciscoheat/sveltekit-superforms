@@ -149,12 +149,14 @@ function _parseFormData<T extends Record<string, unknown>>(
 	options?: SuperValidateOptions<T>
 ) {
 	const output: Record<string, unknown> = {};
-	const schemaKeys = new Set(
-		[
-			...Object.keys(schema.properties ?? {}),
-			...(schema.additionalProperties ? formData.keys() : [])
-		].filter((key) => !key.startsWith('__superform_'))
-	);
+	const schemaKeys = options?.strict
+		? new Set([...formData.keys()].filter((key) => !key.startsWith('__superform_')))
+		: new Set(
+				[
+					...Object.keys(schema.properties ?? {}),
+					...(schema.additionalProperties ? formData.keys() : [])
+				].filter((key) => !key.startsWith('__superform_'))
+			);
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
 		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
@@ -246,7 +248,7 @@ function parseFormDataEntry(
 	info: SchemaInfo
 ): unknown {
 	if (!value) {
-		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
+		//console.log(`No FormData for "${key}" (${type}).`, info, strict); //debug
 
 		// Special case for booleans with default value true
 		if (type == 'boolean' && info.isOptional && info.schema.default === true) {

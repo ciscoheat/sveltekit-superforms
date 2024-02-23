@@ -315,11 +315,6 @@ type FormDataOptions = Partial<{
 	keepFiles: boolean;
 }>;
 
-type FormUpdate = (
-	result: Exclude<ActionResult, { type: 'error' }>,
-	untaint?: boolean
-) => Promise<void>;
-
 const formIds = new WeakMap<Page, Set<string | undefined>>();
 const initialForms = new WeakMap<
 	object,
@@ -870,7 +865,7 @@ export function superForm<
 		Errors.set(output as ValidationErrors<T>);
 	}
 
-	function Form_set(data: T, options: FormDataOptions = {}) {
+	function Form_set(data: Partial<T>, options: FormDataOptions = {}) {
 		// Check if file fields should be kept, usually when the server returns them as undefined.
 		// in that case remove the undefined field from the new data.
 		if (options.keepFiles) {
@@ -886,7 +881,7 @@ export function superForm<
 				}
 			});
 		}
-		return Form.set(data, options);
+		return Form.update(($form) => ({ ...$form, ...data }), options);
 	}
 
 	function Form_shouldReset(validForm: boolean, successActionResult: boolean) {
@@ -902,7 +897,11 @@ export function superForm<
 		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
 			Form_reset({ message: form.message, posted: true });
 		} else {
-			rebind({ form, untaint: successResult, keepFiles: true });
+			rebind({
+				form,
+				untaint: successResult,
+				keepFiles: true
+			});
 		}
 
 		// onUpdated may check stores, so need to wait for them to update.
@@ -917,7 +916,12 @@ export function superForm<
 	}
 
 	function Form_reset(
-		opts: { message?: M; data?: Partial<T>; id?: string; posted?: boolean } = {}
+		opts: {
+			message?: M;
+			data?: Partial<T>;
+			id?: string;
+			posted?: boolean;
+		} = {}
 	) {
 		const resetData = clone(initialForm);
 		resetData.data = { ...resetData.data, ...opts.data };
@@ -932,7 +936,7 @@ export function superForm<
 		});
 	}
 
-	const Form_updateFromActionResult: FormUpdate = async (result) => {
+	async function Form_updateFromActionResult(result: Exclude<ActionResult, { type: 'error' }>) {
 		if (result.type == ('error' as string)) {
 			throw new SuperFormError(
 				`ActionResult of type "${result.type}" cannot be passed to update function.`
@@ -964,7 +968,7 @@ export function superForm<
 				result.status >= 200 && result.status < 300
 			);
 		}
-	};
+	}
 
 	//#endregion
 
@@ -1188,6 +1192,24 @@ export function superForm<
 	// tainted dialog when a form doesn't use it or the browser doesn't use JS.
 	options.taintedMessage = undefined;
 
+	function rebindPage(opts: {
+		form: SuperValidated<T, M, In>;
+		untaint: TaintedFields<T> | boolean;
+		keepFiles?: boolean;
+	}) {
+		const form = opts.form;
+
+		if (opts.untaint) {
+			Tainted_set(typeof opts.untaint === 'boolean' ? undefined : opts.untaint, form.data);
+		}
+
+		// Form data is not tainted when rebinding.
+		// Prevents object errors from being revalidated after rebind.
+		// Check if form was invalidated (usually with options.invalidateAll) to prevent data from being
+		// overwritten by the load function data
+		Form_set(form.data, { taint: 'ignore', keepFiles: opts.keepFiles });
+	}
+
 	// Role rebinding
 	function rebind(opts: {
 		form: SuperValidated<T, M, In>;
@@ -1197,16 +1219,12 @@ export function superForm<
 		posted?: boolean;
 	}) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
+
+		rebindPage({ ...opts });
+
 		const form = opts.form;
 		const message = opts.message ?? form.message;
 
-		if (opts.untaint) {
-			Tainted_set(typeof opts.untaint === 'boolean' ? undefined : opts.untaint, form.data);
-		}
-
-		// Form data is not tainted when rebinding.
-		// Prevents object errors from being revalidated after rebind.
-		Form_set(form.data, { taint: 'ignore', keepFiles: opts.keepFiles });
 		Message.set(message);
 		Errors.set(form.errors);
 		FormId.set(form.id);
@@ -1283,13 +1301,6 @@ export function superForm<
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(
 			page.subscribe(async (pageUpdate) => {
-				// Strange timing issue in SPA mode forces a wait here,
-				// otherwise errors will appear even if the form is valid
-				// when pressing enter to submit the form (not when clicking a submit button!)
-				if (options.SPA) {
-					await new Promise((r) => setTimeout(r, 0));
-				}
-
 				const successResult = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
 				if (options.applyAction && pageUpdate.form && typeof pageUpdate.form === 'object') {
@@ -1830,7 +1841,7 @@ export function superForm<
 									// This will trigger the page subscription in superForm,
 									// which will in turn call Data_update.
 									await applyAction(result);
-								} else if (result.type !== 'success' || !options.invalidateAll) {
+								} else {
 									// Call Data_update directly to trigger events
 									await Form_updateFromActionResult(result);
 								}

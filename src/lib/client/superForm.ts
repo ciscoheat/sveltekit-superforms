@@ -1781,14 +1781,21 @@ export function superForm<
 							};
 
 					currentRequest = null;
+
 					let cancelled = false;
+					const cancel = () => (cancelled = true);
 
 					const data = {
 						result,
 						formEl: FormElement,
 						formElement: FormElement,
-						cancel: () => (cancelled = true)
+						cancel
 					};
+
+					// Check for goto in the events
+					const unsubCheckforNav = navigating.subscribe(($nav) => {
+						if ($nav) cancel();
+					});
 
 					for (const event of formEvents.onResult) {
 						await event(data);
@@ -1914,6 +1921,8 @@ export function superForm<
 							}
 						});
 					}
+
+					unsubCheckforNav();
 				}
 
 				return validationResponse;

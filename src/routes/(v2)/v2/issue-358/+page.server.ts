@@ -20,8 +20,6 @@ export const actions = {
 
 		// Forgot to update email
 		db.name = form.data.name;
-		// @ts-expect-error Hack to prevent updating the missing schema field, it will be updated by the load function.
-		delete form.data.email;
 
 		return message(form, 'Form posted successfully!');
 	}

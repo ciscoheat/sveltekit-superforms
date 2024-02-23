@@ -75,7 +75,7 @@ export type FormOptions<
 > = Partial<{
 	id: string;
 	applyAction: boolean;
-	invalidateAll: boolean;
+	invalidateAll: boolean | 'force';
 	resetForm: boolean | (() => boolean);
 	scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
 	autoFocusOnError: boolean | 'detect';
@@ -865,7 +865,7 @@ export function superForm<
 		Errors.set(output as ValidationErrors<T>);
 	}
 
-	function Form_set(data: Partial<T>, options: FormDataOptions = {}) {
+	function Form_set(data: T, options: FormDataOptions = {}) {
 		// Check if file fields should be kept, usually when the server returns them as undefined.
 		// in that case remove the undefined field from the new data.
 		if (options.keepFiles) {
@@ -881,7 +881,7 @@ export function superForm<
 				}
 			});
 		}
-		return Form.update(($form) => ({ ...$form, ...data }), options);
+		return Form.set(data, options);
 	}
 
 	function Form_shouldReset(validForm: boolean, successActionResult: boolean) {
@@ -900,7 +900,9 @@ export function superForm<
 			rebind({
 				form,
 				untaint: successResult,
-				keepFiles: true
+				keepFiles: true,
+				// Check if the form data should be used for updating, or if the invalidateAll load function should be used:
+				skipFormData: options.invalidateAll == 'force'
 			});
 		}
 
@@ -1192,12 +1194,18 @@ export function superForm<
 	// tainted dialog when a form doesn't use it or the browser doesn't use JS.
 	options.taintedMessage = undefined;
 
-	function rebindPage(opts: {
+	// Role rebinding
+	function rebind(opts: {
 		form: SuperValidated<T, M, In>;
 		untaint: TaintedFields<T> | boolean;
+		message?: M;
 		keepFiles?: boolean;
+		posted?: boolean;
+		skipFormData?: boolean;
 	}) {
+		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
 		const form = opts.form;
+		const message = opts.message ?? form.message;
 
 		if (opts.untaint) {
 			Tainted_set(typeof opts.untaint === 'boolean' ? undefined : opts.untaint, form.data);
@@ -1207,23 +1215,12 @@ export function superForm<
 		// Prevents object errors from being revalidated after rebind.
 		// Check if form was invalidated (usually with options.invalidateAll) to prevent data from being
 		// overwritten by the load function data
-		Form_set(form.data, { taint: 'ignore', keepFiles: opts.keepFiles });
-	}
-
-	// Role rebinding
-	function rebind(opts: {
-		form: SuperValidated<T, M, In>;
-		untaint: TaintedFields<T> | boolean;
-		message?: M;
-		keepFiles?: boolean;
-		posted?: boolean;
-	}) {
-		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
-
-		rebindPage({ ...opts });
-
-		const form = opts.form;
-		const message = opts.message ?? form.message;
+		if (opts.skipFormData !== true) {
+			Form_set(form.data, {
+				taint: 'ignore',
+				keepFiles: opts.keepFiles
+			});
+		}
 
 		Message.set(message);
 		Errors.set(form.errors);

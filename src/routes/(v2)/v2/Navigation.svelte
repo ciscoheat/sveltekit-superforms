@@ -38,7 +38,8 @@
 		'index-errors',
 		'onchange-target',
 		'issue-356',
-		'issue-358'
+		'issue-358',
+		'issue-360'
 	].sort();
 </script>
 

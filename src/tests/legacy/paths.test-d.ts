@@ -300,13 +300,16 @@ test('setError paths', async () => {
 
 test('FormPath with type narrowing, simple types', () => {
 	type Numbers = FormPath<Obj, number>;
+	type Nevers = FormPath<Obj, File>;
 
 	const t1: Numbers = 'points';
 	const t2: Numbers = 'tags[2].id';
 	const t3: Numbers = 'tags[2].parents[3]';
 
 	// @ts-expect-error incorrect path
-	const nested: Numbers = 'name';
+	const f1: Numbers = 'name';
+	// @ts-expect-error incorrect path
+	const f2: Nevers = 'nope';
 });
 
 test('FormPath with type narrowing, arrays', () => {
@@ -318,6 +321,22 @@ test('FormPath with type narrowing, arrays', () => {
 	const i1: NameArrays = 'tags[2].id';
 	// @ts-expect-error incorrect path
 	const i2: NameArrays = 'tags';
+});
+
+test('FormPath with unknown type', () => {
+	const schema = z.object({
+		name: z.string(),
+		age: z.number(),
+		homePlanet: z.unknown()
+	});
+
+	type FP = FormPath<z.infer<typeof schema>>;
+	type FPL = FormPathLeaves<z.infer<typeof schema>>;
+	type FPA = FormPathArrays<z.infer<typeof schema>>;
+
+	const t1: FP = 'homePlanet';
+	const t2: FPL = 'homePlanet';
+	const t3: FPA = 'homePlanet';
 });
 
 ///////////////////////////////////////////////////

@@ -149,7 +149,14 @@ type StringPath<
 											>
 										: never)
 						:
-								| If<Options, 'filter', 'all', Concat<Options['path'], K>, never, T[K]>
+								| If<
+										Options,
+										'filter',
+										'all',
+										Concat<Options['path'], K>,
+										unknown extends T[K] ? Concat<Options['path'], K> : never,
+										T[K]
+								  >
 								| StringPath<
 										NonNullable<T[K]>,
 										{

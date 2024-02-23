@@ -10,7 +10,10 @@ export {
 	fieldProxy,
 	formFieldProxy,
 	stringProxy,
-	arrayProxy
+	arrayProxy,
+	type FieldProxy,
+	type ArrayProxy,
+	type FormFieldProxy
 } from './proxies.js';
 
 /////////////////////////////////////////////////////////////////////

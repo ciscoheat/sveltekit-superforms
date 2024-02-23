@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Type narrowing for `FormPath` and its relatives, to filter the paths based on a specific type, like `FormPath<T, Date>`.
+- Proxy types: `FieldProxy`, `FormFieldProxy` and `ArrayProxy`.
 
 ### Fixed
 

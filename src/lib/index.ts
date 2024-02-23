@@ -44,7 +44,10 @@ export {
 	type FormPathLeaves,
 	type FormPathArrays,
 	type FormPathType,
-	type ChangeEvent
+	type ChangeEvent,
+	type FieldProxy,
+	type ArrayProxy,
+	type FormFieldProxy
 } from './client/index.js';
 
 export { splitPath } from './stringPath.js';

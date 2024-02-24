@@ -239,7 +239,7 @@ function parseFormDataEntry(
 	info: SchemaInfo
 ): unknown {
 	if (!value) {
-		//console.log(`No FormData for "${key}" (${type}).`, info, strict); //debug
+		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 
 		// Special case for booleans with default value true
 		if (type == 'boolean' && info.isOptional && info.schema.default === true) {

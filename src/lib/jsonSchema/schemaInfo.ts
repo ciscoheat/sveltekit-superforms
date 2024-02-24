@@ -98,6 +98,10 @@ function schemaTypes(
 		}
 	}
 
+	if (schema.const && schema.const !== null && typeof schema.const !== 'function') {
+		types.push(typeof schema.const as SchemaType);
+	}
+
 	return Array.from(new Set(types));
 }
 

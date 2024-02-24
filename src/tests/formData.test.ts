@@ -1,7 +1,10 @@
 import { describe, it, expect, assert } from 'vitest';
 import { parseFormData } from '$lib/formData.js';
 import { z } from 'zod';
+import * as v from 'valibot';
 import { zodToJSONSchema } from '$lib/adapters/zod.js';
+import { SchemaError, superValidate } from '$lib/index.js';
+import { valibot } from '$lib/adapters/valibot.js';
 
 enum Foo {
 	A = 2,
@@ -58,5 +61,21 @@ describe('FormData parsing', () => {
 		expect(parsed.posted).toEqual(true);
 		expect(parsed.data.date.toISOString().substring(0, 10)).toBe('2023-12-02');
 		expect({ ...parsed.data, date: undefined }).toEqual({ ...data, date: undefined });
+	});
+
+	it('should throw an error if literals are different from the other types', () => {
+		const schema = v.object({
+			urltest: v.union([v.literal(123), v.string([v.startsWith('https://')])])
+		});
+
+		expect(() => valibot(schema)).toThrowError(SchemaError);
+	});
+
+	it('should treat literals as their typeof type', () => {
+		const schema = v.object({
+			urltest: v.union([v.literal(''), v.string([v.startsWith('https://')])])
+		});
+
+		expect(valibot(schema).defaults.urltest).toBe('');
 	});
 });

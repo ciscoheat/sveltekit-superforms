@@ -1792,9 +1792,10 @@ export function superForm<
 						cancel
 					};
 
-					// Check for goto in the events
+					// Check for goto to a different route in the events
 					const unsubCheckforNav = navigating.subscribe(($nav) => {
-						if ($nav) cancel();
+						if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
+						cancel();
 					});
 
 					for (const event of formEvents.onResult) {

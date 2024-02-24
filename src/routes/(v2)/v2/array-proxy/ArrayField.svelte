@@ -4,16 +4,16 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>, F extends FormPathArrays<T>">
-	import type { Writable } from 'svelte/store';
-	import { arrayProxy } from '$lib/index.js';
+	import { arrayProxy, type ArrayProxy } from '$lib/index.js';
 	import type { SuperForm, FormPathArrays, FormPathType } from '$lib/index.js';
 
 	export let form: SuperForm<T>;
 	export let field: F;
 	export let newValue: FormPathType<T, F> extends (infer S)[] ? S : never;
 
-	const { values: v, errors, valueErrors } = arrayProxy(form, field);
-	const values = v as Writable<(typeof newValue)[]>;
+	const { values, errors, valueErrors } = arrayProxy(form, field) satisfies ArrayProxy<
+		typeof newValue
+	>;
 </script>
 
 <div>

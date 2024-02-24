@@ -323,6 +323,19 @@ test('FormPath with type narrowing, arrays', () => {
 	const i2: NameArrays = 'tags';
 });
 
+test('FormPath with type narrowing, union', () => {
+	type NameArrays = FormPath<Obj, string | number>;
+
+	const t1: NameArrays = 'name';
+	const t2: NameArrays = 'points';
+	const t3: NameArrays = 'tags[3].name';
+	const t4: NameArrays = 'names[3]';
+	const t5: NameArrays = 'tags[0].parents[5]';
+
+	// @ts-expect-error incorrect path
+	const i1: NameArrays = 'tags';
+});
+
 test('FormPath with unknown type', () => {
 	const schema = z.object({
 		name: z.string(),

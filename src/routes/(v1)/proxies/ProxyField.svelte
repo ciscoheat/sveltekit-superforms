@@ -35,7 +35,7 @@
 			format: 'datetime'
 		});
 	}
-	$: boolValue = value as Writable<boolean>;
+	const boolValue = value as Writable<boolean>;
 </script>
 
 <label for={String(field)} class={type === 'checkbox' ? 'flex items-center pt-2 space-x-2' : ''}

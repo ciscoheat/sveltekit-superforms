@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { derived, get, type Readable, type Updater, type Writable } from 'svelte/store';
 import type { InputConstraint } from '../index.js';
 import { SuperFormError } from '$lib/errors.js';
@@ -5,16 +6,21 @@ import { pathExists, traversePath } from '../traversal.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';
 import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './index.js';
-import type { Prettify } from '$lib/utils.js';
+import type { IsAny, Prettify } from '$lib/utils.js';
 
 export type ProxyOptions = {
 	taint?: TaintOption;
 };
 
-type FormPaths<T extends Record<string, unknown>> = FormPath<T> | FormPathLeaves<T>;
+type FormPaths<T extends Record<string, unknown>, Type = any> =
+	| FormPath<T, Type>
+	| FormPathLeaves<T, Type>;
 
 type CorrectProxyType<In, Out, T extends Record<string, unknown>, Path extends FormPaths<T>> =
 	NonNullable<FormPathType<T, Path>> extends In ? Writable<Out> : never;
+
+type PathType<Type, T, Path extends string> =
+	IsAny<Type> extends true ? FormPathType<T, Path> : Type;
 
 type DefaultOptions = {
 	trueStringValue: string;
@@ -236,27 +242,25 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<
 	};
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ValueErrors = any[];
 
 export type ArrayProxy<T, Path = string, Errors = ValueErrors> = {
 	path: Path;
-	values: Writable<T & unknown[]>;
+	values: Writable<T[] & unknown[]>;
 	errors: Writable<string[] | undefined>;
 	valueErrors: Writable<Errors>;
 };
 
-export function arrayProxy<T extends Record<string, unknown>, Path extends FormPathArrays<T>>(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function arrayProxy<
+	T extends Record<string, unknown>,
+	Path extends FormPathArrays<T, ArrType>,
+	ArrType = any
+>(
 	superForm: SuperForm<T, any>,
 	path: Path,
 	options?: { taint?: TaintOption }
-): ArrayProxy<FormPathType<T, Path>, Path> {
-	const formErrors = fieldProxy(
-		superForm.errors,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		`${path}` as any
-	);
+): ArrayProxy<FormPathType<T, Path> extends (infer U)[] ? U : never, Path> {
+	const formErrors = fieldProxy(superForm.errors, `${path}` as any);
 
 	const onlyFieldErrors = derived<typeof formErrors, ValueErrors>(formErrors, ($errors) => {
 		const output: ValueErrors = [];
@@ -320,13 +324,10 @@ export function arrayProxy<T extends Record<string, unknown>, Path extends FormP
 
 	return {
 		path,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		values: values as any,
-		errors: fieldProxy(
-			superForm.errors,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			`${path}._errors` as any
-		) as Writable<string[] | undefined>,
+		errors: fieldProxy(superForm.errors, `${path}._errors` as any) as Writable<
+			string[] | undefined
+		>,
 		valueErrors: fieldErrors
 	};
 }
@@ -339,12 +340,15 @@ export type FormFieldProxy<T, Path = string> = {
 	tainted: Writable<boolean | undefined>;
 };
 
-export function formFieldProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T>>(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function formFieldProxy<
+	T extends Record<string, unknown>,
+	Path extends FormPathLeaves<T, Type>,
+	Type = any
+>(
 	superForm: SuperForm<T, any>,
 	path: Path,
 	options?: ProxyOptions
-): FormFieldProxy<FormPathType<T, Path>, Path> {
+): FormFieldProxy<PathType<Type, T, Path>, Path> {
 	const path2 = splitPath(path);
 	// Filter out array indices, the constraints structure doesn't contain these.
 	const constraintsPath = path2.filter((p) => /\D/.test(String(p))).join('.');
@@ -387,7 +391,6 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	return {
 		path,
 		value: superFieldProxy(superForm, path, options),
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		errors: fieldProxy(superForm.errors, path as any) as unknown as Writable<string[] | undefined>,
 		constraints: fieldProxy(superForm.constraints, constraintsPath as never) as Writable<
 			InputConstraint | undefined
@@ -396,10 +399,10 @@ export function formFieldProxy<T extends Record<string, unknown>, Path extends F
 	};
 }
 
-function updateProxyField<T extends Record<string, unknown>, Path extends string>(
+function updateProxyField<T extends Record<string, unknown>, Path extends string, Type = any>(
 	obj: T,
 	path: (string | number | symbol)[],
-	updater: Updater<FormPathType<T, Path>>
+	updater: Updater<PathType<Type, T, Path>>
 ) {
 	const output = traversePath(obj, path, ({ parent, key, value }) => {
 		if (value === undefined) parent[key] = /\D/.test(key) ? {} : [];
@@ -418,11 +421,11 @@ type SuperFieldProxy<T> = {
 	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
-function superFieldProxy<T extends Record<string, unknown>, Path extends string>(
+function superFieldProxy<T extends Record<string, unknown>, Path extends string, Type = any>(
 	superForm: SuperForm<T>,
 	path: Path,
 	baseOptions?: ProxyOptions
-): SuperFieldProxy<FormPathType<T, Path>> {
+): SuperFieldProxy<PathType<Type, T, Path>> {
 	const form = superForm.form;
 	const path2 = splitPath(path);
 
@@ -436,10 +439,10 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends string>
 			const unsub = proxy.subscribe(...params);
 			return () => unsub();
 		},
-		update(upd: Updater<FormPathType<T, Path>>, options?: ProxyOptions) {
+		update(upd: Updater<PathType<Type, T, Path>>, options?: ProxyOptions) {
 			form.update((data) => updateProxyField(data, path2, upd), options ?? baseOptions);
 		},
-		set(value: FormPathType<T, Path>, options?: ProxyOptions) {
+		set(value: PathType<Type, T, Path>, options?: ProxyOptions) {
 			form.update((data) => updateProxyField(data, path2, () => value), options ?? baseOptions);
 		}
 	};
@@ -462,11 +465,15 @@ function isSuperForm<T extends Record<string, unknown>>(
 
 export type FieldProxy<T> = Writable<T>;
 
-export function fieldProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
+export function fieldProxy<
+	T extends Record<string, unknown>,
+	Path extends FormPaths<T, Type>,
+	Type = any
+>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options?: ProxyOptions
-): FieldProxy<FormPathType<T, Path>> {
+): FieldProxy<PathType<Type, T, Path>> {
 	const path2 = splitPath(path);
 
 	if (isSuperForm(form, options)) {
@@ -483,10 +490,10 @@ export function fieldProxy<T extends Record<string, unknown>, Path extends FormP
 			const unsub = proxy.subscribe(...params);
 			return () => unsub();
 		},
-		update(upd: Updater<FormPathType<T, Path>>) {
+		update(upd: Updater<PathType<Type, T, Path>>) {
 			form.update((data) => updateProxyField(data, path2, upd));
 		},
-		set(value: FormPathType<T, Path>) {
+		set(value: PathType<Type, T, Path>) {
 			form.update((data) => updateProxyField(data, path2, () => value));
 		}
 	};

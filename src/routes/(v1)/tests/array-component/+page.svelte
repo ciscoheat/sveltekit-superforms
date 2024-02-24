@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { arrayProxy, superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import AutoComplete from './AutoComplete.svelte';
@@ -24,8 +24,8 @@
 		{ value: 'DI', label: 'Diadem' }
 	];
 
-	//const { values } = arrayProxy(pageForm, 'sub.tags');
-	//$values.push('test');
+	const { values } = arrayProxy(pageForm, 'sub.tags');
+	console.log($values[0]?.charAt(0));
 </script>
 
 {#if taintedForm}<h3>FORM IS TAINTED</h3>{/if}

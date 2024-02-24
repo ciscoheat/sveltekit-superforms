@@ -3,22 +3,24 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>">
-	import { formFieldProxy, type SuperForm, type FormPathLeaves } from '$lib/index.js';
-	import type { Writable } from 'svelte/store';
+	import {
+		formFieldProxy,
+		type FormFieldProxy,
+		type SuperForm,
+		type FormPathLeaves
+	} from '$lib/index.js';
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	export let form: SuperForm<T, any>;
-	export let field: FormPathLeaves<T>;
+	export let form: SuperForm<T>;
+	export let field: FormPathLeaves<T, boolean>;
 
-	const { value, constraints } = formFieldProxy(form, field);
-	$: boolValue = value as Writable<boolean>;
+	const { value, constraints } = formFieldProxy(form, field) satisfies FormFieldProxy<boolean>;
 </script>
 
 <input
 	name={field}
 	type="checkbox"
 	class="checkbox"
-	bind:checked={$boolValue}
+	bind:checked={$value}
 	{...$constraints}
 	{...$$restProps}
 />

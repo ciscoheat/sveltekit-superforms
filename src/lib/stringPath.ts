@@ -1,3 +1,5 @@
+import type { IsAny } from './utils.js';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function splitPath(path: string) {
 	return path
@@ -53,9 +55,6 @@ export type FormPathLeavesWithErrors<T extends object, Type = any> = string &
  */
 export type FormPathArrays<T extends object, Type = any> = string &
 	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
-
-// Thanks to https://stackoverflow.com/a/77451367/70894
-type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 type Concat<
 	Path extends string,

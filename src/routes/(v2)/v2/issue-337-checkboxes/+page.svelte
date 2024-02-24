@@ -35,6 +35,7 @@
 <p>Tainted:{Boolean($tainted?.extra)}</p>
 
 <form method="POST" use:enhance>
+	<input type="hidden" name="extra" bind:value={$form.extra} />
 	<div>Accept: <CheckBox form={theForm} field="accept" /></div>
 	<div>
 		<button>Submit</button>

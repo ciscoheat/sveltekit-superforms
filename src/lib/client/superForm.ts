@@ -634,7 +634,7 @@ export function superForm<
 			if (validator != initialValidator && !('jsonSchema' in validator)) {
 				throw new SuperFormError(
 					'Client validation adapter found in options.validators. ' +
-						'A full adapter must be used when changing validators dynamically.'
+						'A full adapter must be used when changing validators dynamically, for example "zod" instead of "zodClient".'
 				);
 			}
 

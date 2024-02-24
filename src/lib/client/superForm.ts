@@ -689,7 +689,7 @@ export function superForm<
 					fieldProxy({ form: Form } as SuperForm<T>, path, options).set(value);
 				},
 				get(path) {
-					return get(fieldProxy(Form, path));
+					return get(fieldProxy<T, typeof path>(Form, path));
 				}
 			};
 		} else {
@@ -701,7 +701,7 @@ export function superForm<
 					fieldProxy({ form: Form } as SuperForm<T>, path, options).set(value);
 				},
 				get(path) {
-					return get(fieldProxy(Form, path));
+					return get(fieldProxy<T, typeof path>(Form, path));
 				}
 			};
 		}

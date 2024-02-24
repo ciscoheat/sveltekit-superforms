@@ -3,7 +3,7 @@ import { parseFormData } from '$lib/formData.js';
 import { z } from 'zod';
 import * as v from 'valibot';
 import { zodToJSONSchema } from '$lib/adapters/zod.js';
-import { SchemaError, superValidate } from '$lib/index.js';
+import { SchemaError } from '$lib/index.js';
 import { valibot } from '$lib/adapters/valibot.js';
 
 enum Foo {

@@ -27,6 +27,9 @@ type ParsedData = {
 	data: Record<string, unknown> | null | undefined;
 };
 
+const unionError =
+	'FormData parsing failed: Unions are only supported when the dataType option for superForm is set to "json".';
+
 export async function parseRequest<T extends Record<string, unknown>>(
 	data: unknown,
 	schemaData: JSONSchema,
@@ -170,13 +173,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 		}
 
 		if (info.types.length > 1) {
-			throw new SchemaError(
-				'FormData parsing failed: ' +
-					'Multiple types are only supported when the dataType option for superForm is set to "json".' +
-					'Types found: ' +
-					info.types,
-				key
-			);
+			throw new SchemaError(unionError, key);
 		}
 
 		const [type] = info.types;
@@ -207,10 +204,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 		const entries = formData.getAll(key);
 
 		if (info.union && info.union.length > 1) {
-			throw new SchemaError(
-				'Unions are only supported when the dataType option for superForm is set to "json".',
-				key
-			);
+			throw new SchemaError(unionError, key);
 		}
 
 		if (info.types.includes('array') || info.types.includes('set')) {

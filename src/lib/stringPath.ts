@@ -73,8 +73,8 @@ type If<
 	Pred extends keyof Options,
 	Subj,
 	Then,
-	Else = never,
-	Value = unknown
+	Else,
+	Value
 > = Options[Pred] extends Subj
 	? Options['type'] extends never
 		? Then
@@ -92,7 +92,7 @@ type StringPath<
 		type: never;
 	}
 > = T extends BuiltInObjects
-	? If<Options, 'filter', 'leaves' | 'all', Options['path']>
+	? If<Options, 'filter', 'leaves' | 'all', Options['path'], never, T>
 	: T extends (infer U)[]
 		?
 				| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>, never, T>

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { zod } from '$lib/adapters/zod.js';
-import { superValidate, fieldProxy, setError } from '$lib/index.js';
+import * as v from 'valibot';
+import { superValidate, fieldProxy, setError, type Infer } from '$lib/index.js';
 import type {
 	FormPathType,
 	FormPathArrays,
@@ -372,6 +373,20 @@ test('FormPath with any type', () => {
 	const f1: FP = 'nope';
 	// @ts-expect-error Invalid path
 	const f2: FPA = 'age[3]';
+});
+
+test('Schemas with built-in objects', () => {
+	const schema = v.object({
+		id: v.nullish(v.string(), ''),
+		name: v.string([v.minLength(1)]),
+		date: v.date()
+	});
+
+	type FPL = FormPathLeaves<Infer<typeof schema>, Date>;
+
+	const t1: FPL = 'date';
+	// @ts-expect-error Invalid type
+	const tf: FPL = 'name';
 });
 
 ///////////////////////////////////////////////////

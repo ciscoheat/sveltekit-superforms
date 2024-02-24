@@ -1,4 +1,6 @@
+import type { JSONSchema7Definition } from 'json-schema';
 import justClone from 'just-clone';
+import { SchemaError, type JSONSchema } from './index.js';
 
 // Thanks to: https://dev.to/tylim88/typescript-numeric-range-type-15a5#comment-22mld
 export type NumericRange<
@@ -23,3 +25,12 @@ export type Prettify<T> = T extends object ? { [K in keyof T]: T[K] } : T & {};
 
 // Thanks to https://stackoverflow.com/a/77451367/70894
 export type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
+
+export function assertSchema(
+	schema: JSONSchema7Definition,
+	path: string | (string | number | symbol)[]
+): asserts schema is JSONSchema {
+	if (typeof schema === 'boolean') {
+		throw new SchemaError('Schema property cannot be defined as boolean.', path);
+	}
+}

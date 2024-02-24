@@ -7,6 +7,7 @@ import { defaultValues } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './index.js';
 import { setPaths } from './traversal.js';
 import { splitPath } from './stringPath.js';
+import { assertSchema } from './utils.js';
 
 /**
  * V1 compatibilty. resetForm = false and taintedMessage = true
@@ -192,9 +193,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			? schema.properties[key]
 			: defaultPropertyType;
 
-		if (typeof property == 'boolean') {
-			throw new SchemaError('Schema properties defined as boolean is not supported.', key);
-		}
+		assertSchema(property, key);
 
 		const info = schemaInfo(property ?? defaultPropertyType, !schema.required?.includes(key), [
 			key
@@ -209,7 +208,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 		if (info.union && info.union.length > 1) {
 			throw new SchemaError(
-				'Unions (anyOf) are only supported when the dataType option for superForm is set to "json".',
+				'Unions are only supported when the dataType option for superForm is set to "json".',
 				key
 			);
 		}
@@ -224,9 +223,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			}
 
 			const arrayType = Array.isArray(items) ? items[0] : items;
-			if (typeof arrayType == 'boolean') {
-				throw new SchemaError('Schema properties defined as boolean is not supported.', key);
-			}
+			assertSchema(arrayType, key);
 
 			const arrayInfo = schemaInfo(arrayType, info.isOptional, [key]);
 			if (!arrayInfo) continue;

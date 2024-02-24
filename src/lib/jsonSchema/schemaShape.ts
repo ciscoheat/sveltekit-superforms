@@ -2,6 +2,7 @@ import { SchemaError } from '$lib/errors.js';
 import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo } from './schemaInfo.js';
 import type { JSONSchema } from './index.js';
+import { assertSchema } from '$lib/utils.js';
 
 /**
  * A tree structure where the existence of a node means that the field is an array or an object.
@@ -20,9 +21,7 @@ export function schemaShape(schema: JSONSchema, path: string[] = []): SchemaShap
 }
 
 function _schemaShape(schema: JSONSchema7Definition, path: string[]): SchemaShape | undefined {
-	if (typeof schema === 'boolean') {
-		throw new SchemaError('Schema cannot be defined as boolean', path);
-	}
+	assertSchema(schema, path);
 
 	const info = schemaInfo(schema, false, path);
 

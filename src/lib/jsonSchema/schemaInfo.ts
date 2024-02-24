@@ -1,4 +1,5 @@
 import { SchemaError } from '$lib/errors.js';
+import { assertSchema } from '$lib/utils.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 
 export type SchemaType =
@@ -35,9 +36,7 @@ export function schemaInfo(
 	isOptional: boolean,
 	path: (string | number | symbol)[]
 ): SchemaInfo {
-	if (typeof schema === 'boolean') {
-		throw new SchemaError('Schema cannot be defined as boolean', path);
-	}
+	assertSchema(schema, path);
 
 	if (!path) throw new SchemaError('Why?', path);
 
@@ -75,9 +74,7 @@ function schemaTypes(
 	schema: JSONSchema7Definition,
 	path: (string | number | symbol)[]
 ): SchemaType[] {
-	if (typeof schema === 'boolean') {
-		throw new SchemaError('Schema cannot be defined as boolean', path);
-	}
+	assertSchema(schema, path);
 
 	let types: SchemaType[] = schema.const === null ? ['null'] : [];
 

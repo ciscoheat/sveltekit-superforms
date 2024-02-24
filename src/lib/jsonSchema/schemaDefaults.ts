@@ -1,4 +1,5 @@
 import { SchemaError } from '$lib/errors.js';
+import { assertSchema } from '$lib/utils.js';
 import type { JSONSchema } from './index.js';
 import { schemaInfo } from './schemaInfo.js';
 import type { SchemaType } from './schemaInfo.js';
@@ -104,9 +105,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	if (info.properties) {
 		const output: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(info.properties)) {
-			if (typeof value == 'boolean') {
-				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
-			}
+			assertSchema(value, [...path, key]);
+
 			const def =
 				objectDefaults && objectDefaults[key] !== undefined
 					? objectDefaults[key]
@@ -236,9 +236,8 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 
 	if (info.properties) {
 		for (const [key, value] of Object.entries(info.properties)) {
-			if (typeof value == 'boolean') {
-				throw new SchemaError('Property cannot be defined as boolean.', [...path, key]);
-			}
+			assertSchema(value, [...path, key]);
+
 			output[key] = _defaultTypes(info.properties[key], !info.required?.includes(key), [
 				...path,
 				key

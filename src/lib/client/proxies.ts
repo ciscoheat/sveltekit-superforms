@@ -97,7 +97,7 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 	}) as CorrectProxyType<Date, string, T, Path>;
 }
 
-export function stringProxy<T extends Record<string, unknown>, Path extends FormPath<T>>(
+export function stringProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
 	form: Writable<T> | SuperForm<T, unknown>,
 	path: Path,
 	options: {

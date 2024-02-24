@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Schema literals weren't treated as their `typeof` type, which prevented multi-type union detection.
 - `FormPath` and `FormPathLeaves` didn't narrow the types correctly for `Date`, `Set` and `File`.
+- `stringProxy` didn't accept `FormPathLeaves` as path.
 
 ## [2.6.1] - 2024-02-24
 

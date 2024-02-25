@@ -27,6 +27,20 @@ export type Prettify<T> = T extends object ? { [K in keyof T]: T[K] } : T & {};
 // Thanks to https://stackoverflow.com/a/77451367/70894
 export type IsAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
+export type BuiltInObjects = Date | Set<unknown> | File;
+
+export type DeepPartial<T> = {
+	[K in keyof T]?: NonNullable<T[K]> extends BuiltInObjects
+		? T[K]
+		: NonNullable<T[K]> extends (infer U)[]
+			? NonNullable<U> extends BuiltInObjects
+				? U[]
+				: DeepPartial<U>[]
+			: NonNullable<T[K]> extends object
+				? DeepPartial<T[K]>
+				: T[K];
+};
+
 export function assertSchema(
 	schema: JSONSchema7Definition,
 	path: string | (string | number | symbol)[]

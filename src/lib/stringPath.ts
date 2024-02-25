@@ -1,4 +1,4 @@
-import type { IsAny } from './utils.js';
+import type { BuiltInObjects, IsAny } from './utils.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function splitPath(path: string) {
@@ -18,8 +18,6 @@ export function mergePath(path: (string | number | symbol)[]) {
 		return acc;
 	}, '');
 }
-
-type BuiltInObjects = Date | Set<unknown> | File;
 
 export type AllKeys<T> = T extends T ? keyof T : never;
 

@@ -6,7 +6,7 @@
 	import { formFieldProxy, type SuperForm } from '$lib/index.js';
 	import type { FormPathLeaves } from '$lib/stringPath.js';
 
-	export let form: SuperForm<T, unknown>;
+	export let form: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
 
 	const { path, value, errors, constraints } = formFieldProxy(form, field);

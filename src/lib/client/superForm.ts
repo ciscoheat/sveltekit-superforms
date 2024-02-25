@@ -30,7 +30,7 @@ import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
-import type { MaybePromise } from '$lib/utils.js';
+import type { DeepPartial, MaybePromise } from '$lib/utils.js';
 import type {
 	ClientValidationAdapter,
 	ValidationAdapter,
@@ -39,13 +39,20 @@ import type {
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { fieldProxy, type ProxyOptions } from './proxies.js';
 
-export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
-	FormOptions<T, M>,
-	'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'
->;
+export type SuperFormEvents<
+	T extends Record<string, unknown>,
+	M,
+	In extends Record<string, unknown>
+> = Pick<FormOptions<T, M, In>, 'onError' | 'onResult' | 'onSubmit' | 'onUpdate' | 'onUpdated'>;
 
-export type SuperFormEventList<T extends Record<string, unknown>, M> = {
-	[Property in keyof SuperFormEvents<T, M>]-?: NonNullable<SuperFormEvents<T, M>[Property]>[];
+export type SuperFormEventList<
+	T extends Record<string, unknown>,
+	M,
+	In extends Record<string, unknown>
+> = {
+	[Property in keyof SuperFormEvents<T, M, In>]-?: NonNullable<
+		SuperFormEvents<T, M, In>[Property]
+	>[];
 };
 
 /**
@@ -199,19 +206,22 @@ type ResetOptions<T extends Record<string, unknown>> = {
 type Capture<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
-> = [T] extends [T] ? () => SuperFormSnapshot<T, M> : never;
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
+> = [T] extends [T] ? () => SuperFormSnapshot<T, M, In> : never;
 
 type Restore<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
-> = (snapshot: SuperFormSnapshot<T, M>) => void;
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
+> = (snapshot: SuperFormSnapshot<T, M, In>) => void;
 
 export type SuperForm<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message
+	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	In extends Record<string, unknown> = T
 > = {
 	form: SuperFormData<T>;
 	formId: Writable<string>;
@@ -219,6 +229,7 @@ export type SuperForm<
 	constraints: Writable<InputConstraints<T>>;
 	message: Writable<M | undefined>;
 	tainted: Writable<TaintedFields<T> | undefined>;
+	input: Writable<DeepPartial<In>>;
 
 	submitting: Readable<boolean>;
 	delayed: Readable<boolean>;
@@ -227,31 +238,24 @@ export type SuperForm<
 
 	allErrors: Readable<{ path: string; messages: string[] }[]>;
 
-	options: T extends T ? FormOptions<T, M> : never; // Need this to distribute T so it works with unions
+	options: T extends T ? FormOptions<T, M, In> : never; // Need this to distribute T so it works with unions
 
-	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
+	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M, In>) => ReturnType<typeof enhance>;
 	isTainted: (path?: FormPath<T> | TaintedFields<T> | boolean) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
 	submit: (submitter?: HTMLElement | null) => void;
 
-	capture: Capture<T, M>;
-	restore: T extends T ? Restore<T, M> : never;
+	capture: Capture<T, M, In>;
+	restore: T extends T ? Restore<T, M, In> : never;
 
-	validate: <
-		Out extends Partial<T> = T,
-		Path extends FormPathLeaves<T> = FormPathLeaves<T>,
-		In extends Record<string, unknown> = Record<string, unknown>
-	>(
+	validate: <Out extends Partial<T> = T, Path extends FormPathLeaves<T> = FormPathLeaves<T>>(
 		path: Path,
 		opts?: ValidateOptions<FormPathType<T, Path>, Out, In>
 	) => Promise<string[] | undefined>;
 
-	validateForm: <
-		Out extends Partial<T> = T,
-		In extends Record<string, unknown> = Record<string, unknown>
-	>(opts?: {
+	validateForm: <Out extends Partial<T> = T>(opts?: {
 		update?: boolean;
-		schema?: ValidationAdapter<Out, In>;
+		schema?: ValidationAdapter<Out, Record<string, unknown>>;
 		focusOnError?: boolean;
 	}) => Promise<SuperFormValidated<T, M, In>>;
 };
@@ -401,7 +405,7 @@ export function superForm<
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	In extends Record<string, unknown> = T
->(form: SuperValidated<T, M, In> | T, formOptions?: FormOptions<T, M, In>): SuperForm<T, M> {
+>(form: SuperValidated<T, M, In> | T, formOptions?: FormOptions<T, M, In>): SuperForm<T, M, In> {
 	// Used in reset
 	let initialForm: SuperValidated<T, M, In>;
 	let options = formOptions ?? ({} as FormOptions<T, M, In>);
@@ -446,7 +450,8 @@ export function superForm<
 				valid: false,
 				posted: false,
 				errors: {},
-				data: form as T
+				data: form as T,
+				input: {}
 			} satisfies SuperValidated<T, M, In>;
 		}
 
@@ -531,7 +536,7 @@ export function superForm<
 		});
 
 		// Check for nested objects, throw if datatype isn't json
-		if (options.dataType !== 'json') {
+		if (options.dataType === 'form') {
 			const checkForNestedData = (key: string, value: unknown) => {
 				if (!value || typeof value !== 'object') return;
 
@@ -574,7 +579,9 @@ export function superForm<
 		tainted: undefined as TaintedFields<T> | undefined,
 		valid: form.valid,
 		submitting: false,
-		shape: form.shape
+		shape: form.shape,
+		input: form.input ? clone(form.input) : ({} as DeepPartial<In>),
+		transformed: !!form.input
 	};
 
 	const Data: Readonly<typeof __data> = __data;
@@ -637,14 +644,12 @@ export function superForm<
 		}
 	};
 
-	async function Form_validate(
-		opts: {
-			adapter?: FormOptions<T, M>['validators'];
-			recheckValidData?: boolean;
-			formData?: Record<string, unknown>;
-		} = {}
-	): Promise<SuperFormValidated<T, M, In>> {
-		const dataToValidate = opts.formData ?? Data.form;
+	async function Form_validate(opts: {
+		formData?: Record<string, unknown>;
+		adapter?: FormOptions<T, M, In>['validators'];
+		recheckValidData?: boolean;
+	}): Promise<SuperFormValidated<T, M, In>> {
+		const dataToValidate = opts.formData ?? (Data.transformed ? Data.input : Data.form);
 
 		let errors: ValidationErrors<T> = {};
 		let status: ValidationResult<Partial<T>>;
@@ -684,7 +689,8 @@ export function superForm<
 			constraints: Data.constraints,
 			message: undefined,
 			id: Data.formId,
-			shape: Data.shape
+			shape: Data.shape,
+			input: Data.input
 		};
 	}
 
@@ -707,7 +713,12 @@ export function superForm<
 				target: event.target,
 				set(path, value, options?) {
 					// Casting trick to make it think it's a SuperForm
-					fieldProxy({ form: Form } as SuperForm<T>, path, options).set(value);
+					fieldProxy(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						{ form: Form } as SuperForm<T, any, Record<string, unknown>>,
+						path,
+						options
+					).set(value);
 				},
 				get(path) {
 					return get(fieldProxy<T, typeof path>(Form, path));
@@ -719,7 +730,12 @@ export function superForm<
 				target: undefined,
 				set(path, value, options?) {
 					// Casting trick to make it think it's a SuperForm
-					fieldProxy({ form: Form } as SuperForm<T>, path, options).set(value);
+					fieldProxy(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						{ form: Form } as SuperForm<T, any, Record<string, unknown>>,
+						path,
+						options
+					).set(value);
 				},
 				get(path) {
 					return get(fieldProxy<T, typeof path>(Form, path));
@@ -999,6 +1015,7 @@ export function superForm<
 	const Constraints = writable(__data.constraints);
 	const Posted = writable(__data.posted);
 	const Shape = writable(__data.shape);
+	const Input = writable(__data.input);
 
 	//#region Errors
 
@@ -1188,7 +1205,8 @@ export function superForm<
 		Posted.subscribe((posted) => (__data.posted = posted)),
 		Message.subscribe((message) => (__data.message = message)),
 		Submitting.subscribe((submitting) => (__data.submitting = submitting)),
-		Shape.subscribe((shape) => (__data.shape = shape))
+		Shape.subscribe((shape) => (__data.shape = shape)),
+		Input.subscribe((input) => (__data.input = input))
 	];
 
 	function Unsubscriptions_add(func: () => void) {
@@ -1247,9 +1265,12 @@ export function superForm<
 		Errors.set(form.errors);
 		FormId.set(form.id);
 		Posted.set(opts.posted ?? form.posted);
-		// Constraints and shape will only be set when they exist.
+
+		// These will only be set when they exist
 		if (form.constraints) Constraints.set(form.constraints);
 		if (form.shape) Shape.set(form.shape);
+		if (form.input) Input.set(form.input);
+
 		// Only allowed non-subscribe __data access, here in rebind
 		__data.valid = form.valid;
 
@@ -1262,7 +1283,7 @@ export function superForm<
 		}
 	}
 
-	const formEvents: SuperFormEventList<T, M> = {
+	const formEvents: SuperFormEventList<T, M, In> = {
 		onSubmit: options.onSubmit ? [options.onSubmit] : [],
 		onResult: options.onResult ? [options.onResult] : [],
 		onUpdate: options.onUpdate ? [options.onUpdate] : [],
@@ -1372,12 +1393,13 @@ export function superForm<
 		message: Message,
 		constraints: Constraints,
 		tainted: Tainted_currentState(),
+		input: Input,
 
 		submitting: readonly(Submitting),
 		delayed: readonly(Delayed),
 		timeout: readonly(Timeout),
 
-		options: options as T extends T ? FormOptions<T, M> : never,
+		options: options as T extends T ? FormOptions<T, M, In> : never,
 
 		capture() {
 			return {
@@ -1393,13 +1415,13 @@ export function superForm<
 			};
 		},
 
-		restore: ((snapshot: SuperFormSnapshot<T, M>) => {
+		restore: ((snapshot: SuperFormSnapshot<T, M, In>) => {
 			rebind({ form: snapshot, untaint: snapshot.tainted ?? true });
-		}) as T extends T ? Restore<T, M> : never,
+		}) as T extends T ? Restore<T, M, In> : never,
 
 		async validate<Path extends FormPathLeaves<T>>(
 			path: Path,
-			opts: ValidateOptions<FormPathType<T, Path>, Partial<T>, Record<string, unknown>> = {}
+			opts: ValidateOptions<FormPathType<T, Path>, Partial<T>, In> = {}
 		) {
 			if (!options.validators) {
 				throw new SuperFormError('options.validators must be set to use the validate method.');
@@ -1518,7 +1540,7 @@ export function superForm<
 		///// Custom use:enhance ////////////////////////////////////////
 
 		// @DCI-context
-		enhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
+		enhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M, In>) {
 			EnhancedForm = FormElement;
 
 			if (events) {
@@ -1612,8 +1634,10 @@ export function superForm<
 				const submit = {
 					...submitParams,
 					jsonData(data: Record<string, unknown>) {
-						if (options.dataType !== 'json') {
-							throw new SuperFormError("options.dataType must be set to 'json' to use jsonData.");
+						if (options.dataType === 'form') {
+							throw new SuperFormError(
+								"options.dataType must not be set to 'form' to use jsonData."
+							);
 						}
 						jsonData = data;
 					},
@@ -1683,7 +1707,10 @@ export function superForm<
 					let validation: SuperFormValidated<T, M, In> | undefined = undefined;
 
 					const validateForm = async () => {
-						return await Form_validate({ adapter: validationAdapter });
+						return await Form_validate({
+							formData: Data.transformed ? Data.input : Data.form,
+							adapter: validationAdapter
+						});
 					};
 
 					if (!noValidate) {
@@ -1732,10 +1759,10 @@ export function superForm<
 							if (!validation) validation = await validateForm();
 							cancel({ resetTimers: false });
 							clientValidationResult(validation);
-						} else if (options.dataType === 'json') {
-							if (!validation) validation = await validateForm();
+						} else if (options.dataType !== 'form') {
+							//if (!validation) validation = await validateForm();
 
-							const postData = clone(jsonData ?? validation.data);
+							const postData = clone(jsonData ?? (Data.transformed ? Data.input : Data.form));
 
 							// Move files to form data, since they cannot be serialized.
 							// Will be reassembled in superValidate.
@@ -1959,5 +1986,5 @@ export function superForm<
 				return validationResponse;
 			});
 		}
-	} satisfies SuperForm<T, M>;
+	} satisfies SuperForm<T, M, In>;
 }

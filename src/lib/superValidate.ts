@@ -2,7 +2,7 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
-import type { ErrorStatus } from './utils.js';
+import type { DeepPartial, ErrorStatus } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
@@ -35,6 +35,7 @@ export type SuperValidated<
 	constraints?: InputConstraints<Out>;
 	message?: Message;
 	shape?: SchemaShape;
+	input?: DeepPartial<In>;
 };
 
 export type ValidationErrors<Out extends Record<string, unknown>> = {
@@ -51,10 +52,17 @@ type SuperValidateData<In extends Record<string, unknown>> =
 	| null
 	| undefined;
 
-export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<{
+export type SuperValidateOptions<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+> = Partial<{
 	errors: boolean;
 	id: string;
-	preprocessed: (keyof Out)[];
+	/**
+	 * @deprecated Use `transformed` instead.
+	 */
+	preprocessed: (keyof Out)[] | boolean;
+	transformed: (keyof In)[] | boolean;
 	defaults: Out;
 	jsonSchema: JSONSchema;
 	strict: boolean;
@@ -72,19 +80,19 @@ export async function superValidate<
 	In extends Record<string, unknown> = Out
 >(
 	adapter: ValidationAdapter<Out, In>,
-	options?: SuperValidateOptions<Out>
+	options?: SuperValidateOptions<Out, In>
 ): Promise<SuperValidated<Out, Message, In>>;
 
 export async function superValidate<
 	Out extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
+	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	In extends Record<string, unknown> = Out
 >(
 	data: SuperValidateData<In>,
 	adapter: ValidationAdapter<Out, In>,
-	options?: SuperValidateOptions<Out>
-): Promise<SuperValidated<Out, M, In>>;
+	options?: SuperValidateOptions<Out, In>
+): Promise<SuperValidated<Out, Message, In>>;
 
 /**
  * Validates a schema for data validation and usage in superForm.
@@ -98,11 +106,11 @@ export async function superValidate<
 	In extends Record<string, unknown> = Out
 >(
 	data: ValidationAdapter<Out, In> | SuperValidateData<In>,
-	adapter?: ValidationAdapter<Out, In> | SuperValidateData<In> | SuperValidateOptions<Out>,
-	options?: SuperValidateOptions<Out>
+	adapter?: ValidationAdapter<Out, In> | SuperValidateData<In> | SuperValidateOptions<Out, In>,
+	options?: SuperValidateOptions<Out, In>
 ): Promise<SuperValidated<Out, Message, In>> {
 	if (data && 'superFormValidationLibrary' in data) {
-		options = adapter as SuperValidateOptions<Out>;
+		options = adapter as SuperValidateOptions<Out, In>;
 		adapter = data;
 		data = undefined;
 	}
@@ -112,8 +120,10 @@ export async function superValidate<
 	const defaults = options?.defaults ?? validator.defaults;
 	const jsonSchema = validator.jsonSchema;
 
-	const parsed = await parseRequest<Out>(data, jsonSchema, options);
+	const parsed = await parseRequest<Out, In>(data, jsonSchema, options);
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
+
+	// TODO: Don't merge defaults in transformed mode
 
 	// Merge with defaults in non-strict mode.
 	const parsedData = options?.strict ? parsed.data ?? {} : mergeDefaults(parsed.data, defaults);
@@ -130,7 +140,6 @@ export async function superValidate<
 	const errors = valid || !addErrors ? {} : mapErrors(status.issues, validator.shape);
 
 	// Final data should always have defaults, to ensure type safety
-	//const dataWithDefaults = { ...defaults, ...(valid ? status.data : parsedData) };
 	const dataWithDefaults = valid
 		? status.data
 		: replaceInvalidDefaults(
@@ -138,7 +147,7 @@ export async function superValidate<
 				defaults,
 				jsonSchema,
 				status.issues,
-				options?.preprocessed
+				options
 			);
 
 	let outputData: Record<string, unknown>;
@@ -152,7 +161,7 @@ export async function superValidate<
 		outputData = dataWithDefaults;
 	}
 
-	const output: SuperValidated<Out, Message, In> = {
+	const form: SuperValidated<Out, Message, In> = {
 		id: parsed.id ?? options?.id ?? validator.id,
 		valid,
 		posted: parsed.posted,
@@ -160,15 +169,19 @@ export async function superValidate<
 		data: outputData as Out
 	};
 
+	if (options?.transformed) {
+		form.input = (parsed.data ?? {}) as DeepPartial<In>;
+	}
+
 	if (!parsed.posted) {
-		output.constraints = validator.constraints;
+		form.constraints = validator.constraints;
 
 		if (Object.keys(validator.shape).length) {
-			output.shape = validator.shape;
+			form.shape = validator.shape;
 		}
 	}
 
-	return output;
+	return form;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -213,7 +226,7 @@ type SetErrorOptions = {
  * Sets a form-level error.
  * form.valid is automatically set to false.
  *
- * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
+ * @param {SuperValidated<T, M, In>} form A validation object, usually returned from superValidate.
  * @param {string | string[]} error Error message(s).
  * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.
  * @returns fail(status, { form })
@@ -228,7 +241,7 @@ export function setError<T extends Record<string, unknown>, M, In extends Record
  * Sets an error for a form field or array field.
  * form.valid is automatically set to false.
  *
- * @param {SuperValidated<T, unknown>} form A validation object, usually returned from superValidate.
+ * @param {SuperValidated<T, M, In>} form A validation object, usually returned from superValidate.
  * @param {'' | FormPathLeavesWithErrors<T>} path Path to the form field. Use an empty string to set a form-level error. Array-level errors can be set by appending "._errors" to the field.
  * @param {string | string[]} error Error message(s).
  * @param {SetErrorOptions} options Option to overwrite previous errors and set a different status than 400. The status must be in the range 400-599.

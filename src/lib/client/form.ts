@@ -16,14 +16,14 @@ const activeTimers = new Set<() => void>();
 /**
  * @DCI-context
  */
-export function Form<T extends Record<string, unknown>, M>(
+export function Form<T extends Record<string, unknown>, M, In extends Record<string, unknown>>(
 	formElement: HTMLFormElement,
 	timers: {
 		submitting: Writable<boolean>;
 		delayed: Writable<boolean>;
 		timeout: Writable<boolean>;
 	},
-	options: FormOptions<T, M>
+	options: FormOptions<T, M, In>
 ) {
 	let state: FetchStatus = FetchStatus.Idle;
 	let delayedTimeout: number, timeoutTimeout: number;
@@ -136,9 +136,13 @@ export function Form<T extends Record<string, unknown>, M>(
 	}
 }
 
-export const scrollToFirstError = async <T extends Record<string, unknown>, M>(
+export const scrollToFirstError = async <
+	T extends Record<string, unknown>,
+	M,
+	In extends Record<string, unknown>
+>(
 	Form: HTMLFormElement,
-	options: FormOptions<T, M>
+	options: FormOptions<T, M, In>
 ) => {
 	if (options.scrollToError == 'off') return;
 

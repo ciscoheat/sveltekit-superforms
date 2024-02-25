@@ -46,10 +46,12 @@ const defaultOptions = {
 	dateFormat: 'iso'
 } satisfies DefaultOptions;
 
+type SuperProxy<T extends Record<string, unknown>> = SuperForm<T, any, any>;
+
 ///// Proxy functions ///////////////////////////////////////////////
 
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	options?: Prettify<Pick<DefaultOptions, 'trueStringValue' | 'taint'>>
 ) {
@@ -60,7 +62,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 }
 
 export function intProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	options?: Prettify<Pick<DefaultOptions, 'empty' | 'initiallyEmptyIfZero' | 'taint'>>
 ) {
@@ -71,7 +73,7 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 }
 
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	options?: Prettify<Pick<DefaultOptions, 'empty' | 'delimiter' | 'initiallyEmptyIfZero' | 'taint'>>
 ) {
@@ -82,7 +84,7 @@ export function numberProxy<T extends Record<string, unknown>, Path extends Form
 }
 
 export function dateProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	options?: {
 		format?: DefaultOptions['dateFormat'];
@@ -98,7 +100,7 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 }
 
 export function stringProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	options: {
 		empty: NonNullable<Exclude<DefaultOptions['empty'], 'zero'>>;
@@ -120,7 +122,7 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
  * @param type 'number' | 'int' | 'boolean'
  */
 function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	type: 'number' | 'int' | 'boolean' | 'date' | 'string',
 	options: DefaultOptions
@@ -256,7 +258,7 @@ export function arrayProxy<
 	Path extends FormPathArrays<T, ArrType>,
 	ArrType = any
 >(
-	superForm: SuperForm<T, any>,
+	superForm: SuperProxy<T>,
 	path: Path,
 	options?: { taint?: TaintOption }
 ): ArrayProxy<FormPathType<T, Path> extends (infer U)[] ? U : never, Path> {
@@ -345,7 +347,7 @@ export function formFieldProxy<
 	Path extends FormPathLeaves<T, Type>,
 	Type = any
 >(
-	superForm: SuperForm<T, any>,
+	superForm: SuperProxy<T>,
 	path: Path,
 	options?: ProxyOptions
 ): FormFieldProxy<PathType<Type, T, Path>, Path> {
@@ -422,7 +424,7 @@ type SuperFieldProxy<T> = {
 };
 
 function superFieldProxy<T extends Record<string, unknown>, Path extends string, Type = any>(
-	superForm: SuperForm<T>,
+	superForm: SuperProxy<T>,
 	path: Path,
 	baseOptions?: ProxyOptions
 ): SuperFieldProxy<PathType<Type, T, Path>> {
@@ -449,9 +451,9 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends string,
 }
 
 function isSuperForm<T extends Record<string, unknown>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	options?: { taint?: TaintOption }
-): form is SuperForm<T, unknown> {
+): form is SuperProxy<T> {
 	const isSuperForm = 'form' in form;
 
 	if (!isSuperForm && options?.taint !== undefined) {
@@ -470,7 +472,7 @@ export function fieldProxy<
 	Path extends FormPaths<T, Type>,
 	Type = any
 >(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperProxy<T>,
 	path: Path,
 	options?: ProxyOptions
 ): FieldProxy<PathType<Type, T, Path>> {

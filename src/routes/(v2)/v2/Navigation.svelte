@@ -40,6 +40,7 @@
 		'issue-356',
 		'issue-358',
 		'issue-360',
+		'input-schema',
 		'unknown-in-schema',
 		'issue-374',
 		'issue-366',

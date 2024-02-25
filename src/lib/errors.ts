@@ -1,7 +1,7 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
 import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
 import { mergePath } from './stringPath.js';
-import type { ValidationErrors } from './superValidate.js';
+import type { SuperValidateOptions, ValidationErrors } from './superValidate.js';
 import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone } from './utils.js';
@@ -152,13 +152,16 @@ export function mergeDefaults<T extends Record<string, unknown>>(
  * Merge defaults with (important!) *already validated and merged data*.
  * @DCI-context
  */
-export function replaceInvalidDefaults<T extends Record<string, unknown>>(
+export function replaceInvalidDefaults<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+>(
 	Data: Record<string, unknown>,
-	Defaults: T,
+	Defaults: Out,
 	_schema: JSONSchema,
 	Errors: ValidationIssue[],
-	preprocessed: (keyof T)[] | undefined
-): T {
+	options?: SuperValidateOptions<Out, In>
+): Out {
 	const defaultType =
 		_schema.additionalProperties && typeof _schema.additionalProperties == 'object'
 			? { __types: schemaInfo(_schema.additionalProperties, false, []).types }
@@ -219,7 +222,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	function Data_traverse() {
 		traversePaths(Defaults, Defaults_traverseAndReplace);
 		Errors_traverseAndReplace();
-		return Data as T;
+		return Data as Out;
 	}
 
 	function Data_setValue(currentPath: (string | number | symbol)[], newValue: unknown) {
@@ -252,7 +255,14 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	}): void {
 		const currentPath = defaultPath.path;
 		if (!currentPath || !currentPath[0]) return;
-		if (typeof currentPath[0] === 'string' && preprocessed?.includes(currentPath[0])) return;
+
+		const preprocessed = options?.preprocessed;
+		if (
+			typeof currentPath[0] === 'string' &&
+			preprocessed &&
+			(preprocessed === true || preprocessed?.includes(currentPath[0]))
+		)
+			return;
 
 		const dataPath = pathExists(Data, currentPath);
 

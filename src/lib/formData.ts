@@ -30,11 +30,10 @@ type ParsedData = {
 const unionError =
 	'FormData parsing failed: Unions are only supported when the dataType option for superForm is set to "json".';
 
-export async function parseRequest<T extends Record<string, unknown>>(
-	data: unknown,
-	schemaData: JSONSchema,
-	options?: SuperValidateOptions<T>
-) {
+export async function parseRequest<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+>(data: unknown, schemaData: JSONSchema, options?: SuperValidateOptions<Out, In>) {
 	let parsed: ParsedData;
 
 	if (data instanceof FormData) {
@@ -62,11 +61,10 @@ export async function parseRequest<T extends Record<string, unknown>>(
 	return parsed;
 }
 
-async function tryParseFormData<T extends Record<string, unknown>>(
-	request: Request,
-	schemaData: JSONSchema,
-	options?: SuperValidateOptions<T>
-) {
+async function tryParseFormData<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+>(request: Request, schemaData: JSONSchema, options?: SuperValidateOptions<Out, In>) {
 	let formData: FormData | undefined = undefined;
 	try {
 		formData = await request.formData();
@@ -82,10 +80,13 @@ async function tryParseFormData<T extends Record<string, unknown>>(
 	return parseFormData(formData, schemaData, options);
 }
 
-export function parseSearchParams<T extends Record<string, unknown>>(
+export function parseSearchParams<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+>(
 	data: URL | URLSearchParams,
 	schemaData: JSONSchema,
-	options?: SuperValidateOptions<T>
+	options?: SuperValidateOptions<Out, In>
 ): ParsedData {
 	if (data instanceof URL) data = data.searchParams;
 
@@ -101,11 +102,10 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 	return output;
 }
 
-export function parseFormData<T extends Record<string, unknown>>(
-	formData: FormData,
-	schemaData: JSONSchema,
-	options?: SuperValidateOptions<T>
-): ParsedData {
+export function parseFormData<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+>(formData: FormData, schemaData: JSONSchema, options?: SuperValidateOptions<Out, In>): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
 			try {
@@ -147,10 +147,10 @@ export function parseFormData<T extends Record<string, unknown>>(
 			};
 }
 
-function _parseFormData<T extends Record<string, unknown>>(
+function _parseFormData<Out extends Record<string, unknown>, In extends Record<string, unknown>>(
 	formData: FormData,
 	schema: JSONSchema,
-	options?: SuperValidateOptions<T>
+	options?: SuperValidateOptions<Out, In>
 ) {
 	const output: Record<string, unknown> = {};
 	const schemaKeys = options?.strict
@@ -163,7 +163,9 @@ function _parseFormData<T extends Record<string, unknown>>(
 			);
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
-		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
+		const transformed = options?.transformed ?? options?.preprocessed;
+
+		if (transformed && (transformed === true || transformed.includes(key))) {
 			return entry;
 		}
 

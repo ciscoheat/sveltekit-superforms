@@ -12,6 +12,7 @@ import type {
 import { writable } from 'svelte/store';
 import { test } from 'vitest';
 import { z } from 'zod';
+import type { DeepPartial } from '$lib/utils.js';
 
 type Obj = {
 	name: string;
@@ -387,6 +388,31 @@ test('Schemas with built-in objects', () => {
 	const t1: FPL = 'date';
 	// @ts-expect-error Invalid type
 	const tf: FPL = 'name';
+});
+
+test('DeepPartial', () => {
+	type T = {
+		name: string | undefined;
+		email: string;
+		tags: string[];
+		score: number;
+		nestad:
+			| {
+					date: Date;
+					date2: Date | undefined;
+			  }
+			| undefined;
+		date: Date | undefined;
+		dateArr?: Date[] | undefined;
+		nospace: string | undefined;
+	};
+
+	type T2 = DeepPartial<T>;
+
+	const a: T2 = {};
+	a.tags?.[3].indexOf('test');
+	a.email?.charAt(1);
+	a.dateArr?.[2]?.getDay();
 });
 
 ///////////////////////////////////////////////////

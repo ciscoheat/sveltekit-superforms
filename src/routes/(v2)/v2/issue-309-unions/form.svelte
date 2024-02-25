@@ -7,7 +7,7 @@
 
 	type Inferred = z.infer<typeof unionizedSchema>;
 
-	export let superForm: SuperForm<Inferred, unknown>;
+	export let superForm: SuperForm<Inferred>;
 	$: ({ form } = superForm);
 </script>
 

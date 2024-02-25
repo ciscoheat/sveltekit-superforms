@@ -1016,3 +1016,85 @@ describe('Customized superValidate', () => {
 		expect(v.data.num).toBe(0);
 	});
 });
+
+describe('"input" schema property', () => {
+	const schema = z.object({
+		test: z.string().nullish().default('OK'),
+		len: z
+			.string()
+			.transform((s) => s.length)
+			.pipe(z.number().min(2))
+	});
+
+	it('should be undefined when default values are used', async () => {
+		const adapter = zod(schema);
+		//console.dir(adapter.jsonSchema, { depth: 10 }); //debug
+		type Out = Infer<typeof schema>;
+		type In = InferIn<typeof schema>;
+
+		const form = await superValidate(adapter);
+		expect(form.data).toEqual({ test: 'OK', len: 0 });
+		expect(form.input).toBeUndefined();
+	});
+
+	describe('should return the parsed, non-transformed data if not empty', () => {
+		it('for empty FormData', async () => {
+			const formData = new FormData();
+			const form = await superValidate(formData, zod(schema), { transformed: true });
+
+			expect(form.data).toEqual({ test: 'OK', len: 0 });
+			expect(form.input).toEqual({});
+		});
+
+		it('for valid FormData', async () => {
+			const formData = new FormData();
+			formData.set('len', 'testing');
+			formData.set('test', 'test');
+			const form = await superValidate(formData, zod(schema), { transformed: ['len'] });
+
+			expect(form.data).toEqual({ test: 'test', len: 7 });
+			expect(form.input).toEqual({ test: 'test', len: 'testing' });
+		});
+
+		it('for invalid FormData', async () => {
+			const formData = new FormData();
+			formData.set('len', 't');
+			const form = await superValidate(formData, zod(schema), { transformed: true });
+
+			expect(form.input).toEqual({ len: 't' });
+			expect(form.data).toEqual({ test: 'OK', len: 0 });
+		});
+	});
+});
+
+type T = {
+	name: string | undefined;
+	email: string;
+	tags: string[];
+	score: number;
+	nestad:
+		| {
+				date: Date;
+				date2: Date | undefined;
+		  }
+		| undefined;
+	date: Date | undefined;
+	dateArr?: Date[] | undefined;
+	nospace: string | undefined;
+};
+
+type In = {
+	len: string;
+	test?: string | null | undefined;
+	nested: {
+		date: string;
+	};
+};
+
+type Out = {
+	len: number;
+	test: string | null;
+	nested: {
+		date: Date;
+	};
+};

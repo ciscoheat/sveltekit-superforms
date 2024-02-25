@@ -4,10 +4,10 @@ import type { SuperValidateOptions, SuperValidated } from './superValidate.js';
 
 type SuperSchemaData<T extends Record<string, unknown>> = Partial<T> | null | undefined;
 
-type SuperSchemaOptions<T extends Record<string, unknown>> = Pick<
-	SuperValidateOptions<T>,
-	'id' | 'defaults'
->;
+type SuperSchemaOptions<
+	Out extends Record<string, unknown>,
+	In extends Record<string, unknown>
+> = Pick<SuperValidateOptions<Out, In>, 'id' | 'defaults'>;
 
 export function defaults<
 	Out extends Record<string, unknown>,
@@ -15,7 +15,7 @@ export function defaults<
 	In extends Record<string, unknown> = Out
 >(
 	adapter: ValidationAdapter<Out, In>,
-	options?: SuperSchemaOptions<Out>
+	options?: SuperSchemaOptions<Out, In>
 ): SuperValidated<Out, M, In>;
 
 export function defaults<
@@ -25,7 +25,7 @@ export function defaults<
 >(
 	defaults: SuperSchemaData<Out>,
 	adapter: ValidationAdapter<Out, In>,
-	options?: SuperSchemaOptions<Out>
+	options?: SuperSchemaOptions<Out, In>
 ): SuperValidated<Out, M, In>;
 
 export function defaults<
@@ -35,7 +35,7 @@ export function defaults<
 >(
 	defaults: Out,
 	adapter: ClientValidationAdapter<Out, In>,
-	options?: SuperSchemaOptions<Out>
+	options?: SuperSchemaOptions<Out, In>
 ): SuperValidated<Out, M, In>;
 
 export function defaults<
@@ -44,11 +44,14 @@ export function defaults<
 	In extends Record<string, unknown> = Out
 >(
 	data: SuperSchemaData<Out> | ValidationAdapter<Out, In> | Out,
-	adapter?: ValidationAdapter<Out, In> | ClientValidationAdapter<Out, In> | SuperSchemaOptions<Out>,
-	options?: SuperSchemaOptions<Out>
+	adapter?:
+		| ValidationAdapter<Out, In>
+		| ClientValidationAdapter<Out, In>
+		| SuperSchemaOptions<Out, In>,
+	options?: SuperSchemaOptions<Out, In>
 ): SuperValidated<Out, M, In> {
 	if (data && 'superFormValidationLibrary' in data) {
-		options = adapter as SuperSchemaOptions<Out>;
+		options = adapter as SuperSchemaOptions<Out, In>;
 		adapter = data;
 		data = null;
 	}

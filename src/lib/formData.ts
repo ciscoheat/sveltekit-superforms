@@ -169,7 +169,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 		if (entry && typeof entry !== 'string') {
 			const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;
-			return allowFiles && (entry.size || entry.name) ? entry : undefined;
+			return allowFiles && entry.size ? entry : undefined;
 		}
 
 		if (info.types.length > 1) {

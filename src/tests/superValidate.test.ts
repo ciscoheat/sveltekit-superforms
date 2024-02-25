@@ -246,6 +246,29 @@ describe('Valibot', () => {
 		const a2 = valibot(schema);
 		expect(a2.defaults.enum).toBe('');
 	});
+
+	/* 	it('should have the correct Input and Output types', () => {
+		const logSchema = v.object({
+			id: v.nullish(v.string(), ''),
+			name: v.string([v.minLength(1)]),
+			date: v.date(), // This is type Date in the inferred type
+			characterId: v.optional(v.string(), ''),
+			type: v.optional(v.union([v.literal('game'), v.literal('nongame')]), 'game'),
+			experience: v.number([v.integer(), v.minValue(0)]),
+			acp: v.number([v.integer(), v.minValue(0)]),
+			gold: v.number(),
+			dtd: v.number([v.integer()]),
+			dm: v.object({
+				name: v.optional(v.string(), '')
+			}),
+			is_dm_log: v.optional(v.boolean(), false),
+			magic_items_lost: v.optional(v.array(v.string([v.minLength(1)])), [])
+		});
+
+		type Out = Infer<typeof logSchema>;
+		type In = InferIn<typeof logSchema>;
+	});
+ */
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -628,11 +651,9 @@ describe('File handling with the allowFiles option', () => {
 
 	describe('Handling non-existing files', () => {
 		const schema = z.object({
-			image: z
-				.custom<File>((f) => f instanceof File, 'Please upload a file.')
-				.refine((f) => {
-					return f instanceof File && f.size <= 1000;
-				}, 'Max 1Kb upload size.')
+			image: z.instanceof(File, { message: 'Please upload a file.' }).refine((f) => {
+				return f instanceof File && f.size <= 1000;
+			}, 'Max 1Kb upload size.')
 		});
 
 		describe('Non-nullable schema', () => {

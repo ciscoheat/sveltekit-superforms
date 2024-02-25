@@ -6,7 +6,7 @@ export type SuperStructArray<T extends Record<string, unknown>, Data, ArrayData 
 			: NonNullable<T[Property]> extends (infer A)[]
 				? ArrayData &
 						Record<
-							number,
+							number | string,
 							NonNullable<A> extends Record<string, unknown>
 								? SuperStructArray<NonNullable<A>, Data, ArrayData>
 								: Data

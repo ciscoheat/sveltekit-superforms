@@ -30,8 +30,8 @@
 		{#if $errors.images}
 			<ul class="invalid">
 				{#each Object.keys($errors.images) as key}
-					{#if $errors.images[Number(key)]}
-						<li>Image {Number(key) + 1}: {$errors.images[Number(key)]}</li>
+					{#if $errors.images[key]}
+						<li>Image {Number(key) + 1}: {$errors.images[key]}</li>
 					{/if}
 				{/each}
 			</ul>

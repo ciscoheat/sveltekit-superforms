@@ -16,4 +16,4 @@ export {
 	type ValidationErrors
 } from '../superValidate.js';
 
-export type { Infer, InferIn } from '../adapters/adapters.js';
+export type { Infer, InferIn, Schema } from '../adapters/adapters.js';

@@ -5,14 +5,15 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.6.2] - 2024-02-25
 
 ### Fixed
 
 - Schema literals weren't treated as their `typeof` type, which prevented multi-type union detection.
 - `FormPath` and `FormPathLeaves` didn't narrow the types correctly for `Date`, `Set` and `File`.
 - `stringProxy` didn't accept `FormPathLeaves` as path.
-- Fixed removal of uploads for empty files.
+- Fixed removal of uploads for empty files (as is the default for empty file inputs), they are now ignored.
+- Exported `Schema` type, for any supported validation schema.
 
 ## [2.6.1] - 2024-02-24
 

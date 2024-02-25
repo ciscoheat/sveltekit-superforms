@@ -32,6 +32,7 @@ export {
 	type ValidationErrors,
 	type Infer,
 	type InferIn,
+	type Schema,
 	type FormResult,
 	type FormOptions,
 	type SuperForm,

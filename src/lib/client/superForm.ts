@@ -191,7 +191,7 @@ type SuperFormErrors<T extends Record<string, unknown>> = {
 type ResetOptions<T extends Record<string, unknown>> = {
 	keepMessage?: boolean;
 	data?: Partial<T>;
-	newState?: T;
+	newState?: Partial<T>;
 	id?: string;
 };
 
@@ -924,7 +924,7 @@ export function superForm<
 			posted?: boolean;
 		} = {}
 	) {
-		if (opts.newState) initialForm.data = opts.newState;
+		if (opts.newState) initialForm.data = { ...initialForm.data, ...opts.newState };
 
 		const resetData = clone(initialForm);
 		resetData.data = { ...resetData.data, ...opts.data };

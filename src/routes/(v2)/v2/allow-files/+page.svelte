@@ -22,7 +22,7 @@
 <form method="POST" enctype="multipart/form-data" use:enhance>
 	<label>
 		Upload file, max 10 Kb: <input
-			on:input={(e) => ($form.avatar = e.currentTarget.files?.item(0) as File)}
+			on:input={(e) => ($form.avatar = e.currentTarget.files?.item(0) ?? null)}
 			accept="image/png, image/jpeg"
 			name="avatar"
 			type="file"

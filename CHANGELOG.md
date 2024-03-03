@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `newState` option for `reset`, to set a new state for future resets. Can be used instead of the `data` option.
+
 ### Fixed
 
 - Allowed `string` index in `$errors` and `$tainted`.

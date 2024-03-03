@@ -191,6 +191,7 @@ type SuperFormErrors<T extends Record<string, unknown>> = {
 type ResetOptions<T extends Record<string, unknown>> = {
 	keepMessage?: boolean;
 	data?: Partial<T>;
+	newState?: T;
 	id?: string;
 };
 
@@ -918,13 +919,13 @@ export function superForm<
 	}
 
 	function Form_reset(
-		opts: {
+		opts: Omit<ResetOptions<T>, 'keepMessage'> & {
 			message?: M;
-			data?: Partial<T>;
-			id?: string;
 			posted?: boolean;
 		} = {}
 	) {
+		if (opts.newState) initialForm.data = opts.newState;
+
 		const resetData = clone(initialForm);
 		resetData.data = { ...resetData.data, ...opts.data };
 		if (opts.id !== undefined) resetData.id = opts.id;
@@ -1466,11 +1467,12 @@ export function superForm<
 			return Form_reset({
 				message: options?.keepMessage ? Data.message : undefined,
 				data: options?.data,
-				id: options?.id
+				id: options?.id,
+				newState: options?.newState
 			});
 		},
 
-		submit(submitter?: HTMLElement | null) {
+		submit(submitter?: HTMLElement | Event | null | undefined) {
 			const form = EnhancedForm
 				? EnhancedForm
 				: submitter && submitter instanceof HTMLElement

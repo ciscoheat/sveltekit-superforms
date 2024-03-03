@@ -286,8 +286,8 @@ describe('Modifying initial data for updating reset', () => {
 
 		const newData = { name: 'Test', number: 123 };
 		form.set(newData);
-		expect(get(form)).toEqual(newData);
 
+		expect(get(form)).toEqual(newData);
 		reset();
 		expect(get(form)).toEqual(firstData);
 
@@ -296,9 +296,15 @@ describe('Modifying initial data for updating reset', () => {
 		validated.data.number = 1;
 
 		expect(get(form)).toEqual(firstData);
-
 		reset();
 		expect(get(form)).toEqual({ name: 'A', number: 1 });
+
+		// Set a new reset state
+		const newState = { name: 'B', number: 2 };
+		reset({ newState });
+		expect(get(form)).toEqual(newState);
+		reset();
+		expect(get(form)).toEqual(newState);
 	});
 });
 

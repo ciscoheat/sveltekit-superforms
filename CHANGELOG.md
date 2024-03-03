@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Allowed `string` index in `$errors` and `$tainted`.
 - `submit` can now be used directly in an event handler.
+- Empty file entries didn't return `null` for nullable schema fields.
 
 ## [2.6.2] - 2024-02-25
 

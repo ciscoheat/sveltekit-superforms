@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import type { FormOptions } from './index.js';
+import type { FormOptions } from './superForm.js';
 
 export function cancelFlash<T extends Record<string, unknown>, M>(options: FormOptions<T, M>) {
 	if (!options.flashMessage || !browser) return;

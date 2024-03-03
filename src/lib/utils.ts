@@ -1,6 +1,7 @@
 import type { JSONSchema7Definition } from 'json-schema';
+import type { JSONSchema } from './jsonSchema/index.js';
 import justClone from 'just-clone';
-import { SchemaError, type JSONSchema } from './index.js';
+import { SchemaError } from './errors.js';
 
 // Thanks to: https://dev.to/tylim88/typescript-numeric-range-type-15a5#comment-22mld
 export type NumericRange<

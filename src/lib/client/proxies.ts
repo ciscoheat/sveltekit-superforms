@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { derived, get, type Readable, type Updater, type Writable } from 'svelte/store';
-import type { InputConstraint } from '../index.js';
+import type { InputConstraint } from '../jsonSchema/constraints.js';
 import { SuperFormError } from '$lib/errors.js';
 import { pathExists, traversePath } from '../traversal.js';
 import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from '../stringPath.js';
 import type { FormPathArrays } from '../stringPath.js';
-import type { SuperForm, TaintOption } from './index.js';
+import type { SuperForm, TaintOption } from './superForm.js';
 import type { IsAny, Prettify } from '$lib/utils.js';
 
 export type ProxyOptions = {

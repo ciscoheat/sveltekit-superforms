@@ -6,7 +6,7 @@ import type { ErrorStatus } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
-import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import type { InputConstraints } from './jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
 

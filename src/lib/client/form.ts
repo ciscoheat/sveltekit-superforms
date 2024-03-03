@@ -1,5 +1,5 @@
 import { isElementInViewport, scrollToAndCenter } from './elements.js';
-import type { FormOptions } from './index.js';
+import type { FormOptions } from './superForm.js';
 import { onDestroy, tick } from 'svelte';
 import type { Writable } from 'svelte/store';
 

@@ -1473,7 +1473,7 @@ export function superForm<
 		submit(submitter?: HTMLElement | null) {
 			const form = EnhancedForm
 				? EnhancedForm
-				: submitter
+				: submitter && submitter instanceof HTMLElement
 					? submitter.closest<HTMLFormElement>('form')
 					: undefined;
 

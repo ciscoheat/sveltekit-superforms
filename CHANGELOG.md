@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty file entries didn't return `null` for nullable schema fields. **Ensure that all required file fields aren't set to nullable.**
 - Allowed `string` index in `$errors` and `$tainted`.
 - `submit` can now be passed directly to event handlers.
-- Updated to latest `valibot-json-schema`, with support for [enum_](https://valibot.dev/guides/enums/), amongst others.
+- Updated to latest `valibot-json-schema`, with support for [enum\_](https://valibot.dev/guides/enums/), amongst others.
+- Zod adapter now supports `ZodType`.
 
 ## [2.6.2] - 2024-02-25
 

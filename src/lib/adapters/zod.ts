@@ -1,4 +1,4 @@
-import type { AnyZodObject, ZodDefault, ZodEffects, ZodUnion } from 'zod';
+import type { AnyZodObject, ZodDefault, ZodEffects, ZodType, ZodTypeDef, ZodUnion } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	type AdapterOptions,
@@ -27,7 +27,11 @@ type ZodObjectUnion<T extends AnyZodObject> = ZodUnion<
 	[ZodValidation<T>, ZodValidation<T>, ...ZodValidation<T>[]]
 >;
 
-export type ZodValidation<T extends AnyZodObject | ZodObjectUnion<AnyZodObject>> =
+type ZodObjectType = ZodType<Record<string, unknown>, ZodTypeDef, Record<string, unknown>>;
+
+type ZodObjectTypes = AnyZodObject | ZodObjectUnion<AnyZodObject> | ZodObjectType;
+
+export type ZodValidation<T extends ZodObjectTypes> =
 	| T
 	| ZodEffects<T>
 	| ZodEffects<ZodEffects<T>>
@@ -47,7 +51,7 @@ export type ZodValidation<T extends AnyZodObject | ZodObjectUnion<AnyZodObject>>
 			ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
 	  >;
 
-async function validate<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
+async function validate<T extends ZodValidation<ZodObjectTypes>>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
@@ -64,7 +68,7 @@ async function validate<T extends ZodValidation<AnyZodObject | ZodObjectUnion<An
 	};
 }
 
-function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
+function _zod<T extends ZodValidation<ZodObjectTypes>>(
 	schema: T,
 	options?: AdapterOptions<T>
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
@@ -76,7 +80,7 @@ function _zod<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject
 	});
 }
 
-function _zodClient<T extends ZodValidation<AnyZodObject | ZodObjectUnion<AnyZodObject>>>(
+function _zodClient<T extends ZodValidation<ZodObjectTypes>>(
 	schema: T
 ): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {

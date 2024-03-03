@@ -47,6 +47,7 @@ import { vine } from '$lib/adapters/vine.js';
 import Vine from '@vinejs/vine';
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
+import { SchemaError } from '$lib/index.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -437,6 +438,26 @@ describe('Zod', () => {
 		const adapter = zod(schema);
 		expect(adapter.defaults.letter).toBe('a');
 		expect(adapter.constraints.letter?.required).toBe(true);
+	});
+
+	it('should accept ZodType for the adapter', () => {
+		type User = {
+			userId: string;
+			name: string;
+			manager?: User | null;
+		};
+
+		const UserSchema: z.ZodType<User> = z.object({
+			userId: z.string().uuid(),
+			name: z.string(),
+			manager: z.union([z.null(), z.lazy(() => UserSchema)])
+		});
+
+		zod(UserSchema);
+
+		const NumberSchema: z.ZodType<number> = z.number().int();
+		// @ts-expect-error Not an object schema
+		expect(() => zod(NumberSchema)).toThrowError(SchemaError);
 	});
 
 	schemaTest(zod(schema));

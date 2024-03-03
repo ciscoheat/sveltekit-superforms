@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Empty file entries didn't return `null` for nullable schema fields. **Ensure that all required file fields aren't set to nullable.**
 - Allowed `string` index in `$errors` and `$tainted`.
 - `submit` can now be passed directly to event handlers.
-- Empty file entries didn't return `null` for nullable schema fields. **Ensure that all required file fields aren't set to nullable.**
+- Updated to latest `valibot-json-schema`, with support for [enum_](https://valibot.dev/guides/enums/), amongst others.
 
 ## [2.6.2] - 2024-02-25
 

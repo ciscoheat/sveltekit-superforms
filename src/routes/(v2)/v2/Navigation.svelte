@@ -42,7 +42,8 @@
 		'issue-360',
 		'unknown-in-schema',
 		'issue-374',
-		'issue-366'
+		'issue-366',
+		'issue-368'
 	].sort();
 </script>
 

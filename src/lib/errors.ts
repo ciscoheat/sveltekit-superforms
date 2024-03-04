@@ -106,7 +106,7 @@ export function updateErrors<T extends Record<string, unknown>>(
 	});
 
 	traversePaths(New, (error) => {
-		if (!Array.isArray(error.value)) return;
+		if (!Array.isArray(error.value) && error.value !== undefined) return;
 		setPaths(Previous, [error.path], error.value);
 	});
 

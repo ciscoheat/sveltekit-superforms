@@ -43,7 +43,8 @@
 		'unknown-in-schema',
 		'issue-374',
 		'issue-366',
-		'issue-368'
+		'issue-368',
+		'zod-discriminated'
 	].sort();
 </script>
 

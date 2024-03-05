@@ -1,5 +1,6 @@
 import { SchemaError } from '$lib/errors.js';
 import { assertSchema } from '$lib/utils.js';
+import { merge } from 'ts-deepmerge';
 import type { JSONSchema } from './index.js';
 import { schemaInfo } from './schemaInfo.js';
 import type { SchemaType } from './schemaInfo.js';
@@ -20,8 +21,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	const info = schemaInfo(schema, isOptional, path);
 	if (!info) return undefined;
 
-	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
-	//else console.dir({ path, schema, isOptional }, { depth: 10 }); //debug
+	//if (schema.type == 'object') console.log('--- OBJECT ---');
+	//else console.dir({ path, schema, isOptional }, { depth: 10 });
 
 	let objectDefaults: Record<string, unknown> | undefined = undefined;
 
@@ -69,6 +70,8 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return _multiType.size > 1;
 	};
 
+	let output: Record<string, unknown> = {};
+
 	// Check unions first, so default values can take precedence over nullable and optional
 	if (!objectDefaults && info.union) {
 		const singleDefault = info.union.filter(
@@ -92,6 +95,19 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 					path
 				);
 			}
+
+			// Objects must have default values to avoid setting undefined properties on nested data
+			if (info.types[0] == 'object' && info.union.length) {
+				output =
+					info.union.length > 1
+						? merge.withOptions(
+								{ allowUndefinedOverrides: true },
+								...info.union.map(
+									(s) => _defaultValues(s, isOptional, path) as Record<string, unknown>
+								)
+							)
+						: (_defaultValues(info.union[0], isOptional, path) as Record<string, unknown>);
+			}
 		}
 	}
 
@@ -103,14 +119,13 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	// Objects
 	if (info.properties) {
-		const output: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(info.properties)) {
 			assertSchema(value, [...path, key]);
 
 			const def =
 				objectDefaults && objectDefaults[key] !== undefined
 					? objectDefaults[key]
-					: _defaultValues(value, !schema.required?.includes(key), [...path, key]);
+					: _defaultValues(value, !info.required?.includes(key), [...path, key]);
 
 			//if (def !== undefined) output[key] = def;
 			output[key] = def;

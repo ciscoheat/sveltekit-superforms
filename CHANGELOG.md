@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for object unions, with implicit default values.
+
 ### Fixed
 
 - It wasn't possible to directly assign `undefined` to a field in the `$errors` store.
+- Intersections in Zod schemas weren't handled properly.
 
 ## [2.7.0] - 2024-03-03
 

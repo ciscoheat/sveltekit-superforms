@@ -1,0 +1,129 @@
+<script lang="ts">
+	import { page } from '$app/stores';
+	import { superForm } from '$lib/index.js';
+	import SuperDebug from '$lib/index.js';
+	import { ProfileType } from './schema.js';
+	export let data;
+
+	const { form, errors, message, enhance } = superForm(data.form, {
+		dataType: 'json'
+	});
+</script>
+
+<SuperDebug data={$form} />
+
+<h3>Superforms testing ground - Zod</h3>
+
+{#if $message}
+	<!-- eslint-disable-next-line svelte/valid-compile -->
+	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+		{$message}
+	</div>
+{/if}
+
+<form method="POST" use:enhance>
+	<label>
+		Name<br />
+		<input name="name" aria-invalid={$errors.name ? 'true' : undefined} bind:value={$form.name} />
+		{#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
+	</label>
+
+	<label>
+		Email<br />
+		<input
+			name="email"
+			type="email"
+			aria-invalid={$errors.email ? 'true' : undefined}
+			bind:value={$form.email}
+		/>
+		{#if $errors.email}<span class="invalid">{$errors.email}</span>{/if}
+	</label>
+
+	<label>
+		Type
+		<br />
+		<select bind:value={$form.type}>
+			<option value={ProfileType.STUDENT}>Student</option>
+			<option value={ProfileType.FACULTY}>Faculty</option>
+			<option value={ProfileType.STAFF}>Staff</option>
+		</select>
+	</label>
+	<hr />
+
+	{#if $form.type === ProfileType.STUDENT}
+		<label>
+			Year of Study<br />
+			<input name="yearOfStudy" type="number" bind:value={$form.typeData.yearOfStudy} />
+		</label>
+		<label>
+			Branch<br />
+			<input name="branch" type="text" bind:value={$form.typeData.branch} />
+		</label>
+		<label>
+			Department<br />
+			<input name="department" type="text" bind:value={$form.typeData.department} />
+		</label>
+		<label>
+			Student ID<br />
+			<input name="studentId" type="text" bind:value={$form.typeData.studentId} />
+		</label>
+	{:else if $form.type === ProfileType.FACULTY}
+		<label>
+			Designation<br />
+			<input name="designation" type="text" bind:value={$form.typeData.designation} />
+		</label>
+		<label>
+			Branch<br />
+			<input name="branch" type="text" bind:value={$form.typeData.branch} />
+		</label>
+		<label>
+			Department<br />
+			<input name="department" type="text" bind:value={$form.typeData.department} />
+		</label>
+		<label>
+			Faculty Id<br />
+			<input name="facultyId" type="text" bind:value={$form.typeData.facultyId} />
+		</label>
+	{/if}
+
+	<button>Submit</button>
+</form>
+
+<style>
+	.invalid {
+		color: red;
+	}
+
+	.status {
+		color: white;
+		padding: 4px;
+		padding-left: 8px;
+		border-radius: 2px;
+		font-weight: 500;
+	}
+
+	.status.success {
+		background-color: seagreen;
+	}
+
+	.status.error {
+		background-color: #ff2a02;
+	}
+
+	input {
+		background-color: #ddd;
+	}
+
+	a {
+		text-decoration: underline;
+	}
+
+	hr {
+		margin-top: 4rem;
+	}
+
+	form {
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+	}
+</style>

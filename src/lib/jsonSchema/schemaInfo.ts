@@ -1,6 +1,6 @@
-import { SchemaError } from '$lib/errors.js';
 import { assertSchema } from '$lib/utils.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
+import { merge } from 'ts-deepmerge';
 
 export type SchemaType =
 	| JSONSchema7TypeName
@@ -38,7 +38,15 @@ export function schemaInfo(
 ): SchemaInfo {
 	assertSchema(schema, path);
 
-	if (!path) throw new SchemaError('Why?', path);
+	if (schema.allOf && schema.allOf.length) {
+		return {
+			...merge.withOptions(
+				{ allowUndefinedOverrides: false },
+				...schema.allOf.map((s) => schemaInfo(s, false, []))
+			),
+			schema
+		};
+	}
 
 	const types = schemaTypes(schema, path);
 

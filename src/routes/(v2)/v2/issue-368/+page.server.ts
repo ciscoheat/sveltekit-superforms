@@ -10,7 +10,7 @@ export const load = async () => {
 
 export const actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request);
+		const form = await superValidate(request, zod(schema));
 		console.log(form);
 
 		if (!form.valid) return fail(400, { form });

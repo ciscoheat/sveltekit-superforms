@@ -3,6 +3,80 @@
 	import { page } from '$app/stores';
 	import { readable, get } from 'svelte/store';
 
+	/////////////////////////
+
+	/*! clipboard-copy. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
+
+	function makeError() {
+		return new DOMException('The request is not allowed', 'NotAllowedError');
+	}
+
+	/**
+	 * @param {string} text
+	 */
+	async function copyClipboardApi(text) {
+		// Use the Async Clipboard API when available. Requires a secure browsing
+		// context (i.e. HTTPS)
+		if (!navigator.clipboard) {
+			throw makeError();
+		}
+		return navigator.clipboard.writeText(text);
+	}
+
+	/**
+	 * @param {string} text
+	 */
+	async function copyExecCommand(text) {
+		// Put the text to copy into a <span>
+		const span = document.createElement('span');
+		span.textContent = text;
+
+		// Preserve consecutive spaces and newlines
+		span.style.whiteSpace = 'pre';
+		span.style.webkitUserSelect = 'auto';
+		span.style.userSelect = 'all';
+
+		// Add the <span> to the page
+		document.body.appendChild(span);
+
+		// Make a selection object representing the range of text selected by the user
+		const selection = window.getSelection();
+		const range = window.document.createRange();
+		selection?.removeAllRanges();
+		range.selectNode(span);
+		selection?.addRange(range);
+
+		// Copy text to the clipboard
+		let success = false;
+		try {
+			success = window.document.execCommand('copy');
+		} finally {
+			// Cleanup
+			selection?.removeAllRanges();
+			window.document.body.removeChild(span);
+		}
+
+		if (!success) throw makeError();
+	}
+
+	/**
+	 * @param {string} text
+	 */
+	async function clipboardCopy(text) {
+		try {
+			await copyClipboardApi(text);
+		} catch (err) {
+			// ...Otherwise, use document.execCommand() fallback
+			try {
+				await copyExecCommand(text);
+			} catch (err2) {
+				throw err2 || err || makeError();
+			}
+		}
+	}
+
+	/////////////////////////
+
 	/**
 	 * @typedef {unknown | Promise<unknown>} EncodeableData
 	 * @typedef {import('svelte/store').Readable<EncodeableData>} EncodeableDataStore
@@ -145,6 +219,24 @@
 		}
 
 		collapsed = data.collapsed[route];
+	}
+
+	let copied = false;
+
+	/**
+	 * @param {Event} e
+	 */
+	async function copyContent(e) {
+		if (!e.target) return;
+		const parent = /** @type {HTMLElement} */ (e.target).closest('.super-debug');
+		if (!parent) return;
+
+		const codeEl = /** @type {HTMLPreElement} */ (parent.querySelector('.super-debug--code'));
+		if (codeEl) {
+			await clipboardCopy(codeEl.innerText);
+			copied = true;
+			setTimeout(() => (copied = false), 800);
+		}
 	}
 
 	/**
@@ -333,10 +425,46 @@
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 {#if display}
-	<div class="super-debug" style={themeStyle}>
-		{#if label || status}
-			<div class="super-debug--status {label === '' ? 'absolute inset-x-0 top-0' : ''}">
-				<div class="super-debug--label">{label}</div>
+	<div class="super-debug" class:super-debug--collapsible={collapsible} style={themeStyle}>
+		<div class="super-debug--status {label === '' ? 'absolute inset-x-0 top-0' : ''}">
+			<div class="super-debug--label">{label}</div>
+			<div class="super-debug--right-status">
+				<button type="button" class="super-debug--copy" on:click={copyContent}>
+					{#if !copied}
+						<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"
+							><g
+								fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								><path
+									d="M7 9.667A2.667 2.667 0 0 1 9.667 7h8.666A2.667 2.667 0 0 1 21 9.667v8.666A2.667 2.667 0 0 1 18.333 21H9.667A2.667 2.667 0 0 1 7 18.333z"
+								/><path
+									d="M4.012 16.737A2.005 2.005 0 0 1 3 15V5c0-1.1.9-2 2-2h10c.75 0 1.158.385 1.5 1"
+								/></g
+							></svg
+						>
+					{:else}
+						<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"
+							><g
+								fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								><path d="M15 12v6m-3-3h6" /><rect
+									width="14"
+									height="14"
+									x="8"
+									y="8"
+									rx="2"
+									ry="2"
+								/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></g
+							></svg
+						>
+					{/if}
+				</button>
 				{#if status}
 					<div
 						class:info={$page.status < 200}
@@ -348,9 +476,9 @@
 					</div>
 				{/if}
 			</div>
-		{/if}
+		</div>
 		<pre
-			class="super-debug--pre {label === '' ? 'pt-4' : 'pt-0'}"
+			class="super-debug--pre {collapsed && label === '' ? 'h-4' : ''}"
 			class:hidden={collapsed}
 			bind:this={ref}><code class="super-debug--code"
 				><slot
@@ -437,6 +565,10 @@
 		overflow: hidden;
 	}
 
+	.hidden.h-4 {
+		height: 1.25em;
+	}
+
 	.rotated {
 		transform: rotate(180deg);
 	}
@@ -466,6 +598,11 @@
 		padding: 3px 0;
 	}
 
+	.super-debug--collapse:focus {
+		color: #fafafa;
+		background-color: rgba(255, 255, 255, 0.25);
+	}
+
 	.super-debug--collapse:is(:hover) {
 		color: rgba(255, 255, 255, 0.35);
 		background-color: rgba(255, 255, 255, 0.25);
@@ -477,6 +614,31 @@
 		padding-bottom: 0;
 		justify-content: space-between;
 		font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier, monospace;
+	}
+
+	.super-debug--right-status {
+		display: flex;
+		gap: 0.55em;
+	}
+
+	.super-debug--copy {
+		margin: 0;
+		padding: 0;
+		padding-top: 3px;
+		background-color: transparent;
+		border: 0;
+		color: #666;
+		cursor: pointer;
+	}
+
+	.super-debug--copy:hover {
+		background-color: transparent;
+		color: #666;
+	}
+
+	.super-debug--copy:focus {
+		background-color: transparent;
+		color: #666;
 	}
 
 	.super-debug--label {

@@ -108,6 +108,11 @@
 		<SuperDebug label="Sample User" data={$form} collapsible collapsed />
 	</section>
 	<section>
+		<h4>SuperDebug, initially collapsed, no label</h4>
+		<p>It should not hide the status if no label.</p>
+		<SuperDebug data={$form} collapsible collapsed />
+	</section>
+	<section>
 		<h4>SuperDebug without status</h4>
 		<SuperDebug label="Sample User" status={false} data={$form} />
 	</section>

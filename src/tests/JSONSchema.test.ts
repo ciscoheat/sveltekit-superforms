@@ -488,6 +488,93 @@ describe('Unions', () => {
 			)
 		).toThrowError(SchemaError);
 	});
+
+	describe('Array unions', () => {
+		it('should return an empty array as default value', () => {
+			const arrays = z.object({
+				tags: z.union([
+					z.object({ id: z.number(), num: z.number() }).array(),
+					z.object({ id: z.string(), name: z.string() }).array()
+				])
+			});
+
+			const adapter = zod(arrays);
+			expect(adapter.defaults).toEqual({ tags: [] });
+		});
+	});
+
+	describe('Discriminated unions and intersections', () => {
+		enum ProfileType {
+			STUDENT = 'STUDENT',
+			FACULTY = 'FACULTY',
+			STAFF = 'STAFF'
+		}
+
+		const studentZSchema = z.object({
+			yearOfStudy: z.number().min(1),
+			branch: z.string().min(2),
+			department: z.string().min(2),
+			studentId: z.string().min(2),
+			clubs: z.array(z.string()).optional()
+		});
+
+		const facultyZSchema = z.object({
+			department: z.string().min(2),
+			branch: z.string().min(2),
+			designation: z.string().min(2),
+			facultyId: z.string().min(2)
+		});
+
+		const staffZSchema = z.object({
+			department: z.string().min(2),
+			branch: z.string().min(2),
+			designation: z.string().min(2),
+			staffId: z.string().min(2)
+		});
+
+		const profileSchema = z.discriminatedUnion('type', [
+			z.object({
+				type: z.literal(ProfileType.STUDENT),
+				typeData: studentZSchema
+			}),
+			z.object({
+				type: z.literal(ProfileType.FACULTY),
+				typeData: facultyZSchema
+			}),
+			z.object({
+				type: z.literal(ProfileType.STAFF),
+				typeData: staffZSchema
+			})
+		]);
+
+		const UserProfileZodSchema = z
+			.object({
+				name: z.string().min(2),
+				email: z.string().email(),
+				type: z.nativeEnum(ProfileType)
+			})
+			.and(profileSchema);
+
+		it('should merge properties of object unions together', () => {
+			const adapter = zod(UserProfileZodSchema);
+
+			expect(adapter.defaults).toEqual({
+				name: '',
+				email: '',
+				type: ProfileType.STUDENT,
+				typeData: {
+					yearOfStudy: 0,
+					branch: '',
+					department: '',
+					studentId: '',
+					clubs: undefined,
+					designation: '',
+					facultyId: '',
+					staffId: ''
+				}
+			});
+		});
+	});
 });
 
 describe('Default value types', () => {
@@ -530,79 +617,6 @@ describe('Default value types', () => {
 			},
 			no: {
 				__types: ['unix-time', 'undefined']
-			}
-		});
-	});
-});
-
-describe('Discriminated unions and intersections', () => {
-	enum ProfileType {
-		STUDENT = 'STUDENT',
-		FACULTY = 'FACULTY',
-		STAFF = 'STAFF'
-	}
-
-	const studentZSchema = z.object({
-		yearOfStudy: z.number().min(1),
-		branch: z.string().min(2),
-		department: z.string().min(2),
-		studentId: z.string().min(2),
-		clubs: z.array(z.string()).optional()
-	});
-
-	const facultyZSchema = z.object({
-		department: z.string().min(2),
-		branch: z.string().min(2),
-		designation: z.string().min(2),
-		facultyId: z.string().min(2)
-	});
-
-	const staffZSchema = z.object({
-		department: z.string().min(2),
-		branch: z.string().min(2),
-		designation: z.string().min(2),
-		staffId: z.string().min(2)
-	});
-
-	const profileSchema = z.discriminatedUnion('type', [
-		z.object({
-			type: z.literal(ProfileType.STUDENT),
-			typeData: studentZSchema
-		}),
-		z.object({
-			type: z.literal(ProfileType.FACULTY),
-			typeData: facultyZSchema
-		}),
-		z.object({
-			type: z.literal(ProfileType.STAFF),
-			typeData: staffZSchema
-		})
-	]);
-
-	const UserProfileZodSchema = z
-		.object({
-			name: z.string().min(2),
-			email: z.string().email(),
-			type: z.nativeEnum(ProfileType)
-		})
-		.and(profileSchema);
-
-	it('should merge properties of object unions together', () => {
-		const adapter = zod(UserProfileZodSchema);
-
-		expect(adapter.defaults).toEqual({
-			name: '',
-			email: '',
-			type: ProfileType.STUDENT,
-			typeData: {
-				yearOfStudy: 0,
-				branch: '',
-				department: '',
-				studentId: '',
-				clubs: undefined,
-				designation: '',
-				facultyId: '',
-				staffId: ''
 			}
 		});
 	});

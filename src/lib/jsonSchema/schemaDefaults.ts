@@ -97,7 +97,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			}
 
 			// Objects must have default values to avoid setting undefined properties on nested data
-			if (info.types[0] == 'object' && info.union.length) {
+			if (info.union.length && info.types[0] == 'object') {
 				output =
 					info.union.length > 1
 						? merge.withOptions(

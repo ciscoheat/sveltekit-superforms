@@ -1604,9 +1604,31 @@ export function superForm<
 
 				const _submitCancel = submit.cancel;
 				let cancelled = false;
-				function cancel(resetTimers = true) {
+
+				function clientValidationResult(validation: SuperFormValidated<T, M, In>) {
+					const validationResult = { ...validation, posted: true };
+
+					const status = validationResult.valid
+						? 200
+						: (typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400;
+
+					const data = { form: validationResult };
+
+					const result: ActionResult = validationResult.valid
+						? { type: 'success', status, data }
+						: { type: 'failure', status, data };
+
+					setTimeout(() => validationResponse({ result }, cancelled), 0);
+				}
+
+				function cancel(
+					opts: { resetTimers?: boolean } = {
+						resetTimers: true
+					}
+				) {
 					cancelled = true;
-					if (resetTimers && htmlForm.isSubmitting()) {
+
+					if (opts.resetTimers && htmlForm.isSubmitting()) {
 						htmlForm.completed({ cancelled });
 					}
 					return _submitCancel();
@@ -1614,7 +1636,7 @@ export function superForm<
 				submit.cancel = cancel;
 
 				if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
-					cancel(false);
+					cancel({ resetTimers: false });
 				} else {
 					if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
 						if (currentRequest) currentRequest.abort();
@@ -1627,9 +1649,9 @@ export function superForm<
 					}
 				}
 
-				if (cancelled) {
-					if (options.flashMessage) cancelFlash(options);
-				} else {
+				if (cancelled && options.flashMessage) cancelFlash(options);
+
+				if (!cancelled) {
 					// Client validation
 					const noValidate =
 						!options.SPA &&
@@ -1648,16 +1670,8 @@ export function superForm<
 						validation = await validateForm();
 
 						if (!validation.valid) {
-							cancel(false);
-
-							const result = {
-								type: 'failure' as const,
-								status:
-									(typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400,
-								data: { form: validation }
-							};
-
-							setTimeout(() => validationResponse({ result }), 0);
+							cancel({ resetTimers: false });
+							clientValidationResult(validation);
 						}
 					}
 
@@ -1695,22 +1709,9 @@ export function superForm<
 						lastInputChange = undefined;
 
 						if (options.SPA) {
-							cancel(false);
 							if (!validation) validation = await validateForm();
-
-							const validationResult = { ...validation, posted: true };
-
-							const result = {
-								type: validationResult.valid ? 'success' : 'failure',
-								status: validationResult.valid
-									? 200
-									: typeof options.SPA == 'object'
-										? options.SPA?.failStatus
-										: 400 ?? 400,
-								data: { form: validationResult }
-							} as ActionResult;
-
-							setTimeout(() => validationResponse({ result }), 0);
+							cancel({ resetTimers: false });
+							clientValidationResult(validation);
 						} else if (options.dataType === 'json') {
 							if (!validation) validation = await validateForm();
 
@@ -1772,7 +1773,9 @@ export function superForm<
 					return chunks;
 				}
 
-				async function validationResponse(event: ValidationResponse) {
+				async function validationResponse(event: ValidationResponse, cancelled = false) {
+					currentRequest = null;
+
 					// Check if an error was thrown in hooks, in which case it has no type.
 					const result: ActionResult = event.result.type
 						? event.result
@@ -1782,9 +1785,6 @@ export function superForm<
 								error: event.result
 							};
 
-					currentRequest = null;
-
-					let cancelled = false;
 					const cancel = () => (cancelled = true);
 
 					const data = {

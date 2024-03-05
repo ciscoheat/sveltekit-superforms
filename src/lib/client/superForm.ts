@@ -1778,7 +1778,7 @@ export function superForm<
 					currentRequest = null;
 
 					// Check if an error was thrown in hooks, in which case it has no type.
-					const result: ActionResult = event.result.type
+					let result: ActionResult = event.result.type
 						? event.result
 						: {
 								type: 'error',
@@ -1804,6 +1804,9 @@ export function superForm<
 					for (const event of formEvents.onResult) {
 						await event(data);
 					}
+
+					// In case it was modified in the event
+					result = data.result;
 
 					if (!cancelled) {
 						if ((result.type === 'success' || result.type == 'failure') && result.data) {

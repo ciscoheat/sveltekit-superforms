@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - It wasn't possible to directly assign `undefined` to a field in the `$errors` store.
 - Intersections in Zod schemas weren't handled properly.
+- It wasn't possible to change the reference to the result in `onResult`.
 
 ## [2.7.0] - 2024-03-03
 

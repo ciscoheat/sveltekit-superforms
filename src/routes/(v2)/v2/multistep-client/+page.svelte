@@ -13,22 +13,20 @@
 
 	const { form, errors, message, enhance, validateForm, options } = superForm(data.form, {
 		resetForm: true,
-		// Client-side validation
-		validators: schemas[0],
 		// No need for name attributes or hidden fields with dataType: 'json'
 		dataType: 'json',
 		async onSubmit({ cancel }) {
-			// If on last step, make a normal request, otherwise
-			// cancel server request (let client-side handle it)
+			// If on last step, make a normal request
 			if (isLastStep) return;
 			else cancel();
 
+			// Make a manual client-side validation, since we have cancelled.
 			const result = await validateForm({ update: true });
 			if (result.valid) step = step + 1;
 		},
 
 		async onUpdated({ form }) {
-			if (isLastStep && form.valid) step = 1;
+			if (form.valid) step = 1;
 		}
 	});
 
@@ -49,7 +47,7 @@
 	{#if step == 1}
 		<label>
 			Name<br />
-			<input aria-invalid={$errors.name ? 'true' : undefined} bind:value={$form.name} />
+			<input name="name" aria-invalid={$errors.name ? 'true' : undefined} bind:value={$form.name} />
 			{#if $errors.name}<span class="invalid">{$errors.name}</span>{/if}
 		</label>
 		<button>Next step</button>
@@ -58,6 +56,7 @@
 		<label>
 			Email<br />
 			<input
+				name="email"
 				type="email"
 				aria-invalid={$errors.email ? 'true' : undefined}
 				bind:value={$form.email}

@@ -361,17 +361,33 @@ function multipleFormIdError(id: string | undefined) {
 	);
 }
 
+/////////////////////////////////////////////////////////////////////
+
 /**
  * V1 compatibilty. resetForm = false and taintedMessage = true
  */
-let legacyMode = false;
+let LEGACY_MODE = false;
 
 try {
 	// @ts-expect-error Vite define check
-	if (SUPERFORMS_LEGACY) legacyMode = true;
+	if (SUPERFORMS_LEGACY) LEGACY_MODE = true;
 } catch {
 	// No legacy mode defined
 }
+
+/**
+ * Storybook compatibility mode, basically disables the navigating store.
+ */
+let STORYBOOK_MODE = false;
+
+try {
+	// @ts-expect-error Storybook check
+	if (globalThis.STORIES) STORYBOOK_MODE = true;
+} catch {
+	// No Storybook
+}
+
+/////////////////////////////////////////////////////////////////////
 
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
@@ -393,9 +409,13 @@ export function superForm<
 	let initialValidator: FormOptions<T, M, In>['validators'] | undefined = undefined;
 
 	{
-		if (options.legacy ?? legacyMode) {
+		if (options.legacy ?? LEGACY_MODE) {
 			if (options.resetForm === undefined) options.resetForm = false;
 			if (options.taintedMessage === undefined) options.taintedMessage = true;
+		}
+
+		if (STORYBOOK_MODE) {
+			if (options.applyAction === undefined) options.applyAction = false;
 		}
 
 		initialValidator = options.validators;
@@ -1795,11 +1815,13 @@ export function superForm<
 						cancel
 					};
 
-					// Check for goto to a different route in the events
-					const unsubCheckforNav = navigating.subscribe(($nav) => {
-						if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
-						cancel();
-					});
+					const unsubCheckforNav = STORYBOOK_MODE
+						? () => {}
+						: navigating.subscribe(($nav) => {
+								// Check for goto to a different route in the events
+								if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
+								cancel();
+							});
 
 					for (const event of formEvents.onResult) {
 						await event(data);
@@ -1912,6 +1934,8 @@ export function superForm<
 					// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
 					if (cancelled || result.type != 'redirect') {
 						htmlForm.completed({ cancelled });
+					} else if (STORYBOOK_MODE) {
+						htmlForm.completed({ cancelled, clearAll: true });
 					} else {
 						const unsub = navigating.subscribe(($nav) => {
 							if ($nav) return;

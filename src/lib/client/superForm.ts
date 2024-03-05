@@ -1618,7 +1618,7 @@ export function superForm<
 						? { type: 'success', status, data }
 						: { type: 'failure', status, data };
 
-					setTimeout(() => validationResponse({ result }, cancelled), 0);
+					setTimeout(() => validationResponse({ result }), 0);
 				}
 
 				function cancel(
@@ -1773,7 +1773,8 @@ export function superForm<
 					return chunks;
 				}
 
-				async function validationResponse(event: ValidationResponse, cancelled = false) {
+				async function validationResponse(event: ValidationResponse) {
+					let cancelled = false;
 					currentRequest = null;
 
 					// Check if an error was thrown in hooks, in which case it has no type.

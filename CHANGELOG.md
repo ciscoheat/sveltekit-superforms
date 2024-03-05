@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for object unions, with implicit default values.
-- [Storybook](https://storybook.js.org/recipes/@sveltejs/kit#@sveltejs/kit) support!
+- Experimental [storybook](https://storybook.js.org/recipes/@sveltejs/kit#@sveltejs/kit) support.
 
 ### Fixed
 

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Copy button for [SuperDebug](https://superforms.rocks/super-debug).
+- Clipboard copy button for [SuperDebug](https://superforms.rocks/super-debug). Also fixed height when collapsed without label.
 
 ## [2.8.0] - 2024-03-05
 

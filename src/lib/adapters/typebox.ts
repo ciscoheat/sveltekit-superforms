@@ -17,7 +17,9 @@ const Email =
 async function modules() {
 	const { TypeCompiler } = await import(/* webpackIgnore: true */ '@sinclair/typebox/compiler');
 	const { FormatRegistry } = await import(/* webpackIgnore: true */ '@sinclair/typebox');
-	return { TypeCompiler, FormatRegistry };
+	const { SetErrorFunction, DefaultErrorFunction } = await import(/* webpackIgnore: true */'@sinclair/typebox/errors');
+
+	return { TypeCompiler, FormatRegistry, SetErrorFunction, DefaultErrorFunction };
 }
 
 const fetchModule = /* @__PURE__ */ memoize(modules);
@@ -26,7 +28,14 @@ async function validate<T extends TSchema>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
-	const { TypeCompiler, FormatRegistry } = await fetchModule();
+	const { TypeCompiler, FormatRegistry, SetErrorFunction, DefaultErrorFunction } = await fetchModule();
+
+	/** https://github.com/sinclairzx81/typebox/discussions/723#discussioncomment-8075718 */
+	SetErrorFunction(param => {
+		return typeof param.schema.errorMessage === 'string'
+			? param.schema.errorMessage
+			: DefaultErrorFunction(param);
+	});
 
 	if (!compiled.has(schema)) {
 		compiled.set(schema, TypeCompiler.Compile(schema));

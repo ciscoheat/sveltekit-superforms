@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Clipboard copy button for [SuperDebug](https://superforms.rocks/super-debug). Also fixed height when collapsed without label.
 
+### Fixed
+
+- Storybook fix for missing `page` store.
+
 ## [2.8.0] - 2024-03-05
 
 ### Added

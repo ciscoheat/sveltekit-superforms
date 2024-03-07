@@ -454,7 +454,7 @@ export function superForm<
 
 		// Check multiple id's
 		const _initialFormId = options.id ?? form.id;
-		const _currentPage = get(page);
+		const _currentPage = get(page) ?? (STORYBOOK_MODE ? {} : undefined);
 
 		if (browser && options.warnings?.duplicateId !== false) {
 			if (!formIds.has(_currentPage)) {
@@ -1319,6 +1319,9 @@ export function superForm<
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(
 			page.subscribe(async (pageUpdate) => {
+				if (STORYBOOK_MODE && pageUpdate === undefined) {
+					pageUpdate = { status: 200 } as Page;
+				}
 				const successResult = pageUpdate.status >= 200 && pageUpdate.status < 300;
 
 				if (options.applyAction && pageUpdate.form && typeof pageUpdate.form === 'object') {

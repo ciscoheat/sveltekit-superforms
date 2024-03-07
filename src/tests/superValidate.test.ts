@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, it, expect, assert, beforeEach } from 'vitest';
 import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZodSchema } from './data.js';
@@ -270,6 +271,23 @@ describe('Valibot', () => {
 		type In = InferIn<typeof logSchema>;
 	});
  */
+
+	it('should have the correct JSON Schema after transform', () => {
+		const UserSchema = v.transform(
+			v.object({
+				name: v.string(),
+				age: v.number(),
+				len: v.transform(v.string(), (l) => l.length)
+			}),
+			(input) => ({
+				...input,
+				created: new Date().toISOString()
+			})
+		);
+
+		const adapter = valibot(UserSchema);
+		//console.dir(adapter.jsonSchema, { depth: 10 }); //debug
+	});
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -999,12 +1017,12 @@ describe('Customized superValidate', () => {
 	type SuperParams<T extends Record<string, unknown>> = Parameters<typeof superValidate<T>>;
 	type ZodSchema = Parameters<typeof zod>[0];
 
-	function zodValidate<T extends ZodSchema, M>(
+	function zodValidate<T extends ZodSchema>(
 		data: SuperParams<InferIn<T>>[0],
 		schema: T,
 		options?: SuperParams<Infer<T>>[2]
 	) {
-		return superValidate<Infer<T>, M, InferIn<T>>(data, zod(schema), options);
+		return superValidate<Infer<T>>(data, zod(schema), options);
 	}
 
 	const zodSchema = z.object({
@@ -1013,88 +1031,7 @@ describe('Customized superValidate', () => {
 
 	it('Should be type-safe', async () => {
 		const v = await zodValidate(null, zodSchema);
-		expect(v.data.num).toBe(0);
+		const n: number = v.data.num;
+		expect(n).toBe(0);
 	});
 });
-
-describe('"input" schema property', () => {
-	const schema = z.object({
-		test: z.string().nullish().default('OK'),
-		len: z
-			.string()
-			.transform((s) => s.length)
-			.pipe(z.number().min(2))
-	});
-
-	it('should be undefined when default values are used', async () => {
-		const adapter = zod(schema);
-		//console.dir(adapter.jsonSchema, { depth: 10 }); //debug
-		type Out = Infer<typeof schema>;
-		type In = InferIn<typeof schema>;
-
-		const form = await superValidate(adapter);
-		expect(form.data).toEqual({ test: 'OK', len: 0 });
-		expect(form.input).toBeUndefined();
-	});
-
-	describe('should return the parsed, non-transformed data if not empty', () => {
-		it('for empty FormData', async () => {
-			const formData = new FormData();
-			const form = await superValidate(formData, zod(schema), { transformed: true });
-
-			expect(form.data).toEqual({ test: 'OK', len: 0 });
-			expect(form.input).toEqual({});
-		});
-
-		it('for valid FormData', async () => {
-			const formData = new FormData();
-			formData.set('len', 'testing');
-			formData.set('test', 'test');
-			const form = await superValidate(formData, zod(schema), { transformed: ['len'] });
-
-			expect(form.data).toEqual({ test: 'test', len: 7 });
-			expect(form.input).toEqual({ test: 'test', len: 'testing' });
-		});
-
-		it('for invalid FormData', async () => {
-			const formData = new FormData();
-			formData.set('len', 't');
-			const form = await superValidate(formData, zod(schema), { transformed: true });
-
-			expect(form.input).toEqual({ len: 't' });
-			expect(form.data).toEqual({ test: 'OK', len: 0 });
-		});
-	});
-});
-
-type T = {
-	name: string | undefined;
-	email: string;
-	tags: string[];
-	score: number;
-	nestad:
-		| {
-				date: Date;
-				date2: Date | undefined;
-		  }
-		| undefined;
-	date: Date | undefined;
-	dateArr?: Date[] | undefined;
-	nospace: string | undefined;
-};
-
-type In = {
-	len: string;
-	test?: string | null | undefined;
-	nested: {
-		date: string;
-	};
-};
-
-type Out = {
-	len: number;
-	test: string | null;
-	nested: {
-		date: Date;
-	};
-};

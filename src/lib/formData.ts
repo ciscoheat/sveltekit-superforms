@@ -163,11 +163,12 @@ function _parseFormData<Out extends Record<string, unknown>, In extends Record<s
 			);
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
-		const transformed = options?.transformed ?? options?.preprocessed;
+		const transformed =
+			(options?.inputDefaults && key in options.inputDefaults) ||
+			(options?.preprocessed &&
+				(options.preprocessed === true || options.preprocessed.includes(key)));
 
-		if (transformed && (transformed === true || transformed.includes(key))) {
-			return entry;
-		}
+		if (transformed) return entry;
 
 		if (entry && typeof entry !== 'string') {
 			const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;

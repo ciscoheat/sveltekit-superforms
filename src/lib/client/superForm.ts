@@ -30,7 +30,7 @@ import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
-import type { DeepPartial, MaybePromise } from '$lib/utils.js';
+import type { Exact, MaybePromise } from '$lib/utils.js';
 import type {
 	ClientValidationAdapter,
 	ValidationAdapter,
@@ -229,7 +229,7 @@ export type SuperForm<
 	constraints: Writable<InputConstraints<T>>;
 	message: Writable<M | undefined>;
 	tainted: Writable<TaintedFields<T> | undefined>;
-	input: Writable<DeepPartial<In>>;
+	input: Exact<T, In> extends true ? never : Writable<In>;
 
 	submitting: Readable<boolean>;
 	delayed: Readable<boolean>;
@@ -451,7 +451,7 @@ export function superForm<
 				posted: false,
 				errors: {},
 				data: form as T,
-				input: {}
+				input: undefined
 			} satisfies SuperValidated<T, M, In>;
 		}
 
@@ -580,8 +580,8 @@ export function superForm<
 		valid: form.valid,
 		submitting: false,
 		shape: form.shape,
-		input: form.input ? clone(form.input) : ({} as DeepPartial<In>),
-		transformed: !!form.input
+		input: form.input ? clone(form.input) : undefined,
+		isTransformed: !!form.input
 	};
 
 	const Data: Readonly<typeof __data> = __data;
@@ -649,7 +649,7 @@ export function superForm<
 		adapter?: FormOptions<T, M, In>['validators'];
 		recheckValidData?: boolean;
 	}): Promise<SuperFormValidated<T, M, In>> {
-		const dataToValidate = opts.formData ?? (Data.transformed ? Data.input : Data.form);
+		const dataToValidate = opts.formData ?? (Data.isTransformed ? Data.input : Data.form);
 
 		let errors: ValidationErrors<T> = {};
 		let status: ValidationResult<Partial<T>>;
@@ -1393,7 +1393,7 @@ export function superForm<
 		message: Message,
 		constraints: Constraints,
 		tainted: Tainted_currentState(),
-		input: Input,
+		input: Input as Exact<T, In> extends true ? never : Writable<In>,
 
 		submitting: readonly(Submitting),
 		delayed: readonly(Delayed),
@@ -1708,7 +1708,7 @@ export function superForm<
 
 					const validateForm = async () => {
 						return await Form_validate({
-							formData: Data.transformed ? Data.input : Data.form,
+							formData: Data.isTransformed ? Data.input : Data.form,
 							adapter: validationAdapter
 						});
 					};
@@ -1762,7 +1762,8 @@ export function superForm<
 						} else if (options.dataType !== 'form') {
 							//if (!validation) validation = await validateForm();
 
-							const postData = clone(jsonData ?? (Data.transformed ? Data.input : Data.form));
+							const postData =
+								clone(jsonData ?? (Data.isTransformed ? Data.input : Data.form)) ?? {};
 
 							// Move files to form data, since they cannot be serialized.
 							// Will be reassembled in superValidate.

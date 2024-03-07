@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import type { Infer, InferIn } from '$lib/index.js';
 import { z } from 'zod';
 
 export const schema = z.object({
@@ -9,51 +10,27 @@ export const schema = z.object({
 		.pipe(z.number().min(2))
 });
 
-type In = z.input<typeof schema>;
-type Out = z.infer<typeof schema>;
+type Out = Infer<typeof schema>;
+type In = InferIn<typeof schema>;
 
-type CommonFields<T, U> = {
-	[K in keyof T & keyof U]: T[K] extends U[K]
-		? T[K] extends object
-			? U[K] extends object
-				? CommonFields<T[K], U[K]>
-				: never
-			: T[K]
-		: never;
+type P = Out extends In ? 'yes' : 'no';
+
+type In1 = {
+	test?: string | null | undefined;
+	len?: string;
+	tags: {
+		id?: number;
+		name: string;
+	};
+	extra: Date;
+	extra2?: bigint;
 };
 
-type NotCommonFields<T, U> = {
-	[K in keyof T & keyof U]: T[K] extends U[K]
-		? never
-		: T[K] extends object
-			? U[K] extends object
-				? NotCommonFields<T[K], U[K]>
-				: T[K]
-			: T[K];
+type Out1 = {
+	test: string | null;
+	len: number;
+	tags: {
+		id: number;
+		name: Date;
+	};
 };
-
-type CommonFields2<T, U> = {
-	[K in keyof T & keyof U]: [T[K], U[K]] extends [infer A, infer B]
-		? A extends B
-			? B extends A
-				? A extends object
-					? CommonFields<A, B>
-					: A
-				: never
-			: never
-		: never;
-};
-
-type CommonFields3<T, U> = {
-	[K in keyof T & keyof U]: [T[K], U[K]] extends [infer A, infer B]
-		? A extends B
-			? never
-			: A extends object
-				? CommonFields3<A, B>
-				: A
-		: never;
-};
-
-type M = CommonFields3<In, Out>;
-
-let m: M;

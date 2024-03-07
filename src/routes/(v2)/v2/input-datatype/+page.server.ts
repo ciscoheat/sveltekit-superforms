@@ -4,7 +4,7 @@ import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = async () => {
-	const form = await superValidate(zod(schema), { transformed: true });
+	const form = await superValidate(zod(schema), { inputDefaults: true });
 	console.dir(form, { depth: 10 }); //debug
 
 	return { form };
@@ -15,7 +15,7 @@ export const actions = {
 		const formData = await request.formData();
 		console.log(formData);
 
-		const form = await superValidate(formData, zod(schema), { transformed: true });
+		const form = await superValidate(formData, zod(schema), { inputDefaults: true });
 		console.log(form);
 
 		if (!form.valid) return fail(400, { form });

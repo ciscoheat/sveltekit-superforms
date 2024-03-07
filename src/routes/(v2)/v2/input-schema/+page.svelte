@@ -11,6 +11,14 @@
 		//dataType: 'json',
 		//validators: zod(schema)
 	});
+	const { input: input2 } = superForm(data.formNoInput);
+
+	const len: number = $form.len;
+	const inp: never = input2;
+
+	len;
+	input2;
+	inp;
 </script>
 
 <SuperDebug data={{ $input, $form, $errors, $tainted }} />

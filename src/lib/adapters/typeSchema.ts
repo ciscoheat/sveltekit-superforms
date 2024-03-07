@@ -5,6 +5,7 @@ import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
+import type { Replace } from '$lib/utils.js';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -15,13 +16,6 @@ import type { Predicate, Infer as Infer$1 } from 'ow';
 import type { Runtype, Static } from 'runtypes';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
 */
-
-type Replace<T, From, To> =
-	NonNullable<T> extends From
-		? To | Exclude<T, From>
-		: NonNullable<T> extends object
-			? { [K in keyof T]: Replace<T[K], From, To> }
-			: T;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IfDefined<T> = any extends T ? never : T;

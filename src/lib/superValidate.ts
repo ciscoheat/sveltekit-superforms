@@ -2,13 +2,14 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
-import type { DeepPartial, ErrorStatus } from './utils.js';
+import type { ErrorStatus } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
 import type { InputConstraints } from './jsonSchema/constraints.js';
 import type { SuperStructArray } from './superStruct.js';
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
+import type { InputFields } from './input.js';
 
 export type SuperFormValidated<
 	T extends Record<string, unknown>,
@@ -35,7 +36,7 @@ export type SuperValidated<
 	constraints?: InputConstraints<Out>;
 	message?: Message;
 	shape?: SchemaShape;
-	input?: DeepPartial<In>;
+	input?: In;
 };
 
 export type ValidationErrors<Out extends Record<string, unknown>> = {
@@ -59,10 +60,10 @@ export type SuperValidateOptions<
 	errors: boolean;
 	id: string;
 	/**
-	 * @deprecated Use `transformed` instead.
+	 * @deprecated Use `input` instead.
 	 */
 	preprocessed: (keyof Out)[] | boolean;
-	transformed: (keyof In)[] | boolean;
+	inputDefaults: InputFields<In, Out>;
 	defaults: Out;
 	jsonSchema: JSONSchema;
 	strict: boolean;
@@ -125,8 +126,10 @@ export async function superValidate<
 
 	// TODO: Don't merge defaults in transformed mode
 
+	const mergedDefaults = mergeDefaults(parsed.data, { ...defaults, ...options?.inputDefaults });
+
 	// Merge with defaults in non-strict mode.
-	const parsedData = options?.strict ? parsed.data ?? {} : mergeDefaults(parsed.data, defaults);
+	const parsedData = options?.strict ? parsed.data ?? {} : mergedDefaults;
 
 	let status: ValidationResult<Out>;
 
@@ -143,7 +146,7 @@ export async function superValidate<
 	const dataWithDefaults = valid
 		? status.data
 		: replaceInvalidDefaults(
-				options?.strict ? mergeDefaults(parsedData, defaults) : parsedData,
+				options?.strict ? mergedDefaults : parsedData,
 				defaults,
 				jsonSchema,
 				status.issues,
@@ -169,8 +172,8 @@ export async function superValidate<
 		data: outputData as Out
 	};
 
-	if (options?.transformed) {
-		form.input = (parsed.data ?? {}) as DeepPartial<In>;
+	if (options?.inputDefaults) {
+		form.input = { ...dataWithDefaults, ...options.inputDefaults, ...(parsed.data ?? {}) } as In;
 	}
 
 	if (!parsed.posted) {

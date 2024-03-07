@@ -29,17 +29,22 @@ export type IsAny<T> = boolean extends (T extends never ? true : false) ? true :
 
 export type BuiltInObjects = Date | Set<unknown> | File;
 
-export type DeepPartial<T> = {
-	[K in keyof T]?: NonNullable<T[K]> extends BuiltInObjects
-		? T[K]
-		: NonNullable<T[K]> extends (infer U)[]
-			? NonNullable<U> extends BuiltInObjects
-				? U[]
-				: DeepPartial<U>[]
-			: NonNullable<T[K]> extends object
-				? DeepPartial<T[K]>
-				: T[K];
-};
+export type Replace<T, From, To> =
+	NonNullable<T> extends From
+		? To | Exclude<T, From>
+		: NonNullable<T> extends object
+			? { [K in keyof T]: Replace<T[K], From, To> }
+			: T;
+
+// Thanks to https://stackoverflow.com/a/54160691/70894
+export type Exact<A, B> =
+	(<T>() => T extends A ? 1 : 0) extends <T>() => T extends B ? 1 : 0
+		? A extends B
+			? B extends A
+				? true
+				: false
+			: false
+		: false;
 
 export function assertSchema(
 	schema: JSONSchema7Definition,

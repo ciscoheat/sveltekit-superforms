@@ -44,7 +44,8 @@
 		'issue-374',
 		'issue-366',
 		'issue-368',
-		'zod-discriminated'
+		'zod-discriminated',
+		'syncflash'
 	].sort();
 </script>
 

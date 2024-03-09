@@ -478,8 +478,9 @@
 			</div>
 		</div>
 		<pre
-			class="super-debug--pre {collapsed && label === '' ? 'h-4' : ''}"
-			class:hidden={collapsed}
+			class="super-debug--pre"
+			class:super-debug--with-label={label}
+			class:super-debug--hidden={collapsed}
 			bind:this={ref}><code class="super-debug--code"
 				><slot
 					>{#if assertPromise($debugData, raw, promise)}{#await $debugData}<div
@@ -552,21 +553,13 @@
 		right: 0px;
 	}
 
-	.pt-0 {
-		padding-top: 0px;
-	}
-
-	.pt-4 {
-		padding-top: 1em;
-	}
-
-	.hidden {
+	.super-debug--hidden {
 		height: 0;
 		overflow: hidden;
 	}
 
-	.hidden.h-4 {
-		height: 1.25em;
+	.super-debug--hidden:not(.super-debug--with-label) {
+		height: 1.5em;
 	}
 
 	.rotated {

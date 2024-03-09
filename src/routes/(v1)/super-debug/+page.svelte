@@ -223,4 +223,8 @@
 	:global(.space-y-4 > * + *) {
 		margin-top: 1rem;
 	}
+
+	:global(.hidden) {
+		display: none;
+	}
 </style>

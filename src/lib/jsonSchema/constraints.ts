@@ -1,6 +1,7 @@
 import type { SuperStruct } from '$lib/superStruct.js';
 import type { JSONSchema } from './index.js';
 import { schemaInfo, type SchemaInfo } from './schemaInfo.js';
+import { merge as deepMerge } from 'ts-deepmerge';
 
 export type InputConstraint = Partial<{
 	pattern: string; // RegExp
@@ -21,14 +22,12 @@ export function constraints<T extends Record<string, unknown>>(
 }
 
 function merge<T extends Record<string, unknown>>(
-	constraints: (InputConstraints<T> | InputConstraint | undefined)[]
+	...constraints: (InputConstraints<T> | InputConstraint | undefined)[]
 ): ReturnType<typeof _constraints> {
-	let output = {};
-	for (const constraint of constraints) {
-		if (!constraint) continue;
-		output = { ...output, ...constraint };
-	}
-	return output;
+	const filtered = constraints.filter((c) => !!c);
+	if (!filtered.length) return undefined;
+	if (filtered.length == 1) return filtered[0];
+	return deepMerge(...(filtered as Record<string, unknown>[]));
 }
 
 function _constraints<T extends Record<string, unknown>>(
@@ -37,11 +36,14 @@ function _constraints<T extends Record<string, unknown>>(
 ): InputConstraints<T> | InputConstraint | undefined {
 	if (!info) return undefined;
 
+	let output: Record<string, unknown> | undefined = undefined;
+
 	// Union
-	if (info.union) {
+	if (info.union && info.union.length) {
 		const infos = info.union.map((s) => schemaInfo(s, info.isOptional, path));
 		const merged = infos.map((i) => _constraints(i, path));
-		const output = merge(merged);
+		output = merge(output, ...merged);
+
 		// Delete required if any part of the union is optional
 		if (
 			output &&
@@ -49,22 +51,19 @@ function _constraints<T extends Record<string, unknown>>(
 		) {
 			delete output.required;
 		}
-		return output && Object.values(output).length ? output : undefined;
 	}
 
 	// Arrays
 	if (info.array) {
-		if (info.array.length == 1) {
-			//console.log('Array constraint', schema, path);
-			return _constraints(schemaInfo(info.array[0], info.isOptional, path), path);
-		}
-
-		return merge(info.array.map((i) => _constraints(schemaInfo(i, info.isOptional, path), path)));
+		output = merge(
+			output,
+			...info.array.map((i) => _constraints(schemaInfo(i, info.isOptional, path), path))
+		);
 	}
 
 	// Objects
 	if (info.properties) {
-		const output: Record<string, unknown> = {};
+		const obj = {} as Record<string, unknown>;
 		for (const [key, prop] of Object.entries(info.properties)) {
 			const propInfo = schemaInfo(
 				prop,
@@ -74,13 +73,13 @@ function _constraints<T extends Record<string, unknown>>(
 			const propConstraint = _constraints(propInfo, [...path, key]);
 
 			if (typeof propConstraint === 'object' && Object.values(propConstraint).length > 0) {
-				output[key] = propConstraint;
+				obj[key] = propConstraint;
 			}
 		}
-		return output;
+		output = merge(output, obj);
 	}
 
-	return constraint(info);
+	return output ?? constraint(info);
 }
 
 function constraint(info: SchemaInfo): InputConstraint | undefined {

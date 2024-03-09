@@ -3,11 +3,15 @@
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 	import { ProfileType } from './schema.js';
+	// import type { UserProfileSchema } from './schema';
 	export let data;
 
-	const { form, errors, message, enhance } = superForm(data.form, {
+	const { form, errors, message, enhance, tainted, isTainted, constraints } = superForm(data.form, {
 		dataType: 'json'
 	});
+
+	let yearTainted: boolean = isTainted($tainted?.typeData?.yearOfStudy);
+	yearTainted;
 </script>
 
 <SuperDebug data={$form} />
@@ -53,36 +57,81 @@
 	{#if $form.type === ProfileType.STUDENT}
 		<label>
 			Year of Study<br />
-			<input name="yearOfStudy" type="number" bind:value={$form.typeData.yearOfStudy} />
+			<input
+				name="yearOfStudy"
+				type="number"
+				bind:value={$form.typeData.yearOfStudy}
+				{...$constraints.typeData?.yearOfStudy}
+			/>
+			{#if $errors.typeData?.yearOfStudy}
+				<p>
+					{$errors.typeData?.yearOfStudy}
+				</p>
+			{/if}
 		</label>
 		<label>
 			Branch<br />
 			<input name="branch" type="text" bind:value={$form.typeData.branch} />
+			{#if $errors.typeData?.branch}
+				<p>
+					{$errors.typeData.branch}
+				</p>
+			{/if}
 		</label>
 		<label>
 			Department<br />
 			<input name="department" type="text" bind:value={$form.typeData.department} />
+			{#if $errors.typeData?.department}
+				<p>
+					{$errors.typeData?.department}
+				</p>
+			{/if}
 		</label>
 		<label>
 			Student ID<br />
 			<input name="studentId" type="text" bind:value={$form.typeData.studentId} />
+			{#if $errors.typeData?.studentId}
+				<p>
+					{$errors.typeData?.studentId}
+				</p>
+			{/if}
 		</label>
 	{:else if $form.type === ProfileType.FACULTY}
 		<label>
 			Designation<br />
 			<input name="designation" type="text" bind:value={$form.typeData.designation} />
+			{#if $errors.typeData?.designation && $errors.typeData.designation.length}
+				<p>
+					{$errors.typeData?.designation}
+				</p>
+			{/if}
 		</label>
 		<label>
 			Branch<br />
 			<input name="branch" type="text" bind:value={$form.typeData.branch} />
+			{#if $errors.typeData?.branch}
+				<p>
+					{$errors.typeData?.branch}
+				</p>
+			{/if}
 		</label>
 		<label>
 			Department<br />
 			<input name="department" type="text" bind:value={$form.typeData.department} />
+			{#if $errors.typeData?.department}
+				<p>
+					{$errors.typeData?.department}
+				</p>
+			{/if}
 		</label>
 		<label>
 			Faculty Id<br />
 			<input name="facultyId" type="text" bind:value={$form.typeData.facultyId} />
+			{#if $errors.typeData?.facultyId}
+				<p>
+					{$errors.typeData?.facultyId}
+				</p>
+			{/if}
 		</label>
 	{/if}
 

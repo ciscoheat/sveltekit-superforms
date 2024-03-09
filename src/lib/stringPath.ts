@@ -1,4 +1,4 @@
-import type { IsAny } from './utils.js';
+import type { AllKeys, IsAny, MergeUnion } from './utils.js';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function splitPath(path: string) {
@@ -20,15 +20,6 @@ export function mergePath(path: (string | number | symbol)[]) {
 }
 
 type BuiltInObjects = Date | Set<unknown> | File;
-
-export type AllKeys<T> = T extends T ? keyof T : never;
-
-export type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
-
-// Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
-export type MergeUnion<T> = {
-	[K in AllKeys<T>]: PickType<T, K>;
-};
 
 /**
  * Lists all paths in an object as string accessors.

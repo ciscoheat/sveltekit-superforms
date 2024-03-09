@@ -230,7 +230,7 @@ export type SuperForm<
 	options: T extends T ? FormOptions<T, M> : never; // Need this to distribute T so it works with unions
 
 	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
-	isTainted: (path?: FormPath<T> | TaintedFields<T> | boolean) => boolean;
+	isTainted: (path?: T extends T ? FormPath<T> | TaintedFields<T> | boolean : never) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
 	submit: (submitter?: HTMLElement | null) => void;
 
@@ -1400,10 +1400,7 @@ export function superForm<
 			rebind({ form: snapshot, untaint: snapshot.tainted ?? true });
 		}) as T extends T ? Restore<T, M> : never,
 
-		async validate<Path extends FormPathLeaves<T>>(
-			path: Path,
-			opts: ValidateOptions<FormPathType<T, Path>, Partial<T>, Record<string, unknown>> = {}
-		) {
+		async validate(path, opts = {}) {
 			if (!options.validators) {
 				throw new SuperFormError('options.validators must be set to use the validate method.');
 			}
@@ -1466,7 +1463,11 @@ export function superForm<
 			}
 
 			const result = opts.update
-				? await Form_clientValidation({ paths: [] }, true, opts.schema)
+				? await Form_clientValidation(
+						{ paths: [] },
+						true,
+						opts.schema as ValidationAdapter<Partial<T>> | undefined
+					)
 				: Form_validate({ adapter: opts.schema });
 
 			if (opts.update && EnhancedForm) {

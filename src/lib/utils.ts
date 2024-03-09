@@ -35,3 +35,13 @@ export function assertSchema(
 		throw new SchemaError('Schema property cannot be defined as boolean.', path);
 	}
 }
+
+export type AllKeys<T> = T extends T ? keyof T : never;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
+
+// Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
+export type MergeUnion<T> = {
+	[K in AllKeys<T>]: PickType<T, K>;
+};

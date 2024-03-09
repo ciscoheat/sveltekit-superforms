@@ -1819,13 +1819,14 @@ export function superForm<
 						cancel
 					};
 
-					const unsubCheckforNav = STORYBOOK_MODE
-						? () => {}
-						: navigating.subscribe(($nav) => {
-								// Check for goto to a different route in the events
-								if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
-								cancel();
-							});
+					const unsubCheckforNav =
+						STORYBOOK_MODE || !options.SPA
+							? () => {}
+							: navigating.subscribe(($nav) => {
+									// Check for goto to a different route in the events
+									if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
+									cancel();
+								});
 
 					for (const event of formEvents.onResult) {
 						await event(data);

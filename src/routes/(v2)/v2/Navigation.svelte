@@ -45,7 +45,8 @@
 		'issue-366',
 		'issue-368',
 		'zod-discriminated',
-		'syncflash'
+		'syncflash',
+		'redirect-login'
 	].sort();
 </script>
 

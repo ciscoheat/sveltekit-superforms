@@ -15,7 +15,7 @@
 <svelte:head><title>Superforms testing grounds</title></svelte:head>
 
 {#if $flash}
-	{@const bg = $flash.type == 'success' ? '#3D9970' : '#FF4136'}
+	{@const bg = $flash.type == 'success' || $flash.type == 'ok' ? '#3D9970' : '#FF4136'}
 	<div style:background-color={bg} class="flash">{$flash.message}</div>
 {/if}
 

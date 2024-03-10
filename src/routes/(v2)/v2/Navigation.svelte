@@ -46,7 +46,8 @@
 		'issue-368',
 		'zod-discriminated',
 		'syncflash',
-		'redirect-login'
+		'redirect-login',
+		'debounce-username'
 	].sort();
 </script>
 

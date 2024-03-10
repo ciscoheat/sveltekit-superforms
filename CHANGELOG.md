@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- "SPA action mode", the `SPA` option can now take a string, corresponding to a form action, and it will post there, without the need for a html form on the page.
+
 ### Fixed
 
 - Fixed types for constraints, tainted and errors when using intersections and unions in schemas.

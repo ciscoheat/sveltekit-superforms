@@ -1,3 +1,4 @@
+/* eslint-disable dci-lint/atomic-role-binding */
 import type { TaintedFields, SuperFormValidated, SuperValidated } from '$lib/superValidate.js';
 import type { ActionResult, Page, SubmitFunction } from '@sveltejs/kit';
 import {
@@ -24,7 +25,7 @@ import {
 import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
 import { SuperFormError, flattenErrors, mapErrors, updateErrors } from '$lib/errors.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
-import { applyAction, enhance } from '$app/forms';
+import { applyAction, enhance as kitEnhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
 import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
@@ -83,7 +84,7 @@ export type FormOptions<
 	selectErrorText: boolean;
 	stickyNavbar: string;
 	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
-	SPA: true | { failStatus?: number };
+	SPA: true | { failStatus?: number } | string;
 
 	onSubmit: (
 		input: Parameters<SubmitFunction>[0] & {
@@ -229,10 +230,10 @@ export type SuperForm<
 
 	options: T extends T ? FormOptions<T, M> : never; // Need this to distribute T so it works with unions
 
-	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof enhance>;
+	enhance: (el: HTMLFormElement, events?: SuperFormEvents<T, M>) => ReturnType<typeof kitEnhance>;
 	isTainted: (path?: T extends T ? FormPath<T> | TaintedFields<T> | boolean : never) => boolean;
 	reset: (options?: ResetOptions<T>) => void;
-	submit: (submitter?: HTMLElement | null) => void;
+	submit: (submitter?: HTMLElement | Event | EventTarget | null) => void;
 
 	capture: Capture<T, M>;
 	restore: T extends T ? Restore<T, M> : never;
@@ -323,7 +324,10 @@ const initialForms = new WeakMap<
 >();
 
 const defaultOnError = (event: { result: { error: unknown } }) => {
-	console.warn('Unhandled Superform error, use onError event to handle it:', event.result.error);
+	console.warn(
+		'Unhandled error caught by Superforms, use onError event to handle it:',
+		event.result.error
+	);
 };
 
 const defaultFormOptions = {
@@ -415,6 +419,12 @@ export function superForm<
 		}
 
 		if (STORYBOOK_MODE) {
+			if (options.applyAction === undefined) options.applyAction = false;
+		}
+
+		if (typeof options.SPA === 'string') {
+			if (options.validators === undefined) options.validators = false;
+			if (options.invalidateAll === undefined) options.invalidateAll = false;
 			if (options.applyAction === undefined) options.applyAction = false;
 		}
 
@@ -528,6 +538,7 @@ export function superForm<
 			}
 
 			formIds.get(_currentPage)?.delete(_initialFormId);
+			ActionForm_remove();
 		});
 
 		// Check for nested objects, throw if datatype isn't json
@@ -1201,6 +1212,32 @@ export function superForm<
 
 	//#endregion
 
+	//#region ActionForm
+
+	// SPA action mode
+	let ActionForm: HTMLFormElement | undefined = undefined;
+
+	function ActionForm_create(action: string) {
+		ActionForm = document.createElement('form');
+		ActionForm.method = 'POST';
+		ActionForm.action = action;
+		superFormEnhance(ActionForm);
+		document.body.appendChild(ActionForm);
+	}
+
+	function ActionForm_setAction(action: string) {
+		if (ActionForm) ActionForm.action = action;
+	}
+
+	function ActionForm_remove() {
+		if (ActionForm?.parentElement) {
+			ActionForm.remove();
+			ActionForm = undefined;
+		}
+	}
+
+	//#endregion
+
 	const AllErrors: Readable<ReturnType<typeof flattenErrors>> = derived(
 		Errors,
 		($errors: ValidationErrors<T> | undefined) => ($errors ? flattenErrors($errors) : [])
@@ -1269,6 +1306,8 @@ export function superForm<
 		onUpdated: options.onUpdated ? [options.onUpdated] : [],
 		onError: options.onError ? [options.onError] : []
 	};
+
+	///// Store subscriptions ///////////////////////////////////////////////////
 
 	if (browser) {
 		// Tainted check
@@ -1364,6 +1403,490 @@ export function superForm<
 				}
 			})
 		);
+
+		if (typeof options.SPA === 'string') {
+			ActionForm_create(options.SPA);
+		}
+	}
+
+	/**
+	 * Custom use:enhance that enables all the client-side functionality.
+	 * @param FormElement
+	 * @param events
+	 * @DCI-context
+	 */
+	function superFormEnhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
+		ActionForm_remove();
+		EnhancedForm = FormElement;
+
+		if (events) {
+			if (events.onError) {
+				if (options.onError === 'apply') {
+					throw new SuperFormError(
+						'options.onError is set to "apply", cannot add any onError events.'
+					);
+				} else if (events.onError === 'apply') {
+					throw new SuperFormError('Cannot add "apply" as onError event in use:enhance.');
+				}
+
+				formEvents.onError.push(events.onError);
+			}
+			if (events.onResult) formEvents.onResult.push(events.onResult);
+			if (events.onSubmit) formEvents.onSubmit.push(events.onSubmit);
+			if (events.onUpdate) formEvents.onUpdate.push(events.onUpdate);
+			if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
+		}
+
+		// Now we know that we are enhanced,
+		// so we can enable the tainted form option.
+		Tainted_enable();
+
+		let lastInputChange: FullChangeEvent['paths'] | undefined;
+
+		// TODO: Debounce option?
+		async function onInput(e: Event) {
+			const info = inputInfo(e.target);
+			// Need to wait for immediate updates due to some timing issue
+			if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
+
+			lastInputChange = NextChange_paths();
+			NextChange_additionalEventInformation(
+				'input',
+				info.immediate,
+				info.multiple,
+				FormElement,
+				e.target ?? undefined
+			);
+		}
+
+		async function onBlur(e: Event) {
+			// Avoid triggering client-side validation while submitting
+			if (Data.submitting) return;
+
+			if (!lastInputChange || NextChange_paths() != lastInputChange) {
+				return;
+			}
+
+			const info = inputInfo(e.target);
+			// Need to wait for immediate updates due to some timing issue
+			if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
+
+			Form_clientValidation({
+				paths: lastInputChange,
+				immediate: info.multiple,
+				multiple: info.multiple,
+				type: 'blur',
+				formElement: FormElement,
+				target: e.target ?? undefined
+			});
+
+			// Clear input change event, now that the field doesn't have focus anymore.
+			lastInputChange = undefined;
+		}
+
+		FormElement.addEventListener('focusout', onBlur);
+		FormElement.addEventListener('input', onInput);
+
+		onDestroy(() => {
+			FormElement.removeEventListener('focusout', onBlur);
+			FormElement.removeEventListener('input', onInput);
+			EnhancedForm = undefined;
+		});
+
+		///// SvelteKit enhance function //////////////////////////////////
+
+		const htmlForm = HtmlForm(
+			FormElement,
+			{ submitting: Submitting, delayed: Delayed, timeout: Timeout },
+			options
+		);
+
+		let currentRequest: AbortController | null;
+
+		return kitEnhance(FormElement, async (submitParams) => {
+			let jsonData: Record<string, unknown> | undefined = undefined;
+			let validationAdapter = options.validators;
+
+			const submit = {
+				...submitParams,
+				jsonData(data: Record<string, unknown>) {
+					if (options.dataType !== 'json') {
+						throw new SuperFormError("options.dataType must be set to 'json' to use jsonData.");
+					}
+					jsonData = data;
+				},
+				validators(adapter: Exclude<ValidatorsOption<T>, 'clear'>) {
+					validationAdapter = adapter;
+				}
+			};
+
+			const _submitCancel = submit.cancel;
+			let cancelled = false;
+
+			function clientValidationResult(validation: SuperFormValidated<T, M, In>) {
+				const validationResult = { ...validation, posted: true };
+
+				const status = validationResult.valid
+					? 200
+					: (typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
+							? undefined
+							: options.SPA?.failStatus) ?? 400;
+
+				const data = { form: validationResult };
+
+				const result: ActionResult = validationResult.valid
+					? { type: 'success', status, data }
+					: { type: 'failure', status, data };
+
+				setTimeout(() => validationResponse({ result }), 0);
+			}
+
+			function cancel(
+				opts: { resetTimers?: boolean } = {
+					resetTimers: true
+				}
+			) {
+				cancelled = true;
+
+				if (opts.resetTimers && htmlForm.isSubmitting()) {
+					htmlForm.completed({ cancelled });
+				}
+				return _submitCancel();
+			}
+			submit.cancel = cancel;
+
+			if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
+				cancel({ resetTimers: false });
+			} else {
+				if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
+					if (currentRequest) currentRequest.abort();
+				}
+				htmlForm.submitting();
+				currentRequest = submit.controller;
+
+				for (const event of formEvents.onSubmit) {
+					await event(submit);
+				}
+			}
+
+			if (cancelled && options.flashMessage) cancelFlash(options);
+
+			if (!cancelled) {
+				// Client validation
+				const noValidate =
+					!options.SPA &&
+					(FormElement.noValidate ||
+						((submit.submitter instanceof HTMLButtonElement ||
+							submit.submitter instanceof HTMLInputElement) &&
+							submit.submitter.formNoValidate));
+
+				let validation: SuperFormValidated<T, M, In> | undefined = undefined;
+
+				const validateForm = async () => {
+					return await Form_validate({ adapter: validationAdapter });
+				};
+
+				if (!noValidate) {
+					validation = await validateForm();
+
+					if (!validation.valid) {
+						cancel({ resetTimers: false });
+						clientValidationResult(validation);
+					}
+				}
+
+				if (!cancelled) {
+					switch (options.clearOnSubmit) {
+						case 'errors-and-message':
+							Errors.clear();
+							Message.set(undefined);
+							break;
+
+						case 'errors':
+							Errors.clear();
+							break;
+
+						case 'message':
+							Message.set(undefined);
+							break;
+					}
+
+					if (
+						options.flashMessage &&
+						(options.clearOnSubmit == 'errors-and-message' || options.clearOnSubmit == 'message') &&
+						shouldSyncFlash(options)
+					) {
+						options.flashMessage.module.getFlash(page).set(undefined);
+					}
+
+					// Deprecation fix
+					const submitData =
+						'formData' in submit ? submit.formData : (submit as { data: FormData }).data;
+
+					// Prevent input/blur events to trigger client-side validation,
+					// and accidentally removing errors set by setError
+					lastInputChange = undefined;
+
+					if (options.SPA === true) {
+						if (!validation) validation = await validateForm();
+						cancel({ resetTimers: false });
+						clientValidationResult(validation);
+					} else if (options.dataType === 'json') {
+						if (!validation) validation = await validateForm();
+
+						const postData = clone(jsonData ?? validation.data);
+
+						// Move files to form data, since they cannot be serialized.
+						// Will be reassembled in superValidate.
+						traversePaths(postData, (data) => {
+							if (data.value instanceof File) {
+								const key = '__superform_file_' + mergePath(data.path);
+								submitData.append(key, data.value);
+								return data.set(undefined);
+							} else if (
+								Array.isArray(data.value) &&
+								data.value.length &&
+								data.value.every((v) => v instanceof File)
+							) {
+								const key = '__superform_files_' + mergePath(data.path);
+								for (const file of data.value) {
+									submitData.append(key, file);
+								}
+								return data.set(undefined);
+							}
+						});
+
+						// Clear post data to reduce transfer size,
+						// since $form should be serialized and sent as json.
+						Object.keys(postData).forEach((key) => {
+							// Files should be kept though, even if same key.
+							if (typeof submitData.get(key) === 'string') {
+								submitData.delete(key);
+							}
+						});
+
+						// Split the form data into chunks, in case it gets too large for proxy servers
+						const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
+						for (const chunk of chunks) {
+							submitData.append('__superform_json', chunk);
+						}
+					}
+
+					if (!submitData.has('__superform_id')) {
+						// Add formId
+						const id = Data.formId;
+						if (id !== undefined) submitData.set('__superform_id', id);
+					}
+
+					if (typeof options.SPA === 'string') {
+						ActionForm_setAction(options.SPA);
+					}
+
+					/*
+					if (typeof options.SPA === 'string') {
+						const absolute = /^(?:\/\/[a-z+]+:)/i.test(options.SPA);
+						if (!absolute) {
+							const split = options.SPA.indexOf('?');
+							if (split == -1) {
+								submitParams.action.pathname = options.SPA;
+							} else if (split == 0) {
+								submitParams.action.search = options.SPA;
+							} else {
+								submitParams.action.pathname = options.SPA.slice(0, split);
+								submitParams.action.search = options.SPA.slice(split);
+							}
+						}
+						
+						console.log(
+							'SPA submit to',
+							submitParams.action.toString(),
+							Array.from(submitData.entries())
+							);
+					}
+					*/
+				}
+			}
+
+			///// End of submit interaction ///////////////////////////////////////
+
+			// Thanks to https://stackoverflow.com/a/29202760/70894
+			function chunkSubstr(str: string, size: number) {
+				const numChunks = Math.ceil(str.length / size);
+				const chunks = new Array(numChunks);
+
+				for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+					chunks[i] = str.substring(o, o + size);
+				}
+
+				return chunks;
+			}
+
+			async function validationResponse(event: ValidationResponse) {
+				let cancelled = false;
+				currentRequest = null;
+
+				// Check if an error was thrown in hooks, in which case it has no type.
+				let result: ActionResult = event.result.type
+					? event.result
+					: {
+							type: 'error',
+							status: 500,
+							error: event.result
+						};
+
+				const cancel = () => (cancelled = true);
+
+				const data = {
+					result,
+					formEl: FormElement,
+					formElement: FormElement,
+					cancel
+				};
+
+				const unsubCheckforNav =
+					STORYBOOK_MODE || !options.SPA
+						? () => {}
+						: navigating.subscribe(($nav) => {
+								// Check for goto to a different route in the events
+								if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
+								cancel();
+							});
+
+				for (const event of formEvents.onResult) {
+					await event(data);
+				}
+
+				// In case it was modified in the event
+				result = data.result;
+
+				if (!cancelled) {
+					if ((result.type === 'success' || result.type == 'failure') && result.data) {
+						const forms = Context_findValidationForms(result.data);
+						if (!forms.length) {
+							throw new SuperFormError(
+								'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
+							);
+						}
+
+						for (const newForm of forms) {
+							if (newForm.id !== Data.formId) continue;
+
+							const data = {
+								form: newForm as SuperValidated<T, M, In>,
+								formEl: FormElement,
+								formElement: FormElement,
+								cancel: () => (cancelled = true)
+							};
+
+							for (const event of formEvents.onUpdate) {
+								await event(data);
+							}
+
+							if (!cancelled) {
+								if (options.customValidity) {
+									setCustomValidityForm(FormElement, data.form.errors);
+								}
+
+								// Special reset case for file inputs
+								if (Form_shouldReset(data.form.valid, result.type == 'success')) {
+									data.formElement
+										.querySelectorAll<HTMLInputElement>('input[type="file"]')
+										.forEach((e) => (e.value = ''));
+								}
+							}
+						}
+					}
+
+					if (!cancelled) {
+						if (result.type !== 'error') {
+							if (result.type === 'success' && options.invalidateAll) {
+								await invalidateAll();
+							}
+
+							if (options.applyAction) {
+								// This will trigger the page subscription in superForm,
+								// which will in turn call Data_update.
+								await applyAction(result);
+							} else {
+								// Call Data_update directly to trigger events
+								await Form_updateFromActionResult(result);
+							}
+						} else {
+							// Error result
+							if (options.applyAction) {
+								if (options.onError == 'apply') {
+									await applyAction(result);
+								} else {
+									// Transform to failure, to avoid data loss
+									// Set the data to the error result, so it will be
+									// picked up in page.subscribe in superForm.
+									const failResult = {
+										type: 'failure',
+										status: Math.floor(result.status || 500),
+										data: result
+									} as const;
+									await applyAction(failResult);
+								}
+							}
+
+							// Check if the error message should be replaced
+							if (options.onError !== 'apply') {
+								const data = { result, message: Message };
+
+								for (const onErrorEvent of formEvents.onError) {
+									if (
+										onErrorEvent !== 'apply' &&
+										(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
+									) {
+										await onErrorEvent(data);
+									}
+								}
+							}
+						}
+
+						// Trigger flash message event if there was an error
+						if (options.flashMessage) {
+							if (result.type == 'error' && options.flashMessage.onError) {
+								await options.flashMessage.onError({
+									result,
+									flashMessage: options.flashMessage.module.getFlash(page)
+								});
+							}
+						}
+					}
+				}
+
+				if (cancelled && options.flashMessage) {
+					cancelFlash(options);
+				}
+
+				// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
+				if (cancelled || result.type != 'redirect') {
+					htmlForm.completed({ cancelled });
+				} else if (STORYBOOK_MODE) {
+					htmlForm.completed({ cancelled, clearAll: true });
+				} else {
+					const unsub = navigating.subscribe(($nav) => {
+						if ($nav) return;
+						// Timeout required when applyAction is false
+						setTimeout(() => {
+							try {
+								if (unsub) unsub();
+							} catch {
+								// If component is already destroyed?
+							}
+						});
+						if (htmlForm.isSubmitting()) {
+							htmlForm.completed({ cancelled, clearAll: true });
+						}
+					});
+				}
+
+				unsubCheckforNav();
+			}
+
+			return validationResponse;
+		});
 	}
 
 	///// Return the SuperForm object /////////////////////////////////
@@ -1496,7 +2019,7 @@ export function superForm<
 			});
 		},
 
-		submit(submitter?: HTMLElement | Event | null | undefined) {
+		submit(submitter?: HTMLElement | Event | EventTarget | null | undefined) {
 			const form = EnhancedForm
 				? EnhancedForm
 				: submitter && submitter instanceof HTMLElement
@@ -1519,450 +2042,6 @@ export function superForm<
 
 		isTainted: Tainted_isTainted,
 
-		///// Custom use:enhance ////////////////////////////////////////
-
-		// @DCI-context
-		enhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
-			EnhancedForm = FormElement;
-
-			if (events) {
-				if (events.onError) {
-					if (options.onError === 'apply') {
-						throw new SuperFormError(
-							'options.onError is set to "apply", cannot add any onError events.'
-						);
-					} else if (events.onError === 'apply') {
-						throw new SuperFormError('Cannot add "apply" as onError event in use:enhance.');
-					}
-
-					formEvents.onError.push(events.onError);
-				}
-				if (events.onResult) formEvents.onResult.push(events.onResult);
-				if (events.onSubmit) formEvents.onSubmit.push(events.onSubmit);
-				if (events.onUpdate) formEvents.onUpdate.push(events.onUpdate);
-				if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
-			}
-
-			// Now we know that we are enhanced,
-			// so we can enable the tainted form option.
-			Tainted_enable();
-
-			let lastInputChange: FullChangeEvent['paths'] | undefined;
-
-			// TODO: Debounce option?
-			async function onInput(e: Event) {
-				const info = inputInfo(e.target);
-				// Need to wait for immediate updates due to some timing issue
-				if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
-
-				lastInputChange = NextChange_paths();
-				NextChange_additionalEventInformation(
-					'input',
-					info.immediate,
-					info.multiple,
-					FormElement,
-					e.target ?? undefined
-				);
-			}
-
-			async function onBlur(e: Event) {
-				// Avoid triggering client-side validation while submitting
-				if (Data.submitting) return;
-
-				if (!lastInputChange || NextChange_paths() != lastInputChange) {
-					return;
-				}
-
-				const info = inputInfo(e.target);
-				// Need to wait for immediate updates due to some timing issue
-				if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
-
-				Form_clientValidation({
-					paths: lastInputChange,
-					immediate: info.multiple,
-					multiple: info.multiple,
-					type: 'blur',
-					formElement: FormElement,
-					target: e.target ?? undefined
-				});
-
-				// Clear input change event, now that the field doesn't have focus anymore.
-				lastInputChange = undefined;
-			}
-
-			FormElement.addEventListener('focusout', onBlur);
-			FormElement.addEventListener('input', onInput);
-
-			onDestroy(() => {
-				FormElement.removeEventListener('focusout', onBlur);
-				FormElement.removeEventListener('input', onInput);
-				EnhancedForm = undefined;
-			});
-
-			///// SvelteKit enhance function //////////////////////////////////
-
-			const htmlForm = HtmlForm(
-				FormElement,
-				{ submitting: Submitting, delayed: Delayed, timeout: Timeout },
-				options
-			);
-
-			let currentRequest: AbortController | null;
-
-			return enhance(FormElement, async (submitParams) => {
-				let jsonData: Record<string, unknown> | undefined = undefined;
-				let validationAdapter = options.validators;
-
-				const submit = {
-					...submitParams,
-					jsonData(data: Record<string, unknown>) {
-						if (options.dataType !== 'json') {
-							throw new SuperFormError("options.dataType must be set to 'json' to use jsonData.");
-						}
-						jsonData = data;
-					},
-					validators(adapter: Exclude<ValidatorsOption<T>, 'clear'>) {
-						validationAdapter = adapter;
-					}
-				};
-
-				const _submitCancel = submit.cancel;
-				let cancelled = false;
-
-				function clientValidationResult(validation: SuperFormValidated<T, M, In>) {
-					const validationResult = { ...validation, posted: true };
-
-					const status = validationResult.valid
-						? 200
-						: (typeof options.SPA === 'boolean' ? undefined : options.SPA?.failStatus) ?? 400;
-
-					const data = { form: validationResult };
-
-					const result: ActionResult = validationResult.valid
-						? { type: 'success', status, data }
-						: { type: 'failure', status, data };
-
-					setTimeout(() => validationResponse({ result }), 0);
-				}
-
-				function cancel(
-					opts: { resetTimers?: boolean } = {
-						resetTimers: true
-					}
-				) {
-					cancelled = true;
-
-					if (opts.resetTimers && htmlForm.isSubmitting()) {
-						htmlForm.completed({ cancelled });
-					}
-					return _submitCancel();
-				}
-				submit.cancel = cancel;
-
-				if (htmlForm.isSubmitting() && options.multipleSubmits == 'prevent') {
-					cancel({ resetTimers: false });
-				} else {
-					if (htmlForm.isSubmitting() && options.multipleSubmits == 'abort') {
-						if (currentRequest) currentRequest.abort();
-					}
-					htmlForm.submitting();
-					currentRequest = submit.controller;
-
-					for (const event of formEvents.onSubmit) {
-						await event(submit);
-					}
-				}
-
-				if (cancelled && options.flashMessage) cancelFlash(options);
-
-				if (!cancelled) {
-					// Client validation
-					const noValidate =
-						!options.SPA &&
-						(FormElement.noValidate ||
-							((submit.submitter instanceof HTMLButtonElement ||
-								submit.submitter instanceof HTMLInputElement) &&
-								submit.submitter.formNoValidate));
-
-					let validation: SuperFormValidated<T, M, In> | undefined = undefined;
-
-					const validateForm = async () => {
-						return await Form_validate({ adapter: validationAdapter });
-					};
-
-					if (!noValidate) {
-						validation = await validateForm();
-
-						if (!validation.valid) {
-							cancel({ resetTimers: false });
-							clientValidationResult(validation);
-						}
-					}
-
-					if (!cancelled) {
-						switch (options.clearOnSubmit) {
-							case 'errors-and-message':
-								Errors.clear();
-								Message.set(undefined);
-								break;
-
-							case 'errors':
-								Errors.clear();
-								break;
-
-							case 'message':
-								Message.set(undefined);
-								break;
-						}
-
-						if (
-							options.flashMessage &&
-							(options.clearOnSubmit == 'errors-and-message' ||
-								options.clearOnSubmit == 'message') &&
-							shouldSyncFlash(options)
-						) {
-							options.flashMessage.module.getFlash(page).set(undefined);
-						}
-
-						// Deprecation fix
-						const submitData =
-							'formData' in submit ? submit.formData : (submit as { data: FormData }).data;
-
-						// Prevent input/blur events to trigger client-side validation,
-						// and accidentally removing errors set by setError
-						lastInputChange = undefined;
-
-						if (options.SPA) {
-							if (!validation) validation = await validateForm();
-							cancel({ resetTimers: false });
-							clientValidationResult(validation);
-						} else if (options.dataType === 'json') {
-							if (!validation) validation = await validateForm();
-
-							const postData = clone(jsonData ?? validation.data);
-
-							// Move files to form data, since they cannot be serialized.
-							// Will be reassembled in superValidate.
-							traversePaths(postData, (data) => {
-								if (data.value instanceof File) {
-									const key = '__superform_file_' + mergePath(data.path);
-									submitData.append(key, data.value);
-									return data.set(undefined);
-								} else if (
-									Array.isArray(data.value) &&
-									data.value.length &&
-									data.value.every((v) => v instanceof File)
-								) {
-									const key = '__superform_files_' + mergePath(data.path);
-									for (const file of data.value) {
-										submitData.append(key, file);
-									}
-									return data.set(undefined);
-								}
-							});
-
-							// Clear post data to reduce transfer size,
-							// since $form should be serialized and sent as json.
-							Object.keys(postData).forEach((key) => {
-								// Files should be kept though, even if same key.
-								if (typeof submitData.get(key) === 'string') {
-									submitData.delete(key);
-								}
-							});
-
-							// Split the form data into chunks, in case it gets too large for proxy servers
-							const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
-							for (const chunk of chunks) {
-								submitData.append('__superform_json', chunk);
-							}
-						}
-
-						if (!options.SPA && !submitData.has('__superform_id')) {
-							// Add formId
-							const id = Data.formId;
-							if (id !== undefined) submitData.set('__superform_id', id);
-						}
-					}
-				}
-
-				// Thanks to https://stackoverflow.com/a/29202760/70894
-				function chunkSubstr(str: string, size: number) {
-					const numChunks = Math.ceil(str.length / size);
-					const chunks = new Array(numChunks);
-
-					for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-						chunks[i] = str.substring(o, o + size);
-					}
-
-					return chunks;
-				}
-
-				async function validationResponse(event: ValidationResponse) {
-					let cancelled = false;
-					currentRequest = null;
-
-					// Check if an error was thrown in hooks, in which case it has no type.
-					let result: ActionResult = event.result.type
-						? event.result
-						: {
-								type: 'error',
-								status: 500,
-								error: event.result
-							};
-
-					const cancel = () => (cancelled = true);
-
-					const data = {
-						result,
-						formEl: FormElement,
-						formElement: FormElement,
-						cancel
-					};
-
-					const unsubCheckforNav =
-						STORYBOOK_MODE || !options.SPA
-							? () => {}
-							: navigating.subscribe(($nav) => {
-									// Check for goto to a different route in the events
-									if (!$nav || $nav.from?.route.id === $nav.to?.route.id) return;
-									cancel();
-								});
-
-					for (const event of formEvents.onResult) {
-						await event(data);
-					}
-
-					// In case it was modified in the event
-					result = data.result;
-
-					if (!cancelled) {
-						if ((result.type === 'success' || result.type == 'failure') && result.data) {
-							const forms = Context_findValidationForms(result.data);
-							if (!forms.length) {
-								throw new SuperFormError(
-									'No form data returned from ActionResult. Make sure you return { form } in the form actions.'
-								);
-							}
-
-							for (const newForm of forms) {
-								if (newForm.id !== Data.formId) continue;
-
-								const data = {
-									form: newForm as SuperValidated<T, M, In>,
-									formEl: FormElement,
-									formElement: FormElement,
-									cancel: () => (cancelled = true)
-								};
-
-								for (const event of formEvents.onUpdate) {
-									await event(data);
-								}
-
-								if (!cancelled) {
-									if (options.customValidity) {
-										setCustomValidityForm(FormElement, data.form.errors);
-									}
-
-									// Special reset case for file inputs
-									if (Form_shouldReset(data.form.valid, result.type == 'success')) {
-										data.formElement
-											.querySelectorAll<HTMLInputElement>('input[type="file"]')
-											.forEach((e) => (e.value = ''));
-									}
-								}
-							}
-						}
-
-						if (!cancelled) {
-							if (result.type !== 'error') {
-								if (result.type === 'success' && options.invalidateAll) {
-									await invalidateAll();
-								}
-
-								if (options.applyAction) {
-									// This will trigger the page subscription in superForm,
-									// which will in turn call Data_update.
-									await applyAction(result);
-								} else {
-									// Call Data_update directly to trigger events
-									await Form_updateFromActionResult(result);
-								}
-							} else {
-								// Error result
-								if (options.applyAction) {
-									if (options.onError == 'apply') {
-										await applyAction(result);
-									} else {
-										// Transform to failure, to avoid data loss
-										// Set the data to the error result, so it will be
-										// picked up in page.subscribe in superForm.
-										const failResult = {
-											type: 'failure',
-											status: Math.floor(result.status || 500),
-											data: result
-										} as const;
-										await applyAction(failResult);
-									}
-								}
-
-								// Check if the error message should be replaced
-								if (options.onError !== 'apply') {
-									const data = { result, message: Message };
-
-									for (const onErrorEvent of formEvents.onError) {
-										if (
-											onErrorEvent !== 'apply' &&
-											(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
-										) {
-											await onErrorEvent(data);
-										}
-									}
-								}
-							}
-
-							// Trigger flash message event if there was an error
-							if (options.flashMessage) {
-								if (result.type == 'error' && options.flashMessage.onError) {
-									await options.flashMessage.onError({
-										result,
-										flashMessage: options.flashMessage.module.getFlash(page)
-									});
-								}
-							}
-						}
-					}
-
-					if (cancelled && options.flashMessage) {
-						cancelFlash(options);
-					}
-
-					// Redirect messages are handled in onDestroy and afterNavigate in client/form.ts.
-					if (cancelled || result.type != 'redirect') {
-						htmlForm.completed({ cancelled });
-					} else if (STORYBOOK_MODE) {
-						htmlForm.completed({ cancelled, clearAll: true });
-					} else {
-						const unsub = navigating.subscribe(($nav) => {
-							if ($nav) return;
-							// Timeout required when applyAction is false
-							setTimeout(() => {
-								try {
-									if (unsub) unsub();
-								} catch {
-									// If component is already destroyed?
-								}
-							});
-							if (htmlForm.isSubmitting()) {
-								htmlForm.completed({ cancelled, clearAll: true });
-							}
-						});
-					}
-
-					unsubCheckforNav();
-				}
-
-				return validationResponse;
-			});
-		}
+		enhance: superFormEnhance
 	} satisfies SuperForm<T, M>;
 }

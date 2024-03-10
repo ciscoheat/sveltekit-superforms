@@ -1,10 +1,4 @@
-<script>
-	import { browser } from '$app/environment';
-	import { page } from '$app/stores';
-	import { readable, get } from 'svelte/store';
-
-	/////////////////////////
-
+<script context="module">
 	/*! clipboard-copy. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 	function makeError() {
@@ -74,8 +68,12 @@
 			}
 		}
 	}
+</script>
 
-	/////////////////////////
+<script>
+	import { browser } from '$app/environment';
+	import { page } from '$app/stores';
+	import { readable, get } from 'svelte/store';
 
 	/**
 	 * @typedef {unknown | Promise<unknown>} EncodeableData
@@ -221,7 +219,10 @@
 		collapsed = data.collapsed[route];
 	}
 
-	let copied = false;
+	/**
+	 * @type {ReturnType<typeof setTimeout> | undefined}
+	 */
+	let copied;
 
 	/**
 	 * @param {Event} e
@@ -232,11 +233,11 @@
 		if (!parent) return;
 
 		const codeEl = /** @type {HTMLPreElement} */ (parent.querySelector('.super-debug--code'));
-		if (codeEl) {
-			await clipboardCopy(codeEl.innerText);
-			copied = true;
-			setTimeout(() => (copied = false), 800);
-		}
+		if (!codeEl) return;
+
+		clearTimeout(copied);
+		await clipboardCopy(codeEl.innerText);
+		copied = setTimeout(() => (copied = undefined), 900);
 	}
 
 	/**
@@ -617,7 +618,7 @@
 	.super-debug--copy {
 		margin: 0;
 		padding: 0;
-		padding-top: 3px;
+		padding-top: 2px;
 		background-color: transparent;
 		border: 0;
 		color: #666;

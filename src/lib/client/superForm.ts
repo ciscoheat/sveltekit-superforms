@@ -39,6 +39,7 @@ import type {
 } from '$lib/adapters/adapters.js';
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { fieldProxy, type ProxyOptions } from './proxies.js';
+import { shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -395,9 +396,9 @@ try {
 
 /**
  * Initializes a SvelteKit form, for convenient handling of values, errors and sumbitting data.
- * @param {SuperValidated} form Usually data.form from PageData.
- * @param {FormOptions} options Configuration for the form.
- * @returns {SuperForm} An object with properties for the form.
+ * @param {SuperValidated} form Usually data.form from PageData or defaults, but can also be an object with default values, but then constraints won't be available.
+ * @param {FormOptions} formOptions Configuration for the form.
+ * @returns {SuperForm} A SuperForm object that can be used in a Svelte component.
  * @DCI-context
  */
 export function superForm<
@@ -423,7 +424,6 @@ export function superForm<
 		}
 
 		if (typeof options.SPA === 'string') {
-			if (options.validators === undefined) options.validators = false;
 			if (options.invalidateAll === undefined) options.invalidateAll = false;
 			if (options.applyAction === undefined) options.applyAction = false;
 		}
@@ -435,7 +435,7 @@ export function superForm<
 			...options
 		};
 
-		if (options.SPA && options.validators === undefined) {
+		if (options.SPA === true && options.validators === undefined) {
 			console.warn(
 				'No validators set for superForm in SPA mode. ' +
 					'Add a validation adapter to the validators option, or set it to false to disable this warning.'
@@ -452,11 +452,12 @@ export function superForm<
 
 		if (Context_isValidationObject(form) === false) {
 			form = {
-				id: options.id ?? '',
+				id: options.id ?? Math.random().toString(36).slice(2, 10),
 				valid: false,
 				posted: false,
 				errors: {},
-				data: form as T
+				data: form as T,
+				shape: shapeFromObject(form)
 			} satisfies SuperValidated<T, M, In>;
 		}
 
@@ -488,13 +489,6 @@ export function superForm<
 			initialForms.set(form, form);
 		}
 		initialForm = initialForms.get(form) as SuperValidated<T, M, In>;
-
-		if (typeof initialForm.valid !== 'boolean') {
-			throw new SuperFormError(
-				'A non-validation object was passed to superForm. ' +
-					'It should be an object of type SuperValidated, usually returned from superValidate.'
-			);
-		}
 
 		// Detect if a form is posted without JavaScript.
 		if (!browser && _currentPage.form && typeof _currentPage.form === 'object') {

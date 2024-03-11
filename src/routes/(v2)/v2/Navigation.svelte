@@ -47,7 +47,8 @@
 		'zod-discriminated',
 		'syncflash',
 		'redirect-login',
-		'debounce-username'
+		'debounce-username',
+		'mixed-forms'
 	].sort();
 </script>
 

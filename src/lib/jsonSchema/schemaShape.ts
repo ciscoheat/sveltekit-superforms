@@ -49,3 +49,16 @@ function _schemaShape(schema: JSONSchema7Definition, path: string[]): SchemaShap
 
 	return info.types.includes('array') || info.types.includes('object') ? {} : undefined;
 }
+
+export function shapeFromObject(obj: object): SchemaShape {
+	let output: SchemaShape = {};
+	const isArray = Array.isArray(obj);
+
+	for (const [key, value] of Object.entries(obj)) {
+		if (!value || typeof value !== 'object') continue;
+		if (isArray) output = { ...output, ...shapeFromObject(value) };
+		else output[key] = shapeFromObject(value);
+	}
+
+	return output;
+}

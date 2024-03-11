@@ -3,12 +3,13 @@ import type { JSONSchema7 } from 'json-schema';
 import { schemaInfo } from '$lib/jsonSchema/schemaInfo.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
-import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
+import { schemaShape, shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
 import { z } from 'zod';
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
 import { SchemaError } from '$lib/errors.js';
+import type { Infer } from '$lib/index.js';
 
 const schema = {
 	type: 'object',
@@ -393,6 +394,18 @@ describe('Object shapes', () => {
 		expect(schemaShape(schema)).toEqual({
 			numberArray: {}
 		});
+	});
+
+	it('should return the same with the shapeFromObject function', () => {
+		const data = {
+			tags: [
+				{ id: 1, names: ['aa', 'bb'], test: '' },
+				{ id: 2, names: ['bb', 'cc'], test: ['aaa'] }
+			]
+		} satisfies Infer<typeof schema>;
+
+		assert(schema.safeParse(data).success);
+		expect(shapeFromObject(data)).toEqual({ tags: { names: {}, test: {} } });
 	});
 });
 

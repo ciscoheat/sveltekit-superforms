@@ -13,7 +13,8 @@
 
 	const {
 		submitting,
-		submit: checkSubmit
+		submit: submitCheckUsername,
+		posted
 		//enhance: checkEnhance
 	} = superForm(
 		{ username: '' },
@@ -30,13 +31,13 @@
 		}
 	);
 
-	const checkUsername = debounce(250, checkSubmit);
+	const checkUsername = debounce(250, submitCheckUsername);
 
 	// eslint-disable-next-line svelte/valid-compile
 	$page;
 </script>
 
-<SuperDebug data={$form} />
+<SuperDebug data={{ $form, $posted }} />
 
 <h3>Superforms testing ground - Zod</h3>
 
@@ -56,7 +57,7 @@
 			on:input={checkUsername}
 		/>
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-		{#if $submitting}{@html spinner}{:else if $errors.username}❌{:else if $form.username}✅{/if}
+		{#if $submitting}{@html spinner}{:else if $errors.username}❌{:else if $form.username && $posted}✅{/if}
 		{#if $errors.username}<div class="invalid">{$errors.username}</div>{/if}
 	</label>
 

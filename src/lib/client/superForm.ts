@@ -758,14 +758,23 @@ export function superForm<
 			setTimeout(() => Form__changeEvent(event));
 		}
 
-		if (!event || !options.validators || options.validators == 'clear') return;
+		let skipValidation = false;
 
 		if (!force) {
 			if (options.validationMethod == 'onsubmit' || options.validationMethod == 'submit-only') {
-				return;
+				skipValidation = true;
+			} else if (options.validationMethod == 'onblur' && event?.type == 'input')
+				skipValidation = true;
+			else if (options.validationMethod == 'oninput' && event?.type == 'blur')
+				skipValidation = true;
+		}
+
+		if (skipValidation || !event || !options.validators || options.validators == 'clear') {
+			if (event?.paths) {
+				const formElement = event?.formElement ?? EnhancedForm;
+				if (formElement) Form__clearCustomValidity(formElement, event.paths);
 			}
-			if (options.validationMethod == 'onblur' && event.type == 'input') return;
-			if (options.validationMethod == 'oninput' && event.type == 'blur') return;
+			return;
 		}
 
 		const result = await Form_validate({ adapter });
@@ -782,21 +791,13 @@ export function superForm<
 		return result;
 	}
 
-	async function Form__displayNewErrors(
-		errors: ValidationErrors<T>,
-		event: FullChangeEvent,
-		force: boolean
+	function Form__clearCustomValidity(
+		formElement: HTMLFormElement,
+		paths: (string | number | symbol)[][]
 	) {
-		const { type, immediate, multiple, paths } = event;
-		const previous = Data.errors;
-
-		const output: Record<string, unknown> = {};
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
-
-		const formElement = event.formElement ?? EnhancedForm;
-
 		if (options.customValidity && formElement) {
-			for (const path of event.paths) {
+			for (const path of paths) {
 				const name = CSS.escape(mergePath(path));
 				const el = formElement.querySelector<HTMLElement>(`[name="${name}"]`);
 				if (el) {
@@ -806,6 +807,22 @@ export function superForm<
 				}
 			}
 		}
+		return validity;
+	}
+
+	async function Form__displayNewErrors(
+		errors: ValidationErrors<T>,
+		event: FullChangeEvent,
+		force: boolean
+	) {
+		const { type, immediate, multiple, paths } = event;
+		const previous = Data.errors;
+
+		const output: Record<string, unknown> = {};
+		let validity = new Map<string, { el: HTMLElement; message: string }>();
+
+		const formElement = event.formElement ?? EnhancedForm;
+		if (formElement) validity = Form__clearCustomValidity(formElement, event.paths);
 
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;

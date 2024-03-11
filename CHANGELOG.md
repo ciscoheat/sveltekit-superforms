@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- "SPA action mode", the `SPA` option can now take a string, corresponding to a form action, and it will post there, even without a html form on the page.
+- "SPA action mode", the `SPA` option can now take a string, corresponding to a form action, and it will post there, even without a html form on the page. Especially useful for debounced server checks like available usernames.
 
 ### Fixed
 
@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed SuperDebug collapsed height by preventing global css leak.
 - Redirect in SPA mode cancelled normal redirects, preventing applyAction.
 - Default objects sent to `superForm` returned a form with an empty id, causing collisions, it is now a random string.
+- `customValidity` didn't clear without client-side validators.
 
 ## [2.8.1] - 2024-03-07
 

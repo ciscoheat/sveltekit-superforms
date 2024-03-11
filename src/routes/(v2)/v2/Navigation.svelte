@@ -48,7 +48,8 @@
 		'syncflash',
 		'redirect-login',
 		'debounce-username',
-		'mixed-forms'
+		'mixed-forms',
+		'custom-validity'
 	].sort();
 </script>
 

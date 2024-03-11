@@ -424,6 +424,7 @@ export function superForm<
 		}
 
 		if (typeof options.SPA === 'string') {
+			// SPA action mode is "passive", no page updates are made.
 			if (options.invalidateAll === undefined) options.invalidateAll = false;
 			if (options.applyAction === undefined) options.applyAction = false;
 		}
@@ -435,7 +436,10 @@ export function superForm<
 			...options
 		};
 
-		if (options.SPA === true && options.validators === undefined) {
+		if (
+			(options.SPA === true || typeof options.SPA === 'object') &&
+			options.validators === undefined
+		) {
 			console.warn(
 				'No validators set for superForm in SPA mode. ' +
 					'Add a validation adapter to the validators option, or set it to false to disable this warning.'
@@ -641,6 +645,10 @@ export function superForm<
 			});
 		}
 	};
+
+	function Form_isSPA() {
+		return options.SPA === true || typeof options.SPA === 'object';
+	}
 
 	async function Form_validate(
 		opts: {
@@ -1585,7 +1593,7 @@ export function superForm<
 			if (!cancelled) {
 				// Client validation
 				const noValidate =
-					!options.SPA &&
+					!Form_isSPA() &&
 					(FormElement.noValidate ||
 						((submit.submitter instanceof HTMLButtonElement ||
 							submit.submitter instanceof HTMLInputElement) &&
@@ -1638,7 +1646,7 @@ export function superForm<
 					// and accidentally removing errors set by setError
 					lastInputChange = undefined;
 
-					if (options.SPA === true) {
+					if (Form_isSPA()) {
 						if (!validation) validation = await validateForm();
 						cancel({ resetTimers: false });
 						clientValidationResult(validation);
@@ -1692,29 +1700,6 @@ export function superForm<
 					if (typeof options.SPA === 'string') {
 						ActionForm_setAction(options.SPA);
 					}
-
-					/*
-					if (typeof options.SPA === 'string') {
-						const absolute = /^(?:\/\/[a-z+]+:)/i.test(options.SPA);
-						if (!absolute) {
-							const split = options.SPA.indexOf('?');
-							if (split == -1) {
-								submitParams.action.pathname = options.SPA;
-							} else if (split == 0) {
-								submitParams.action.search = options.SPA;
-							} else {
-								submitParams.action.pathname = options.SPA.slice(0, split);
-								submitParams.action.search = options.SPA.slice(split);
-							}
-						}
-						
-						console.log(
-							'SPA submit to',
-							submitParams.action.toString(),
-							Array.from(submitData.entries())
-							);
-					}
-					*/
 				}
 			}
 
@@ -1755,7 +1740,7 @@ export function superForm<
 				};
 
 				const unsubCheckforNav =
-					STORYBOOK_MODE || !options.SPA
+					STORYBOOK_MODE || !Form_isSPA()
 						? () => {}
 						: navigating.subscribe(($nav) => {
 								// Check for goto to a different route in the events

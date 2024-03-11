@@ -3,6 +3,7 @@ import { zod } from '$lib/adapters/zod.js';
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';
 import type { Actions } from './$types.js';
+import { takenUsernames } from './usernames.js';
 
 const usernameSchema = schema.pick({ username: true });
 
@@ -29,43 +30,14 @@ export const actions: Actions = {
 		console.log(formData);
 
 		const form = await superValidate(formData, zod(usernameSchema));
+		console.log(form);
+
 		if (!form.valid) return { form };
 
-		console.log('🚀 ~ check: ~ form:', form);
-
-		if (natoAlphabetNames.includes(form.data.username)) {
+		if (takenUsernames.includes(form.data.username)) {
 			return setError(form, 'username', 'Username is already taken.');
 		}
 
 		return { form };
 	}
 };
-
-const natoAlphabetNames = [
-	'Alpha',
-	'Bravo',
-	'Charlie',
-	'Delta',
-	'Echo',
-	'Foxtrot',
-	'Golf',
-	'Hotel',
-	'India',
-	'Juliet',
-	'Kilo',
-	'Lima',
-	'Mike',
-	'November',
-	'Oscar',
-	'Papa',
-	'Quebec',
-	'Romeo',
-	'Sierra',
-	'Tango',
-	'Uniform',
-	'Victor',
-	'Whiskey',
-	'Xray',
-	'Yankee',
-	'Zulu'
-].map((n) => n.toLowerCase());

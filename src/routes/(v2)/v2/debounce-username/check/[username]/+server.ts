@@ -1,8 +1,8 @@
-import { json } from '@sveltejs/kit';
-import { schema } from '../../schema';
-import { RequestHandler } from './$types';
-import { actionResult, setError, superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { schema } from '../../schema.js';
+import type { RequestHandler } from './$types.js';
+import { actionResult, setError, superValidate } from '$lib/index.js';
+import { zod } from '$lib/adapters/zod.js';
+import { takenUsernames } from '../../usernames.js';
 
 const usernameSchema = schema.pick({ username: true });
 
@@ -11,13 +11,12 @@ export const POST: RequestHandler = async ({ params }) => {
 	await new Promise((res) => setTimeout(res, Math.random() * 500));
 
 	const form = await superValidate({ username: params.username }, zod(usernameSchema));
-	if (!form.valid) return actionResult('failure', { form })
+	if (!form.valid) return actionResult('failure', { form });
 
-	if (natoAlphabetNames.includes(form.data.username)) {
+	if (takenUsernames.includes(form.data.username)) {
 		setError(form, 'username', 'Username is already taken.');
-		return actionResult('failure', { form })
+		return actionResult('failure', { form });
 	}
 
-	return 
+	return actionResult('success', { form });
 };
-

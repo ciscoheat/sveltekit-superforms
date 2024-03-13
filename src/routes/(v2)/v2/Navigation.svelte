@@ -49,7 +49,8 @@
 		'redirect-login',
 		'debounce-username',
 		'mixed-forms',
-		'custom-validity'
+		'custom-validity',
+		'file-component'
 	].sort();
 </script>
 

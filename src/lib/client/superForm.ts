@@ -1336,26 +1336,23 @@ export function superForm<
 			if (options.taintedMessage && !Data.submitting && !forceRedirection) {
 				if (Tainted_isTainted()) {
 					const { taintedMessage } = options;
+					const isTaintedFunction = typeof taintedMessage === 'function';
 
 					// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
-					nav.cancel();
-					// Does not display any dialog on page refresh or closing tab and let the default browser behaviour
+					// if it's a custom function
+					if (isTaintedFunction) nav.cancel();
+					// Does not display any dialog on page refresh or closing tab, will use default browser behaviour
 					if (nav.type === 'leave') return;
 
-					const isTaintedFunction = typeof taintedMessage === 'function';
 					const message =
 						isTaintedFunction || taintedMessage === true ? defaultMessage : taintedMessage;
 
-					// - rejected => shouldRedirect = false
-					// - resolved with false => shouldRedirect = false
-					// - resolved with true => shouldRedirect = true
-					const confirmFunction = isTaintedFunction
-						? taintedMessage
-						: () => window.confirm(message);
-
 					let shouldRedirect;
 					try {
-						shouldRedirect = await confirmFunction();
+						// - rejected => shouldRedirect = false
+						// - resolved with false => shouldRedirect = false
+						// - resolved with true => shouldRedirect = true
+						shouldRedirect = isTaintedFunction ? await taintedMessage() : window.confirm(message);
 					} catch {
 						shouldRedirect = false;
 					}
@@ -1369,6 +1366,8 @@ export function superForm<
 							// Reset forceRedirection for multiple-tainted purpose
 							forceRedirection = false;
 						}
+					} else if (!shouldRedirect && !isTaintedFunction) {
+						nav.cancel();
 					}
 				}
 			}

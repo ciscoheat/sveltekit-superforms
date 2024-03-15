@@ -50,7 +50,8 @@
 		'debounce-username',
 		'mixed-forms',
 		'custom-validity',
-		'file-component'
+		'file-component',
+		'tainted-history'
 	].sort();
 </script>
 

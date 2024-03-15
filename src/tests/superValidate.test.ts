@@ -248,6 +248,20 @@ describe('Valibot', () => {
 		expect(a2.defaults.enum).toBe('');
 	});
 
+	it('should handle non-JSON Schema validators by returning any', async () => {
+		const schema = v.object({
+			file: v.instance(File, [
+				v.mimeType(['image/jpeg', 'image/png']),
+				v.maxSize(1024 * 1024 * 10)
+			]),
+			size: v.special<`${number}px`>((val) =>
+				typeof val === 'string' ? /^\d+px$/.test(val) : false
+			)
+		});
+
+		expect(() => valibot(schema)).not.toThrow();
+	});
+
 	/* 	it('should have the correct Input and Output types', () => {
 		const logSchema = v.object({
 			id: v.nullish(v.string(), ''),

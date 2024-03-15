@@ -20,8 +20,8 @@ dependencies:
 
 optionalDependencies:
   '@gcornut/valibot-json-schema':
-    specifier: ^0.0.25
-    version: 0.0.25(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(valibot@0.29.0)
+    specifier: ^0.0.26
+    version: 0.0.26(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(valibot@0.30.0)
   '@sinclair/typebox':
     specifier: ^0.32.15
     version: 0.32.15
@@ -41,8 +41,8 @@ optionalDependencies:
     specifier: ^1.0.3
     version: 1.0.3
   valibot:
-    specifier: ^0.29.0
-    version: 0.29.0
+    specifier: ^0.30.0
+    version: 0.30.0
   yup:
     specifier: ^1.4.0
     version: 1.4.0
@@ -621,8 +621,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@gcornut/valibot-json-schema@0.0.25(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(valibot@0.29.0):
-    resolution: {integrity: sha512-JlOmghA8OMM8B+3lLSWrZqce4FM5SrCO/bmYGZQz3ZYPja/mXhLYa2qEOFUsBaz24prv04un3zXIUpJzgglAkw==}
+  /@gcornut/valibot-json-schema@0.0.26(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(valibot@0.30.0):
+    resolution: {integrity: sha512-8eZpGLP1awX9UGEK+VUFiyXnjiIV/h5RPC7wt2KQG6O7YkXEw7t2pUxHhR5ULcoN0BsZ3FOWZqyzu3tFF7aXxw==}
     hasBin: true
     requiresBuild: true
     peerDependencies:
@@ -634,7 +634,7 @@ packages:
       '@types/json-schema': 7.0.15
       esbuild: 0.20.1
       esbuild-runner: 2.2.2(esbuild@0.20.1)
-      valibot: 0.29.0
+      valibot: 0.30.0
     dev: false
     optional: true
 
@@ -3055,8 +3055,8 @@ packages:
     hasBin: true
     dev: true
 
-  /valibot@0.29.0:
-    resolution: {integrity: sha512-JhZn08lwZPhAamOCfBwBkv/btQt4KeQhekULPH8crH053zUCLSOGEF2zKExu3bFf245tsj6J1dY0ysd/jUiMIQ==}
+  /valibot@0.30.0:
+    resolution: {integrity: sha512-5POBdbSkM+3nvJ6ZlyQHsggisfRtyT4tVTo1EIIShs6qCdXJnyWU5TJ68vr8iTg5zpOLjXLRiBqNx+9zwZz/rA==}
     requiresBuild: true
     dev: false
     optional: true

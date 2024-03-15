@@ -23,13 +23,13 @@ type SchemaConfig = NonNullable<Parameters<typeof safeParseAsync>[2]>;
 const defaultOptions = {
 	strictObjectTypes: true,
 	dateStrategy: 'integer' as const,
-	ignoreUnknownValidation: true
+	ignoreUnknownValidation: true,
+	customSchemaConversion: { special: () => ({}), instance: () => ({}) }
 } satisfies ToJSONSchemaOptions;
 
 /* @__NO_SIDE_EFFECTS__ */
 export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return valibotToJSON({ ...defaultOptions, ...(options as any) }) as JSONSchema;
+	return valibotToJSON({ ...defaultOptions, ...options }) as JSONSchema;
 };
 
 async function validate<T extends SupportedSchemas>(

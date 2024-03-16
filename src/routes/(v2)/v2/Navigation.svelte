@@ -51,7 +51,8 @@
 		'mixed-forms',
 		'custom-validity',
 		'file-component',
-		'tainted-history'
+		'tainted-history',
+		'files-proxy'
 	].sort();
 </script>
 

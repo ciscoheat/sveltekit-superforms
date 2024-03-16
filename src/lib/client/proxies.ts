@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { derived, get, type Readable, type Updater, type Writable } from 'svelte/store';
+import { derived, get, writable, type Readable, type Updater, type Writable } from 'svelte/store';
 import type { InputConstraint } from '../jsonSchema/constraints.js';
 import { SuperFormError } from '$lib/errors.js';
 import { pathExists, traversePath } from '../traversal.js';
@@ -7,6 +7,7 @@ import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from
 import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './superForm.js';
 import type { IsAny, Prettify } from '$lib/utils.js';
+import { browser } from '$app/environment';
 
 export type ProxyOptions = {
 	taint?: TaintOption;
@@ -109,6 +110,88 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
 		...defaultOptions,
 		...options
 	}) as CorrectProxyType<string, string, T, Path>;
+}
+
+export function fileProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, File>>(
+	form: SuperForm<T, unknown>,
+	path: Path,
+	options?: ProxyOptions
+) {
+	const file = formFieldProxy(form, path, options);
+	const formFile = file.value as Writable<File>;
+	const fileList = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
+
+	formFile.subscribe((file) => {
+		if (!browser) return;
+		const dt = new DataTransfer();
+		if (file) dt.items.add(file);
+		fileList.set(dt.files);
+	});
+
+	const fileStore = {
+		subscribe(run: (value: FileList) => void) {
+			return fileList.subscribe(run);
+		},
+		set(value: FileList | File | (null extends FormPathType<T, Path> ? null : never)) {
+			if (!browser) return;
+			if (!value || value instanceof File) {
+				const dt = new DataTransfer();
+				if (value) dt.items.add(value);
+				else formFile.set(value as File);
+				value = dt.files;
+			}
+			fileList.set(value);
+			if (value.length > 0) formFile.set(value.item(0) as File);
+		}
+	};
+
+	return {
+		...file,
+		file: fileStore
+	};
+}
+
+export function filesProxy<
+	T extends Record<string, unknown>,
+	Path extends FormPathArrays<T, File[]>
+>(form: SuperForm<T, unknown>, path: Path, options?: ProxyOptions) {
+	const files = arrayProxy(form, path, options);
+	const formFiles = files.values as Writable<File[]>;
+	const fileList = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
+
+	formFiles.subscribe((f) => {
+		if (!browser || !f) return;
+		const dt = new DataTransfer();
+		f.forEach((file) => dt.items.add(file));
+		fileList.set(dt.files);
+	});
+
+	return {
+		...files,
+		files: {
+			subscribe(run: (value: FileList) => void) {
+				return fileList.subscribe(run);
+			},
+			set(value: FileList | File[]) {
+				if (!(value instanceof FileList)) {
+					const dt = new DataTransfer();
+					value.forEach((file) => dt.items.add(file));
+					value = dt.files;
+				}
+				const newList = value;
+
+				fileList.set(newList);
+				formFiles.update(() => {
+					const output: File[] = [];
+					for (let i = 0; i < newList.length; i++) {
+						const file = newList.item(i);
+						if (file) output.push(file);
+					}
+					return output as File[];
+				});
+			}
+		}
+	};
 }
 
 ///// Implementation ////////////////////////////////////////////////

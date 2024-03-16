@@ -17,6 +17,8 @@ export {
 	formFieldProxy,
 	stringProxy,
 	arrayProxy,
+	fileProxy,
+	filesProxy,
 	defaults,
 	defaultValues,
 	schemaShape,

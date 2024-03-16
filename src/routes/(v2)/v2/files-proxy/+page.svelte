@@ -16,6 +16,8 @@
 	const { files, valueErrors } = filesProxy(superform, 'images');
 	const { file, errors } = fileProxy(superform, 'image');
 
+	/////////////////////////////////////////////////////////////////////////////
+
 	function changeFileWithProxy() {
 		file.set(new File(['1234566'], 'test.txt', { type: 'text/plain' }));
 	}
@@ -34,15 +36,44 @@
 		file.set(null);
 	}
 
-	///////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////
 
-	function changeFiles() {
+	function changeFilesWithProxy() {
 		const newFiles = [
 			new File(['1234566'], 'test1.txt', { type: 'text/plain' }),
 			new File(['7890123'], 'test2.txt', { type: 'text/plain' })
 		];
 		files.set(newFiles);
 	}
+
+	function changeFilesDirectly() {
+		$form.images = [
+			new File(['1234566'], 'test1.txt', { type: 'text/plain' }),
+			new File(['7890123'], 'test2.txt', { type: 'text/plain' })
+		];
+	}
+
+	function emptyFilesDirectly() {
+		$form.images = [];
+	}
+
+	function emptyFilesWithProxy() {
+		files.set([]);
+	}
+
+	/*
+	function clearFilesDirectly() {
+		// @ts-expect-error Not nullable
+		$form.images = null;
+	}
+
+	function clearFilesWithProxy() {
+		// @ts-expect-error Not nullable
+		files.set(null);
+	}
+	*/
+
+	/////////////////////////////////////////////////////////////////////////////
 </script>
 
 <SuperDebug data={{ $form, $tainted, files, valueErrors }} />
@@ -50,6 +81,7 @@
 {#if $message}<h4>{$message}</h4>{/if}
 
 <div id="file">FILE:{$form.image ? $form.image.name : 'null'}</div>
+<div id="files">FILES:{$form.images.length ? $form.images.map((f) => f.name) : 'empty'}</div>
 
 <div>
 	<button on:click={() => (show = !show)}>Toggle form</button>
@@ -86,10 +118,8 @@
 		</label>
 		<div class="buttons">
 			<div><button>Submit</button></div>
-			<div>
-				<button type="button" on:click={changeFiles}>Change files</button>
-			</div>
 			<div class="button-group">
+				<b>Single file</b>
 				<div>
 					<button type="button" on:click={changeFileDirectly}>Change file directly</button>
 					<button type="button" on:click={changeFileWithProxy}>Change file with proxy</button>
@@ -98,6 +128,21 @@
 					<button type="button" on:click={clearFileDirectly}>Clear file directly</button>
 					<button type="button" on:click={clearFileWithProxy}>Clear file with proxy</button>
 				</div>
+			</div>
+			<div class="button-group">
+				<b>Multiple files</b>
+				<div>
+					<button type="button" on:click={changeFilesDirectly}>Change files directly</button>
+					<button type="button" on:click={changeFilesWithProxy}>Change files with proxy</button>
+				</div>
+				<div>
+					<button type="button" on:click={emptyFilesDirectly}>Empty files directly</button>
+					<button type="button" on:click={emptyFilesWithProxy}>Empty files with proxy</button>
+				</div>
+				<!--div>
+					<button type="button" on:click={clearFilesDirectly}>Clear files directly</button>
+					<button type="button" on:click={clearFilesWithProxy}>Clear files with proxy</button>
+				</div-->
 			</div>
 		</div>
 	</form>

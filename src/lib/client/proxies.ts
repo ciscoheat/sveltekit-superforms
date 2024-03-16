@@ -119,29 +119,30 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 ) {
 	const file = formFieldProxy(form, path, options);
 	const formFile = file.value as Writable<File>;
-	const fileList = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
+	const fileProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
 
 	formFile.subscribe((file) => {
 		if (!browser) return;
 		const dt = new DataTransfer();
 		if (file) dt.items.add(file);
-		fileList.set(dt.files);
+		fileProxy.set(dt.files);
 	});
 
 	const fileStore = {
 		subscribe(run: (value: FileList) => void) {
-			return fileList.subscribe(run);
+			return fileProxy.subscribe(run);
 		},
-		set(value: FileList | File | (null extends FormPathType<T, Path> ? null : never)) {
+		set(file: FileList | File | (null extends FormPathType<T, Path> ? null : never)) {
 			if (!browser) return;
-			if (!value || value instanceof File) {
+			if (!file || file instanceof File) {
 				const dt = new DataTransfer();
-				if (value) dt.items.add(value);
-				else formFile.set(value as File);
-				value = dt.files;
+				if (file) dt.items.add(file);
+				else formFile.set(file as File);
+				file = dt.files;
 			}
-			fileList.set(value);
-			if (value.length > 0) formFile.set(value.item(0) as File);
+
+			fileProxy.set(file);
+			if (file.length > 0) formFile.set(file.item(0) as File);
 		}
 	};
 
@@ -157,40 +158,43 @@ export function filesProxy<
 >(form: SuperForm<T, unknown>, path: Path, options?: ProxyOptions) {
 	const files = arrayProxy(form, path, options);
 	const formFiles = files.values as Writable<File[]>;
-	const fileList = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
+	const filesProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
 
-	formFiles.subscribe((f) => {
-		if (!browser || !f) return;
+	formFiles.subscribe((files) => {
+		if (!browser) return;
 		const dt = new DataTransfer();
-		f.forEach((file) => dt.items.add(file));
-		fileList.set(dt.files);
+		if (files) files.forEach((file) => dt.items.add(file));
+		filesProxy.set(dt.files);
 	});
+
+	const filesStore = {
+		subscribe(run: (value: FileList) => void) {
+			return filesProxy.subscribe(run);
+		},
+		set(files: FileList | File[] /*| (null extends FormPathType<T, Path> ? null : never)*/) {
+			if (!browser) return;
+			if (!(files instanceof FileList)) {
+				const dt = new DataTransfer();
+				if (Array.isArray(files)) files.forEach((file) => dt.items.add(file));
+				else formFiles.set(files as File[]);
+				files = dt.files;
+			}
+
+			const newFiles = files;
+			filesProxy.set(newFiles);
+
+			const output: File[] = [];
+			for (let i = 0; i < newFiles.length; i++) {
+				const file = newFiles.item(i);
+				if (file) output.push(file);
+			}
+			formFiles.set(output);
+		}
+	};
 
 	return {
 		...files,
-		files: {
-			subscribe(run: (value: FileList) => void) {
-				return fileList.subscribe(run);
-			},
-			set(value: FileList | File[]) {
-				if (!(value instanceof FileList)) {
-					const dt = new DataTransfer();
-					value.forEach((file) => dt.items.add(file));
-					value = dt.files;
-				}
-				const newList = value;
-
-				fileList.set(newList);
-				formFiles.update(() => {
-					const output: File[] = [];
-					for (let i = 0; i < newList.length; i++) {
-						const file = newList.item(i);
-						if (file) output.push(file);
-					}
-					return output as File[];
-				});
-			}
-		}
+		files: filesStore
 	};
 }
 

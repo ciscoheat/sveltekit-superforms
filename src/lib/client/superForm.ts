@@ -1149,15 +1149,19 @@ export function superForm<
 		if (taintOptions == 'ignore') return;
 
 		const paths = comparePaths(newData, Data.form);
+		const newTainted = comparePaths(newData, Tainted.clean).map((path) => path.join());
+
 		if (paths.length) {
 			if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
 				Tainted.state.set(undefined);
 			} else {
-				Tainted.state.update((tainted) => {
-					if (!tainted) tainted = {};
+				Tainted.state.update((currentlyTainted) => {
+					if (!currentlyTainted) currentlyTainted = {};
 
-					setPaths(tainted, paths, (path, data) => {
+					setPaths(currentlyTainted, paths, (path, data) => {
 						// If value goes back to the clean value, untaint the path
+						if (!newTainted.includes(path.join())) return undefined;
+
 						const currentValue = traversePath(newData, path);
 						const cleanPath = traversePath(Tainted.clean, path);
 						return currentValue && cleanPath && currentValue.value === cleanPath.value
@@ -1169,7 +1173,7 @@ export function superForm<
 									: data.value;
 					});
 
-					return tainted;
+					return currentlyTainted;
 				});
 			}
 		}

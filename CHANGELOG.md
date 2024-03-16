@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for `instance` and `special` validators for Valibot, which now enables File validation for Valibot!
 - `taintedMessage` didn't always work when navigating with the History API.
+- `tainted` didn't untaint automatically when using arrays.
 
 ## [2.9.0] - 2024-03-12
 

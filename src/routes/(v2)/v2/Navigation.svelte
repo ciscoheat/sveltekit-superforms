@@ -52,7 +52,8 @@
 		'custom-validity',
 		'file-component',
 		'tainted-history',
-		'files-proxy'
+		'files-proxy',
+		'tainted-array'
 	].sort();
 </script>
 

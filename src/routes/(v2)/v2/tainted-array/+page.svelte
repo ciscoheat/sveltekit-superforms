@@ -1,22 +1,28 @@
 <script lang="ts">
-  import { superForm } from '$lib/index.js';
-  import SuperDebug from '$lib/index.js';
+	import { superForm } from '$lib/index.js';
+	import SuperDebug from '$lib/index.js';
 
-  export let data;
+	export let data;
 
-  const { form, errors, constraints, enhance, tainted, isTainted } = superForm(data.form, {
+	const { form, enhance, tainted, isTainted } = superForm(data.form, {
 		dataType: 'json'
 	});
 </script>
 
-<SuperDebug data={{$form, $tainted, tainted: isTainted($tainted)}} />
+<SuperDebug data={{ $form, $tainted }} />
+
+<div>TAINTED:{isTainted($tainted)}</div>
 
 <form method="POST" use:enhance>
-
-	<button type="button" on:click={() => $form.details = [...$form.details, {name: 'John Doe', email: 'john_doe@example.com'}]}>Add name</button>
-
-	<button type="button" on:click={() => $form.details = $form.details.slice(1)}>Remove name</button>
-
+	<button
+		type="button"
+		on:click={() =>
+			($form.details = [...$form.details, { name: 'John Doe', email: 'john_doe@example.com' }])}
+		>Add name</button
+	>
+	<button type="button" on:click={() => ($form.details = $form.details.slice(1))}
+		>Remove name</button
+	>
 	<div><button>Submit</button></div>
 </form>
 

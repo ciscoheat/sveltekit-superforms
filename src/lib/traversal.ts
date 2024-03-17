@@ -51,7 +51,7 @@ export function traversePath<T extends object>(
 
 	let parent = obj;
 
-	while (path.length < realPath.length) {
+	while (parent && path.length < realPath.length) {
 		const key = path[path.length - 1] as keyof typeof parent;
 
 		const value = modifier

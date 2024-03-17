@@ -11,10 +11,10 @@
 	const superform = superForm(data.form, {
 		validators: zod(schema)
 	});
-	const { form, tainted, message, enhance } = superform;
+	const { form, tainted, message, enhance, errors } = superform;
 
-	const { files, valueErrors } = filesProxy(superform, 'images');
-	const { file, errors } = fileProxy(superform, 'image');
+	const files = filesProxy(form, 'images');
+	const file = fileProxy(form, 'image');
 
 	/////////////////////////////////////////////////////////////////////////////
 
@@ -76,7 +76,7 @@
 	/////////////////////////////////////////////////////////////////////////////
 </script>
 
-<SuperDebug data={{ $form, $tainted, files, valueErrors }} />
+<SuperDebug data={{ $form, $tainted, files, $errors }} />
 
 {#if $message}<h4>{$message}</h4>{/if}
 
@@ -97,9 +97,9 @@
 				name="images"
 				type="file"
 			/>
-			{#if $valueErrors}
+			{#if Object.keys($errors.images ?? {}).length}
 				<ul class="invalid">
-					{#each $valueErrors as error, i}
+					{#each Object.keys($errors.images ?? {}) as error, i}
 						<li>Image {i + 1}: {error}</li>
 					{/each}
 				</ul>
@@ -112,8 +112,8 @@
 				name="images"
 				type="file"
 			/>
-			{#if $errors}
-				<div class="invalid">{$errors}</div>
+			{#if $errors.image}
+				<div class="invalid">{$errors.image}</div>
 			{/if}
 		</label>
 		<div class="buttons">

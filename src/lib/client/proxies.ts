@@ -23,6 +23,11 @@ type CorrectProxyType<In, Out, T extends Record<string, unknown>, Path extends F
 type PathType<Type, T, Path extends string> =
 	IsAny<Type> extends true ? FormPathType<T, Path> : Type;
 
+type Nullable<
+	T extends Record<string, unknown>,
+	Path extends FormPaths<T> | FormPathArrays<T> | FormPathLeaves<T>
+> = null extends FormPathType<T, Path> ? null : never;
+
 type DefaultOptions = {
 	trueStringValue: string;
 	dateFormat:
@@ -50,7 +55,7 @@ const defaultOptions = {
 ///// Proxy functions ///////////////////////////////////////////////
 
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: Prettify<Pick<DefaultOptions, 'trueStringValue' | 'taint'>>
 ) {
@@ -61,7 +66,7 @@ export function booleanProxy<T extends Record<string, unknown>, Path extends For
 }
 
 export function intProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: Prettify<Pick<DefaultOptions, 'empty' | 'initiallyEmptyIfZero' | 'taint'>>
 ) {
@@ -72,7 +77,7 @@ export function intProxy<T extends Record<string, unknown>, Path extends FormPat
 }
 
 export function numberProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: Prettify<Pick<DefaultOptions, 'empty' | 'delimiter' | 'initiallyEmptyIfZero' | 'taint'>>
 ) {
@@ -83,7 +88,7 @@ export function numberProxy<T extends Record<string, unknown>, Path extends Form
 }
 
 export function dateProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: {
 		format?: DefaultOptions['dateFormat'];
@@ -99,7 +104,7 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 }
 
 export function stringProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options: {
 		empty: NonNullable<Exclude<DefaultOptions['empty'], 'zero'>>;
@@ -112,13 +117,26 @@ export function stringProxy<T extends Record<string, unknown>, Path extends Form
 	}) as CorrectProxyType<string, string, T, Path>;
 }
 
+export function fileFieldProxy<
+	T extends Record<string, unknown>,
+	Path extends FormPathLeaves<T, File>
+>(
+	form: SuperForm<T>,
+	path: Path,
+	options?: ProxyOptions
+): FormFieldProxy<FileList | File | Nullable<T, Path>, Path> {
+	const fileField = fileProxy(form, path, options);
+	const formField = formFieldProxy(form, path, options);
+
+	return { ...formField, value: fileField };
+}
+
 export function fileProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, File>>(
-	form: SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: ProxyOptions
 ) {
-	const file = formFieldProxy(form, path, options);
-	const formFile = file.value as Writable<File>;
+	const formFile = fieldProxy(form, path, options) as FieldProxy<File>;
 	const fileProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
 
 	formFile.subscribe((file) => {
@@ -132,7 +150,7 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 		subscribe(run: (value: FileList) => void) {
 			return fileProxy.subscribe(run);
 		},
-		set(file: FileList | File | (null extends FormPathType<T, Path> ? null : never)) {
+		set(file: FileList | File | Nullable<T, Path>) {
 			if (!browser) return;
 			if (!file || file instanceof File) {
 				const dt = new DataTransfer();
@@ -143,21 +161,34 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 
 			fileProxy.set(file);
 			if (file.length > 0) formFile.set(file.item(0) as File);
+		},
+		update() {
+			throw new SuperFormError('You cannot update a fileProxy, only set it.');
 		}
-	};
+	} satisfies Writable<FileList>;
 
-	return {
-		...file,
-		file: fileStore
-	};
+	return fileStore;
+}
+
+export function filesFieldProxy<
+	T extends Record<string, unknown>,
+	Path extends FormPathArrays<T, File[]>
+>(
+	form: SuperForm<T>,
+	path: Path,
+	options?: ProxyOptions
+): ArrayProxy<File, Path, ValueErrors, FileList> {
+	const filesStore = filesProxy(form, path as any, options);
+	const arrayField = arrayProxy(form, path, options);
+
+	return { ...arrayField, values: filesStore };
 }
 
 export function filesProxy<
 	T extends Record<string, unknown>,
 	Path extends FormPathArrays<T, File[]>
->(form: SuperForm<T, unknown>, path: Path, options?: ProxyOptions) {
-	const files = arrayProxy(form, path, options);
-	const formFiles = files.values as Writable<File[]>;
+>(form: Writable<T> | SuperForm<T>, path: Path, options?: ProxyOptions) {
+	const formFiles = fieldProxy(form, path as any, options) as FieldProxy<File[]>;
 	const filesProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
 
 	formFiles.subscribe((files) => {
@@ -171,7 +202,7 @@ export function filesProxy<
 		subscribe(run: (value: FileList) => void) {
 			return filesProxy.subscribe(run);
 		},
-		set(files: FileList | File[] /*| (null extends FormPathType<T, Path> ? null : never)*/) {
+		set(files: FileList | File[] | Nullable<T, Path>) {
 			if (!browser) return;
 			if (!(files instanceof FileList)) {
 				const dt = new DataTransfer();
@@ -189,13 +220,13 @@ export function filesProxy<
 				if (file) output.push(file);
 			}
 			formFiles.set(output);
+		},
+		update() {
+			throw new SuperFormError('You cannot update a fileProxy, only set it.');
 		}
-	};
+	} satisfies Writable<FileList>;
 
-	return {
-		...files,
-		files: filesStore
-	};
+	return filesStore;
 }
 
 ///// Implementation ////////////////////////////////////////////////
@@ -207,7 +238,7 @@ export function filesProxy<
  * @param type 'number' | 'int' | 'boolean'
  */
 function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	type: 'number' | 'int' | 'boolean' | 'date' | 'string',
 	options: DefaultOptions
@@ -331,9 +362,9 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<
 
 type ValueErrors = any[];
 
-export type ArrayProxy<T, Path = string, Errors = ValueErrors> = {
+export type ArrayProxy<T, Path = string, Errors = ValueErrors, ExtraValues = never> = {
 	path: Path;
-	values: Writable<T[] & unknown[]>;
+	values: Writable<(T[] & unknown[]) | ExtraValues>;
 	errors: Writable<string[] | undefined>;
 	valueErrors: Writable<Errors>;
 };
@@ -343,7 +374,7 @@ export function arrayProxy<
 	Path extends FormPathArrays<T, ArrType>,
 	ArrType = any
 >(
-	superForm: SuperForm<T, any>,
+	superForm: SuperForm<T>,
 	path: Path,
 	options?: { taint?: TaintOption }
 ): ArrayProxy<FormPathType<T, Path> extends (infer U)[] ? U : never, Path> {
@@ -432,7 +463,7 @@ export function formFieldProxy<
 	Path extends FormPathLeaves<T, Type>,
 	Type = any
 >(
-	superForm: SuperForm<T, any>,
+	superForm: SuperForm<T>,
 	path: Path,
 	options?: ProxyOptions
 ): FormFieldProxy<PathType<Type, T, Path>, Path> {
@@ -536,9 +567,9 @@ function superFieldProxy<T extends Record<string, unknown>, Path extends string,
 }
 
 function isSuperForm<T extends Record<string, unknown>>(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	options?: { taint?: TaintOption }
-): form is SuperForm<T, unknown> {
+): form is SuperForm<T> {
 	const isSuperForm = 'form' in form;
 
 	if (!isSuperForm && options?.taint !== undefined) {
@@ -557,7 +588,7 @@ export function fieldProxy<
 	Path extends FormPaths<T, Type>,
 	Type = any
 >(
-	form: Writable<T> | SuperForm<T, unknown>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: ProxyOptions
 ): FieldProxy<PathType<Type, T, Path>> {

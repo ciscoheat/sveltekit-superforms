@@ -208,7 +208,8 @@ function _parseFormData<T extends Record<string, unknown>>(
 		}
 
 		if (info.types.includes('array') || info.types.includes('set')) {
-			const items = property.items;
+			// If no items, it could be a union containing the info
+			const items = property.items ?? (info.union?.length == 1 ? info.union[0] : undefined);
 			if (!items || typeof items == 'boolean' || (Array.isArray(items) && items.length != 1)) {
 				throw new SchemaError(
 					'Arrays must have a single "items" property that defines its type.',
@@ -222,7 +223,11 @@ function _parseFormData<T extends Record<string, unknown>>(
 			const arrayInfo = schemaInfo(arrayType, info.isOptional, [key]);
 			if (!arrayInfo) continue;
 
+			// Check for empty files being posted (and filtered)
+			const isFileArray = entries.length && entries.some((e) => e && typeof e !== 'string');
 			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo));
+			if (isFileArray && arrayData.every((file) => !file)) arrayData.length = 0;
+
 			output[key] = info.types.includes('set') ? new Set(arrayData) : arrayData;
 		} else {
 			output[key] = parseSingleEntry(key, entries[entries.length - 1], info);

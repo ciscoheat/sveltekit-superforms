@@ -9,7 +9,8 @@
 	let show = true;
 
 	const superform = superForm(data.form, {
-		validators: zod(schema)
+		validators: zod(schema),
+		resetForm: true
 	});
 	const { form, tainted, message, enhance, errors } = superform;
 
@@ -69,12 +70,14 @@
 	function clearFilesDirectly() {
 		// @ts-expect-error Not optional
 		$form.images = undefined;
+		// @ts-expect-error Not nullable
 		$form.images = null;
 	}
 
 	function clearFilesWithProxy() {
 		// @ts-expect-error Not optional
 		files.values.set(undefined);
+		// @ts-expect-error Not nullable
 		files.values.set(null);
 	}
 
@@ -114,7 +117,7 @@
 			Upload one file, max 10 Kb: <input
 				bind:files={$file}
 				accept="image/png, image/jpeg"
-				name="images"
+				name="image"
 				type="file"
 			/>
 			{#if $errors.image}

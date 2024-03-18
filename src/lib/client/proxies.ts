@@ -207,7 +207,15 @@ export function filesProxy<
 	formFiles.subscribe((files) => {
 		if (!browser) return;
 		const dt = new DataTransfer();
-		if (files) files.forEach((file) => dt.items.add(file));
+
+		if (Array.isArray(files)) {
+			if (files.length && files.every((f) => !f)) {
+				formFiles.set([]);
+				return;
+			}
+
+			files.filter((f) => !!f).forEach((file) => dt.items.add(file));
+		}
 		filesProxy.set(dt.files);
 	});
 
@@ -219,7 +227,10 @@ export function filesProxy<
 			if (!browser) return;
 			if (!(files instanceof FileList)) {
 				const dt = new DataTransfer();
-				if (Array.isArray(files)) files.forEach((file) => dt.items.add(file));
+				if (Array.isArray(files))
+					files.forEach((file) => {
+						if (file) dt.items.add(file);
+					});
 				else formFiles.set(files as File[]);
 				files = dt.files;
 			}

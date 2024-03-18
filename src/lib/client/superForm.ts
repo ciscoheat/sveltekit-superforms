@@ -1419,7 +1419,7 @@ export function superForm<
 						rebind({
 							form: newForm as SuperValidated<T, M, In>,
 							untaint: successResult,
-							keepFiles: true
+							keepFiles: !Form_shouldReset(true, true)
 						});
 					}
 				}

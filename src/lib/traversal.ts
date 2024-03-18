@@ -126,36 +126,35 @@ function eqSet(xs: Set<unknown>, ys: Set<unknown>) {
 export function comparePaths(newObj: unknown, oldObj: unknown) {
 	const diffPaths = new Map<string, (string | number | symbol)[]>();
 
+	function builtInDiff(one: Date | Set<unknown> | File, other: Date | Set<unknown> | File) {
+		if (one instanceof Date && other instanceof Date && one.getTime() !== other.getTime())
+			return true;
+		if (one instanceof Set && other instanceof Set && !eqSet(one, other)) return true;
+		if (one instanceof File && other instanceof File && one !== other) return true;
+		return false;
+	}
+
+	function isBuiltin(data: unknown): data is Date | Set<unknown> | File {
+		return data instanceof Date || data instanceof Set || data instanceof File;
+	}
+
 	function checkPath(data: PathData, compareTo: object) {
-		const exists = compareTo ? traversePath(compareTo, data.path) : undefined;
+		const otherData = compareTo ? traversePath(compareTo, data.path) : undefined;
 
 		function addDiff() {
 			diffPaths.set(data.path.join(' '), data.path);
 			return 'skip';
 		}
 
-		if (data.isLeaf) {
-			if (!exists) {
-				addDiff();
-			} else if (data.value !== exists.value) {
-				addDiff();
+		if (isBuiltin(data.value)) {
+			if (!isBuiltin(otherData?.value) || builtInDiff(data.value, otherData.value)) {
+				return addDiff();
 			}
-		} else if (exists) {
-			if (
-				(data.value instanceof Date || exists.value instanceof Date) &&
-				(!!data.value != !!exists.value || data.value.getTime() != exists.value.getTime())
-			) {
-				return addDiff();
-			} else if (
-				(data.value instanceof Set || exists.value instanceof Set) &&
-				(!!data.value != !!exists.value || !eqSet(data.value, exists.value))
-			) {
-				return addDiff();
-			} else if (
-				(data.value instanceof File || exists.value instanceof File) &&
-				(!!data.value != !!exists.value || data.value !== exists.value)
-			) {
-				return addDiff();
+		}
+
+		if (data.isLeaf) {
+			if (!otherData || data.value !== otherData.value) {
+				addDiff();
 			}
 		}
 	}

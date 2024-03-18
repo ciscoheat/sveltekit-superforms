@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { zod } from '$lib/adapters/zod.js';
 	import { schema } from './schema.js';
-	import { fileProxy, filesProxy, superForm } from '$lib/client/index.js';
+	import { fileProxy, filesFieldProxy, superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
 	export let data;
@@ -13,7 +13,9 @@
 	});
 	const { form, tainted, message, enhance, errors } = superform;
 
-	const files = filesProxy(form, 'images');
+	const files = filesFieldProxy(superform, 'images');
+	const values = files.values;
+
 	const file = fileProxy(form, 'image');
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -43,7 +45,7 @@
 			new File(['1234566'], 'test1.txt', { type: 'text/plain' }),
 			new File(['7890123'], 'test2.txt', { type: 'text/plain' })
 		];
-		files.set(newFiles);
+		files.values.set(newFiles);
 	}
 
 	function changeFilesDirectly() {
@@ -58,30 +60,26 @@
 	}
 
 	function emptyFilesWithProxy() {
-		files.set([]);
+		files.values.set([]);
 	}
 
-	/*
 	function clearFilesDirectly() {
-		// @ts-expect-error Not nullable
 		$form.images = null;
 	}
 
 	function clearFilesWithProxy() {
-		// @ts-expect-error Not nullable
-		files.set(null);
+		files.values.set(null);
 	}
-	*/
 
 	/////////////////////////////////////////////////////////////////////////////
 </script>
 
-<SuperDebug data={{ $form, $tainted, files, $errors }} />
+<SuperDebug data={{ $form, $tainted, $errors }} />
 
 {#if $message}<h4>{$message}</h4>{/if}
 
 <div id="file">FILE:{$form.image ? $form.image.name : 'null'}</div>
-<div id="files">FILES:{$form.images.length ? $form.images.map((f) => f.name) : 'empty'}</div>
+<div id="files">FILES:{$form.images?.length ? $form.images.map((f) => f.name) : 'empty'}</div>
 
 <div>
 	<button on:click={() => (show = !show)}>Toggle form</button>
@@ -92,7 +90,7 @@
 		<label>
 			Upload files, max 10 Kb: <input
 				multiple
-				bind:files={$files}
+				bind:files={$values}
 				accept="image/png, image/jpeg"
 				name="images"
 				type="file"
@@ -139,10 +137,10 @@
 					<button type="button" on:click={emptyFilesDirectly}>Empty files directly</button>
 					<button type="button" on:click={emptyFilesWithProxy}>Empty files with proxy</button>
 				</div>
-				<!--div>
+				<div>
 					<button type="button" on:click={clearFilesDirectly}>Clear files directly</button>
 					<button type="button" on:click={clearFilesWithProxy}>Clear files with proxy</button>
-				</div-->
+				</div>
 			</div>
 		</div>
 	</form>

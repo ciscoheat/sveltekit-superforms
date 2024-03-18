@@ -95,9 +95,6 @@ describe('Path comparisons', () => {
 			tags: [{ name: 'tag1' }, { name: 'tag4' }]
 		};
 
-		//expect(comparePaths(obj1, obj1)).toStrictEqual([]);
-		//expect(comparePaths(obj1, structuredClone(obj1))).toStrictEqual([]);
-
 		expect(comparePaths(obj1, obj2)).toStrictEqual([
 			['name'],
 			['tags', '1', 'name'],
@@ -155,6 +152,33 @@ describe('Path comparisons', () => {
 			['flavours', '0'],
 			['flavours', '1']
 		]);
+	});
+
+	test('Paths with empty arrays', () => {
+		const obj1 = { flavours: [] };
+		const obj2 = { flavours: [] };
+
+		expect(comparePaths(obj1, obj2)).toStrictEqual([]);
+	});
+
+	test('Paths with empty objects', () => {
+		const obj1 = {};
+		const obj2 = {};
+
+		expect(comparePaths(obj1, obj2)).toStrictEqual([]);
+	});
+
+	test('Paths with built-in objects', () => {
+		const obj1 = {
+			images: [new File(['123456'], 'test.txt')]
+		};
+
+		const obj2 = {
+			images: []
+		};
+
+		expect(comparePaths(obj1, obj2)).toStrictEqual([['images', '0']]);
+		expect(comparePaths(obj2, obj1)).toStrictEqual([['images', '0']]);
 	});
 });
 

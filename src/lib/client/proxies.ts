@@ -173,13 +173,9 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 export function filesFieldProxy<
 	T extends Record<string, unknown>,
 	Path extends FormPathArrays<T, File[]>
->(
-	form: SuperForm<T>,
-	path: Path,
-	options?: ProxyOptions
-): ArrayProxy<File, Path, ValueErrors, FileList> {
-	const filesStore = filesProxy(form, path as any, options);
-	const arrayField = arrayProxy(form, path, options);
+>(form: SuperForm<T>, path: Path, options?: ProxyOptions) {
+	const filesStore = filesProxy<T, Path>(form, path as any, options);
+	const arrayField = arrayProxy<T, Path>(form, path, options);
 
 	return { ...arrayField, values: filesStore };
 }

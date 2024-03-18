@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `fileProxy`, `filesProxy`, `fileFieldProxy` and `filesFieldProxy`, so `File` objects can be used with `bind:files` on the input field.
+
 ### Fixed
 
 - Support for `instance` and `special` validators for Valibot, which now enables File validation for Valibot!

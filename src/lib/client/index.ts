@@ -12,7 +12,9 @@ export {
 	stringProxy,
 	arrayProxy,
 	fileProxy,
+	fileFieldProxy,
 	filesProxy,
+	filesFieldProxy,
 	type FieldProxy,
 	type ArrayProxy,
 	type FormFieldProxy

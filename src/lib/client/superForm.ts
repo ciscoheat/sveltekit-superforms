@@ -810,7 +810,7 @@ export function superForm<
 				const el = formElement.querySelector<HTMLElement>(`[name="${name}"]`);
 				if (el) {
 					const message = 'validationMessage' in el ? String(el.validationMessage) : '';
-					validity.set(path.join(), { el, message });
+					validity.set(path.join('.'), { el, message });
 					updateCustomValidity(el, undefined);
 				}
 			}
@@ -835,14 +835,16 @@ export function superForm<
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
 
-			let joinedPath = error.path.join('.');
-			if (joinedPath.endsWith('._errors')) {
-				joinedPath = joinedPath.substring(0, -8);
+			const currentPath = [...error.path];
+			if (currentPath[currentPath.length - 1] == '_errors') {
+				currentPath.pop();
 			}
 
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
 				setPaths(output, [error.path], error.value);
+
+				const joinedPath = currentPath.join('.');
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
 					const { el, message } = validity.get(joinedPath)!;
@@ -859,9 +861,9 @@ export function superForm<
 
 			const isEventError =
 				error.value &&
-				paths
-					.map((path) => path.join('.'))
-					.some((path) => path.length <= joinedPath.length && path.startsWith(joinedPath));
+				paths.some((path) => {
+					return currentPath && path && currentPath.length > 0 && currentPath[0] == path[0];
+				});
 
 			if (isEventError && options.validationMethod == 'oninput') return addError();
 

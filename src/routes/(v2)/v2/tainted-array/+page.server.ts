@@ -3,7 +3,7 @@ import { zod } from '$lib/adapters/zod.js';
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';
 
-import type { Actions, PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types.js';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(zod(schema));

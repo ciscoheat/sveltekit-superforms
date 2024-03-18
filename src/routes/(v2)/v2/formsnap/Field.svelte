@@ -7,7 +7,9 @@
 
 <script lang="ts" generics="T extends Record<string, unknown>, U extends FormPath<T>">
 	import type { SuperForm } from '$lib/index.js';
+	// eslint-disable-next-line svelte/valid-compile
 	export let form: SuperForm<T>;
+	// eslint-disable-next-line svelte/valid-compile
 	export let name: U;
 </script>
 

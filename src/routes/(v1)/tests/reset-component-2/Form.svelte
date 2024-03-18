@@ -15,7 +15,7 @@
 		msg,
 		fields,
 		dataType = 'form'
-	} = $props<{
+	}: {
 		action: string;
 		schema: ValidationAdapter<T>;
 		data: SuperValidated<T>;
@@ -23,15 +23,7 @@
 		dataType?: 'form' | 'json';
 		msg: Snippet<[{ status: number; text: string }]>;
 		fields: Snippet<[SuperForm<T>]>;
-	}>();
-
-	/*
-	export let action: string;
-	export let schema: ValidationAdapter<Infer<typeof registerSchema>>;
-	export let data: SuperValidated<Infer<typeof registerSchema>>;
-	export let invalidateAll: boolean; // set to false to keep form data using muliple forms on a page
-	export let dataType: 'form' | 'json' = 'form';
-	*/
+	} = $props();
 
 	export const _form = superForm(data, {
 		dataType,

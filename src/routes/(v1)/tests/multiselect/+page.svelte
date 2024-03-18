@@ -13,6 +13,7 @@
 	});
 
 	$: console.log($allErrors);
+	// eslint-disable-next-line svelte/valid-compile
 	$: options = optionsSchema._def.innerType.options;
 </script>
 

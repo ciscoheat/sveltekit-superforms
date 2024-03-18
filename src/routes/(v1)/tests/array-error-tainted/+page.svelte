@@ -23,6 +23,7 @@
 		validators: zod(schema)
 	});
 
+	// eslint-disable-next-line svelte/valid-compile
 	$: status = get(page).status;
 </script>
 

@@ -127,8 +127,8 @@ devDependencies:
     specifier: ^2.4.4
     version: 2.4.4(@sveltejs/kit@2.5.4)(svelte@5.0.0-next.79)
   sveltekit-rate-limiter:
-    specifier: ^0.4.3
-    version: 0.4.3(@sveltejs/kit@2.5.4)
+    specifier: ^0.5.1
+    version: 0.5.1(@sveltejs/kit@2.5.4)
   throttle-debounce:
     specifier: ^5.0.0
     version: 5.0.0
@@ -2911,8 +2911,8 @@ packages:
       svelte: 5.0.0-next.79
     dev: true
 
-  /sveltekit-rate-limiter@0.4.3(@sveltejs/kit@2.5.4):
-    resolution: {integrity: sha512-BKkD2tvgyz5j4Fn1vt0y7FLF0zZ01f9thjWPGDb6fyX3tBXyMrtZ8ISK8M7zjz9Cik/2KrkvFtmldhXF6/hjqw==}
+  /sveltekit-rate-limiter@0.5.1(@sveltejs/kit@2.5.4):
+    resolution: {integrity: sha512-Q2C7mT9PdoL6v3VXgxngyXiEg2i3Dp0iVjVvKi722lroTM7oHxAJsmj66607BiSw8mdQk1Me6nhE6uRXrkDVIg==}
     peerDependencies:
       '@sveltejs/kit': 1.x || 2.x
     dependencies:

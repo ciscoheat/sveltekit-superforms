@@ -47,6 +47,7 @@ export {
 	type TaintOption,
 	type FormPath,
 	type FormPathLeaves,
+	type FormPathLeavesWithErrors,
 	type FormPathArrays,
 	type FormPathType,
 	type ChangeEvent,

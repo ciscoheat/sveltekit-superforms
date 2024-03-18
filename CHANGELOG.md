@@ -5,11 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.10.3] - 2024-03-18
+## [2.10.5] - 2024-03-18
 
 ### Added
 
 - `fileProxy`, `filesProxy`, `fileFieldProxy` and `filesFieldProxy`, so `File` objects can be used with `bind:files` on the input field. See [file uploads](https://superforms.rocks/concepts/files) for examples.
+- Exported `FormPathLeavesWithErrors`, for the `setError` function.
 
 ### Fixed
 

@@ -60,6 +60,7 @@ export type {
 export {
 	type FormPath,
 	type FormPathLeaves,
+	type FormPathLeavesWithErrors,
 	type FormPathArrays,
 	type FormPathType
 } from '../stringPath.js';

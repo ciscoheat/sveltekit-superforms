@@ -15,7 +15,7 @@
 	const { form, tainted, message, enhance, errors } = superform;
 
 	const files = filesFieldProxy(superform, 'images');
-	const values = files.values;
+	const { values, valueErrors } = files;
 
 	const file = fileProxy(form, 'image');
 
@@ -111,13 +111,13 @@
 				name="images"
 				type="file"
 			/>
-			{#if Object.keys($errors.images ?? {}).length}
-				<ul class="invalid">
-					{#each Object.keys($errors.images ?? {}) as error, i}
+			<ul class="invalid">
+				{#each $valueErrors as error, i}
+					{#if error}
 						<li>Image {i + 1}: {error}</li>
-					{/each}
-				</ul>
-			{/if}
+					{/if}
+				{/each}
+			</ul>
 		</label>
 		<label>
 			Upload one file, max 10 Kb: <input

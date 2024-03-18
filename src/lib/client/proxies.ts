@@ -167,17 +167,20 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 		set(file: FileList | File | Nullable<T, Path> | Optional<T, Path>) {
 			if (!browser) return;
 
-			if (!file || file instanceof File) {
+			if (!file) {
 				const dt = new DataTransfer();
-				if (file) dt.items.add(file);
-				else formFile.set(file as File);
-				file = dt.files;
+				fileProxy.set(dt.files);
+				formFile.set(file as File);
+			} else if (file instanceof File) {
+				const dt = new DataTransfer();
+				dt.items.add(file);
+				fileProxy.set(dt.files);
+				formFile.set(file);
+			} else if (file instanceof FileList) {
+				fileProxy.set(file);
+				if (file.length > 0) formFile.set(file.item(0) as File);
+				else formFile.set(initialValue as File);
 			}
-
-			fileProxy.set(file);
-
-			if (file.length > 0) formFile.set(file.item(0) as File);
-			else formFile.set(initialValue as File);
 		},
 		update() {
 			throw new SuperFormError('You cannot update a fileProxy, only set it.');
@@ -201,7 +204,9 @@ export function filesProxy<
 	T extends Record<string, unknown>,
 	Path extends FormPathArrays<T, File[]>
 >(form: Writable<T> | SuperForm<T>, path: Path, options?: ProxyOptions) {
-	const formFiles = fieldProxy(form, path as any, options) as FieldProxy<File[]>;
+	const formFiles = fieldProxy(form, path as any, options) as FieldProxy<
+		File[] | Nullable<T, Path> | Optional<T, Path>
+	>;
 	const filesProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
 
 	formFiles.subscribe((files) => {
@@ -225,25 +230,24 @@ export function filesProxy<
 		},
 		set(files: FileList | File[] | Nullable<T, Path> | Optional<T, Path>) {
 			if (!browser) return;
+
 			if (!(files instanceof FileList)) {
 				const dt = new DataTransfer();
 				if (Array.isArray(files))
 					files.forEach((file) => {
 						if (file) dt.items.add(file);
 					});
-				else formFiles.set(files as File[]);
-				files = dt.files;
+				filesProxy.set(dt.files);
+				formFiles.set(files);
+			} else {
+				const output: File[] = [];
+				for (let i = 0; i < files.length; i++) {
+					const file = files.item(i);
+					if (file) output.push(file);
+				}
+				filesProxy.set(files);
+				formFiles.set(output);
 			}
-
-			const newFiles = files;
-			filesProxy.set(newFiles);
-
-			const output: File[] = [];
-			for (let i = 0; i < newFiles.length; i++) {
-				const file = newFiles.item(i);
-				if (file) output.push(file);
-			}
-			formFiles.set(output);
 		},
 		update(updater: Updater<File[] | Nullable<T, Path> | Optional<T, Path>>) {
 			filesStore.set(updater(get(formFiles)));

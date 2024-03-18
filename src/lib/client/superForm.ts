@@ -1058,7 +1058,21 @@ export function superForm<
 	let NextChange: FullChangeEvent | null = null;
 
 	function NextChange_setHtmlEvent(event: FullChangeEvent) {
-		NextChange = event;
+		// For File inputs, if only paths are available, use that instead of replacing
+		// (fileProxy updates causes this)
+		if (
+			NextChange &&
+			event &&
+			Object.keys(event).length == 1 &&
+			event.paths?.length &&
+			NextChange.target &&
+			NextChange.target instanceof HTMLInputElement &&
+			NextChange.target.type.toLowerCase() == 'file'
+		) {
+			NextChange.paths = event.paths;
+		} else {
+			NextChange = event;
+		}
 		// Wait for on:input to provide additional information
 		setTimeout(() => {
 			Form_clientValidation(NextChange);

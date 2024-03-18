@@ -859,7 +859,9 @@ export function superForm<
 
 			const isEventError =
 				error.value &&
-				paths.map((path) => path.join('.')).some((path) => path.startsWith(joinedPath));
+				paths
+					.map((path) => path.join('.'))
+					.some((path) => path.length <= joinedPath.length && path.startsWith(joinedPath));
 
 			if (isEventError && options.validationMethod == 'oninput') return addError();
 

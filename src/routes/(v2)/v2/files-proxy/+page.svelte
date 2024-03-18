@@ -88,8 +88,14 @@
 
 {#if $message}<h4>{$message}</h4>{/if}
 
-<div id="file">FILE:{$form.image ? $form.image.name : 'null'}</div>
-<div id="files">FILES:{$form.images?.length ? $form.images.map((f) => f.name) : 'empty'}</div>
+<div id="file">FILE:{$form.image ? $form.image.name : String($form.image)}</div>
+<div id="files">
+	FILES:{$form.images
+		? $form.images.length
+			? $form.images.map((f) => f.name)
+			: 'empty'
+		: String($form.images)}
+</div>
 
 <div>
 	<button on:click={() => (show = !show)}>Toggle form</button>

@@ -217,10 +217,10 @@ export function filesProxy<
 			}
 			formFiles.set(output);
 		},
-		update() {
-			throw new SuperFormError('You cannot update a fileProxy, only set it.');
+		update(updater: Updater<File[] | Nullable<T, Path>>) {
+			filesStore.set(updater(get(formFiles)));
 		}
-	} satisfies Writable<FileList>;
+	};
 
 	return filesStore;
 }

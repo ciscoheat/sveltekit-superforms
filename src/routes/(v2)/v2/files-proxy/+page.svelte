@@ -41,11 +41,12 @@
 	/////////////////////////////////////////////////////////////////////////////
 
 	function changeFilesWithProxy() {
-		const newFiles = [
-			new File(['1234566'], 'test1.txt', { type: 'text/plain' }),
-			new File(['7890123'], 'test2.txt', { type: 'text/plain' })
-		];
+		const newFiles = [new File(['1234566'], 'test1.txt', { type: 'text/plain' })];
 		files.values.set(newFiles);
+		files.values.update(($files) => [
+			...($files ?? []),
+			new File(['7890123'], 'test2.txt', { type: 'text/plain' })
+		]);
 	}
 
 	function changeFilesDirectly() {

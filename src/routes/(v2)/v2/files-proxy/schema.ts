@@ -9,4 +9,5 @@ export const schema = z.object({
 	image: z
 		.instanceof(File, { message: 'Please upload a file.' })
 		.refine((f) => f.size < 10000, 'Max 10Kb upload size.')
+		.optional()
 });

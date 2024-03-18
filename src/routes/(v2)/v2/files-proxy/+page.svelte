@@ -31,11 +31,13 @@
 	function clearFileDirectly() {
 		// @ts-expect-error Not nullable
 		$form.image = null;
+		$form.image = undefined;
 	}
 
 	function clearFileWithProxy() {
 		// @ts-expect-error Not nullable
 		file.set(null);
+		file.set(undefined);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -65,10 +67,14 @@
 	}
 
 	function clearFilesDirectly() {
+		// @ts-expect-error Not optional
+		$form.images = undefined;
 		$form.images = null;
 	}
 
 	function clearFilesWithProxy() {
+		// @ts-expect-error Not optional
+		files.values.set(undefined);
 		files.values.set(null);
 	}
 

@@ -28,6 +28,11 @@ type Nullable<
 	Path extends FormPaths<T> | FormPathArrays<T> | FormPathLeaves<T>
 > = null extends FormPathType<T, Path> ? null : never;
 
+type Optional<
+	T extends Record<string, unknown>,
+	Path extends FormPaths<T> | FormPathArrays<T> | FormPathLeaves<T>
+> = [undefined] extends [FormPathType<T, Path>] ? undefined : never;
+
 type DefaultOptions = {
 	trueStringValue: string;
 	dateFormat:
@@ -123,8 +128,8 @@ export function fileFieldProxy<
 >(
 	form: SuperForm<T>,
 	path: Path,
-	options?: ProxyOptions
-): FormFieldProxy<FileList | File | Nullable<T, Path>, Path> {
+	options?: ProxyOptions & { empty?: 'null' | 'undefined' }
+): FormFieldProxy<FileList | File | Nullable<T, Path> | Optional<T, Path>, Path> {
 	const fileField = fileProxy(form, path, options);
 	const formField = formFieldProxy(form, path, options);
 
@@ -134,13 +139,22 @@ export function fileFieldProxy<
 export function fileProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, File>>(
 	form: Writable<T> | SuperForm<T>,
 	path: Path,
-	options?: ProxyOptions
+	options?: ProxyOptions & { empty?: 'null' | 'undefined' }
 ) {
 	const formFile = fieldProxy(form, path, options) as FieldProxy<File>;
 	const fileProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
 
+	let initialized = false;
+	let initialValue: File | null | undefined;
+
 	formFile.subscribe((file) => {
 		if (!browser) return;
+
+		if (!initialized) {
+			initialValue = options?.empty ? (options.empty === 'undefined' ? undefined : null) : file;
+			initialized = true;
+		}
+
 		const dt = new DataTransfer();
 		if (file) dt.items.add(file);
 		fileProxy.set(dt.files);
@@ -150,8 +164,9 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 		subscribe(run: (value: FileList) => void) {
 			return fileProxy.subscribe(run);
 		},
-		set(file: FileList | File | Nullable<T, Path>) {
+		set(file: FileList | File | Nullable<T, Path> | Optional<T, Path>) {
 			if (!browser) return;
+
 			if (!file || file instanceof File) {
 				const dt = new DataTransfer();
 				if (file) dt.items.add(file);
@@ -160,7 +175,9 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 			}
 
 			fileProxy.set(file);
+
 			if (file.length > 0) formFile.set(file.item(0) as File);
+			else formFile.set(initialValue as File);
 		},
 		update() {
 			throw new SuperFormError('You cannot update a fileProxy, only set it.');
@@ -198,7 +215,7 @@ export function filesProxy<
 		subscribe(run: (value: FileList) => void) {
 			return filesProxy.subscribe(run);
 		},
-		set(files: FileList | File[] | Nullable<T, Path>) {
+		set(files: FileList | File[] | Nullable<T, Path> | Optional<T, Path>) {
 			if (!browser) return;
 			if (!(files instanceof FileList)) {
 				const dt = new DataTransfer();
@@ -217,7 +234,7 @@ export function filesProxy<
 			}
 			formFiles.set(output);
 		},
-		update(updater: Updater<File[] | Nullable<T, Path>>) {
+		update(updater: Updater<File[] | Nullable<T, Path> | Optional<T, Path>>) {
 			filesStore.set(updater(get(formFiles)));
 		}
 	};

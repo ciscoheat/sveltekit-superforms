@@ -840,11 +840,11 @@ export function superForm<
 				currentPath.pop();
 			}
 
+			const joinedPath = currentPath.join('.');
+
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
 				setPaths(output, [error.path], error.value);
-
-				const joinedPath = currentPath.join('.');
 
 				if (options.customValidity && isEventError && validity.has(joinedPath)) {
 					const { el, message } = validity.get(joinedPath)!;
@@ -859,10 +859,16 @@ export function superForm<
 
 			if (force) return addError();
 
+			const lastPath = error.path[error.path.length - 1];
+			const isObjectError = lastPath == '_errors';
+
 			const isEventError =
 				error.value &&
 				paths.some((path) => {
-					return currentPath && path && currentPath.length > 0 && currentPath[0] == path[0];
+					// If array/object, any part of the path can match. If not, exact match is required
+					return isObjectError
+						? currentPath && path && currentPath.length > 0 && currentPath[0] == path[0]
+						: joinedPath == path.join('.');
 				});
 
 			if (isEventError && options.validationMethod == 'oninput') return addError();
@@ -889,10 +895,6 @@ export function superForm<
 			if (previousError && previousError.key in previousError.parent) {
 				return addError();
 			}
-
-			const lastPath = error.path[error.path.length - 1];
-			const isObjectError = lastPath == '_errors';
-			//const isErrorInArray = error.path.some((p) => /^\d+$/.test(String(p)));
 
 			if (isObjectError) {
 				// New object errors should be displayed on blur events,

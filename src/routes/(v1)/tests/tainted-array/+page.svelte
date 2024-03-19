@@ -33,7 +33,7 @@
 
 <button on:click={addPerson}>Add Person</button>
 
-<form use:enhance>
+<form method="POST" use:enhance>
 	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.people as _, i}
 		<div>
@@ -41,7 +41,7 @@
 				<label for="firstName">First Name</label>
 				<input name="firstName" bind:value={$form.people[i].firstName} />
 				{#if $errors.people?.[i]?.firstName}
-					<p>{$errors.people[i].firstName}</p>
+					<p id="error-1">{$errors.people[i].firstName}</p>
 				{/if}
 			</div>
 
@@ -49,7 +49,7 @@
 				<label for="lastName">Last Name</label>
 				<input name="lastName" bind:value={$form.people[i].lastName} />
 				{#if $errors.people?.[i]?.lastName}
-					<p>{$errors.people[i].lastName}</p>
+					<p id="error-2">{$errors.people[i].lastName}</p>
 				{/if}
 			</div>
 		</div>

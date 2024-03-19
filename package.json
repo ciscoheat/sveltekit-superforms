@@ -38,10 +38,10 @@
 		"build": "vite build && npm run package",
 		"preview": "vite preview",
 		"package": "svelte-kit sync && svelte-package && publint",
-		"prepublishOnly": "npm run test && npm run lint && npm run check && npm run package",
+		"prepublishOnly": "npm run test && npm run lint && npm run check && npm run package && npm run check:adapters",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.check.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"check:adapters": "node all-adapters.js",
+		"check:adapters": "node types-exist.js",
 		"test": "vitest run",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."

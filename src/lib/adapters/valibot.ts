@@ -7,18 +7,15 @@ import {
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
-import { safeParseAsync, type BaseSchema, type BaseSchemaAsync } from 'valibot';
+import { safeParseAsync, type BaseSchema, type BaseSchemaAsync, type SchemaConfig } from 'valibot';
 import { memoize } from '$lib/memoize.js';
 import {
 	type ToJSONSchemaOptions,
 	toJSONSchema as valibotToJSON
 } from '@gcornut/valibot-json-schema';
 import type { JSONSchema } from '../jsonSchema/index.js';
-import type { Prettify } from '$lib/utils.js';
 
 type SupportedSchemas = BaseSchema | BaseSchemaAsync;
-
-type SchemaConfig = NonNullable<Parameters<typeof safeParseAsync>[2]>;
 
 const defaultOptions = {
 	strictObjectTypes: true,
@@ -55,12 +52,10 @@ async function validate<T extends SupportedSchemas>(
 
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
-	options: Prettify<
-		Omit<ToJSONSchemaOptions, 'schema'> &
-			AdapterOptions<T> & {
-				config?: SchemaConfig;
-			}
-	> = {}
+	options: Omit<ToJSONSchemaOptions, 'schema'> &
+		AdapterOptions<T> & {
+			config?: SchemaConfig;
+		} = {}
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',

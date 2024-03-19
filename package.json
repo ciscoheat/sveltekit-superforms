@@ -41,6 +41,7 @@
 		"prepublishOnly": "npm run test && npm run lint && npm run check && npm run package",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.check.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"check:adapters": "node all-adapters.js",
 		"test": "vitest run",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."

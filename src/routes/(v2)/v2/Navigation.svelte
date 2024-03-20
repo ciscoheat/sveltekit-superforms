@@ -53,7 +53,8 @@
 		'file-component',
 		'tainted-history',
 		'files-proxy',
-		'tainted-array'
+		'tainted-array',
+		'spa-clearonsubmit'
 	].sort();
 </script>
 

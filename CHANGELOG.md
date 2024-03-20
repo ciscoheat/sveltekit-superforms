@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- The [clearOnSubmit](https://superforms.rocks/concepts/submit-behavior#clearonsubmit) option didn't clear the errors when supposed to. To avoid a breaking change, **the default option for clearOnSubmit is now** `message`, not `errors-and-message`, as it didn't work anyway.
+
 ## [2.10.5] - 2024-03-18
 
 ### Added

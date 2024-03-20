@@ -349,7 +349,7 @@ const defaultFormOptions = {
 	dataType: 'form',
 	validators: undefined,
 	customValidity: false,
-	clearOnSubmit: 'errors-and-message',
+	clearOnSubmit: 'message',
 	delayMs: 500,
 	timeoutMs: 8000,
 	multipleSubmits: 'prevent',
@@ -1054,7 +1054,7 @@ export function superForm<
 		 * To work with client-side validation, errors cannot be deleted but must
 		 * be set to undefined, to know where they existed before (tainted+error check in oninput)
 		 */
-		clear: () => undefined
+		clear: () => Errors.set({})
 	};
 
 	//#endregion
@@ -1583,6 +1583,23 @@ export function superForm<
 				setTimeout(() => validationResponse({ result }), 0);
 			}
 
+			function clearOnSubmit() {
+				switch (options.clearOnSubmit) {
+					case 'errors-and-message':
+						Errors.clear();
+						Message.set(undefined);
+						break;
+
+					case 'errors':
+						Errors.clear();
+						break;
+
+					case 'message':
+						Message.set(undefined);
+						break;
+				}
+			}
+
 			function cancel(
 				opts: { resetTimers?: boolean } = {
 					resetTimers: true
@@ -1628,6 +1645,8 @@ export function superForm<
 					return await Form_validate({ adapter: validationAdapter });
 				};
 
+				clearOnSubmit();
+
 				if (!noValidate) {
 					validation = await validateForm();
 
@@ -1638,21 +1657,6 @@ export function superForm<
 				}
 
 				if (!cancelled) {
-					switch (options.clearOnSubmit) {
-						case 'errors-and-message':
-							Errors.clear();
-							Message.set(undefined);
-							break;
-
-						case 'errors':
-							Errors.clear();
-							break;
-
-						case 'message':
-							Message.set(undefined);
-							break;
-					}
-
 					if (
 						options.flashMessage &&
 						(options.clearOnSubmit == 'errors-and-message' || options.clearOnSubmit == 'message') &&

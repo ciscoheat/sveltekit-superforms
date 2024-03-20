@@ -126,7 +126,7 @@ export type FormOptions<
 				result: {
 					type: 'error';
 					status?: number;
-					error: App.Error;
+					error: App.Error | { message: string };
 				};
 		  }) => MaybePromise<unknown | void>);
 	onChange: (event: ChangeEvent<T>) => void;

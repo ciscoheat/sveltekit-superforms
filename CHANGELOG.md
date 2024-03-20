@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The [clearOnSubmit](https://superforms.rocks/concepts/submit-behavior#clearonsubmit) option didn't clear the errors when supposed to. To avoid a breaking change, **the default option for clearOnSubmit is now** `message`, not `errors-and-message`, as it didn't work anyway.
 
+### Fixed
+
+- the `event.error` signature in [onError](https://superforms.rocks/concepts/events#onerror) was incorrect, it doesn't always include `App.Error`. It is now a union between `App.Error` and its default SvelteKit signature, `{ message: string }`.
+
 ## [2.10.5] - 2024-03-18
 
 ### Added

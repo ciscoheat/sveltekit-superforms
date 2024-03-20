@@ -5,7 +5,6 @@ import { error, fail } from '@sveltejs/kit';
 
 export const load = async () => {
 	const form = await superValidate({ name: 'some name' }, zod(userSchema));
-
 	return { form };
 };
 
@@ -18,11 +17,14 @@ export const actions = {
 			return fail(400, { form });
 		}
 
-		if (form.data.exception) {
-			throw new Error('test-error');
-		} else {
-			// @ts-expect-error Does not follow the App.Error shape
-			error(502, { code: 'expected', title: 'Error title', message: 'Error' });
+		switch (form.data.exception) {
+			case 'error':
+				// @ts-expect-error Does not follow the App.Error shape
+				error(502, { code: 'expected', title: 'Error title', message: 'Error' });
+				break;
+
+			case 'exception':
+				throw new Error('test-error');
 		}
 	}
 };

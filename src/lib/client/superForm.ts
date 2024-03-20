@@ -126,7 +126,7 @@ export type FormOptions<
 				result: {
 					type: 'error';
 					status?: number;
-					error: App.Error | { message: string };
+					error: App.Error | Error | { message: string };
 				};
 		  }) => MaybePromise<unknown | void>);
 	onChange: (event: ChangeEvent<T>) => void;
@@ -269,16 +269,6 @@ export type ValidateOptions<
 	errors: string | string[];
 	schema: ValidationAdapter<Out, In>;
 }>;
-
-type ValidationResponse<
-	Success extends Record<string, unknown> | undefined = Record<
-		string,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		any
-	>,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	Invalid extends Record<string, unknown> | undefined = Record<string, any>
-> = { result: ActionResult<Success, Invalid> };
 
 export type ChangeEvent<T extends Record<string, unknown>> =
 	| {
@@ -1744,18 +1734,21 @@ export function superForm<
 				return chunks;
 			}
 
-			async function validationResponse(event: ValidationResponse) {
+			// event can be a record if an external request was returning JSON,
+			// or if it failed parsing the expected JSON.
+			async function validationResponse(event: { result: Record<string, unknown> }) {
 				let cancelled = false;
 				currentRequest = null;
 
 				// Check if an error was thrown in hooks, in which case it has no type.
-				let result: ActionResult = event.result.type
-					? event.result
-					: {
-							type: 'error',
-							status: 500,
-							error: event.result
-						};
+				let result: ActionResult =
+					'type' in event.result && 'status' in event.result
+						? (event.result as ActionResult)
+						: {
+								type: 'error',
+								status: parseInt(String(event.result.status)) || 500,
+								error: event.result.error instanceof Error ? event.result.error : event.result
+							};
 
 				const cancel = () => (cancelled = true);
 

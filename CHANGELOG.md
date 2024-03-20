@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- the `event.error` signature in [onError](https://superforms.rocks/concepts/events#onerror) was incorrect, it doesn't always include `App.Error`. It is now a union between `App.Error` and its default SvelteKit signature, `{ message: string }`.
+- the `event.result.error` signature in [onError](https://superforms.rocks/concepts/events#onerror) was incorrect, it doesn't always match `App.Error`. It is now a union between `App.Error`, The built-in JS `Error` class, and the default App.Error signature `{ message: string }`.
 
 ## [2.10.5] - 2024-03-18
 

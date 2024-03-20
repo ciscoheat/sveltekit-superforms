@@ -54,7 +54,8 @@
 		'tainted-history',
 		'files-proxy',
 		'tainted-array',
-		'spa-clearonsubmit'
+		'spa-clearonsubmit',
+		'app-error'
 	].sort();
 </script>
 

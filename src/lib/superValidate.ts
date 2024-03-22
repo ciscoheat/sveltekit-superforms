@@ -1,5 +1,5 @@
 import { traversePath } from './traversal.js';
-import { type ActionFailure, fail, type RequestEvent } from '@sveltejs/kit';
+import { type ActionFailure, fail as kitFail, type RequestEvent } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
 import type { ErrorStatus } from './utils.js';
@@ -198,7 +198,7 @@ export function message<
 	const remove = options?.removeFiles !== false;
 	const output = remove ? withFiles({ form }) : { form };
 
-	return form.valid ? output : fail(options?.status ?? 400, output);
+	return form.valid ? output : kitFail(options?.status ?? 400, output);
 }
 
 export const setMessage = message;
@@ -290,7 +290,7 @@ export function setError<
 	form.valid = false;
 
 	const output = options.removeFiles === false ? { form } : withFiles({ form });
-	return fail(options.status ?? 400, output);
+	return kitFail(options.status ?? 400, output);
 }
 
 export function withFiles<T extends object>(obj: T) {
@@ -304,3 +304,29 @@ export function withFiles<T extends object>(obj: T) {
 }
 
 export const removeFiles = withFiles;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function fail<T extends Record<string, unknown> | undefined>(status: number, data?: T) {
+	function checkForm(
+		data: unknown
+	): data is SuperValidated<Record<string, unknown>, unknown, Record<string, unknown>> {
+		return !!data && typeof data === 'object' && 'valid' in data && 'data' in data && 'id' in data;
+	}
+
+	function checkObj<T extends object>(data: T | undefined) {
+		if (data && typeof data === 'object') {
+			for (const key in data) {
+				const v = data[key];
+				if (checkForm(v)) {
+					v.valid = false;
+					removeFiles(v);
+				} else if (v && typeof v === 'object') {
+					checkObj(v);
+				}
+			}
+		}
+		return data;
+	}
+
+	return kitFail<T>(status, checkObj(data) as T);
+}

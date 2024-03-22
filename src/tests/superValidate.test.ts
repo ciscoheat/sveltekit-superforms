@@ -12,7 +12,7 @@ import {
 	type SuperValidated
 } from '$lib/superValidate.js';
 import { merge } from 'ts-deepmerge';
-import { fail } from '@sveltejs/kit';
+import { fail as kitFail } from '@sveltejs/kit';
 import { defaults as schemaDefaults } from '$lib/defaults.js';
 
 ///// Adapters //////////////////////////////////////////////////////
@@ -793,7 +793,7 @@ describe('File handling with the allowFiles option', () => {
 		});
 
 		it('should remove the files with the removeFiles function', async () => {
-			fail(400, withFiles({ form }));
+			kitFail(400, withFiles({ form }));
 			expect(form.data.avatar).toBeUndefined();
 		});
 	});

@@ -55,7 +55,8 @@
 		'files-proxy',
 		'tainted-array',
 		'spa-clearonsubmit',
-		'app-error'
+		'app-error',
+		'form-result-type'
 	].sort();
 </script>
 

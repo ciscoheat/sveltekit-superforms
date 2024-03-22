@@ -31,6 +31,7 @@ export {
 	setError,
 	withFiles,
 	removeFiles,
+	fail,
 	type SuperValidated,
 	type TaintedFields,
 	type ValidationErrors,

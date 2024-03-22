@@ -118,6 +118,7 @@ export type FormOptions<
 		formEl: HTMLFormElement;
 		formElement: HTMLFormElement;
 		cancel: () => void;
+		result: Extract<ActionResult, { type: 'success' | 'failure' }>;
 	}) => MaybePromise<unknown | void>;
 	onUpdated: (event: { form: Readonly<SuperValidated<T, M, In>> }) => MaybePromise<unknown | void>;
 	onError:
@@ -1791,12 +1792,16 @@ export function superForm<
 								form: newForm as SuperValidated<T, M, In>,
 								formEl: FormElement,
 								formElement: FormElement,
-								cancel: () => (cancelled = true)
+								cancel: () => (cancelled = true),
+								result: result as Extract<ActionResult, { type: 'success' | 'failure' }>
 							};
 
 							for (const event of formEvents.onUpdate) {
 								await event(data);
 							}
+
+							// In case it was modified in the event
+							result = data.result as ActionResult;
 
 							if (!cancelled) {
 								if (options.customValidity) {

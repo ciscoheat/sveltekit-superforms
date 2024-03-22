@@ -156,7 +156,7 @@ export function fileProxy<T extends Record<string, unknown>, Path extends FormPa
 		}
 
 		const dt = new DataTransfer();
-		if (file) dt.items.add(file);
+		if (file instanceof File) dt.items.add(file);
 		fileProxy.set(dt.files);
 	});
 
@@ -219,7 +219,7 @@ export function filesProxy<
 				return;
 			}
 
-			files.filter((f) => !!f).forEach((file) => dt.items.add(file));
+			files.filter((f) => f instanceof File).forEach((file) => dt.items.add(file));
 		}
 		filesProxy.set(dt.files);
 	});
@@ -235,7 +235,7 @@ export function filesProxy<
 				const dt = new DataTransfer();
 				if (Array.isArray(files))
 					files.forEach((file) => {
-						if (file) dt.items.add(file);
+						if (file instanceof File) dt.items.add(file);
 					});
 				filesProxy.set(dt.files);
 				formFiles.set(files);

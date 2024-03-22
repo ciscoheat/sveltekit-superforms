@@ -1910,6 +1910,30 @@ export function superForm<
 		});
 	}
 
+	function removeFiles(formData: T) {
+		const paths: (string | number | symbol)[][] = [];
+
+		traversePaths(formData, (data) => {
+			if (data.value instanceof File) {
+				paths.push(data.path);
+				return 'skip';
+			} else if (
+				Array.isArray(data.value) &&
+				data.value.length &&
+				data.value.every((d) => d instanceof File)
+			) {
+				paths.push(data.path);
+				return 'skip';
+			}
+		});
+
+		if (!paths.length) return { data: formData, paths };
+
+		const data = clone(formData);
+		setPaths(data, paths, (path) => pathExists(initialForm.data, path)?.value);
+		return { data, paths };
+	}
+
 	///// Return the SuperForm object /////////////////////////////////
 
 	return {
@@ -1927,15 +1951,22 @@ export function superForm<
 		options: options as T extends T ? FormOptions<T, M> : never,
 
 		capture() {
+			const { data, paths } = removeFiles(Data.form);
+			let tainted = Data.tainted;
+			if (paths.length) {
+				tainted = clone(tainted) ?? {};
+				setPaths(tainted, paths, false);
+			}
+
 			return {
 				valid: Data.valid,
 				posted: Data.posted,
 				errors: Data.errors,
-				data: Data.form,
+				data,
 				constraints: Data.constraints,
 				message: Data.message,
 				id: Data.formId,
-				tainted: Data.tainted,
+				tainted,
 				shape: Data.shape
 			};
 		},

@@ -9,8 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The `ActionResult` for success or failure is now added to the `onUpdate` event in the `result` property.
+- The `ActionResult` for success or failure is now added to the `onUpdate` event in the `result` property. Can be used to more easily access the `ActionData`.
 - Added a `fail` function, works the same as the SvelteKit fail, but removes files and sets `form.valid` to `false`.
+- `options.config` added to the Zod adapter, so the JSON Schema generation can be customized.
+
+### Fixed
+
+- [Snapshots](https://superforms.rocks/concepts/snapshots) couldn't handle files. They are now reverted to their default value when captured and restored in a snapshot, including the tainted state for these fields.
 
 ## [2.10.6] - 2024-03-20
 

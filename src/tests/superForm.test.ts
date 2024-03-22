@@ -329,6 +329,29 @@ describe('FormOptions', () => {
 	});
 });
 
+describe('Capture', () => {
+	it('should replace files with their default value, and empty file arrays', async () => {
+		const schema = z.object({
+			image: z.instanceof(File, { message: 'Please upload a file.' }).nullable(),
+			undefImage: z.instanceof(File, { message: 'Please upload a file.' }),
+			images: z.instanceof(File, { message: 'Please upload files.' }).array()
+		});
+
+		const validated = await superValidate(zod(schema));
+		const form = superForm(validated);
+
+		form.form.update(($form) => {
+			$form.image = new File(['123123'], 'test.png');
+			$form.images = [new File(['123123'], 'test2.png'), new File(['123123'], 'test3.png')];
+			$form.undefImage = new File(['123123'], 'test4.png');
+			return $form;
+		});
+
+		const captured = form.capture();
+		expect(captured.data).toStrictEqual({ image: null, images: [], undefImage: undefined });
+	});
+});
+
 ///// mockSvelte.ts (must be copy/pasted here) ////////////////////////////////
 
 import { vi } from 'vitest';

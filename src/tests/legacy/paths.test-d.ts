@@ -327,11 +327,7 @@ test('FormPath with type narrowing, arrays', () => {
 test('FormPath with type narrowing, union', () => {
 	type NameArrays = FormPath<Obj, string | number>;
 
-	const t1: NameArrays = 'name';
-	const t2: NameArrays = 'points';
-	const t3: NameArrays = 'tags[3].name';
-	const t4: NameArrays = 'names[3]';
-	const t5: NameArrays = 'tags[0].parents[5]';
+	const ok: NameArrays[] = ['name', 'points', 'tags[3].name', 'names[3]', 'tags[0].parents[5]'];
 
 	// @ts-expect-error incorrect path
 	const i1: NameArrays = 'tags';
@@ -371,7 +367,6 @@ test('FormPath with any type', () => {
 
 	// @ts-expect-error Invalid path
 	const f1: FP = 'nope';
-	// @ts-expect-error Invalid path
 	const f2: FPA = 'age[3]';
 });
 
@@ -387,6 +382,23 @@ test('Schemas with built-in objects', () => {
 	const t1: FPL = 'date';
 	// @ts-expect-error Invalid type
 	const tf: FPL = 'name';
+});
+
+test('Schema with nested arrays', () => {
+	const reportSchema = z.object({
+		reportDate: z.date(),
+		images: z.instanceof(File, { message: 'Please upload a file.' }).array()
+	});
+
+	const schema = z.object({
+		reports: z.array(reportSchema).min(1, 'At least one report must be submitted')
+	});
+
+	type FPL = FormPathLeaves<Infer<typeof schema>>;
+
+	const ok: FPL[] = ['reports[3].reportDate', 'reports[3].images[2]'];
+	// @ts-expect-error Invalid type
+	const no: FPL = 'reports[3]';
 });
 
 ///////////////////////////////////////////////////

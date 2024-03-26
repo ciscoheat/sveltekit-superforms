@@ -122,14 +122,25 @@ type StringPath<
 												never,
 												T[K]
 											>
-										: If<
-												Options,
-												'filter',
-												'leaves' | 'all',
-												Concat<Options['path'], `${K}[${number}]`>,
-												never,
-												U
-											>)
+										: NonNullable<U> extends object
+											? IsAny<T[K]> extends true
+												? Concat<Options['path'], `${K}[${number}]`>
+												: If<
+														Options,
+														'filter',
+														'all',
+														Concat<Options['path'], `${K}[${number}]`>,
+														never,
+														U
+													>
+											: If<
+													Options,
+													'filter',
+													'leaves' | 'all',
+													Concat<Options['path'], `${K}[${number}]`>,
+													never,
+													U
+												>)
 								| (NonNullable<U> extends object
 										? StringPath<
 												NonNullable<U>,

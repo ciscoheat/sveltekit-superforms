@@ -24,28 +24,32 @@ type BuiltInObjects = Date | Set<unknown> | File;
 /**
  * Lists all paths in an object as string accessors.
  */
-export type FormPath<T extends object, Type = any> = string &
-	StringPath<T, { filter: 'all'; objAppend: never; path: ''; type: Type }>;
+export type FormPath<T extends object, Type = any> = string & T extends any
+	? StringPath<T, { filter: 'all'; objAppend: never; path: ''; type: Type }>
+	: never;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Similar to the leaves in a node tree, if you look at the object as a tree structure.
  */
-export type FormPathLeaves<T extends object, Type = any> = string &
-	StringPath<T, { filter: 'leaves'; objAppend: never; path: ''; type: Type }>;
+export type FormPathLeaves<T extends object, Type = any> = string & T extends any
+	? StringPath<T, { filter: 'leaves'; objAppend: never; path: ''; type: Type }>
+	: never;
 
 /**
  * List paths in an object as string accessors, but only with non-objects as accessible properties.
  * Also includes the _errors field for objects and arrays.
  */
-export type FormPathLeavesWithErrors<T extends object, Type = any> = string &
-	StringPath<T, { filter: 'leaves'; objAppend: '_errors'; path: ''; type: Type }>;
+export type FormPathLeavesWithErrors<T extends object, Type = any> = string & T extends any
+	? StringPath<T, { filter: 'leaves'; objAppend: '_errors'; path: ''; type: Type }>
+	: never;
 
 /**
  * List all arrays in an object as string accessors.
  */
-export type FormPathArrays<T extends object, Type = any> = string &
-	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
+export type FormPathArrays<T extends object, Type = any> = string & T extends any
+	? StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>
+	: never;
 
 type Concat<
 	Path extends string,

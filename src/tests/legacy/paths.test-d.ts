@@ -324,6 +324,18 @@ test('FormPath with type narrowing, arrays', () => {
 	const i2: NameArrays = 'tags';
 });
 
+test('FormPath with type narrowing, arrays 2', () => {
+	type NameArrays = FormPath<FormData, string[]>;
+
+	const t1: NameArrays = 'field1';
+	const t2: NameArrays = 'field3.nestedArray[3].innerArray';
+
+	// @ts-expect-error incorrect path
+	const i1: NameArrays = 'field1[2].id';
+	// @ts-expect-error incorrect path
+	const i2: NameArrays = 'field3.nestedArray[2]';
+});
+
 test('FormPath with type narrowing, union', () => {
 	type NameArrays = FormPath<Obj, string | number>;
 

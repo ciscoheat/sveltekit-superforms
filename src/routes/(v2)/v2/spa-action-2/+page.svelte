@@ -1,20 +1,21 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { valibot } from '$lib/adapters/valibot.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { defaults, superForm } from '$lib/index.js';
+	import type { ActionData } from './classify/$types.js';
+	import { classifySchema } from './classify/schema.js';
 
 	export let data;
 
-	const { enhance } = superForm(
-		{},
-		{
-			SPA: '/v2/spa-action-2/classify',
-			taintedMessage: false,
-			onUpdate({ form }) {
-				const entry = data.entries.find((e) => e.id == form.message.id);
-				if (entry) entry.name = 'Modified';
-			}
+	const { enhance } = superForm(defaults(valibot(classifySchema)), {
+		SPA: '/v2/spa-action-2/classify',
+		taintedMessage: false,
+		onUpdate({ result }) {
+			const status = result.data as NonNullable<ActionData>;
+			const entry = data.entries.find((e) => e.id == status.posted);
+			if (entry) entry.name = 'Modified';
 		}
-	);
+	});
 </script>
 
 <SuperDebug data={data.entries} />

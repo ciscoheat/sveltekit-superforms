@@ -521,13 +521,13 @@ export function superForm<
 		onDestroy(() => {
 			Unsubscriptions_unsubscribe();
 			NextChange_clear();
+			EnhancedForm_destroy();
 
 			for (const events of Object.values(formEvents)) {
 				events.length = 0;
 			}
 
 			formIds.get(_currentPage)?.delete(_initialFormId);
-			ActionForm_remove();
 		});
 
 		// Check for nested objects, throw if datatype isn't json
@@ -770,7 +770,7 @@ export function superForm<
 
 		if (skipValidation || !event || !options.validators || options.validators == 'clear') {
 			if (event?.paths) {
-				const formElement = event?.formElement ?? EnhancedForm;
+				const formElement = event?.formElement ?? EnhancedForm_get();
 				if (formElement) Form__clearCustomValidity(formElement, event.paths);
 			}
 			return;
@@ -820,7 +820,7 @@ export function superForm<
 		const output: Record<string, unknown> = {};
 		let validity = new Map<string, { el: HTMLElement; message: string }>();
 
-		const formElement = event.formElement ?? EnhancedForm;
+		const formElement = event.formElement ?? EnhancedForm_get();
 		if (formElement) validity = Form__clearCustomValidity(formElement, event.paths);
 
 		traversePaths(errors, (error) => {
@@ -1246,28 +1246,34 @@ export function superForm<
 
 	//#endregion
 
-	//#region ActionForm
+	//#region EnhancedForm
 
-	// SPA action mode
-	let ActionForm: HTMLFormElement | undefined = undefined;
+	/**
+	 * Used for SPA action mode and options.customValidity to display errors, even if programmatically set
+	 */
+	let EnhancedForm: HTMLFormElement | undefined;
 
-	function ActionForm_create(action: string) {
-		ActionForm = document.createElement('form');
-		ActionForm.method = 'POST';
-		ActionForm.action = action;
-		superFormEnhance(ActionForm);
-		document.body.appendChild(ActionForm);
+	function EnhancedForm_get() {
+		return EnhancedForm;
 	}
 
-	function ActionForm_setAction(action: string) {
-		if (ActionForm) ActionForm.action = action;
+	function EnhancedForm_createFromSPA(action: string) {
+		EnhancedForm = document.createElement('form');
+		EnhancedForm.method = 'POST';
+		EnhancedForm.action = action;
+		superFormEnhance(EnhancedForm);
+		document.body.appendChild(EnhancedForm);
 	}
 
-	function ActionForm_remove() {
-		if (ActionForm?.parentElement) {
-			ActionForm.remove();
-			ActionForm = undefined;
+	function EnhancedForm_setAction(action: string) {
+		if (EnhancedForm) EnhancedForm.action = action;
+	}
+
+	function EnhancedForm_destroy() {
+		if (EnhancedForm?.parentElement) {
+			EnhancedForm.remove();
 		}
+		EnhancedForm = undefined;
 	}
 
 	//#endregion
@@ -1276,9 +1282,6 @@ export function superForm<
 		Errors,
 		($errors: ValidationErrors<T> | undefined) => ($errors ? flattenErrors($errors) : [])
 	);
-
-	// Used for options.customValidity to display errors, even if programmatically set
-	let EnhancedForm: HTMLFormElement | undefined;
 
 	///// End of Roles //////////////////////////////////////////////////////////
 
@@ -1438,7 +1441,7 @@ export function superForm<
 		);
 
 		if (typeof options.SPA === 'string') {
-			ActionForm_create(options.SPA);
+			EnhancedForm_createFromSPA(options.SPA);
 		}
 	}
 
@@ -1449,8 +1452,15 @@ export function superForm<
 	 * @DCI-context
 	 */
 	function superFormEnhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
-		ActionForm_remove();
-		EnhancedForm = FormElement;
+		if (FormElement.method == 'get') FormElement.method = 'post';
+
+		if (typeof options.SPA === 'string') {
+			if (options.SPA.length && FormElement.action == document.location.href) {
+				FormElement.action = options.SPA;
+			}
+		} else {
+			EnhancedForm = FormElement;
+		}
 
 		if (events) {
 			if (events.onError) {
@@ -1523,7 +1533,6 @@ export function superForm<
 		onDestroy(() => {
 			FormElement.removeEventListener('focusout', onBlur);
 			FormElement.removeEventListener('input', onInput);
-			EnhancedForm = undefined;
 		});
 
 		///// SvelteKit enhance function //////////////////////////////////
@@ -1716,7 +1725,7 @@ export function superForm<
 					}
 
 					if (typeof options.SPA === 'string') {
-						ActionForm_setAction(options.SPA);
+						EnhancedForm_setAction(options.SPA);
 					}
 				}
 			}
@@ -2045,14 +2054,15 @@ export function superForm<
 					)
 				: Form_validate({ adapter: opts.schema });
 
-			if (opts.update && EnhancedForm) {
+			const enhancedForm = EnhancedForm_get();
+			if (opts.update && enhancedForm) {
 				// Focus on first error field
 				setTimeout(() => {
-					if (EnhancedForm)
-						scrollToFirstError(EnhancedForm, {
-							...options,
-							scrollToError: opts.focusOnError === false ? 'off' : options.scrollToError
-						});
+					if (!enhancedForm) return;
+					scrollToFirstError(enhancedForm, {
+						...options,
+						scrollToError: opts.focusOnError === false ? 'off' : options.scrollToError
+					});
 				}, 1);
 			}
 
@@ -2072,8 +2082,8 @@ export function superForm<
 		},
 
 		submit(submitter?: HTMLElement | Event | EventTarget | null | undefined) {
-			const form = EnhancedForm
-				? EnhancedForm
+			const form = EnhancedForm_get()
+				? EnhancedForm_get()
 				: submitter && submitter instanceof HTMLElement
 					? submitter.closest<HTMLFormElement>('form')
 					: undefined;

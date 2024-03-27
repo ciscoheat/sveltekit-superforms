@@ -29,7 +29,7 @@ async function validate<T extends TSchema>(
 	const { TypeCompiler, FormatRegistry } = await fetchModule();
 
 	if (!compiled.has(schema)) {
-		compiled.set(schema, TypeCompiler.Compile(schema));
+		compiled.set(schema, TypeCompiler.Compile<TSchema>(schema));
 	}
 
 	if (!FormatRegistry.Has('email')) {

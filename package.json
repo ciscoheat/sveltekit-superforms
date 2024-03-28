@@ -131,7 +131,7 @@
 		}
 	},
 	"optionalDependencies": {
-		"@gcornut/valibot-json-schema": "^0.0.26",
+		"@gcornut/valibot-json-schema": "^0.0.27",
 		"@sinclair/typebox": "^0.32.20",
 		"@sodaru/yup-to-json-schema": "^2.0.1",
 		"@vinejs/vine": "^1.8.0",

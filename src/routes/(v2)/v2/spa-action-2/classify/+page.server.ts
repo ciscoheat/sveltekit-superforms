@@ -4,6 +4,8 @@ import { classifySchema } from './schema.js';
 
 export const actions = {
 	default: async ({ request }) => {
+		await new Promise((res) => setTimeout(res, 1000));
+
 		const form = await superValidate(request, valibot(classifySchema));
 		console.log(form);
 

@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [SPA action form](https://superforms.rocks/concepts/spa#spa-action-form) now supports form elements as well, by adding its `use:enhance` on all related forms.
+
 ### Fixed
 
 - Fixed type inference for `FormPath` with nested arrays. Error output improved as well.
+- If method is "GET" or doesn't exist on an enhanced form, it's now automatically set to "POST".
 
 ## [2.11.0] - 2024-03-22
 

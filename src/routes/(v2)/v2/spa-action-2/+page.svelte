@@ -7,7 +7,7 @@
 
 	export let data;
 
-	const { enhance } = superForm(defaults(valibot(classifySchema)), {
+	const { enhance, submitting, formId } = superForm(defaults(valibot(classifySchema)), {
 		SPA: '/v2/spa-action-2/classify',
 		taintedMessage: false,
 		onUpdate({ result }) {
@@ -32,12 +32,15 @@
 		{#each data.entries as entry}
 			<tr>
 				<td>{entry.id}</td>
-				<td>{entry.name}</td>
+				<td id="name-{entry.id}">{entry.name}</td>
 				<td>
 					<form use:enhance>
 						<input type="hidden" name="id" value={entry.id} />
 						<input type="hidden" name="name" value={entry.name} />
-						<button>Change name</button>
+						<button on:click={() => ($formId = String(entry.id))}>
+							{#if $submitting && $formId == String(entry.id)}Loading...
+							{:else}Change name{/if}
+						</button>
 					</form>
 				</td>
 			</tr>

@@ -2099,7 +2099,11 @@ export function superForm<
 				((submitter instanceof HTMLButtonElement && submitter.type == 'submit') ||
 					(submitter instanceof HTMLInputElement && ['submit', 'image'].includes(submitter.type)));
 
-			form.requestSubmit(isSubmitButton ? submitter : undefined);
+			if (form.requestSubmit) {
+				form.requestSubmit(isSubmitButton ? submitter : undefined);
+			} else {
+				form.submit();
+			}
 		},
 
 		isTainted: Tainted_isTainted,

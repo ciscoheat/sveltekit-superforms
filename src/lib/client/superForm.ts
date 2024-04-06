@@ -389,6 +389,30 @@ try {
 	// No Storybook
 }
 
+const lifeCycleCallbacks = {
+	onDestroy: new Set<() => void>(),
+	beforeNavigate: new Set<(nav: BeforeNavigate) => Promise<void>>()
+}
+let componentInitialized = false;
+function initLifeCycleCallbacks() {
+	if (componentInitialized) return;
+	componentInitialized = true;
+
+	onDestroy(() => {
+		for (const callback of lifeCycleCallbacks.onDestroy) {
+			callback();
+		}
+		lifeCycleCallbacks.onDestroy.clear();
+	});
+
+	beforeNavigate((nav: BeforeNavigate) => {
+		for (const callback of lifeCycleCallbacks.beforeNavigate) {
+			callback(nav);
+		}
+		lifeCycleCallbacks.beforeNavigate.clear();
+	});
+}
+
 /////////////////////////////////////////////////////////////////////
 
 /**
@@ -409,6 +433,8 @@ export function superForm<
 	let options = formOptions ?? ({} as FormOptions<T, M, In>);
 	// To check if a full validator is used when switching options.validators dynamically
 	let initialValidator: FormOptions<T, M, In>['validators'] | undefined = undefined;
+
+	initLifeCycleCallbacks();
 
 	{
 		if (options.legacy ?? LEGACY_MODE) {
@@ -525,7 +551,7 @@ export function superForm<
 
 		///// From here, form is properly initialized /////
 
-		onDestroy(() => {
+		lifeCycleCallbacks.onDestroy.add(() => {
 			Unsubscriptions_unsubscribe();
 			NextChange_clear();
 			EnhancedForm_destroy();
@@ -1397,7 +1423,7 @@ export function superForm<
 	///// Store subscriptions ///////////////////////////////////////////////////
 
 	if (browser) {
-		beforeNavigate(Tainted_check);
+		lifeCycleCallbacks.beforeNavigate.add(Tainted_check);
 
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(

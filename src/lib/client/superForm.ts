@@ -50,13 +50,19 @@ export type SuperFormEventList<T extends Record<string, unknown>, M> = {
 	[Property in keyof SuperFormEvents<T, M>]-?: NonNullable<SuperFormEvents<T, M>[Property]>[];
 };
 
+type FilterType<T, Check> = {
+	[K in keyof NonNullable<T> as NonNullable<NonNullable<T>[K]> extends Check
+		? never
+		: K]: NonNullable<T>[K];
+};
 /**
- * Helper type for making onResult strongly typed with ActionData.
- * @example const result = event.result as FormResult<ActionData>;
+ * Helper type for making ActionResult data strongly typed in onUpdate.
+ * @example const action : FormResult<ActionData> = result.data;
  */
-export type FormResult<T extends Record<string, unknown> | null> = ActionResult<
-	NonNullable<T>,
-	NonNullable<T>
+export type FormResult<T extends Record<string, unknown> | null | undefined> = FilterType<
+	T,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	SuperValidated<Record<string, unknown>, any, Record<string, unknown>>
 >;
 
 export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
@@ -118,7 +124,7 @@ export type FormOptions<
 		formEl: HTMLFormElement;
 		formElement: HTMLFormElement;
 		cancel: () => void;
-		result: Extract<ActionResult, { type: 'success' | 'failure' }>;
+		result: Required<Extract<ActionResult, { type: 'success' | 'failure' }>>;
 	}) => MaybePromise<unknown | void>;
 	onUpdated: (event: { form: Readonly<SuperValidated<T, M, In>> }) => MaybePromise<unknown | void>;
 	onError:
@@ -1802,7 +1808,7 @@ export function superForm<
 								formEl: FormElement,
 								formElement: FormElement,
 								cancel: () => (cancelled = true),
-								result: result as Extract<ActionResult, { type: 'success' | 'failure' }>
+								result: result as Required<Extract<ActionResult, { type: 'success' | 'failure' }>>
 							};
 
 							for (const event of formEvents.onUpdate) {

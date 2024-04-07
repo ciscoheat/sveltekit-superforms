@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superForm, type FormResult } from '$lib/client/index.js';
+	import { superForm, type FormResult, type SuperValidated } from '$lib/client/index.js';
 	import type { PageData, ActionData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schemas.js';
@@ -16,11 +16,23 @@
 			console.log('onError', event);
 		},
 		onResult: (event) => {
-			const result = event.result as FormResult<ActionData>;
-			if (result.type == 'failure') {
-				result.data?.form.data.email;
+			if (event.result.type == 'failure') {
+				const action = event.result.data as NonNullable<ActionData>;
+				const n: number = action.test;
+				const f: SuperValidated<Record<string, unknown>> = action.form;
+				n;
+				f;
+				event.result.data?.form.data.email;
 			}
 			console.log('onResult', event);
+		},
+		onUpdate({ result }) {
+			const action = result.data as FormResult<ActionData>;
+			const n: number = action.test;
+			// @ts-expect-error SuperValidated should not exist
+			const f: SuperValidated<Record<string, unknown>> = action.form;
+			n;
+			f;
 		},
 		onSubmit: (args) => {
 			console.log('onSubmit', args);

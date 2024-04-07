@@ -15,6 +15,6 @@ export const actions = {
 		const form = await superValidate(formData, zod(schema));
 		console.log('POST', form);
 
-		return { form };
+		return { form, test: 123 };
 	}
 } satisfies Actions;

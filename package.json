@@ -8,8 +8,16 @@
 		"svelte",
 		"form",
 		"validation",
-		"zod",
-		"forms"
+		"forms",
+		"schema",
+		"json-schema",
+		"arktype",
+		"joi",
+		"typebox",
+		"valibot",
+		"vinejs",
+		"yup",
+		"zod"
 	],
 	"license": "MIT",
 	"homepage": "https://superforms.rocks",

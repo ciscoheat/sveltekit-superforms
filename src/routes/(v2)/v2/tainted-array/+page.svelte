@@ -7,6 +7,11 @@
 	const { form, enhance, tainted, isTainted } = superForm(data.form, {
 		dataType: 'json'
 	});
+
+	isTainted('details');
+	isTainted($tainted?.details);
+	// @ts-expect-error Invalid path
+	isTainted('nope');
 </script>
 
 <SuperDebug data={{ $form, $tainted }} />

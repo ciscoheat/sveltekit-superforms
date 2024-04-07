@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `submit` method now falls back to submit, if no support for requestSubmit in browser.
+- `isTainted` now handles the type of `$tainted` in generic components.
 
 ## [2.12.2] - 2024-03-29
 

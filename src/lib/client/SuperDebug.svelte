@@ -291,6 +291,12 @@
 				if (value instanceof Error) {
 					return '#}E#' + `${value.name}: ${value.message || value.cause || '(No error message)'}`;
 				}
+				if (value instanceof Set) {
+					return Array.from(value);
+				}
+				if (value instanceof Map) {
+					return Array.from(value.entries());
+				}
 				if (browser && typeof this === 'object' && this[key] instanceof File) {
 					return fileToJSON(this[key]);
 				}

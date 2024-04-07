@@ -464,10 +464,11 @@ export function superForm<
 
 		form = form as SuperValidated<T, M, In>;
 
-		// Check multiple id's
-		const _initialFormId = options.id ?? form.id;
+		// Assign options.id to form, if it exists
+		const _initialFormId = (form.id = options.id ?? form.id);
 		const _currentPage = get(page) ?? (STORYBOOK_MODE ? {} : undefined);
 
+		// Check multiple id's
 		if (browser && options.warnings?.duplicateId !== false) {
 			if (!formIds.has(_currentPage)) {
 				formIds.set(_currentPage, new Set([_initialFormId]));

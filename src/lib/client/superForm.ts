@@ -2100,6 +2100,10 @@ export function superForm<
 				);
 			}
 
+			if (!form.requestSubmit) {
+				return form.submit();
+			}
+
 			const isSubmitButton =
 				submitter &&
 				((submitter instanceof HTMLButtonElement && submitter.type == 'submit') ||

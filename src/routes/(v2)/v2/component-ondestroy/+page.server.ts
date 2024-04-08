@@ -17,27 +17,31 @@ const grids = [
 	{
 		id: 3,
 		values: [7, 8, 9]
-	},
-]
+	}
+];
 
 export const actions: Actions = {
 	async default({ request }) {
-		console.log('push')
+		console.log('push');
 		grids.push({
 			id: 3,
 			values: [7, 8, 9]
-		})
+		});
 
-		return {success: true}
+		return { success: true };
 	}
-}
+};
 
 export const load: PageServerLoad = async () => {
-	const grid_forms = await Promise.all(grids.map((grid) => superValidate(grid, zod(schema), {
-		id: grid.id.toString()
-	})))
+	const grid_forms = await Promise.all(
+		grids.map((grid) =>
+			superValidate(grid, zod(schema), {
+				id: grid.id.toString()
+			})
+		)
+	);
 
-	console.log(grid_forms.length)
+	console.log(grid_forms.length);
 
-	return { grid_forms }
+	return { grid_forms };
 };

@@ -13,7 +13,7 @@
 		onUpdate({ result }) {
 			const status = result.data as NonNullable<ActionData>;
 			const entry = data.entries.find((e) => e.id == status.posted);
-			if (entry) entry.name = 'Modified';
+			if (entry) entry.name = 'Modified ' + status.posted;
 		}
 	});
 </script>

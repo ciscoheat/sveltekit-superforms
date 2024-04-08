@@ -262,6 +262,21 @@ describe('Valibot', () => {
 		expect(() => valibot(schema)).not.toThrow();
 	});
 
+	/*
+	it('should work with FormPathLeaves and brand', async () => {
+		const schema = v.object({ id: v.brand(v.string(), 'Id') });
+		type T = Infer<typeof schema>;
+		type IdSchema = { id: string & v.Brand<"Id"> };
+		//     ^? { id: string & Brand<"Id"> }
+
+		const a: FormPathLeaves<T> = 'id';
+		// @ts-expect-error Should handle brand
+		const b: FormPathLeaves<T> = 'id.length';
+		a;
+		b;
+	});
+	*/
+
 	/* 	it('should have the correct Input and Output types', () => {
 		const logSchema = v.object({
 			id: v.nullish(v.string(), ''),

@@ -1,6 +1,6 @@
 /* eslint-disable dci-lint/atomic-role-binding */
 import type { TaintedFields, SuperFormValidated, SuperValidated } from '$lib/superValidate.js';
-import type { ActionResult, Page, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, BeforeNavigate, Page, SubmitFunction } from '@sveltejs/kit';
 import {
 	derived,
 	get,
@@ -1353,50 +1353,53 @@ export function superForm<
 
 	///// Store subscriptions ///////////////////////////////////////////////////
 
-	if (browser) {
-		// Tainted check
-		const defaultMessage = 'Leave page? Changes that you made may not be saved.';
-		let forceRedirection = false;
-		beforeNavigate(async (nav) => {
-			if (options.taintedMessage && !Data.submitting && !forceRedirection) {
-				if (Tainted_isTainted()) {
-					const { taintedMessage } = options;
-					const isTaintedFunction = typeof taintedMessage === 'function';
+	// Tainted check
+	const defaultMessage = 'Leave page? Changes that you made may not be saved.';
+	let forceRedirection = false;
 
-					// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
-					// if it's a custom function
-					if (isTaintedFunction) nav.cancel();
-					// Does not display any dialog on page refresh or closing tab, will use default browser behaviour
-					if (nav.type === 'leave') return;
+	async function taintedCheck(nav: BeforeNavigate) {
+		if (options.taintedMessage && !Data.submitting && !forceRedirection) {
+			if (Tainted_isTainted()) {
+				const { taintedMessage } = options;
+				const isTaintedFunction = typeof taintedMessage === 'function';
 
-					const message =
-						isTaintedFunction || taintedMessage === true ? defaultMessage : taintedMessage;
+				// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
+				// if it's a custom function
+				if (isTaintedFunction) nav.cancel();
+				// Does not display any dialog on page refresh or closing tab, will use default browser behaviour
+				if (nav.type === 'leave') return;
 
-					let shouldRedirect;
+				const message =
+					isTaintedFunction || taintedMessage === true ? defaultMessage : taintedMessage;
+
+				let shouldRedirect;
+				try {
+					// - rejected => shouldRedirect = false
+					// - resolved with false => shouldRedirect = false
+					// - resolved with true => shouldRedirect = true
+					shouldRedirect = isTaintedFunction ? await taintedMessage() : window.confirm(message);
+				} catch {
+					shouldRedirect = false;
+				}
+
+				if (shouldRedirect && nav.to) {
 					try {
-						// - rejected => shouldRedirect = false
-						// - resolved with false => shouldRedirect = false
-						// - resolved with true => shouldRedirect = true
-						shouldRedirect = isTaintedFunction ? await taintedMessage() : window.confirm(message);
-					} catch {
-						shouldRedirect = false;
+						forceRedirection = true;
+						await goto(nav.to.url, { ...nav.to.params });
+						return;
+					} finally {
+						// Reset forceRedirection for multiple-tainted purpose
+						forceRedirection = false;
 					}
-
-					if (shouldRedirect && nav.to) {
-						try {
-							forceRedirection = true;
-							await goto(nav.to.url, { ...nav.to.params });
-							return;
-						} finally {
-							// Reset forceRedirection for multiple-tainted purpose
-							forceRedirection = false;
-						}
-					} else if (!shouldRedirect && !isTaintedFunction) {
-						nav.cancel();
-					}
+				} else if (!shouldRedirect && !isTaintedFunction) {
+					nav.cancel();
 				}
 			}
-		});
+		}
+	}
+
+	if (browser) {
+		beforeNavigate(taintedCheck);
 
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(

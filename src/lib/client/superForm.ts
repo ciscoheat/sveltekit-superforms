@@ -1114,10 +1114,53 @@ export function superForm<
 	//#region Tainted
 
 	const Tainted = {
+		defaultMessage: 'Leave page? Changes that you made may not be saved.',
 		state: writable<TaintedFields<T> | undefined>(),
 		message: options.taintedMessage,
-		clean: clone(form.data) // Important to clone form.data, so it's not comparing the same object,
+		clean: clone(form.data), // Important to clone form.data, so it's not comparing the same object,
+		forceRedirection: false
 	};
+
+	async function Tainted_check(nav: BeforeNavigate) {
+		if (options.taintedMessage && !Data.submitting && !Tainted.forceRedirection) {
+			if (Tainted_isTainted()) {
+				const { taintedMessage } = options;
+				const isTaintedFunction = typeof taintedMessage === 'function';
+
+				// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
+				// if it's a custom function
+				if (isTaintedFunction) nav.cancel();
+				// Does not display any dialog on page refresh or closing tab, will use default browser behaviour
+				if (nav.type === 'leave') return;
+
+				const message =
+					isTaintedFunction || taintedMessage === true ? Tainted.defaultMessage : taintedMessage;
+
+				let shouldRedirect;
+				try {
+					// - rejected => shouldRedirect = false
+					// - resolved with false => shouldRedirect = false
+					// - resolved with true => shouldRedirect = true
+					shouldRedirect = isTaintedFunction ? await taintedMessage() : window.confirm(message);
+				} catch {
+					shouldRedirect = false;
+				}
+
+				if (shouldRedirect && nav.to) {
+					try {
+						Tainted.forceRedirection = true;
+						await goto(nav.to.url, { ...nav.to.params });
+						return;
+					} finally {
+						// Reset forceRedirection for multiple-tainted purpose
+						Tainted.forceRedirection = false;
+					}
+				} else if (!shouldRedirect && !isTaintedFunction) {
+					nav.cancel();
+				}
+			}
+		}
+	}
 
 	function Tainted_enable() {
 		options.taintedMessage = Tainted.message;
@@ -1353,53 +1396,8 @@ export function superForm<
 
 	///// Store subscriptions ///////////////////////////////////////////////////
 
-	// Tainted check
-	const defaultMessage = 'Leave page? Changes that you made may not be saved.';
-	let forceRedirection = false;
-
-	async function taintedCheck(nav: BeforeNavigate) {
-		if (options.taintedMessage && !Data.submitting && !forceRedirection) {
-			if (Tainted_isTainted()) {
-				const { taintedMessage } = options;
-				const isTaintedFunction = typeof taintedMessage === 'function';
-
-				// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
-				// if it's a custom function
-				if (isTaintedFunction) nav.cancel();
-				// Does not display any dialog on page refresh or closing tab, will use default browser behaviour
-				if (nav.type === 'leave') return;
-
-				const message =
-					isTaintedFunction || taintedMessage === true ? defaultMessage : taintedMessage;
-
-				let shouldRedirect;
-				try {
-					// - rejected => shouldRedirect = false
-					// - resolved with false => shouldRedirect = false
-					// - resolved with true => shouldRedirect = true
-					shouldRedirect = isTaintedFunction ? await taintedMessage() : window.confirm(message);
-				} catch {
-					shouldRedirect = false;
-				}
-
-				if (shouldRedirect && nav.to) {
-					try {
-						forceRedirection = true;
-						await goto(nav.to.url, { ...nav.to.params });
-						return;
-					} finally {
-						// Reset forceRedirection for multiple-tainted purpose
-						forceRedirection = false;
-					}
-				} else if (!shouldRedirect && !isTaintedFunction) {
-					nav.cancel();
-				}
-			}
-		}
-	}
-
 	if (browser) {
-		beforeNavigate(taintedCheck);
+		beforeNavigate(Tainted_check);
 
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(

@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- The "GET to POST" modification for `use:enhance` was only intended for SPA mode to fully support progressive enhancement, so it now properly checks for that before adding the missing `method="POST"` attribute on the form.
+
 ## [2.12.4] - 2024-04-09
 
 ### Fixed

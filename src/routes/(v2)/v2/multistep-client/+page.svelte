@@ -43,7 +43,7 @@
 
 <h3>Step {step}</h3>
 
-<form use:enhance>
+<form method="POST" use:enhance>
 	{#if step == 1}
 		<label>
 			Name<br />

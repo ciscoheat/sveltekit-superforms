@@ -1460,7 +1460,7 @@ export function superForm<
 	 * @DCI-context
 	 */
 	function superFormEnhance(FormElement: HTMLFormElement, events?: SuperFormEvents<T, M>) {
-		if (FormElement.method == 'get') FormElement.method = 'post';
+		if (options.SPA !== undefined && FormElement.method == 'get') FormElement.method = 'post';
 
 		if (typeof options.SPA === 'string') {
 			if (options.SPA.length && FormElement.action == document.location.href) {

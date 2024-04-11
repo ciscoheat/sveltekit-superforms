@@ -14,6 +14,7 @@
 		'issue-337-checkboxes',
 		'issue-345',
 		'letters',
+		'multiple-forms',
 		'multiple-files',
 		'multistep-client',
 		'multistep-server',

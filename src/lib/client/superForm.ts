@@ -491,7 +491,12 @@ export function superForm<
 		form = form as SuperValidated<T, M, In>;
 
 		// Assign options.id to form, if it exists
-		const _initialFormId = (form.id = options.id ?? form.id);
+		// Avoid reassigning id in runes mode to avoid ERR_SVELTE_UNSAFE_MUTATION
+		// TODO: detect runes mode if possible & warn if id is different
+		let _initialFormId = form.id
+		if (options.id && form.id !== options.id) {
+			_initialFormId = options.id;
+		}
 		const _currentPage = get(page) ?? (STORYBOOK_MODE ? {} : undefined);
 
 		// Check multiple id's

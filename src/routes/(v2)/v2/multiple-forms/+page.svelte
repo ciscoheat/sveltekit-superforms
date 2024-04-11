@@ -3,6 +3,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import Form from './Form.svelte';
 	import { enhance } from '$app/forms';
+	import { get } from 'svelte/store';
 
 	let {
 		data
@@ -16,7 +17,7 @@
 	})));
 </script>
 
-{#each superforms as superform (superform.formId)}
+{#each superforms as superform (get(superform.formId))}
 	<Form {superform} />
 	<hr>
 {/each}

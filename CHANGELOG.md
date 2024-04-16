@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The "GET to POST" modification for `use:enhance` was only intended for SPA mode to fully support progressive enhancement, so it now properly checks for that before adding the missing `method="POST"` attribute on the form.
+- The tainted message didn't trigger on page refresh or closing a tab in the browser.
 
 ## [2.12.4] - 2024-04-09
 

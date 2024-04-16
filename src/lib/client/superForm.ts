@@ -1121,44 +1121,70 @@ export function superForm<
 		forceRedirection: false
 	};
 
-	async function Tainted_check(nav: BeforeNavigate) {
-		if (options.taintedMessage && !Data.submitting && !Tainted.forceRedirection) {
-			if (Tainted_isTainted()) {
-				const { taintedMessage } = options;
-				const isTaintedFunction = typeof taintedMessage === 'function';
+	function Tainted_isEnabled() {
+		return (
+			options.taintedMessage && !Data.submitting && !Tainted.forceRedirection && Tainted_isTainted()
+		);
+	}
 
-				// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
-				// if it's a custom function
-				if (isTaintedFunction) nav.cancel();
-				// Does not display any dialog on page refresh or closing tab, will use default browser behaviour
-				if (nav.type === 'leave') return;
+	function Tainted_checkUnload(e: BeforeUnloadEvent) {
+		if (!Tainted_isEnabled()) return;
 
-				const message =
-					isTaintedFunction || taintedMessage === true ? Tainted.defaultMessage : taintedMessage;
+		// Chrome requires returnValue to be set
+		e.preventDefault();
+		e.returnValue = '';
 
-				let shouldRedirect;
-				try {
-					// - rejected => shouldRedirect = false
-					// - resolved with false => shouldRedirect = false
-					// - resolved with true => shouldRedirect = true
-					shouldRedirect = isTaintedFunction ? await taintedMessage() : window.confirm(message);
-				} catch {
-					shouldRedirect = false;
-				}
+		// Prompt the user
+		const { taintedMessage } = options;
+		const isTaintedFunction = typeof taintedMessage === 'function';
+		const confirmationMessage =
+			isTaintedFunction || taintedMessage === true ? Tainted.defaultMessage : taintedMessage;
 
-				if (shouldRedirect && nav.to) {
-					try {
-						Tainted.forceRedirection = true;
-						await goto(nav.to.url, { ...nav.to.params });
-						return;
-					} finally {
-						// Reset forceRedirection for multiple-tainted purpose
-						Tainted.forceRedirection = false;
-					}
-				} else if (!shouldRedirect && !isTaintedFunction) {
-					nav.cancel();
-				}
+		(e || window.event).returnValue = confirmationMessage || Tainted.defaultMessage;
+		return confirmationMessage;
+	}
+
+	async function Tainted_beforeNav(nav: BeforeNavigate) {
+		if (!Tainted_isEnabled()) return;
+
+		const { taintedMessage } = options;
+		const isTaintedFunction = typeof taintedMessage === 'function';
+
+		// As beforeNavigate does not support Promise, we cancel the redirection until the promise resolve
+		// if it's a custom function
+		if (isTaintedFunction) nav.cancel();
+
+		// Does not display any dialog on page refresh or closing tab, will use Tainted_checkUnload
+		if (nav.type === 'leave') {
+			return;
+		}
+
+		const message =
+			isTaintedFunction || taintedMessage === true ? Tainted.defaultMessage : taintedMessage;
+
+		let shouldRedirect;
+		try {
+			// - rejected => shouldRedirect = false
+			// - resolved with false => shouldRedirect = false
+			// - resolved with true => shouldRedirect = true
+			shouldRedirect = isTaintedFunction
+				? await taintedMessage()
+				: window.confirm(message || Tainted.defaultMessage);
+		} catch {
+			shouldRedirect = false;
+		}
+
+		if (shouldRedirect && nav.to) {
+			try {
+				Tainted.forceRedirection = true;
+				await goto(nav.to.url, { ...nav.to.params });
+				return;
+			} finally {
+				// Reset forceRedirection for multiple-tainted purpose
+				Tainted.forceRedirection = false;
 			}
+		} else if (!shouldRedirect && !isTaintedFunction) {
+			nav.cancel();
 		}
 	}
 
@@ -1397,7 +1423,14 @@ export function superForm<
 	///// Store subscriptions ///////////////////////////////////////////////////
 
 	if (browser) {
-		beforeNavigate(Tainted_check);
+		// Set up events for tainted check
+		window.addEventListener('beforeunload', Tainted_checkUnload);
+
+		onDestroy(() => {
+			window.removeEventListener('beforeunload', Tainted_checkUnload);
+		});
+
+		beforeNavigate(Tainted_beforeNav);
 
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(
@@ -1488,8 +1521,8 @@ export function superForm<
 			if (events.onUpdated) formEvents.onUpdated.push(events.onUpdated);
 		}
 
-		// Now we know that we are enhanced,
-		// so we can enable the tainted form option.
+		// Now we know that we are enhanced, we can enable the tainted form option
+		// for in-site navigation. Refresh and close tab is handled by window.beforeunload.
 		Tainted_enable();
 
 		let lastInputChange: FullChangeEvent['paths'] | undefined;

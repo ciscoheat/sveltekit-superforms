@@ -47,7 +47,7 @@
 	{#if $message}<div>**{$message}**</div>{/if}
 	<form method="POST" use:enhance>
 		<div class="block card p-4 w-screen max-w-xl">
-			<div class="flex justify-center items-center mb-4" />
+			<div class="flex justify-center items-center mb-4"></div>
 			<p>E-mail</p>
 
 			<input

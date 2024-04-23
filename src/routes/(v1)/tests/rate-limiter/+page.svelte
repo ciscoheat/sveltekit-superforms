@@ -104,7 +104,7 @@
 			class="peer textarea my-2 block w-full resize-none !rounded-md bg-transparent px-4 pt-3 text-sm text-secondary placeholder-secondary shadow-md outline outline-2 outline-secondary/20 backdrop-blur-sm transition-all focus-visible:outline-[2.5px] focus-visible:outline-neutral"
 			class:!outline-red-500={$errors.message}
 			rows="5"
-		/>
+		></textarea>
 		{#if $errors.message}
 			<label
 				class="absolute left-2.5 top-[18px] z-10 px-[10px] text-[12px] font-bold text-secondary transition-all peer-valid:top-[-9px] peer-valid:bg-primary peer-focus-visible:top-[-9px] peer-focus-visible:bg-primary"

@@ -57,9 +57,5 @@
 		input {
 			background-color: #dedede;
 		}
-
-		.invalid {
-			color: crimson;
-		}
 	}
 </style>

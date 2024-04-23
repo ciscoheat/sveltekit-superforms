@@ -35,10 +35,6 @@
 	form {
 		margin: 2rem 0;
 
-		input {
-			background-color: #dedede;
-		}
-
 		.invalid {
 			color: crimson;
 		}

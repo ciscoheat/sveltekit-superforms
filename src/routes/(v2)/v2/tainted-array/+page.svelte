@@ -34,9 +34,3 @@
 <div style="margin-top:2rem;">
 	<a target="_blank" href="https://superforms.rocks/get-started">Tutorial for this example here</a>
 </div>
-
-<style>
-	.invalid {
-		color: red;
-	}
-</style>

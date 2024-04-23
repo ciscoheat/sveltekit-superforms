@@ -46,10 +46,6 @@
 
 		input {
 			background-color: #dedede;
-
-			&[type='checkbox'] {
-				margin-left: 1em;
-			}
 		}
 
 		.invalid {

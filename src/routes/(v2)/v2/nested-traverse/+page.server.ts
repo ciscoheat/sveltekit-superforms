@@ -1,10 +1,8 @@
 import { nerveForm } from './schema.js';
 import { z } from 'zod';
-import { superValidate } from 'sveltekit-superforms/server';
+import { message, superValidate } from 'sveltekit-superforms/server';
 import { zod } from '$lib/adapters/zod.js';
 import type { Actions } from '@sveltejs/kit';
-import { fail } from '@sveltejs/kit';
-import { parse } from 'devalue';
 
 type DeficitTypeKey = keyof z.infer<typeof nerveForm>;
 type NerveFormData = z.infer<typeof nerveForm>;
@@ -45,6 +43,7 @@ export async function load() {
 			acc[cur.type as DeficitTypeKey][cur.side as Side].comments = cur.comments || '';
 		}
 		return acc;
+		// @ts-expect-error Incomplete type, should be undefined
 	}, emptyData);
 
 	const form = await superValidate(formData, zod(nerveForm));
@@ -55,13 +54,9 @@ export async function load() {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const formData = await request.formData();
-		console.dir(parse(formData.get('__superform_json')), { depth: 10 });
-		const form = await superValidate(formData, zod(nerveForm));
-		console.dir(form, { depth: 10 }); //debug
+		const form = await superValidate(request, zod(nerveForm));
 
-		if (!form.valid) console.log('Not valid');
-		if (!form.valid) return fail(400, { form });
-		return { form };
+		if (!form.valid) return message(form, 'Not valid', { status: 400 });
+		return message(form, 'OK');
 	}
 };

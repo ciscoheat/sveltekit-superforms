@@ -56,7 +56,8 @@
 		'tainted-array',
 		'spa-clearonsubmit',
 		'app-error',
-		'form-result-type'
+		'form-result-type',
+		'nested-traverse'
 	].sort();
 </script>
 

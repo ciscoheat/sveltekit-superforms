@@ -4,12 +4,14 @@
 
 	export let data;
 
-	const form = superForm(data.form, { dataType: 'json' });
-	const { form: formData, enhance } = form;
+	const form = superForm(data.form, { dataType: 'json', taintedMessage: false });
+	const { form: formData, enhance, message } = form;
 
 	const sections = ['motor', 'sensory', 'dysesthesia'] as const;
 	const sides = ['left', 'right'] as const;
 </script>
+
+{#if $message}<h3>{$message}</h3>{/if}
 
 <form method="POST" use:enhance>
 	<main class="flex flex-col gap-y-8">

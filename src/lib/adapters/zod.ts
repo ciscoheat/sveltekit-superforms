@@ -14,7 +14,8 @@ import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {
 	dateStrategy: 'integer',
-	pipeStrategy: 'output'
+	pipeStrategy: 'output',
+	$refStrategy: 'none'
 } as const;
 
 /* @__NO_SIDE_EFFECTS__ */

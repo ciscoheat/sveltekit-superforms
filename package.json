@@ -144,12 +144,12 @@
 		"@sodaru/yup-to-json-schema": "^2.0.1",
 		"@vinejs/vine": "^1.8.0",
 		"arktype": "1.0.29-alpha",
-		"joi": "^17.12.3",
+		"joi": "^17.13.0",
 		"superstruct": "^1.0.4",
 		"valibot": "^0.30.0",
 		"yup": "^1.4.0",
-		"zod": "^3.22.5",
-		"zod-to-json-schema": "^3.22.5"
+		"zod": "^3.23.3",
+		"zod-to-json-schema": "^3.23.0"
 	},
 	"dependencies": {
 		"devalue": "^4.3.3",

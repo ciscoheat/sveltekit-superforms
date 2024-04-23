@@ -23,8 +23,7 @@
 		validators: zod(schema)
 	});
 
-	// eslint-disable-next-line svelte/valid-compile
-	$: status = get(page).status;
+	const status = get(page).status;
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />

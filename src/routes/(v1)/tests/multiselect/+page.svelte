@@ -13,8 +13,7 @@
 	});
 
 	$: console.log($allErrors);
-	// eslint-disable-next-line svelte/valid-compile
-	$: options = optionsSchema._def.innerType.options;
+	const options = optionsSchema._def.innerType.options;
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />

@@ -36,10 +36,6 @@
 <p><a target="_blank" href="https://superforms.rocks/api">API Reference</a></p>
 
 <style>
-	.invalid {
-		color: red;
-	}
-
 	.status {
 		color: white;
 		padding: 4px;
@@ -54,10 +50,6 @@
 
 	.status.error {
 		background-color: #ff2a02;
-	}
-
-	input {
-		background-color: #ddd;
 	}
 
 	a {

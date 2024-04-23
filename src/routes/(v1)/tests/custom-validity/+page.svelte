@@ -57,7 +57,7 @@
 		2
 
 		<label>
-			Text: <textarea name="text" bind:value={$form.text} />
+			Text: <textarea name="text" bind:value={$form.text}></textarea>
 		</label>
 
 		<label>

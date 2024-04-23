@@ -63,14 +63,6 @@
 		font-weight: 500;
 	}
 
-	.status.success {
-		background-color: seagreen;
-	}
-
-	.status.error {
-		background-color: #ff2a02;
-	}
-
 	input {
 		background-color: #ddd;
 	}

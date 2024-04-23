@@ -163,10 +163,6 @@
 		background-color: #ddd;
 	}
 
-	a {
-		text-decoration: underline;
-	}
-
 	hr {
 		margin-top: 4rem;
 	}

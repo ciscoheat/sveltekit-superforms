@@ -59,7 +59,7 @@
 			type="text"
 			class="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:text-sm sm:leading-6"
 		/>
-		<button type="button" on:click={addQuestion} class="m-2 h-7 w-7 cursor-pointer" />
+		<button type="button" on:click={addQuestion} class="m-2 h-7 w-7 cursor-pointer"></button>
 		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 		{#each $form.questions as _, index}
 			<div class="col-span-full">
@@ -77,7 +77,7 @@
 							type="button"
 							class="m-2 h-7 w-7 cursor-pointer text-red-600"
 							on:click={() => removeQuestion(index)}
-						/>
+						></button>
 					</div>
 				</div>
 			</div>

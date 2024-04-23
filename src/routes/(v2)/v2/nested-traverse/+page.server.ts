@@ -46,6 +46,7 @@ export async function load() {
 		// @ts-expect-error Incomplete type, should be undefined
 	}, emptyData);
 
+	// @ts-expect-error Incomplete type, should be undefined
 	const form = await superValidate(formData, zod(nerveForm));
 	return {
 		form

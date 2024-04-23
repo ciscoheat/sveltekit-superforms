@@ -489,6 +489,18 @@ describe('Zod', () => {
 		expect(() => zod(NumberSchema)).toThrowError(SchemaError);
 	});
 
+	it('cannot handle promises in optional refine', async () => {
+		const schema = z.object({
+			name: z.string().min(1),
+			email: z
+				.string()
+				.optional()
+				.refine(async () => Promise.resolve(true))
+		});
+
+		expect(() => zod(schema)).toThrow(Error);
+	});
+
 	schemaTest(zod(schema));
 });
 

@@ -1,6 +1,6 @@
 import { nerveForm } from './schema.js';
 import { z } from 'zod';
-import { message, superValidate } from 'sveltekit-superforms/server';
+import { message, superValidate } from '$lib/index.js';
 import { zod } from '$lib/adapters/zod.js';
 import type { Actions } from '@sveltejs/kit';
 

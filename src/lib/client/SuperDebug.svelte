@@ -534,8 +534,8 @@
 
   ```svelte
   <script>
-    import SuperDebug from 'sveltekit-superforms/client/SuperDebug.svelte';
-    import { superForm } from 'sveltekit-superforms/client';
+    import SuperDebug from 'sveltekit-superforms';
+    import { superForm } from 'sveltekit-superforms';
 
     export let data;
     

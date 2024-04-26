@@ -5,6 +5,7 @@ import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
+import type { Schema as SchemasafeSchema } from '@exodus/schemasafe';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -118,6 +119,10 @@ interface VineResolver extends Resolver {
 	output: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
 }
 
+interface SchemasafeResolver extends Resolver {
+	base: SchemasafeSchema;
+}
+
 /*
 interface AjvResolver extends Resolver {
 	base: SchemaObject;
@@ -166,6 +171,7 @@ type Registry = {
 	yup: YupResolver;
 	zod: ZodResolver;
 	vine: VineResolver;
+	schemasafe: SchemasafeResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;

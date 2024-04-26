@@ -27,7 +27,8 @@ export type ValidationLibrary =
 	| 'valibot'
 	| 'yup'
 	| 'zod'
-	| 'vine';
+	| 'vine'
+	| 'schemasafe';
 
 export type AdapterOptions<T extends Schema> = {
 	jsonSchema?: JSONSchema;

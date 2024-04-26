@@ -48,6 +48,7 @@ import Vine from '@vinejs/vine';
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 import { SchemaError } from '$lib/index.js';
+import { schemasafe } from '$lib/adapters/schemasafe.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -179,6 +180,45 @@ describe('TypeBox', () => {
 	});
 
 	schemaTest(typebox(schema));
+});
+
+describe('Schemasafe', () => {
+	const schema = {
+    "$id": "https://example.com/user-data",
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "default": "Unknown" },
+      "email": { 
+				"type": "string", 
+				"format": "email",
+			},
+      "tags": {
+        "type": "array",
+        "minItems": 3,
+        "items": { "type": "string", "minLength": 2 }
+      },
+      "score": { "type": "integer", "minimum": 0 },
+      "date": { "type": "string", "format": "date" },
+			"nospace": {
+				"pattern": "^\\S*$",
+				"type": "string"
+			},
+			"extra": {
+				"anyOf": [
+					{
+						"type": "string"
+					},
+					{
+						"type": "null"
+					}
+				]
+			}
+    },
+    "required": ["name", "email", "tags", "score", "extra"],
+  };
+
+	schemaTest(schemasafe(schema, {defaults}), ['email', 'nospace', 'tags', 'tags[1]'], 'full', true);
 });
 
 /////////////////////////////////////////////////////////////////////

@@ -184,41 +184,46 @@ describe('TypeBox', () => {
 
 describe('Schemasafe', () => {
 	const schema = {
-    "$id": "https://example.com/user-data",
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "type": "object",
-    "properties": {
-      "name": { "type": "string", "default": "Unknown" },
-      "email": { 
-				"type": "string", 
-				"format": "email",
+		$id: 'https://example.com/user-data',
+		$schema: 'http://json-schema.org/draft-07/schema',
+		type: 'object',
+		properties: {
+			name: { type: 'string', default: 'Unknown' },
+			email: {
+				type: 'string',
+				format: 'email'
 			},
-      "tags": {
-        "type": "array",
-        "minItems": 3,
-        "items": { "type": "string", "minLength": 2 }
-      },
-      "score": { "type": "integer", "minimum": 0 },
-      "date": { "type": "string", "format": "date" },
-			"nospace": {
-				"pattern": "^\\S*$",
-				"type": "string"
+			tags: {
+				type: 'array',
+				minItems: 3,
+				items: { type: 'string', minLength: 2 }
 			},
-			"extra": {
-				"anyOf": [
+			score: { type: 'integer', minimum: 0 },
+			date: { type: 'string', format: 'date' },
+			nospace: {
+				pattern: '^\\S*$',
+				type: 'string'
+			},
+			extra: {
+				anyOf: [
 					{
-						"type": "string"
+						type: 'string'
 					},
 					{
-						"type": "null"
+						type: 'null'
 					}
 				]
 			}
-    },
-    "required": ["name", "email", "tags", "score", "extra"],
-  };
+		},
+		required: ['name', 'email', 'tags', 'score', 'extra']
+	};
 
-	schemaTest(schemasafe(schema, {defaults}), ['email', 'nospace', 'tags', 'tags[1]'], 'full', true);
+	schemaTest(
+		schemasafe(schema, { defaults }),
+		['email', 'nospace', 'tags', 'tags[1]'],
+		'full',
+		'same'
+	);
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -567,7 +572,7 @@ describe('vine', () => {
 		expect(realDate).toEqual(new Date(date + 'T00:00:00'));
 	});
 
-	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', true);
+	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', 'T');
 });
 
 ///// Common ////////////////////////////////////////////////////////
@@ -632,9 +637,9 @@ function schemaTest(
 	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full',
-	dateAsString: boolean = false
+	dateFormat: 'Date' | 'same' | 'T' = 'Date'
 ) {
-	const validD = { ...validData, date: dateAsString ? '2024-01-01' : validData.date };
+	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
@@ -708,10 +713,15 @@ function schemaTest(
 		expect(output.errors).toEqual({});
 		expect(output.valid).toEqual(true);
 		expect(output.data).not.toBe(validD);
-		expect(output.data).toEqual({
-			...validD,
-			date: dateAsString ? new Date(validD.date + 'T00:00:00') : validD.date
-		});
+
+		const date =
+			dateFormat == 'Date'
+				? validD.date
+				: dateFormat == 'T'
+					? new Date(validD.date + 'T00:00:00')
+					: '2024-01-01';
+
+		expect(output.data).toEqual({ ...validD, date });
 		expect(output.message).toBeUndefined();
 		expectConstraints(output.constraints);
 	});

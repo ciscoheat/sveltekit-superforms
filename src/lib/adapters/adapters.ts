@@ -30,39 +30,33 @@ export type ValidationLibrary =
 	| 'vine'
 	| 'schemasafe';
 
-export type AdapterOptions<T extends Schema> = {
+export type AdapterOptions<T> = {
 	jsonSchema?: JSONSchema;
-	defaults?: Infer<T>;
+	defaults?: T;
 };
 
-export type RequiredDefaultsOptions<T extends Schema> = {
-	defaults: Infer<T>;
+export type RequiredDefaultsOptions<T> = {
+	defaults: T;
 	jsonSchema?: JSONSchema;
 };
 
 export type ClientValidationAdapter<
-	Out extends Record<string, unknown>,
+	Out,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	In extends Record<string, unknown> = Out
+	In = Out
 > = {
 	superFormValidationLibrary: ValidationLibrary;
 	validate: (data: unknown) => Promise<ValidationResult<Out>>;
 	shape?: SchemaShape;
 };
 
-type BaseValidationAdapter<
-	Out extends Record<string, unknown>,
-	In extends Record<string, unknown> = Out
-> = ClientValidationAdapter<Out, In> & {
+type BaseValidationAdapter<Out, In = Out> = ClientValidationAdapter<Out, In> & {
 	jsonSchema: JSONSchema;
 	defaults?: Out;
 	constraints?: InputConstraints<Out>;
 };
 
-export type ValidationAdapter<
-	Out extends Record<string, unknown>,
-	In extends Record<string, unknown> = Out
-> = BaseValidationAdapter<Out, In> & {
+export type ValidationAdapter<Out, In = Out> = BaseValidationAdapter<Out, In> & {
 	defaults: Out;
 	constraints: InputConstraints<Out>;
 	shape: SchemaShape;
@@ -90,10 +84,10 @@ export function createJsonSchema(options: object, transformer?: () => JSONSchema
 }
 
 /* @__NO_SIDE_EFFECTS__ */
-export function createAdapter<
-	Out extends Record<string, unknown>,
-	In extends Record<string, unknown>
->(adapter: BaseValidationAdapter<Out, In>, jsonSchema?: JSONSchema): ValidationAdapter<Out, In> {
+export function createAdapter<Out, In>(
+	adapter: BaseValidationAdapter<Out, In>,
+	jsonSchema?: JSONSchema
+): ValidationAdapter<Out, In> {
 	if (!adapter || !('superFormValidationLibrary' in adapter)) {
 		throw new SuperFormError(
 			'Superforms v2 requires a validation adapter for the schema. ' +

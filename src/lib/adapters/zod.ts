@@ -71,7 +71,7 @@ async function validate<T extends ZodValidation<ZodObjectTypes>>(
 
 function _zod<T extends ZodValidation<ZodObjectTypes>>(
 	schema: T,
-	options?: AdapterOptions<T> & { config?: Partial<Options> }
+	options?: AdapterOptions<Infer<T>> & { config?: Partial<Options> }
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',

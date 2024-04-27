@@ -17,7 +17,7 @@ export type SuperStructArray<T extends Record<string, unknown>, Data, ArrayData 
 		: never;
 };
 
-export type SuperStruct<T extends Record<string, unknown>, Data> = Partial<{
+export type SuperStruct<T, Data> = Partial<{
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[Property in AllKeys<T>]: [T] extends [any]
 		? NonNullable<T[Property]> extends Record<string, unknown>

@@ -33,7 +33,7 @@ async function validate<T extends Type>(
 
 function _arktype<T extends Type>(
 	schema: T,
-	options: RequiredDefaultsOptions<T>
+	options: RequiredDefaultsOptions<Infer<T>>
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',

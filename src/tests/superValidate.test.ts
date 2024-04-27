@@ -43,12 +43,15 @@ import {
 	array as yupArray,
 	date as yupDate
 } from 'yup';
+
 import { vine } from '$lib/adapters/vine.js';
 import Vine from '@vinejs/vine';
+
+import { schemasafe } from '$lib/adapters/schemasafe.js';
+
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 import { SchemaError } from '$lib/index.js';
-import { schemasafe } from '$lib/adapters/schemasafe.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -96,9 +99,9 @@ const defaults = {
 	email: '',
 	tags: [] as string[],
 	score: 0,
-	date: undefined,
-	nospace: undefined,
-	extra: null
+	date: undefined as Date | undefined,
+	nospace: undefined as string | undefined,
+	extra: null as string | null
 };
 
 /**
@@ -215,15 +218,16 @@ describe('Schemasafe', () => {
 				]
 			}
 		},
-		required: ['name', 'email', 'tags', 'score', 'extra']
-	};
+		required: ['name', 'email', 'tags', 'score', 'extra'],
+		additionalProperties: false
+	} as const;
 
-	schemaTest(
-		schemasafe(schema, { defaults }),
-		['email', 'nospace', 'tags', 'tags[1]'],
-		'full',
-		'string'
-	);
+	// Type test
+	const adapter = schemasafe(schema, { defaults });
+	const a: number = adapter.defaults.score;
+	a;
+
+	schemaTest(adapter, ['email', 'nospace', 'tags', 'tags[1]'], 'full', 'string');
 });
 
 /////////////////////////////////////////////////////////////////////

@@ -46,7 +46,7 @@ async function validate<T extends SchemaTypes>(
 
 function _vine<T extends SchemaTypes>(
 	schema: T,
-	options: RequiredDefaultsOptions<T>
+	options: RequiredDefaultsOptions<Infer<T>>
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'vine',

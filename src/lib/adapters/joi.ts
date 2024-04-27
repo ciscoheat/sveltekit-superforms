@@ -3,7 +3,8 @@ import {
 	type AdapterOptions,
 	createAdapter,
 	type ValidationResult,
-	type ClientValidationAdapter
+	type ClientValidationAdapter,
+	type Infer
 } from './adapters.js';
 import type { ObjectSchema } from 'joi';
 import { memoize } from '$lib/memoize.js';
@@ -32,7 +33,7 @@ async function validate<T extends ObjectSchema>(
 /* @__NO_SIDE_EFFECTS__ */
 function _joi<T extends ObjectSchema>(
 	schema: T,
-	options?: AdapterOptions<T>
+	options?: AdapterOptions<Infer<T>>
 ): ValidationAdapter<Record<string, unknown>> {
 	return createAdapter({
 		superFormValidationLibrary: 'joi',

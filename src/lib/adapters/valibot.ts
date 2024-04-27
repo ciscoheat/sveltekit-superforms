@@ -53,7 +53,7 @@ async function validate<T extends SupportedSchemas>(
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
 	options: Omit<ToJSONSchemaOptions, 'schema'> &
-		AdapterOptions<T> & {
+		AdapterOptions<Infer<T>> & {
 			config?: SchemaConfig;
 		} = {}
 ): ValidationAdapter<Infer<T>, InferIn<T>> {

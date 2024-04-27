@@ -13,15 +13,13 @@ export type InputConstraint = Partial<{
 	maxlength: number;
 }>;
 
-export type InputConstraints<T extends Record<string, unknown>> = SuperStruct<T, InputConstraint>;
+export type InputConstraints<T> = SuperStruct<T, InputConstraint>;
 
-export function constraints<T extends Record<string, unknown>>(
-	schema: JSONSchema
-): InputConstraints<T> {
+export function constraints<T>(schema: JSONSchema): InputConstraints<T> {
 	return _constraints(schemaInfo(schema, false, []), []) as InputConstraints<T>;
 }
 
-function merge<T extends Record<string, unknown>>(
+function merge<T>(
 	...constraints: (InputConstraints<T> | InputConstraint | undefined)[]
 ): ReturnType<typeof _constraints> {
 	const filtered = constraints.filter((c) => !!c);
@@ -30,7 +28,7 @@ function merge<T extends Record<string, unknown>>(
 	return deepMerge(...(filtered as Record<string, unknown>[]));
 }
 
-function _constraints<T extends Record<string, unknown>>(
+function _constraints<T>(
 	info: SchemaInfo | undefined,
 	path: string[]
 ): InputConstraints<T> | InputConstraint | undefined {

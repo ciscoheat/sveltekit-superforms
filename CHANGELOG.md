@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Errors weren't reset properly when the form was resetted, causing client-side validation to behave like the field was tainted.
+
 ## [2.12.6] - 2024-04-23
 
 ### Fixed

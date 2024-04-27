@@ -1394,7 +1394,7 @@ export function superForm<
 		}
 
 		Message.set(message);
-		Errors.set(form.errors);
+		Errors.set(opts.untaint === true ? {} : form.errors);
 		FormId.set(form.id);
 		Posted.set(opts.posted ?? form.posted);
 		// Constraints and shape will only be set when they exist.

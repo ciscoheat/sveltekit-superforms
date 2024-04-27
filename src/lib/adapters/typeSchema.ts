@@ -120,7 +120,7 @@ interface VineResolver extends Resolver {
 }
 
 interface SchemasafeResolver extends Resolver {
-	base: SchemasafeSchema;
+	base: Exclude<SchemasafeSchema, boolean>;
 }
 
 /*

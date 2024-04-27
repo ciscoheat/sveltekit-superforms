@@ -222,7 +222,7 @@ describe('Schemasafe', () => {
 		schemasafe(schema, { defaults }),
 		['email', 'nospace', 'tags', 'tags[1]'],
 		'full',
-		'same'
+		'string'
 	);
 });
 
@@ -572,7 +572,7 @@ describe('vine', () => {
 		expect(realDate).toEqual(new Date(date + 'T00:00:00'));
 	});
 
-	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', 'T');
+	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', 'stringToDate');
 });
 
 ///// Common ////////////////////////////////////////////////////////
@@ -637,7 +637,7 @@ function schemaTest(
 	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full',
-	dateFormat: 'Date' | 'same' | 'T' = 'Date'
+	dateFormat: 'Date' | 'string' | 'stringToDate' = 'Date'
 ) {
 	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
@@ -717,7 +717,7 @@ function schemaTest(
 		const date =
 			dateFormat == 'Date'
 				? validD.date
-				: dateFormat == 'T'
+				: dateFormat == 'stringToDate'
 					? new Date(validD.date + 'T00:00:00')
 					: '2024-01-01';
 

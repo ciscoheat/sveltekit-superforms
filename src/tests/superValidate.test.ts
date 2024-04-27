@@ -273,6 +273,7 @@ describe('Schemasafe', () => {
 
 	schemaTest(constAdapter, undefined, 'full', 'string');
 	schemaTest(adapter, undefined, 'full', 'string');
+	schemaTest(dynamicAdapter, undefined, 'full', 'string');
 });
 
 /////////////////////////////////////////////////////////////////////

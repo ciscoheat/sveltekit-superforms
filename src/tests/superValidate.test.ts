@@ -186,7 +186,7 @@ describe('TypeBox', () => {
 });
 
 describe('Schemasafe', () => {
-	const schema = {
+	const constSchema = {
 		$id: 'https://example.com/user-data',
 		$schema: 'http://json-schema.org/draft-07/schema',
 		type: 'object',
@@ -222,12 +222,57 @@ describe('Schemasafe', () => {
 		additionalProperties: false
 	} as const;
 
+	const schema = {
+		$id: 'https://example.com/user-data',
+		$schema: 'http://json-schema.org/draft-07/schema',
+		type: 'object',
+		properties: {
+			name: { type: 'string', default: 'Unknown' },
+			email: {
+				type: 'string',
+				format: 'email'
+			},
+			tags: {
+				type: 'array',
+				minItems: 3,
+				items: { type: 'string', minLength: 2 }
+			},
+			score: { type: 'integer', minimum: 0 },
+			date: { type: 'string', format: 'date' },
+			nospace: {
+				pattern: '^\\S*$',
+				type: 'string'
+			},
+			extra: {
+				anyOf: [
+					{
+						type: 'string'
+					},
+					{
+						type: 'null'
+					}
+				]
+			}
+		},
+		required: ['name', 'email', 'tags', 'score', 'extra'],
+		additionalProperties: false
+	};
+
 	// Type test
-	const adapter = schemasafe(schema, { defaults });
-	const a: number = adapter.defaults.score;
+	const constAdapter = schemasafe(constSchema);
+	const a: number = constAdapter.defaults.score;
 	a;
 
-	schemaTest(adapter, ['email', 'nospace', 'tags', 'tags[1]'], 'full', 'string');
+	const adapter = schemasafe(schema, { defaults });
+	const b: number = adapter.defaults.score;
+	b;
+
+	const dynamicAdapter = schemasafe(schema);
+	const c: Record<string, unknown> = dynamicAdapter.defaults;
+	c;
+
+	schemaTest(constAdapter, undefined, 'full', 'string');
+	schemaTest(adapter, undefined, 'full', 'string');
 });
 
 /////////////////////////////////////////////////////////////////////

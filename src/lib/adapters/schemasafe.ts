@@ -20,7 +20,10 @@ const Email =
 
 // Type inference problem unless this is applied: https://github.com/ThomasAribart/json-schema-to-ts/blob/main/documentation/FAQs/applying-from-schema-on-generics.md
 
-function _schemasafe<T extends JSONSchema, Data = FromSchema<T>>(
+function _schemasafe<
+	T extends JSONSchema | Record<string, unknown>,
+	Data = unknown extends FromSchema<T> ? Record<string, unknown> : FromSchema<T>
+>(
 	schema: T,
 	options?: AdapterOptions<Data> & { config?: ValidatorOptions }
 ): ValidationAdapter<Data> {

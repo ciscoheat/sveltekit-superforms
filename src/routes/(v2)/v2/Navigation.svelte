@@ -57,7 +57,8 @@
 		'spa-clearonsubmit',
 		'app-error',
 		'form-result-type',
-		'nested-traverse'
+		'nested-traverse',
+		'reset-errors'
 	].sort();
 </script>
 

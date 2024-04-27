@@ -989,7 +989,8 @@ export function superForm<
 			untaint: true,
 			message: opts.message,
 			keepFiles: false,
-			posted: opts.posted
+			posted: opts.posted,
+			resetted: true
 		});
 	}
 
@@ -1373,12 +1374,13 @@ export function superForm<
 		keepFiles?: boolean;
 		posted?: boolean;
 		skipFormData?: boolean;
+		resetted?: boolean;
 	}) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
 		const form = opts.form;
 		const message = opts.message ?? form.message;
 
-		if (opts.untaint) {
+		if (opts.untaint || opts.resetted) {
 			Tainted_set(typeof opts.untaint === 'boolean' ? undefined : opts.untaint, form.data);
 		}
 
@@ -1394,7 +1396,10 @@ export function superForm<
 		}
 
 		Message.set(message);
-		Errors.set(opts.untaint === true ? {} : form.errors);
+
+		if (opts.resetted) Errors.update(() => ({}), { force: true });
+		else Errors.set(form.errors);
+
 		FormId.set(form.id);
 		Posted.set(opts.posted ?? form.posted);
 		// Constraints and shape will only be set when they exist.
@@ -1471,10 +1476,13 @@ export function superForm<
 							initialForm.data = newForm.data as T;
 						}
 
+						const resetStatus = Form_shouldReset(true, true);
+
 						rebind({
 							form: newForm as SuperValidated<T, M, In>,
 							untaint: successResult,
-							keepFiles: !Form_shouldReset(true, true)
+							keepFiles: !resetStatus,
+							resetted: resetStatus
 						});
 					}
 				}

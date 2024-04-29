@@ -2,8 +2,8 @@ import { memoize } from '$lib/memoize.js';
 import {
 	createAdapter,
 	type AdapterOptions,
-	type ValidationAdapter,
-	type ValidationResult
+	type ClientValidationAdapter,
+	type ValidationAdapter
 } from './adapters.js';
 import {
 	validator,
@@ -15,51 +15,62 @@ import {
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { JSONSchema as JSONSchema7 } from '$lib/jsonSchema/index.js';
 
+/*
+ * Adapter specificts:
+ * Type inference problem unless this is applied:
+ * https://github.com/ThomasAribart/json-schema-to-ts/blob/main/documentation/FAQs/applying-from-schema-on-generics.md
+ * Must duplicate validate method, otherwise the above type inference will fail.
+ */
+
 const Email =
 	/^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
 
-// Type inference problem unless this is applied: https://github.com/ThomasAribart/json-schema-to-ts/blob/main/documentation/FAQs/applying-from-schema-on-generics.md
+const defaultOptions = {
+	formats: {
+		email: (str: string) => Email.test(str)
+	},
+	includeErrors: true,
+	allErrors: true
+};
+
+function cachedValidator(currentSchema: JSONSchema7, config?: ValidatorOptions) {
+	if (!cache.has(currentSchema)) {
+		cache.set(
+			currentSchema,
+			validator(currentSchema as Schema, {
+				...defaultOptions,
+				...config
+			})
+		);
+	}
+
+	return cache.get(currentSchema)!;
+}
 
 function _schemasafe<
 	T extends JSONSchema | Record<string, unknown>,
-	Data = unknown extends FromSchema<T> ? Record<string, unknown> : FromSchema<T>
+	Data = unknown extends FromSchema<T> ? Record<string, unknown> : FromSchema<T>,
+	Out = [Data] extends [never] ? Record<string, unknown> : Data
 >(
 	schema: T,
-	options?: AdapterOptions<Data> & { config?: ValidatorOptions }
-): ValidationAdapter<Data> {
+	options?: AdapterOptions<Out> & { config?: ValidatorOptions }
+): ValidationAdapter<Out> {
 	return createAdapter({
 		superFormValidationLibrary: 'schemasafe',
 		jsonSchema: schema as JSONSchema7,
 		defaults: options?.defaults,
-		async validate(data: unknown): Promise<ValidationResult<Data>> {
-			const currentSchema = schema as JSONSchema7;
-
-			if (!cache.has(currentSchema)) {
-				cache.set(
-					currentSchema,
-					validator(currentSchema as Schema, {
-						formats: {
-							email: (str) => Email.test(str)
-						},
-						includeErrors: true,
-						allErrors: true,
-						...options?.config
-					})
-				);
-			}
-
-			const _validate = cache.get(currentSchema)!;
-
-			const isValid = _validate(data as Json);
+		async validate(data: unknown) {
+			const validator = cachedValidator(schema as JSONSchema7, options?.config);
+			const isValid = validator(data as Json);
 
 			if (isValid) {
 				return {
-					data: data as Data,
+					data: data as Out,
 					success: true
 				};
 			}
 			return {
-				issues: (_validate.errors ?? []).map(({ instanceLocation, keywordLocation }) => ({
+				issues: (validator.errors ?? []).map(({ instanceLocation, keywordLocation }) => ({
 					message: keywordLocation,
 					path: instanceLocation.split('/').slice(1)
 				})),
@@ -69,6 +80,38 @@ function _schemasafe<
 	});
 }
 
+function _schemasafeClient<
+	T extends JSONSchema | Record<string, unknown>,
+	Data = unknown extends FromSchema<T> ? Record<string, unknown> : FromSchema<T>,
+	Out = [Data] extends [never] ? Record<string, unknown> : Data
+>(
+	schema: T,
+	options?: AdapterOptions<Out> & { config?: ValidatorOptions }
+): ClientValidationAdapter<Out> {
+	return {
+		superFormValidationLibrary: 'schemasafe',
+		async validate(data: unknown) {
+			const validator = cachedValidator(schema as JSONSchema7, options?.config);
+			const isValid = validator(data as Json);
+
+			if (isValid) {
+				return {
+					data: data as Out,
+					success: true
+				};
+			}
+			return {
+				issues: (validator.errors ?? []).map(({ instanceLocation, keywordLocation }) => ({
+					message: keywordLocation,
+					path: instanceLocation.split('/').slice(1)
+				})),
+				success: false
+			};
+		}
+	};
+}
+
 export const schemasafe = /* @__PURE__ */ memoize(_schemasafe);
+export const schemasafeClient = /* @__PURE__ */ memoize(_schemasafeClient);
 
 const cache = new WeakMap<JSONSchema7, Validate>();

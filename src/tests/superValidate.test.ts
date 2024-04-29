@@ -51,7 +51,7 @@ import { schemasafe } from '$lib/adapters/schemasafe.js';
 
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
-import { SchemaError } from '$lib/index.js';
+import { SchemaError, type JSONSchema } from '$lib/index.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -274,6 +274,39 @@ describe('Schemasafe', () => {
 	schemaTest(constAdapter, undefined, 'full', 'string');
 	schemaTest(adapter, undefined, 'full', 'string');
 	schemaTest(dynamicAdapter, undefined, 'full', 'string');
+
+	it('should work with type inference for superValidate with a request', async () => {
+		const schema = {
+			type: 'object',
+			properties: {
+				name: { type: 'string', default: 'Hello world!' },
+				email: { type: 'string', format: 'email' }
+			},
+			required: ['email'],
+			additionalProperties: false,
+			$schema: 'http://json-schema.org/draft-07/schema#'
+		} as const satisfies JSONSchema;
+
+		const formData = new FormData();
+		formData.set('name', 'Test');
+		formData.set('email', 'test');
+
+		const request = new Request('https://example.com', {
+			method: 'POST',
+			body: formData
+		});
+
+		//const data = await request.formData();
+		//console.log('🚀 ~ it ~ data:', data);
+
+		const adapter = schemasafe(schema);
+		const form = await superValidate(request, adapter);
+		console.log('🚀 ~ it ~ form:', form);
+		const email: string = form.data.email;
+
+		assert(!form.valid);
+		expect(email).toBe('test');
+	});
 });
 
 /////////////////////////////////////////////////////////////////////

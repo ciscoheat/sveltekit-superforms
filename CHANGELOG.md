@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Support for "raw" JSON Schema validation with the new [schemasafe](https://github.com/ExodusMovement/schemasafe) adapter. Thanks to sukeshpabolu for the initial work on this!
+
 ### Fixed
 
 - Errors weren't reset properly when the form was resetted, causing client-side validation to behave like the field was tainted.

@@ -12,10 +12,12 @@ export const load = async () => {
 
 export const actions = {
 	default: async ({ request }) => {
+		const formData = await request.formData();
+
 		const adapter = schemasafe(schema);
 		const adapter2 = schemasafe(constSchema);
-		const form = await superValidate(request, adapter);
-		const form2 = await superValidate(request, adapter2);
+		const form = await superValidate(formData, adapter);
+		const form2 = await superValidate(formData, adapter2);
 
 		if (!form.valid || !form2.valid) {
 			return fail(400, { form });

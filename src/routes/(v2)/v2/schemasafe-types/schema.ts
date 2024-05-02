@@ -4,7 +4,7 @@ import type { JSONSchema } from 'sveltekit-superforms';
 export const schema = {
 	type: 'object',
 	properties: {
-		name: { type: 'string', default: 'Hello world!' },
+		name: { type: 'string', default: '', minLength: 3 },
 		email: { type: 'string', format: 'email' }
 	},
 	required: ['email'],
@@ -15,7 +15,7 @@ export const schema = {
 export const constSchema = {
 	type: 'object',
 	properties: {
-		name: { type: 'string', default: 'Hello world!' },
+		name: { type: 'string', default: '', minLength: 3 },
 		email: { type: 'string', format: 'email' }
 	},
 	required: ['email'],

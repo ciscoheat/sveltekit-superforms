@@ -22,7 +22,7 @@
 		bind:value={$form.name}
 		aria-invalid={$errors.name ? 'true' : undefined}
 	/>
-	{#if $errors.name}{$errors.name}{/if}
+	{#if $errors.name}<span>{$errors.name}</span>{/if}
 
 	<label for="email">E-mail</label>
 	<input
@@ -31,7 +31,7 @@
 		bind:value={$form.email}
 		aria-invalid={$errors.email ? 'true' : undefined}
 	/>
-	{#if $errors.email}{$errors.email}{/if}
+	{#if $errors.email}<span>{$errors.email}</span>{/if}
 
 	<div><button>Submit</button></div>
 </form>

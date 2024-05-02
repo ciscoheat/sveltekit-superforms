@@ -184,7 +184,7 @@
 		"prettier-plugin-svelte": "^3.2.3",
 		"publint": "^0.2.7",
 		"sass": "^1.76.0",
-		"svelte": "5.0.0-next.109",
+		"svelte": "5.0.0-next.121",
 		"svelte-check": "^3.7.0",
 		"svelte-french-toast": "^1.2.0",
 		"sveltekit-flash-message": "^2.4.4",

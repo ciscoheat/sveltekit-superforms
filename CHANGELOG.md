@@ -5,11 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.13.0] - 2024-05-03
 
 ### Added
 
-- Support for "raw" JSON Schema validation with the new [schemasafe](https://github.com/ExodusMovement/schemasafe) adapter. Thanks to sukeshpabolu for the initial work on this!
+- Support for "raw" [JSON Schema](https://json-schema.org/) validation with the new [schemasafe](https://github.com/ExodusMovement/schemasafe) adapter. Thanks to sukeshpabolu for the initial work on this!
 
 ### Fixed
 

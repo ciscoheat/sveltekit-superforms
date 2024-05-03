@@ -58,7 +58,8 @@
 		'app-error',
 		'form-result-type',
 		'nested-traverse',
-		'reset-errors'
+		'reset-errors',
+		'schemasafe-types'
 	].sort();
 </script>
 

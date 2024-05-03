@@ -5,7 +5,7 @@
 
 	export let data;
 
-	const { form, errors, enhance } = superForm(data.form, { taintedMessage: null });
+	const { form, errors, enhance, message } = superForm(data.form, { taintedMessage: null });
 	const { form: form2 } = superForm(data.constForm, {
 		validators: schemasafeClient(schema),
 		taintedMessage: null
@@ -13,6 +13,8 @@
 	$: name = $form.name;
 	$: name2 = $form2.name;
 </script>
+
+{#if $message}<div id="message">{$message}</div>{/if}
 
 <form method="POST" use:enhance>
 	<label for="name">Name ({name}{name2})</label>

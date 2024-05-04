@@ -432,7 +432,7 @@
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 {#if display}
-	<div class="super-debug" class:super-debug--collapsible={collapsible} style={themeStyle}>
+	<div class="super-debug" class:super-debug--collapsible={collapsible} style={themeStyle} dir="ltr">
 		<div class="super-debug--status {label === '' ? 'absolute inset-x-0 top-0' : ''}">
 			<div class="super-debug--label">{label}</div>
 			<div class="super-debug--right-status">

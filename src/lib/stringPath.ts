@@ -19,7 +19,7 @@ export function mergePath(path: (string | number | symbol)[]) {
 	}, '');
 }
 
-type BuiltInObjects = Date | Set<unknown> | File;
+type DictOrArray = Record<PropertyKey, unknown> | unknown[];
 
 /**
  * Lists all paths in an object as string accessors.
@@ -82,13 +82,11 @@ type StringPath<
 		path: '';
 		type: never;
 	}
-> = T extends BuiltInObjects
-	? If<Options, 'filter', 'leaves' | 'all', Options['path'], never, T>
-	: T extends (infer U)[]
+> = T extends (infer U)[]
 		?
 				| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>, never, T>
 				| If<Options, 'filter', 'arrays' | 'all', Options['path'], never, T>
-				| (NonNullable<U> extends object
+				| (NonNullable<U> extends DictOrArray
 						? StringPath<
 								NonNullable<U>,
 								{
@@ -100,7 +98,7 @@ type StringPath<
 							>
 						: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`, never, T>)
 		: {
-				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends object
+				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends DictOrArray
 					?
 							| If<
 									Options,
@@ -122,7 +120,7 @@ type StringPath<
 												never,
 												T[K]
 											>
-										: NonNullable<U> extends object
+										: NonNullable<U> extends DictOrArray
 											? IsAny<T[K]> extends true
 												? Concat<Options['path'], `${K}[${number}]`>
 												: If<
@@ -141,7 +139,7 @@ type StringPath<
 													never,
 													U
 												>)
-								| (NonNullable<U> extends object
+								| (NonNullable<U> extends DictOrArray
 										? StringPath<
 												NonNullable<U>,
 												{

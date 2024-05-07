@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `FormPath` now extends only basic objects and arrays, avoiding issues with classes, built-in objects like `File` and `Date`, and special "branded" types that validation libraries are using. Thanks to [Matt DeKok](https://github.com/sillvva) for this fix!
 - [SuperDebug](https://superforms.rocks/super-debug) always renders left-to-right now.
+- Discriminated unions for the form itself weren't including the union keys for the schema, when parsing the form data.
 
 ## [2.13.0] - 2024-05-03
 

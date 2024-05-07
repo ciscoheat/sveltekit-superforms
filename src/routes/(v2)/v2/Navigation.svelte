@@ -59,7 +59,8 @@
 		'form-result-type',
 		'nested-traverse',
 		'reset-errors',
-		'schemasafe-types'
+		'schemasafe-types',
+		'discriminated-union'
 	].sort();
 </script>
 

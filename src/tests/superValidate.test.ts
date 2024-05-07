@@ -301,7 +301,6 @@ describe('Schemasafe', () => {
 
 		const adapter = schemasafe(schema);
 		const form = await superValidate(request, adapter);
-		console.log('🚀 ~ it ~ form:', form);
 		const email: string = form.data.email;
 
 		assert(!form.valid);
@@ -1107,6 +1106,56 @@ describe('Array validation', () => {
 			expect(form.errors.nested?.arr?._errors).toBeUndefined();
 			expect(form.data.nested.arr).toEqual([]);
 		});
+	});
+});
+
+describe('Top-level union', () => {
+	it('should handle unions on the top-level', async () => {
+		/*
+		const schema: JSONSchema7 = {
+			anyOf: [
+				{
+					type: 'object',
+					properties: { type: { type: 'string', const: 'empty' } },
+					required: ['type'],
+					additionalProperties: false
+				},
+				{
+					type: 'object',
+					properties: {
+						type: { type: 'string', const: 'extra' },
+						roleId: { type: 'string' }
+					},
+					required: ['type', 'roleId'],
+					additionalProperties: false
+				}
+			],
+			$schema: 'http://json-schema.org/draft-07/schema#'
+		};
+		*/
+
+		const schema = z.discriminatedUnion('type', [
+			z.object({
+				type: z.literal('empty')
+			}),
+			z.object({
+				type: z.literal('extra'),
+				roleId: z.string()
+			})
+		]);
+
+		const formData = new FormData();
+		formData.set('type', 'extra');
+		formData.set('roleId', 'ABC');
+
+		const form = await superValidate(formData, zod(schema));
+		//console.log('🚀 ~ it ~ form:', form);
+
+		assert(form.valid);
+		assert(form.data.type == 'extra');
+
+		const roleId: string = form.data.roleId;
+		expect(roleId).toBe('ABC');
 	});
 });
 

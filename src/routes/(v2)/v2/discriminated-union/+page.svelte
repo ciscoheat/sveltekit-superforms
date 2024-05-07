@@ -1,0 +1,82 @@
+<script lang="ts">
+	import { page } from '$app/stores';
+	import { superForm } from '$lib/index.js';
+	import SuperDebug from '$lib/index.js';
+
+	export let data;
+
+	const { form, errors, message, enhance } = superForm(data.form, {
+		taintedMessage: null,
+		resetForm: true
+	});
+
+	// eslint-disable-next-line svelte/valid-compile
+	$page;
+</script>
+
+<SuperDebug data={$form} />
+
+<h3>Superforms testing ground - Zod</h3>
+
+{#if $message}
+	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+		{$message}
+	</div>
+{/if}
+
+<form method="POST" use:enhance>
+	<label>
+		Type<br />
+		<input
+			name="type"
+			type="text"
+			aria-invalid={$errors.type ? 'true' : undefined}
+			bind:value={$form.type}
+		/>
+		{#if $errors.type}<span class="invalid">{$errors.type}</span>{/if}
+	</label>
+
+	<button>Submit</button>
+</form>
+
+<hr />
+<p><a target="_blank" href="https://superforms.rocks/api">API Reference</a></p>
+
+<style>
+	.invalid {
+		color: red;
+	}
+
+	.status {
+		color: white;
+		padding: 4px;
+		padding-left: 8px;
+		border-radius: 2px;
+		font-weight: 500;
+	}
+
+	.status.success {
+		background-color: seagreen;
+	}
+
+	.status.error {
+		background-color: #ff2a02;
+	}
+
+	input {
+		background-color: #ddd;
+	}
+
+	a {
+		text-decoration: underline;
+	}
+
+	hr {
+		margin-top: 4rem;
+	}
+
+	form {
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+	}
+</style>

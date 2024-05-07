@@ -153,14 +153,32 @@ function _parseFormData<T extends Record<string, unknown>>(
 	options?: SuperValidateOptions<T>
 ) {
 	const output: Record<string, unknown> = {};
-	const schemaKeys = options?.strict
-		? new Set([...formData.keys()].filter((key) => !key.startsWith('__superform_')))
-		: new Set(
-				[
-					...Object.keys(schema.properties ?? {}),
-					...(schema.additionalProperties ? formData.keys() : [])
-				].filter((key) => !key.startsWith('__superform_'))
-			);
+
+	let schemaKeys: Set<string>;
+
+	if (options?.strict) {
+		schemaKeys = new Set([...formData.keys()].filter((key) => !key.startsWith('__superform_')));
+	} else {
+		let unionKeys: string[] = [];
+
+		// Special fix for union schemas, then the keys must be gathered from the objects in the union
+		if (schema.anyOf) {
+			const info = schemaInfo(schema, false, []);
+			if (info.union?.some((s) => s.type !== 'object')) {
+				throw new SchemaError('All form types must be an object if schema is a union.');
+			}
+
+			unionKeys = info.union?.flatMap((s) => Object.keys(s.properties ?? {})) ?? [];
+		}
+
+		schemaKeys = new Set(
+			[
+				...unionKeys,
+				...Object.keys(schema.properties ?? {}),
+				...(schema.additionalProperties ? formData.keys() : [])
+			].filter((key) => !key.startsWith('__superform_'))
+		);
+	}
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
 		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
@@ -243,6 +261,8 @@ function parseFormDataEntry(
 	type: Exclude<SchemaType, 'null'>,
 	info: SchemaInfo
 ): unknown {
+	//console.log(`Parsing FormData ${key} (${type}): "${value}"`, info); //debug
+
 	if (!value) {
 		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 

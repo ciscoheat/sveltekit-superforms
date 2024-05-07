@@ -5,6 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `FormPath` now extends only basic objects and arrays, avoiding issues with classes, built-in objects like `File` and `Date`, and special "branded" types that validation libraries are using. Thanks to [Matt DeKok](https://github.com/sillvva) for this fix!
+- [SuperDebug](https://superforms.rocks/super-debug) always renders left-to-right now.
+
 ## [2.13.0] - 2024-05-03
 
 ### Added

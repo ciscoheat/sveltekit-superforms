@@ -159,7 +159,7 @@
 		"zod-to-json-schema": "^3.23.0"
 	},
 	"dependencies": {
-		"devalue": "^4.3.3",
+		"devalue": "^5.0.0",
 		"just-clone": "^6.2.0",
 		"memoize-weak": "^1.0.2",
 		"ts-deepmerge": "^7.0.0"

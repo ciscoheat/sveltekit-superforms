@@ -310,7 +310,7 @@ describe('Schemasafe', () => {
 
 /////////////////////////////////////////////////////////////////////
 
-describe('Arktype', () => {
+describe.only('Arktype', () => {
 	const schema = type({
 		name: 'string',
 		email: 'email',
@@ -723,15 +723,22 @@ function schemaTest(
 ) {
 	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
+	function missingError(error: string) {
+		return `Validation error "${error}" not found`;
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
 		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
 
-		if (errors.includes('nospace')) expect(errorMessages.nospace).toBeTruthy();
-		if (errors.includes('email')) expect(errorMessages.email).toBeTruthy();
-		if (errors.includes('date')) expect(errorMessages.date).toBeTruthy();
-		if (errors.includes('tags')) expect(errorMessages?.tags?._errors?.[0]).toBeTruthy();
-		if (errors.includes('tags[1]')) expect(errorMessages?.tags?.['1']?.[0]).toBeTruthy();
+		if (errors.includes('nospace'))
+			expect(errorMessages.nospace, missingError('nospace')).toBeTruthy();
+		if (errors.includes('email')) expect(errorMessages.email, missingError('email')).toBeTruthy();
+		if (errors.includes('date')) expect(errorMessages.date, missingError('date')).toBeTruthy();
+		if (errors.includes('tags'))
+			expect(errorMessages?.tags?._errors?.[0], missingError('tags')).toBeTruthy();
+		if (errors.includes('tags[1]'))
+			expect(errorMessages?.tags?.['1']?.[0], missingError('tags[1]')).toBeTruthy();
 
 		const errorCount = errors.filter((path) => traversePath(errorMessages, splitPath(path))?.value);
 

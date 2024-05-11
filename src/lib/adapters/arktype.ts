@@ -1,4 +1,4 @@
-import type { Type } from 'arktype';
+import { type, type Type } from 'arktype';
 import {
 	type ValidationAdapter,
 	type RequiredDefaultsOptions,
@@ -11,22 +11,23 @@ import {
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
 
-async function validate<T extends Type>(
+async function _validate<T extends Type>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
 	const result = schema(data);
-	if (result.problems == null) {
+	if (!(result instanceof type.errors)) {
 		return {
-			data: result.data as Infer<T>,
+			data: result as Infer<T>,
 			success: true
 		};
 	}
+	const issues = [];
+	for (const error of result) {
+		issues.push({ message: error.message, path: error.path });
+	}
 	return {
-		issues: Array.from(result.problems).map(({ message, path }) => ({
-			message,
-			path
-		})),
+		issues,
 		success: false
 	};
 }
@@ -39,29 +40,14 @@ function _arktype<T extends Type>(
 		superFormValidationLibrary: 'arktype',
 		defaults: options.defaults,
 		jsonSchema: createJsonSchema(options),
-		async validate(data) {
-			const result = schema(data);
-			if (result.problems == null) {
-				return {
-					data: result.data as Infer<T>,
-					success: true
-				};
-			}
-			return {
-				issues: Array.from(result.problems).map(({ message, path }) => ({
-					message,
-					path
-				})),
-				success: false
-			};
-		}
+		validate: async (data) => _validate(schema, data)
 	});
 }
 
 function _arktypeClient<T extends Type>(schema: T): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'arktype',
-		validate: async (data) => validate(schema, data)
+		validate: async (data) => _validate(schema, data)
 	};
 }
 

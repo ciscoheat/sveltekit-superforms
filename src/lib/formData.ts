@@ -190,12 +190,26 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return !allowFiles ? undefined : entry.size ? entry : info.isNullable ? null : undefined;
 		}
 
-		if (info.types.length > 1) {
-			throw new SchemaError(unionError, key);
+		const types = info.types.length === 0 ? ['any' as const] : info.types;
+		let result: unknown;
+
+		for (const type of types) {
+			result = parseFormDataEntry(key, entry, type, info);
+
+			if (result === unsupportedSchemaType) {
+				continue;
+			}
+			return result;
 		}
 
-		const [type] = info.types;
-		return parseFormDataEntry(key, entry, type ?? 'any', info);
+		if (result === unsupportedSchemaType) {
+			if (types.length === 1) {
+				throw new SuperFormError('Unsupported schema type for FormData: ' + types[0]);
+			} else {
+				throw new SuperFormError('Unsupported schema types for FormData: ' + types.join(', '));
+			}
+		}
+		return result;
 	}
 
 	const defaultPropertyType =
@@ -323,6 +337,8 @@ function parseFormDataEntry(
 			return typeError();
 
 		default:
-			throw new SuperFormError('Unsupported schema type for FormData: ' + type);
+			return unsupportedSchemaType;
 	}
 }
+
+const unsupportedSchemaType = Symbol();

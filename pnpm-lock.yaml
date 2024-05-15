@@ -37,8 +37,8 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0
       arktype:
-        specifier: 2.0.0-dev.11
-        version: 2.0.0-dev.11
+        specifier: 2.0.0-dev.12
+        version: 2.0.0-dev.12
       joi:
         specifier: ^17.13.1
         version: 17.13.1
@@ -158,11 +158,11 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@arktype/schema@0.1.2':
-    resolution: {integrity: sha512-ggvxs5P0toqd/4/XK76URQrtyOYpbYcLhirEZeTso6FxkloPa0lT+whPg7DNQj5qi2OQXLUHBYKMx9DOb13ViQ==}
+  '@arktype/schema@0.1.4':
+    resolution: {integrity: sha512-pqgpjL9vFwjgBW+gJKbKTHwVutWwa0h3sziK7Hx9lb4xzk8DXbpypTpmM/voaVtSVTQWtPaPLQ/45rwBQZwB5A==}
 
-  '@arktype/util@0.0.38':
-    resolution: {integrity: sha512-IvYMGnkUASJllRk3mdBVgckomKx2LNsDTrWCxz04EBK1OuU+4fJ/smSjxgZVWfopNXZds9sHNxZgTJOIw7GvJw==}
+  '@arktype/util@0.0.41':
+    resolution: {integrity: sha512-0YURzJ42v+lhlP1t5Dj90YezETRTCdFU0oM4xMVpYsmPx/DHJzr9n7AX1QPAlYWH4wY7hYY3gwai3O+8VntPgw==}
 
   '@babel/runtime@7.24.5':
     resolution: {integrity: sha512-Nms86NXrsaeU9vbBJKni6gXiEXZ4CVpYVzEjDH9Sb8vmZ3UljyA1GSOJl/6LGPO8EHLuSF9H+IxNXHPX8QHJ4g==}
@@ -687,8 +687,8 @@ packages:
   aria-query@5.3.0:
     resolution: {integrity: sha512-b0P0sZPKtyu8HkeRAfCq0IfURZK+SuwMjY1UXGBU27wpAiTwQAIlq56IbIO+ytk/JjS1fMR14ee5WBBfKi5J6A==}
 
-  arktype@2.0.0-dev.11:
-    resolution: {integrity: sha512-k+WVQoHsHsTyTiVQkO201mxLQxyXHmy3buJW8TXLOkr4X2yOUCp0K1SBscuG9OEJoc8MjpvoIharjPHEkFI7kg==}
+  arktype@2.0.0-dev.12:
+    resolution: {integrity: sha512-NrmlARlXdrx9E6yA+ao0QxYoGgldwHv9zm/ll8erQs3K//NHla20Jmkjk4dQFQrr5rWAwr4NT8d+oUhWvKO32g==}
 
   array-union@2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
@@ -1803,12 +1803,12 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@arktype/schema@0.1.2':
+  '@arktype/schema@0.1.4':
     dependencies:
-      '@arktype/util': 0.0.38
+      '@arktype/util': 0.0.41
     optional: true
 
-  '@arktype/util@0.0.38':
+  '@arktype/util@0.0.41':
     optional: true
 
   '@babel/runtime@7.24.5':
@@ -2294,10 +2294,10 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  arktype@2.0.0-dev.11:
+  arktype@2.0.0-dev.12:
     dependencies:
-      '@arktype/schema': 0.1.2
-      '@arktype/util': 0.0.38
+      '@arktype/schema': 0.1.4
+      '@arktype/util': 0.0.41
     optional: true
 
   array-union@2.1.0: {}

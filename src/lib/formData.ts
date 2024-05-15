@@ -27,9 +27,6 @@ type ParsedData = {
 	data: Record<string, unknown> | null | undefined;
 };
 
-const unionError =
-	'FormData parsing failed: Unions are only supported when the dataType option for superForm is set to "json".';
-
 export async function parseRequest<T extends Record<string, unknown>>(
 	data: unknown,
 	schemaData: JSONSchema,
@@ -180,7 +177,12 @@ function _parseFormData<T extends Record<string, unknown>>(
 		);
 	}
 
-	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
+	function parseSingleEntry(
+		key: string,
+		entry: FormDataEntryValue,
+		info: SchemaInfo,
+		types: Exclude<SchemaType, 'null'>[]
+	) {
 		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
 			return entry;
 		}
@@ -190,25 +192,18 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return !allowFiles ? undefined : entry.size ? entry : info.isNullable ? null : undefined;
 		}
 
-		const types = info.types.length === 0 ? ['any' as const] : info.types;
 		let result: unknown;
 
 		for (const type of types) {
 			result = parseFormDataEntry(key, entry, type, info);
 
 			if (result === unsupportedSchemaType) {
+				// Skip this candidate.
 				continue;
 			}
 			return result;
 		}
 
-		if (result === unsupportedSchemaType) {
-			if (types.length === 1) {
-				throw new SuperFormError('Unsupported schema type for FormData: ' + types[0]);
-			} else {
-				throw new SuperFormError('Unsupported schema types for FormData: ' + types.join(', '));
-			}
-		}
 		return result;
 	}
 
@@ -224,9 +219,8 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 		assertSchema(property, key);
 
-		const info = schemaInfo(property ?? defaultPropertyType, !schema.required?.includes(key), [
-			key
-		]);
+		const isOptional = !schema.required?.includes(key);
+		const info = schemaInfo(property ?? defaultPropertyType, isOptional, [key]);
 		if (!info) continue;
 
 		if (!info.types.includes('boolean') && !schema.additionalProperties && !formData.has(key)) {
@@ -235,35 +229,95 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 		const entries = formData.getAll(key);
 
+		let candidates = [info];
+
 		if (info.union && info.union.length > 1) {
-			throw new SchemaError(unionError, key);
+			candidates = info.union.map((u) =>
+				schemaInfo(u, isOptional || !u.required?.includes(key), [key])
+			);
 		}
 
-		if (info.types.includes('array') || info.types.includes('set')) {
-			// If no items, it could be a union containing the info
-			const items = property.items ?? (info.union?.length == 1 ? info.union[0] : undefined);
-			if (!items || typeof items == 'boolean' || (Array.isArray(items) && items.length != 1)) {
-				throw new SchemaError(
-					'Arrays must have a single "items" property that defines its type.',
-					key
-				);
+		let result: {
+			data: unknown;
+			triedTypes: string[];
+		} = { data: undefined, triedTypes: [] };
+
+		for (const candidate of candidates) {
+			if (candidate.types.includes('array') || candidate.types.includes('set')) {
+				let { items } = candidate.schema;
+
+				if (!items && candidate.union) {
+					// Find items info in the unions.
+					items = candidate.union.find(
+						(u) => u && typeof u !== 'boolean' && Array.isArray(u) && u.length === 1
+					);
+				}
+
+				if (!items || typeof items === 'boolean' || (Array.isArray(items) && items.length !== 1)) {
+					throw new SchemaError(
+						'Arrays must have a single "items" property that defines its type.',
+						key
+					);
+				}
+
+				const arrayType = Array.isArray(items) ? items[0] : items;
+				assertSchema(arrayType, key);
+
+				const arrayInfo = schemaInfo(arrayType, info.isOptional, [key]);
+				if (!arrayInfo) continue;
+
+				const types = arrayInfo.types.length === 0 ? ['any' as const] : arrayInfo.types;
+
+				// Check for empty files being posted (and filtered)
+				const isFileArray = entries.length && entries.some((e) => e && typeof e !== 'string');
+
+				const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo, types));
+
+				if (isFileArray && arrayData.every((file) => !file)) arrayData.length = 0;
+
+				// Validate this candidate's values.
+				if (arrayData.find((d) => d === unsupportedSchemaType)) {
+					// Skip this candidate.
+
+					result = {
+						data: unsupportedSchemaType,
+						triedTypes: [...result.triedTypes, ...types]
+					};
+					continue;
+				}
+
+				result = {
+					data: info.types.includes('set') ? new Set(arrayData) : arrayData,
+					triedTypes: []
+				};
+				break;
+			} else {
+				const types = candidate.types.length === 0 ? ['any' as const] : candidate.types;
+
+				const data = parseSingleEntry(key, entries[entries.length - 1], candidate, types);
+
+				if (data === unsupportedSchemaType) {
+					// Skip this candidate.
+
+					result = {
+						data: unsupportedSchemaType,
+						triedTypes: [...result.triedTypes, ...types]
+					};
+					continue;
+				}
+
+				result = { data, triedTypes: [] };
+				break;
 			}
-
-			const arrayType = Array.isArray(items) ? items[0] : items;
-			assertSchema(arrayType, key);
-
-			const arrayInfo = schemaInfo(arrayType, info.isOptional, [key]);
-			if (!arrayInfo) continue;
-
-			// Check for empty files being posted (and filtered)
-			const isFileArray = entries.length && entries.some((e) => e && typeof e !== 'string');
-			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo));
-			if (isFileArray && arrayData.every((file) => !file)) arrayData.length = 0;
-
-			output[key] = info.types.includes('set') ? new Set(arrayData) : arrayData;
-		} else {
-			output[key] = parseSingleEntry(key, entries[entries.length - 1], info);
 		}
+
+		if (result.data === unsupportedSchemaType) {
+			throw new SuperFormError(
+				'Unsupported schema types for FormData: ' + result.triedTypes.join(', ')
+			);
+		}
+
+		output[key] = result.data;
 	}
 
 	return output;

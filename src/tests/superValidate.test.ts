@@ -630,6 +630,26 @@ describe('Zod', () => {
 
 	describe.only('with z.record', () => {
 		it('should work with additionalProperties for records', async () => {
+			/*
+			{
+				type: 'object',
+				properties: {
+					id: { type: 'string' },
+					options: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							properties: { label: { type: 'string' } },
+							required: [ 'label' ],
+							additionalProperties: false
+						}
+					}
+				},
+				required: [ 'id', 'options' ],
+				additionalProperties: false,
+				'$schema': 'http://json-schema.org/draft-07/schema#'
+			}
+			*/
 			const schema = z.object({
 				id: z.string(),
 				options: z.record(
@@ -641,8 +661,6 @@ describe('Zod', () => {
 					})
 				)
 			});
-
-			console.dir(zod(schema).jsonSchema, { depth: 10 }); //debug
 
 			let row = {
 				id: '1',

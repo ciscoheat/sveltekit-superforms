@@ -310,7 +310,7 @@ describe('Schemasafe', () => {
 
 /////////////////////////////////////////////////////////////////////
 
-describe.only('Arktype', () => {
+describe('Arktype', () => {
 	const schema = type({
 		name: 'string',
 		email: 'email',

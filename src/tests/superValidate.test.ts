@@ -18,7 +18,7 @@ import { defaults as schemaDefaults } from '$lib/defaults.js';
 ///// Adapters //////////////////////////////////////////////////////
 
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
-import { z } from 'zod';
+import { z, type ZodErrorMap } from 'zod';
 
 import { valibot } from '$lib/adapters/valibot.js';
 import * as v from 'valibot';
@@ -626,6 +626,34 @@ describe('Zod', () => {
 		});
 
 		expect(() => zod(schema)).toThrow(Error);
+	});
+
+	it('with the errorMap option', async () => {
+		const schema = z.object({
+			num: z.number().int()
+		});
+
+		const options: { errorMap?: ZodErrorMap } = {
+			errorMap: (error, ctx) => {
+				if (error.code === z.ZodIssueCode.invalid_type) {
+					return { message: 'Not an integer.' };
+				}
+				return { message: ctx.defaultError };
+			}
+		};
+
+		const adapter = zod(schema, options);
+
+		const form = await superValidate(
+			// @ts-expect-error Testing errorMap with invalid type
+			{ num: 'abc' },
+			adapter
+		);
+		expect(form.valid).toBe(false);
+		expect(form.errors.num).toEqual(['Not an integer.']);
+
+		const sameAdapter = zod(schema, options);
+		expect(sameAdapter).toBe(adapter);
 	});
 
 	schemaTest(zod(schema));

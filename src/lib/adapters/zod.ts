@@ -1,4 +1,12 @@
-import type { AnyZodObject, ZodDefault, ZodEffects, ZodType, ZodTypeDef, ZodUnion } from 'zod';
+import type {
+	AnyZodObject,
+	ZodDefault,
+	ZodEffects,
+	ZodErrorMap,
+	ZodType,
+	ZodTypeDef,
+	ZodUnion
+} from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	type AdapterOptions,
@@ -54,9 +62,10 @@ export type ZodValidation<T extends ZodObjectTypes> =
 
 async function validate<T extends ZodValidation<ZodObjectTypes>>(
 	schema: T,
-	data: unknown
+	data: unknown,
+	errorMap: ZodErrorMap | undefined
 ): Promise<ValidationResult<Infer<T>>> {
-	const result = await schema.safeParseAsync(data);
+	const result = await schema.safeParseAsync(data, { errorMap });
 	if (result.success) {
 		return {
 			data: result.data as Infer<T>,
@@ -71,22 +80,23 @@ async function validate<T extends ZodValidation<ZodObjectTypes>>(
 
 function _zod<T extends ZodValidation<ZodObjectTypes>>(
 	schema: T,
-	options?: AdapterOptions<Infer<T>> & { config?: Partial<Options> }
+	options?: AdapterOptions<Infer<T>> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
-		validate: async (data) => validate(schema, data),
+		validate: async (data) => validate(schema, data, options?.errorMap),
 		jsonSchema: options?.jsonSchema ?? zodToJSONSchema(schema, options?.config),
 		defaults: options?.defaults
 	});
 }
 
 function _zodClient<T extends ZodValidation<ZodObjectTypes>>(
-	schema: T
+	schema: T,
+	options?: { errorMap?: ZodErrorMap }
 ): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'zod',
-		validate: async (data) => validate(schema, data)
+		validate: async (data) => validate(schema, data, options?.errorMap)
 	};
 }
 

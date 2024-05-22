@@ -628,6 +628,39 @@ describe('Zod', () => {
 		expect(() => zod(schema)).toThrow(Error);
 	});
 
+	describe.only('with z.record', () => {
+		it('should work with additionalProperties for records', async () => {
+			const schema = z.object({
+				id: z.string(),
+				options: z.record(
+					z.string(),
+					z.object({
+						label: z.string().refine((value) => value.length > 0, {
+							message: 'Label is required'
+						})
+					})
+				)
+			});
+
+			console.dir(zod(schema).jsonSchema, { depth: 10 }); //debug
+
+			let row = {
+				id: '1',
+				options: {
+					'1': {
+						label: 'Option 1'
+					},
+					'2': {
+						label: ''
+					}
+				}
+			};
+
+			const form = await superValidate(row, zod(schema));
+			console.dir(form, { depth: 10 }); //debug
+		});
+	});
+
 	schemaTest(zod(schema));
 });
 

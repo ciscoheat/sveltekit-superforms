@@ -57,12 +57,20 @@ export function schemaInfo(
 				) as JSONSchema7[])
 			: undefined;
 
-	const properties =
-		schema.properties && types.includes('object')
-			? (Object.fromEntries(
-					Object.entries(schema.properties).filter(([, value]) => typeof value !== 'boolean')
-				) as { [key: string]: JSONSchema7 })
+	const additionalProperties =
+		types.includes('object') && typeof schema.additionalProperties == 'object'
+			? schemaInfo(schema.additionalProperties, isOptional, path)
 			: undefined;
+
+	const mergedProperties = types.includes('object')
+		? { ...additionalProperties?.properties, ...schema.properties }
+		: undefined;
+
+	const properties = mergedProperties
+		? (Object.fromEntries(
+				Object.entries(mergedProperties).filter(([, value]) => typeof value !== 'boolean')
+			) as { [key: string]: JSONSchema7 })
+		: undefined;
 
 	const union = unionInfo(schema)?.filter((u) => u.type !== 'null' && u.const !== null);
 

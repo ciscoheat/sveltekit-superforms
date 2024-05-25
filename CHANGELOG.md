@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `isTainted` now works with undefined values in the `$tainted` store.
+- Fixed default properties for Record in schemas.
 
 ## [2.13.1] - 2024-05-07
 

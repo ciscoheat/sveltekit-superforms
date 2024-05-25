@@ -1207,6 +1207,8 @@ export function superForm<
 	function Tainted_isTainted(
 		path?: FormPath<T> | Record<string, unknown> | boolean | undefined
 	): boolean {
+		if (!arguments.length) return Tainted__isObjectTainted(Data.tainted);
+
 		if (typeof path === 'boolean') return path;
 		if (typeof path === 'object') return Tainted__isObjectTainted(path);
 		if (!Data.tainted || path === undefined) return false;

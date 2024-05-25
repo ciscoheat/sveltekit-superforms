@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `errorMap` option for the Zod adapter, for simplified error handling in localization. ([Zod docs](https://zod.dev/ERROR_HANDLING?id=customizing-errors-with-zoderrormap))
+
 ### Fixed
 
 - `isTainted` now works with undefined values in the `$tainted` store.

@@ -1209,8 +1209,7 @@ export function superForm<
 	): boolean {
 		if (typeof path === 'boolean') return path;
 		if (typeof path === 'object') return Tainted__isObjectTainted(path);
-		if (!Data.tainted) return false;
-		if (!path) return Tainted__isObjectTainted(Data.tainted);
+		if (!Data.tainted || path === undefined) return false;
 
 		const field = pathExists(Data.tainted, splitPath(path));
 		return Tainted__isObjectTainted(field?.value);

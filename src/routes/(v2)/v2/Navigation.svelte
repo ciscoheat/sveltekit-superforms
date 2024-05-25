@@ -60,7 +60,8 @@
 		'nested-traverse',
 		'reset-errors',
 		'schemasafe-types',
-		'discriminated-union'
+		'discriminated-union',
+		'simple-tainted'
 	].sort();
 </script>
 

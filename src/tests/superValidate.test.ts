@@ -656,6 +656,65 @@ describe('Zod', () => {
 		expect(sameAdapter).toBe(adapter);
 	});
 
+	describe('with z.record', () => {
+		it('should work with additionalProperties for records', async () => {
+			/*
+			{
+				type: 'object',
+				properties: {
+					id: { type: 'string' },
+					options: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							properties: { label: { type: 'string' } },
+							required: [ 'label' ],
+							additionalProperties: false
+						}
+					}
+				},
+				required: [ 'id', 'options' ],
+				additionalProperties: false,
+				'$schema': 'http://json-schema.org/draft-07/schema#'
+			}
+			*/
+			const schema = z.object({
+				id: z.string(),
+				options: z.record(
+					z.string(),
+					z.object({
+						label: z.string().refine((value) => value.length > 0, {
+							message: 'Label is required'
+						})
+					})
+				)
+			});
+
+			const row = {
+				id: '1',
+				options: {
+					'1': {
+						label: 'Option 1'
+					},
+					'2': {
+						label: ''
+					}
+				}
+			};
+
+			const adapter = zod(schema);
+			const form = await superValidate(row, adapter);
+
+			assert(!form.valid);
+
+			expect(form.errors).toStrictEqual({
+				options: { '2': { label: ['Label is required'] } }
+			});
+
+			expect(form.data).toEqual(row);
+		});
+	});
+
 	schemaTest(zod(schema));
 });
 

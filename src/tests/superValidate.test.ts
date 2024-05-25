@@ -628,7 +628,7 @@ describe('Zod', () => {
 		expect(() => zod(schema)).toThrow(Error);
 	});
 
-	describe.only('with z.record', () => {
+	describe('with z.record', () => {
 		it('should work with additionalProperties for records', async () => {
 			/*
 			{
@@ -662,7 +662,7 @@ describe('Zod', () => {
 				)
 			});
 
-			let row = {
+			const row = {
 				id: '1',
 				options: {
 					'1': {
@@ -674,8 +674,16 @@ describe('Zod', () => {
 				}
 			};
 
-			const form = await superValidate(row, zod(schema));
-			console.dir(form, { depth: 10 }); //debug
+			const adapter = zod(schema);
+			const form = await superValidate(row, adapter);
+
+			assert(!form.valid);
+
+			expect(form.errors).toStrictEqual({
+				options: { '2': { label: ['Label is required'] } }
+			});
+
+			expect(form.data).toEqual(row);
 		});
 	});
 

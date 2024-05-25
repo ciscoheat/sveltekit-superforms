@@ -22,6 +22,7 @@ export type SchemaInfo = {
 	union?: JSONSchema7[];
 	array?: JSONSchema7[];
 	properties?: { [key: string]: JSONSchema7 };
+	additionalProperties?: { [key: string]: JSONSchema7 };
 	required?: string[];
 };
 
@@ -58,19 +59,22 @@ export function schemaInfo(
 			: undefined;
 
 	const additionalProperties =
-		types.includes('object') && typeof schema.additionalProperties == 'object'
-			? schemaInfo(schema.additionalProperties, isOptional, path)
+		schema.additionalProperties &&
+		typeof schema.additionalProperties === 'object' &&
+		types.includes('object')
+			? (Object.fromEntries(
+					Object.entries(schema.additionalProperties).filter(
+						([, value]) => typeof value !== 'boolean'
+					)
+				) as { [key: string]: JSONSchema7 })
 			: undefined;
 
-	const mergedProperties = types.includes('object')
-		? { ...additionalProperties?.properties, ...schema.properties }
-		: undefined;
-
-	const properties = mergedProperties
-		? (Object.fromEntries(
-				Object.entries(mergedProperties).filter(([, value]) => typeof value !== 'boolean')
-			) as { [key: string]: JSONSchema7 })
-		: undefined;
+	const properties =
+		schema.properties && types.includes('object')
+			? (Object.fromEntries(
+					Object.entries(schema.properties).filter(([, value]) => typeof value !== 'boolean')
+				) as { [key: string]: JSONSchema7 })
+			: undefined;
 
 	const union = unionInfo(schema)?.filter((u) => u.type !== 'null' && u.const !== null);
 
@@ -82,6 +86,7 @@ export function schemaInfo(
 		union: union?.length ? union : undefined,
 		array,
 		properties,
+		additionalProperties,
 		required: schema.required
 	};
 }

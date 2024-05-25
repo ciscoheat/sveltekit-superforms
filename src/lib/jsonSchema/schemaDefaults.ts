@@ -260,6 +260,20 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 		}
 	}
 
+	// Check if a Record type is used for additionalProperties
+	if (info.additionalProperties && info.types.includes('object')) {
+		const additionalInfo = schemaInfo(info.additionalProperties, info.isOptional, path);
+		if (additionalInfo.properties && additionalInfo.types.includes('object')) {
+			for (const [key] of Object.entries(additionalInfo.properties)) {
+				output[key] = _defaultTypes(
+					additionalInfo.properties[key],
+					!additionalInfo.required?.includes(key),
+					[...path, key]
+				);
+			}
+		}
+	}
+
 	if (info.isNullable && !output.__types.includes('null')) {
 		output.__types.push('null');
 	}

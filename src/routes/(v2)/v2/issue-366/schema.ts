@@ -4,8 +4,9 @@ import {
 	object,
 	boolean,
 	minLength,
-	toTrimmed,
+	trim,
 	picklist,
+	pipe,
 	literal,
 	date
 } from 'valibot';
@@ -13,13 +14,14 @@ import {
 const roleOptions = ['USER', 'PREMIUM', 'ADMIN'] as const;
 
 export const userSchema = object({
-	firstName: string([toTrimmed(), minLength(1, 'Please enter your first name.')]),
-	lastName: string([toTrimmed(), minLength(1, 'Please enter your last name.')]),
-	email: string([
-		toTrimmed(),
+	firstName: pipe(string(), trim(), minLength(1, 'Please enter your first name.')),
+	lastName: pipe(string(), trim(), minLength(1, 'Please enter your last name.')),
+	email: pipe(
+		string(),
+		trim(),
 		email('The email address is not valid.'),
 		minLength(1, 'An email address is required.')
-	]),
+	),
 	role: picklist(roleOptions, 'You must have a role.'),
 	verified: boolean(),
 	terms: literal(true, 'You must accept the terms and privacy policy.'),
@@ -29,11 +31,12 @@ export const userSchema = object({
 });
 
 export const emailSchema = object({
-	email: string([
-		toTrimmed(),
+	email: pipe(
+		string(),
+		trim(),
 		email('The email address is not valid.'),
 		minLength(1, 'An email address is required.')
-	])
+	)
 });
 
 export type UserSchema = typeof userSchema;

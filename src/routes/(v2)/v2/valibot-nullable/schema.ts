@@ -1,6 +1,6 @@
-import { object, string, minLength, email, nullable } from 'valibot';
+import { object, string, minLength, email, nullable, pipe } from 'valibot';
 
 export const schema = object({
-	name: nullable(string([minLength(1)])),
-	email: string([email()])
+	name: nullable(pipe(string(), minLength(1))),
+	email: pipe(string(), email())
 });

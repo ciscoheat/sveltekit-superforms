@@ -24,6 +24,7 @@ export type ValidationLibrary =
 	| 'joi'
 	| 'superform'
 	| 'typebox'
+	| 'typia'
 	| 'valibot'
 	| 'yup'
 	| 'zod'

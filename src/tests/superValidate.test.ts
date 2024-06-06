@@ -49,6 +49,9 @@ import Vine from '@vinejs/vine';
 
 import { schemasafe } from '$lib/adapters/schemasafe.js';
 
+import { typia as typiaAdapter } from '$lib/adapters/typia.js';
+import typia, { type tags } from 'typia';
+
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 import { SchemaError, type JSONSchema } from '$lib/index.js';
@@ -454,6 +457,24 @@ describe('ajv', () => {
 	schemaTest(ajv(schema));
 });
 */
+
+/////////////////////////////////////////////////////////////////////
+
+describe('typia', () => {
+	interface Schema extends Record<string, unknown> {
+		name: string;
+		email: string & tags.Format<'email'>;
+		tags: (string & tags.MinLength<2>)[] & tags.MinItems<3>;
+		score: number & tags.Type<'uint32'> & tags.Minimum<0>;
+		date?: Date;
+		nospace?: string & tags.Pattern<'^\\S*$'>;
+		extra: string | null;
+	}
+
+	const validate = typia.createValidate<Schema>();
+	const adapter = typiaAdapter(validate, { defaults });
+	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple');
+});
 
 /////////////////////////////////////////////////////////////////////
 

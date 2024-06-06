@@ -53,7 +53,8 @@
 		"check:adapters": "node types-exist.js",
 		"test": "vitest run",
 		"lint": "prettier --check . && eslint .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"prepare": "ts-patch install && typia patch"
 	},
 	"exports": {
 		".": {
@@ -165,6 +166,7 @@
 		"ts-deepmerge": "^7.0.0"
 	},
 	"devDependencies": {
+		"@ryoppippi/unplugin-typia": "npm:@jsr/ryoppippi__unplugin-typia@^0.2.2",
 		"@sveltejs/adapter-auto": "^3.2.1",
 		"@sveltejs/kit": "^2.5.10",
 		"@sveltejs/package": "^2.3.1",
@@ -190,8 +192,11 @@
 		"sveltekit-flash-message": "^2.4.4",
 		"sveltekit-rate-limiter": "^0.5.1",
 		"throttle-debounce": "^5.0.0",
+		"ts-node": "^10.9.2",
+		"ts-patch": "^3.2.0",
 		"tslib": "^2.6.2",
 		"typescript": "^5.4.5",
+		"typia": "^6.0.6",
 		"uuid": "^9.0.1",
 		"vite": "^5.2.11",
 		"vitest": "^1.6.0"

@@ -142,6 +142,9 @@
 		},
 		"@vinejs/vine": {
 			"optional": true
+		},
+		"typia": {
+			"optional": true
 		}
 	},
 	"optionalDependencies": {

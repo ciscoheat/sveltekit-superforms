@@ -62,8 +62,8 @@ importers:
         version: 3.23.0(zod@3.23.8)
     devDependencies:
       '@ryoppippi/unplugin-typia':
-        specifier: npm:@jsr/ryoppippi__unplugin-typia@^0.2.2
-        version: '@jsr/ryoppippi__unplugin-typia@0.2.2(rollup@4.18.0)'
+        specifier: npm:@jsr/ryoppippi__unplugin-typia@^0.3.3
+        version: '@jsr/ryoppippi__unplugin-typia@0.3.3(rollup@4.18.0)'
       '@sveltejs/adapter-auto':
         specifier: ^3.2.1
         version: 3.2.1(@sveltejs/kit@2.5.10(@sveltejs/vite-plugin-svelte@3.1.0(svelte@5.0.0-next.137)(vite@5.2.11(@types/node@20.12.12)(sass@1.77.2)))(svelte@5.0.0-next.137)(vite@5.2.11(@types/node@20.12.12)(sass@1.77.2)))
@@ -398,8 +398,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@jsr/ryoppippi__unplugin-typia@0.2.2':
-    resolution: {integrity: sha512-VWvHhSFLg5UhSYvaoV+VR+LL+X8AML/y0ui8DyyOstBYoMt7RLuwxdCxvcnvox7ZAT3sC7sHmx0USZoap78WOA==, tarball: https://npm.jsr.io/~/11/@jsr/ryoppippi__unplugin-typia/0.2.2.tgz}
+  '@jsr/ryoppippi__unplugin-typia@0.3.3':
+    resolution: {integrity: sha512-hIGrX7qdmopRdkjnFDuOV0Eqz41fmwmXWxczd6KUg1gc+VJZrelER8f5/OV+sMgGYmXyYSsTIDRcVnq2ur79aw==, tarball: https://npm.jsr.io/~/11/@jsr/ryoppippi__unplugin-typia/0.3.3.tgz}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2539,7 +2539,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  '@jsr/ryoppippi__unplugin-typia@0.2.2(rollup@4.18.0)':
+  '@jsr/ryoppippi__unplugin-typia@0.3.3(rollup@4.18.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.18.0)
       consola: 3.2.3

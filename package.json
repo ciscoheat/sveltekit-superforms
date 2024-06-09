@@ -169,7 +169,7 @@
 		"ts-deepmerge": "^7.0.0"
 	},
 	"devDependencies": {
-		"@ryoppippi/unplugin-typia": "npm:@jsr/ryoppippi__unplugin-typia@^0.3.3",
+		"@ryoppippi/unplugin-typia": "npm:@jsr/ryoppippi__unplugin-typia@^0.3.7",
 		"@sveltejs/adapter-auto": "^3.2.1",
 		"@sveltejs/kit": "^2.5.10",
 		"@sveltejs/package": "^2.3.1",
@@ -206,6 +206,5 @@
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"type": "module",
-	"packageManager": "pnpm@9.1.4+sha256.30a1801ac4e723779efed13a21f4c39f9eb6c9fbb4ced101bce06b422593d7c9"
+	"type": "module"
 }

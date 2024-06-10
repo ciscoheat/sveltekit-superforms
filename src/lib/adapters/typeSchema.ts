@@ -1,7 +1,12 @@
 import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
 import type { Type } from 'arktype';
 import type { AnySchema } from 'joi';
-import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
+import type {
+	GenericSchema,
+	GenericSchemaAsync,
+	InferInput as Input,
+	InferOutput as Output
+} from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
@@ -47,7 +52,7 @@ type InferSchema<TResolver extends Resolver> = TResolver['base'];
 
 type ValidationIssue = {
 	message: string;
-	path?: Array<string | number | symbol>;
+	path?: Array<string | number | symbol | unknown>;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,9 +99,11 @@ interface TypeBoxResolver extends Resolver {
 }
 
 interface ValibotResolver extends Resolver {
-	base: BaseSchema | BaseSchemaAsync;
-	input: this['schema'] extends BaseSchema | BaseSchemaAsync ? Input<this['schema']> : never;
-	output: this['schema'] extends BaseSchema | BaseSchemaAsync ? Output<this['schema']> : never;
+	base: GenericSchema | GenericSchemaAsync;
+	input: this['schema'] extends GenericSchema | GenericSchemaAsync ? Input<this['schema']> : never;
+	output: this['schema'] extends GenericSchema | GenericSchemaAsync
+		? Output<this['schema']>
+		: never;
 }
 
 interface YupResolver extends Resolver {

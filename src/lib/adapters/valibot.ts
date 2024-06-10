@@ -7,7 +7,15 @@ import {
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
-import { safeParseAsync, type BaseSchema, type BaseSchemaAsync, type SchemaConfig } from 'valibot';
+import {
+	safeParseAsync,
+	type GenericSchema,
+	type GenericSchemaAsync,
+	type Config,
+	type GenericIssue,
+	type IssuePathItem,
+	type SetPathItem
+} from 'valibot';
 import { memoize } from '$lib/memoize.js';
 import {
 	type ToJSONSchemaOptions,
@@ -15,13 +23,13 @@ import {
 } from '@gcornut/valibot-json-schema';
 import type { JSONSchema } from '../jsonSchema/index.js';
 
-type SupportedSchemas = BaseSchema | BaseSchemaAsync;
+type SupportedSchemas = GenericSchema | GenericSchemaAsync;
 
 const defaultOptions = {
 	strictObjectTypes: true,
 	dateStrategy: 'integer' as const,
 	ignoreUnknownValidation: true,
-	customSchemaConversion: { special: () => ({}), instance: () => ({}) }
+	customSchemaConversion: { custom: () => ({}), instance: () => ({}) }
 } satisfies ToJSONSchemaOptions;
 
 /* @__NO_SIDE_EFFECTS__ */
@@ -32,7 +40,7 @@ export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
 async function validate<T extends SupportedSchemas>(
 	schema: T,
 	data: unknown,
-	config?: SchemaConfig
+	config?: Config<GenericIssue<unknown>>
 ): Promise<ValidationResult<Infer<T>>> {
 	const result = await safeParseAsync(schema, data, config);
 	if (result.success) {
@@ -44,7 +52,7 @@ async function validate<T extends SupportedSchemas>(
 	return {
 		issues: result.issues.map(({ message, path }) => ({
 			message,
-			path: path?.map(({ key }) => key) as string[]
+			path: (path as Exclude<IssuePathItem, SetPathItem>[])?.map(({ key }) => key) as string[]
 		})),
 		success: false
 	};
@@ -54,7 +62,7 @@ function _valibot<T extends SupportedSchemas>(
 	schema: T,
 	options: Omit<ToJSONSchemaOptions, 'schema'> &
 		AdapterOptions<Infer<T>> & {
-			config?: SchemaConfig;
+			config?: Config<GenericIssue<unknown>>;
 		} = {}
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({

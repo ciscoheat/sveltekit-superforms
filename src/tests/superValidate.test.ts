@@ -330,11 +330,11 @@ describe('Arktype', () => {
 describe('Valibot', () => {
 	const schema = v.object({
 		name: v.optional(v.string(), 'Unknown'),
-		email: v.string([v.email()]),
-		tags: v.array(v.string([v.minLength(2)]), [v.minLength(3)]),
-		score: v.number([v.integer(), v.minValue(0)]),
+		email: v.pipe(v.string(), v.email()),
+		tags: v.pipe(v.array(v.pipe(v.string(), v.minLength(2))), v.minLength(3)),
+		score: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		date: v.optional(v.date()),
-		nospace: v.optional(v.string([v.regex(nospacePattern)])),
+		nospace: v.optional(v.pipe(v.string(), v.regex(nospacePattern))),
 		extra: v.nullable(v.string())
 	});
 
@@ -377,11 +377,12 @@ describe('Valibot', () => {
 
 	it('should handle non-JSON Schema validators by returning any', async () => {
 		const schema = v.object({
-			file: v.instance(File, [
+			file: v.pipe(
+				v.instance(File),
 				v.mimeType(['image/jpeg', 'image/png']),
 				v.maxSize(1024 * 1024 * 10)
-			]),
-			size: v.special<`${number}px`>((val) =>
+			),
+			size: v.custom<`${number}px`>((val) =>
 				typeof val === 'string' ? /^\d+px$/.test(val) : false
 			)
 		});
@@ -776,7 +777,10 @@ describe('Schema In/Out transformations', () => {
 
 	it('does not fully work with Valibot', async () => {
 		const schema = v.object({
-			len: v.transform(v.string(), (s) => s.length)
+			len: v.pipe(
+				v.string(),
+				v.transform((s) => s.length)
+			)
 		});
 
 		// @ts-expect-error Using schema Out type as In - Not allowed

@@ -1,6 +1,4 @@
 <script context="module">
-	let styleInit = false;
-
 	/*! clipboard-copy. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 	function makeError() {
@@ -76,6 +74,8 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { readable, get } from 'svelte/store';
+
+	let styleInit = false;
 
 	/**
 	 * @typedef {unknown | Promise<unknown>} EncodeableData
@@ -432,227 +432,225 @@
 	$: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
-<svelte:head>
-	{#if !styleInit}
-		<style>
-			.super-debug--absolute {
-				position: absolute;
-			}
+{#if !styleInit}
+	<style>
+		.super-debug--absolute {
+			position: absolute;
+		}
 
-			.super-debug--top-0 {
-				top: 0;
-			}
+		.super-debug--top-0 {
+			top: 0;
+		}
 
-			.super-debug--inset-x-0 {
-				left: 0px;
-				right: 0px;
-			}
+		.super-debug--inset-x-0 {
+			left: 0px;
+			right: 0px;
+		}
 
-			.super-debug--hidden {
-				height: 0;
-				overflow: hidden;
-			}
+		.super-debug--hidden {
+			height: 0;
+			overflow: hidden;
+		}
 
-			.super-debug--hidden:not(.super-debug--with-label) {
-				height: 1.5em;
-			}
+		.super-debug--hidden:not(.super-debug--with-label) {
+			height: 1.5em;
+		}
 
-			.super-debug--rotated {
-				transform: rotate(180deg);
-			}
+		.super-debug--rotated {
+			transform: rotate(180deg);
+		}
 
-			.super-debug {
-				--_sd-bg-color: var(--sd-bg-color, var(--sd-vscode-bg-color, rgb(30, 41, 59)));
-				position: relative;
-				background-color: var(--_sd-bg-color);
-				border-radius: 0.5rem;
-				overflow: hidden;
-			}
+		.super-debug {
+			--_sd-bg-color: var(--sd-bg-color, var(--sd-vscode-bg-color, rgb(30, 41, 59)));
+			position: relative;
+			background-color: var(--_sd-bg-color);
+			border-radius: 0.5rem;
+			overflow: hidden;
+		}
 
-			.super-debug--pre {
-				overflow-x: auto;
-			}
+		.super-debug--pre {
+			overflow-x: auto;
+		}
 
-			.super-debug--collapse {
-				display: block;
-				width: 100%;
-				color: rgba(255, 255, 255, 0.25);
-				background-color: rgba(255, 255, 255, 0.15);
-				padding: 5px 0;
-				display: flex;
-				justify-content: center;
-				border-color: transparent;
-				margin: 0;
-				padding: 3px 0;
-			}
+		.super-debug--collapse {
+			display: block;
+			width: 100%;
+			color: rgba(255, 255, 255, 0.25);
+			background-color: rgba(255, 255, 255, 0.15);
+			padding: 5px 0;
+			display: flex;
+			justify-content: center;
+			border-color: transparent;
+			margin: 0;
+			padding: 3px 0;
+		}
 
-			.super-debug--collapse:focus {
-				color: #fafafa;
-				background-color: rgba(255, 255, 255, 0.25);
-			}
+		.super-debug--collapse:focus {
+			color: #fafafa;
+			background-color: rgba(255, 255, 255, 0.25);
+		}
 
-			.super-debug--collapse:is(:hover) {
-				color: rgba(255, 255, 255, 0.35);
-				background-color: rgba(255, 255, 255, 0.25);
-			}
+		.super-debug--collapse:is(:hover) {
+			color: rgba(255, 255, 255, 0.35);
+			background-color: rgba(255, 255, 255, 0.25);
+		}
 
-			.super-debug--status {
-				display: flex;
-				padding: 1em;
-				padding-bottom: 0;
-				justify-content: space-between;
-				font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier,
-					monospace;
-			}
+		.super-debug--status {
+			display: flex;
+			padding: 1em;
+			padding-bottom: 0;
+			justify-content: space-between;
+			font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier,
+				monospace;
+		}
 
-			.super-debug--right-status {
-				display: flex;
-				gap: 0.55em;
-			}
+		.super-debug--right-status {
+			display: flex;
+			gap: 0.55em;
+		}
 
-			.super-debug--copy {
-				margin: 0;
-				padding: 0;
-				padding-top: 2px;
-				background-color: transparent;
-				border: 0;
-				color: #666;
-				cursor: pointer;
-			}
+		.super-debug--copy {
+			margin: 0;
+			padding: 0;
+			padding-top: 2px;
+			background-color: transparent;
+			border: 0;
+			color: #666;
+			cursor: pointer;
+		}
 
-			.super-debug--copy:hover {
-				background-color: transparent;
-				color: #666;
-			}
+		.super-debug--copy:hover {
+			background-color: transparent;
+			color: #666;
+		}
 
-			.super-debug--copy:focus {
-				background-color: transparent;
-				color: #666;
-			}
+		.super-debug--copy:focus {
+			background-color: transparent;
+			color: #666;
+		}
 
-			.super-debug--label {
-				color: var(--sd-label-color, var(--sd-vscode-label-color, white));
-			}
+		.super-debug--label {
+			color: var(--sd-label-color, var(--sd-vscode-label-color, white));
+		}
 
-			.super-debug--promise-loading {
-				color: var(--sd-promise-loading-color, var(--sd-vscode-promise-loading-color, #999));
-			}
+		.super-debug--promise-loading {
+			color: var(--sd-promise-loading-color, var(--sd-vscode-promise-loading-color, #999));
+		}
 
-			.super-debug--promise-rejected {
-				color: var(--sd-promise-rejected-color, var(--sd-vscode-promise-rejected-color, #ff475d));
-			}
+		.super-debug--promise-rejected {
+			color: var(--sd-promise-rejected-color, var(--sd-vscode-promise-rejected-color, #ff475d));
+		}
 
-			.super-debug pre {
-				color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
-				background-color: var(--_sd-bg-color);
-				font-size: 1em;
-				margin-bottom: 0;
-				padding: 1em 0 1em 1em;
-			}
+		.super-debug pre {
+			color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
+			background-color: var(--_sd-bg-color);
+			font-size: 1em;
+			margin-bottom: 0;
+			padding: 1em 0 1em 1em;
+		}
 
-			.super-debug--info {
-				color: var(--sd-info, var(--sd-vscode-info, rgb(85, 85, 255)));
-			}
+		.super-debug--info {
+			color: var(--sd-info, var(--sd-vscode-info, rgb(85, 85, 255)));
+		}
 
-			.super-debug--success {
-				color: var(--sd-success, var(--sd-vscode-success, #2cd212));
-			}
+		.super-debug--success {
+			color: var(--sd-success, var(--sd-vscode-success, #2cd212));
+		}
 
-			.super-debug--redirect {
-				color: var(--sd-redirect, var(--sd-vscode-redirect, #03cae5));
-			}
+		.super-debug--redirect {
+			color: var(--sd-redirect, var(--sd-vscode-redirect, #03cae5));
+		}
 
-			.super-debug--error {
-				color: var(--sd-error, var(--sd-vscode-error, #ff475d));
-			}
+		.super-debug--error {
+			color: var(--sd-error, var(--sd-vscode-error, #ff475d));
+		}
 
-			.super-debug--code .key {
-				color: var(--sd-code-key, var(--sd-vscode-code-key, #eab308));
-			}
+		.super-debug--code .key {
+			color: var(--sd-code-key, var(--sd-vscode-code-key, #eab308));
+		}
 
-			.super-debug--code .string {
-				color: var(--sd-code-string, var(--sd-vscode-code-string, #6ec687));
-			}
+		.super-debug--code .string {
+			color: var(--sd-code-string, var(--sd-vscode-code-string, #6ec687));
+		}
 
-			.super-debug--code .date {
-				color: var(--sd-code-date, var(--sd-vscode-code-date, #f06962));
-			}
+		.super-debug--code .date {
+			color: var(--sd-code-date, var(--sd-vscode-code-date, #f06962));
+		}
 
-			.super-debug--code .boolean {
-				color: var(--sd-code-boolean, var(--sd-vscode-code-boolean, #79b8ff));
-			}
+		.super-debug--code .boolean {
+			color: var(--sd-code-boolean, var(--sd-vscode-code-boolean, #79b8ff));
+		}
 
-			.super-debug--code .number {
-				color: var(--sd-code-number, var(--sd-vscode-code-number, #af77e9));
-			}
+		.super-debug--code .number {
+			color: var(--sd-code-number, var(--sd-vscode-code-number, #af77e9));
+		}
 
-			.super-debug--code .bigint {
-				color: var(--sd-code-bigint, var(--sd-vscode-code-bigint, #af77e9));
-			}
+		.super-debug--code .bigint {
+			color: var(--sd-code-bigint, var(--sd-vscode-code-bigint, #af77e9));
+		}
 
-			.super-debug--code .null {
-				color: var(--sd-code-null, var(--sd-vscode-code-null, #238afe));
-			}
+		.super-debug--code .null {
+			color: var(--sd-code-null, var(--sd-vscode-code-null, #238afe));
+		}
 
-			.super-debug--code .nan {
-				color: var(--sd-code-nan, var(--sd-vscode-code-nan, #af77e9));
-			}
+		.super-debug--code .nan {
+			color: var(--sd-code-nan, var(--sd-vscode-code-nan, #af77e9));
+		}
 
-			.super-debug--code .undefined {
-				color: var(--sd-code-undefined, var(--sd-vscode-code-undefined, #238afe));
-			}
+		.super-debug--code .undefined {
+			color: var(--sd-code-undefined, var(--sd-vscode-code-undefined, #238afe));
+		}
 
-			.super-debug--code .function {
-				color: var(--sd-code-function, var(--sd-vscode-code-function, #f06962));
-			}
+		.super-debug--code .function {
+			color: var(--sd-code-function, var(--sd-vscode-code-function, #f06962));
+		}
 
-			.super-debug--code .symbol {
-				color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
-			}
+		.super-debug--code .symbol {
+			color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
+		}
 
-			.super-debug--code .error {
-				color: var(--sd-code-error, var(--sd-vscode-code-error, #ff475d));
-			}
+		.super-debug--code .error {
+			color: var(--sd-code-error, var(--sd-vscode-code-error, #ff475d));
+		}
 
-			.super-debug pre::-webkit-scrollbar {
-				width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1rem));
-				height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1rem));
-			}
+		.super-debug pre::-webkit-scrollbar {
+			width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1rem));
+			height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1rem));
+		}
 
-			.super-debug pre::-webkit-scrollbar-track {
-				border-radius: 12px;
-				background-color: var(
-					--sd-sb-track-color,
-					var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
-				);
-			}
-			.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
-				border-radius: 12px;
-				background-color: var(
-					--sd-sb-track-color-focus,
-					var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
-				);
-			}
+		.super-debug pre::-webkit-scrollbar-track {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-track-color,
+				var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
+			);
+		}
+		.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-track-color-focus,
+				var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
+			);
+		}
 
-			.super-debug pre::-webkit-scrollbar-thumb {
-				border-radius: 12px;
-				background-color: var(
-					--sd-sb-thumb-color,
-					var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
-				);
-			}
-			.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
-				border-radius: 12px;
-				background-color: var(
-					--sd-sb-thumb-color-focus,
-					var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))
-				);
-			}
-		</style>
-		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-		{@const init = styleInit = true}
-	{/if}
-</svelte:head>
+		.super-debug pre::-webkit-scrollbar-thumb {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-thumb-color,
+				var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
+			);
+		}
+		.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-thumb-color-focus,
+				var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))
+			);
+		}
+	</style>
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{@const init = styleInit = true}
+{/if}
 
 <!-- eslint-disable svelte/no-at-html-tags -->
 {#if display}

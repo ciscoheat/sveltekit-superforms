@@ -52,7 +52,7 @@ type InferSchema<TResolver extends Resolver> = TResolver['base'];
 
 type ValidationIssue = {
 	message: string;
-	path?: Array<string | number | symbol | unknown>;
+	path?: Array<string | number | symbol>;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

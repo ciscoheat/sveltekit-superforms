@@ -1,4 +1,4 @@
-import { type, type Type } from 'arktype';
+import type { Type } from 'arktype';
 import {
 	type ValidationAdapter,
 	type RequiredDefaultsOptions,
@@ -11,10 +11,18 @@ import {
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
 
+async function modules() {
+	const { type } = await import(/* webpackIgnore: true */ 'arktype');
+	return { type };
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
+
 async function _validate<T extends Type>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
+	const { type } = await fetchModule();
 	const result = schema(data);
 	if (!(result instanceof type.errors)) {
 		return {

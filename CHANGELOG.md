@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Valibot updated to 0.31.0, which ends support for any version below that. Please follow the [migration guide](https://valibot.dev/guides/migrate-to-v0.31.0/) to update your Valibot schemas.
 
+### Fixed
+
+- Inlined the [SuperDebug](https://superforms.rocks/super-debug) css, to prevent it from being automatically bundled due to it being a default import.
+
 ## [2.14.0] - 2024-05-26
 
 ### Added

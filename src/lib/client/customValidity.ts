@@ -25,9 +25,14 @@ export function setCustomValidityForm(
 			continue;
 		}
 
-		const error = traversePath(errors, splitPath(el.name));
-		setCustomValidity(el, error?.value);
-		if (error?.value) return;
+		const path = traversePath(errors, splitPath(el.name));
+		const error =
+			path && typeof path.value === 'object' && '_errors' in path.value
+				? path.value._errors
+				: path?.value;
+
+		setCustomValidity(el, error);
+		if (error) return;
 	}
 }
 

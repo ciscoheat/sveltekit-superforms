@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Inlined the [SuperDebug](https://superforms.rocks/super-debug) css, to prevent it from being automatically bundled due to it being a default import.
+- The [customValidity](https://superforms.rocks/concepts/error-handling#customvalidity) option now handles object errors, and can refer to any part of the schema.
 
 ## [2.14.0] - 2024-05-26
 

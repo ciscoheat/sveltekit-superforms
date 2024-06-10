@@ -61,7 +61,8 @@
 		'reset-errors',
 		'schemasafe-types',
 		'discriminated-union',
-		'simple-tainted'
+		'simple-tainted',
+		'validity-objects'
 	].sort();
 </script>
 

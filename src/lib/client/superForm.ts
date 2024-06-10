@@ -778,7 +778,7 @@ export function superForm<
 		if (skipValidation || !event || !options.validators || options.validators == 'clear') {
 			if (event?.paths) {
 				const formElement = event?.formElement ?? EnhancedForm_get();
-				if (formElement) Form__clearCustomValidity(formElement, event.paths);
+				if (formElement) Form__clearCustomValidity(formElement);
 			}
 			return;
 		}
@@ -797,20 +797,14 @@ export function superForm<
 		return result;
 	}
 
-	function Form__clearCustomValidity(
-		formElement: HTMLFormElement,
-		paths: (string | number | symbol)[][]
-	) {
+	function Form__clearCustomValidity(formElement: HTMLFormElement) {
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
 		if (options.customValidity && formElement) {
-			for (const path of paths) {
-				const name = CSS.escape(mergePath(path));
-				const el = formElement.querySelector<HTMLElement>(`[name="${name}"]`);
-				if (el) {
-					const message = 'validationMessage' in el ? String(el.validationMessage) : '';
-					validity.set(path.join('.'), { el, message });
-					updateCustomValidity(el, undefined);
-				}
+			for (const el of formElement.querySelectorAll<HTMLElement & { name: string }>(`[name]`)) {
+				if (typeof el.name !== 'string' || !el.name.length) continue;
+				const message = 'validationMessage' in el ? String(el.validationMessage) : '';
+				validity.set(el.name, { el, message });
+				updateCustomValidity(el, undefined);
 			}
 		}
 		return validity;
@@ -828,7 +822,7 @@ export function superForm<
 		let validity = new Map<string, { el: HTMLElement; message: string }>();
 
 		const formElement = event.formElement ?? EnhancedForm_get();
-		if (formElement) validity = Form__clearCustomValidity(formElement, event.paths);
+		if (formElement) validity = Form__clearCustomValidity(formElement);
 
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
@@ -848,7 +842,7 @@ export function superForm<
 					const { el, message } = validity.get(joinedPath)!;
 
 					if (message != error.value) {
-						updateCustomValidity(el, error.value);
+						setTimeout(() => updateCustomValidity(el, error.value));
 						// Only need one error to display
 						validity.clear();
 					}

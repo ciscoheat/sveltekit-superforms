@@ -6,7 +6,7 @@
 
 	export let data;
 
-	const { form, errors, tainted, message, enhance } = superForm(data.form, {
+	const { form, message, enhance } = superForm(data.form, {
 		taintedMessage: false,
 		dataType: 'json',
 		customValidity: true,

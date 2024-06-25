@@ -49,8 +49,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4
       valibot:
-        specifier: ^0.31.0
-        version: 0.31.0
+        specifier: ^0.34.0
+        version: 0.34.0
       yup:
         specifier: ^1.4.0
         version: 1.4.0
@@ -1672,6 +1672,9 @@ packages:
   valibot@0.31.0:
     resolution: {integrity: sha512-bleS8aVFpRGTUgbMoXzsRJhpxJGiZ3MG1nuNSORuDvio+sI1EyT1+lQHg+77Pfnlxz+25Uj5HiwdaklcDcYdiQ==}
 
+  valibot@0.34.0:
+    resolution: {integrity: sha512-TELvxO0hEB1/6XjTS5Jfi4dS0oyawA5flxs4/sK/tSUXnlLMiKTMYE6Atuu0a7kvtP3eqPv3yZ80msfM+qMDHA==}
+
   validator@13.12.0:
     resolution: {integrity: sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg==}
     engines: {node: '>= 0.10'}
@@ -3280,6 +3283,9 @@ snapshots:
   uuid@9.0.1: {}
 
   valibot@0.31.0:
+    optional: true
+
+  valibot@0.34.0:
     optional: true
 
   validator@13.12.0:

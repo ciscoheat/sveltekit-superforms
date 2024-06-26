@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.15.2] - 2024-06-26
+
+### Changed
+
+- Valibot minimum dependency is now `>=0.33.0` to fix a type issue. Please follow the [migration guide](https://valibot.dev/guides/migrate-to-v0.31.0/) to update your Valibot schemas if your version is below v0.31.0.
+
 ## [2.15.1] - 2024-06-10
 
 ### Changed

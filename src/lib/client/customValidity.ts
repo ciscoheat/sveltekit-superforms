@@ -18,10 +18,8 @@ export function setCustomValidityForm(
 	formElement: HTMLFormElement,
 	errors: ValidationErrors<Record<string, unknown>>
 ) {
-	for (const el of formElement.querySelectorAll<
-		HTMLInputElement & HTMLSelectElement & HTMLTextAreaElement & HTMLButtonElement
-	>('input,select,textarea,button')) {
-		if (noCustomValidityDataAttribute in el.dataset) {
+	for (const el of formElement.querySelectorAll<HTMLInputElement>('input,select,textarea,button')) {
+		if (('dataset' in el && noCustomValidityDataAttribute in el.dataset) || !el.name) {
 			continue;
 		}
 

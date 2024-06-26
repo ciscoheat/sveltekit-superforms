@@ -277,6 +277,7 @@
 					return '#}#undefined';
 				}
 				if (typeof this === 'object' && this[key] instanceof Date) {
+					// @ts-expect-error Date checking works with isNaN
 					return '#}D#' + (isNaN(this[key]) ? 'Invalid Date' : value);
 				}
 				if (typeof value === 'number') {

@@ -113,10 +113,29 @@ describe('Mapping defaults to invalid data', () => {
 
 describe('The ValidationErrors type', () => {
 	it('should work as expected', () => {
-		const data = { name: '' };
-		const name = 'name' as keyof typeof data;
+		const schema = z.object({
+			name: z.string().min(1),
+			birthDate: z
+				.object({
+					year: z.number(),
+					month: z.number(),
+					day: z.number()
+				})
+				.refine(() => {
+					// Custom validation logic for the date
+					return false; // Assuming the validation fails
+				}, 'Invalid Date')
+		});
+
+		const data: z.infer<typeof schema> = { name: '', birthDate: { year: 0, month: 0, day: 0 } };
 		const errors: ValidationErrors<typeof data> = {};
-		const test: string[] = errors[name] ?? [];
-		expect(test).toEqual([]);
+
+		const birthErrors: string[] | undefined = errors.birthDate?._errors;
+		const name: string[] = errors['name'] ?? [];
+		const year: string[] | undefined = errors.birthDate?.year;
+
+		expect(name).toEqual([]);
+		expect(year).toBeUndefined();
+		expect(birthErrors).toBeUndefined();
 	});
 });

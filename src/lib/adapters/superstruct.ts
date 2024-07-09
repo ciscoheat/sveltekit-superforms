@@ -10,15 +10,10 @@ import {
 import type { Struct } from 'superstruct';
 import { memoize } from '$lib/memoize.js';
 
-// async function modules() {
-// 	const { validate } = await import(/* webpackIgnore: true */ 'superstruct');
-// 	return { validate };
-// }
-
-// const fetchModule = /* @__PURE__ */ memoize(modules);
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function validate<T extends Struct<any, any>>(
+type StructObject<T extends Record<string, unknown>> = Struct<T, any>;
+
+async function validate<T extends StructObject<Infer<T>>>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
@@ -39,8 +34,7 @@ async function validate<T extends Struct<any, any>>(
 	};
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function _superstruct<T extends Struct<any, any>>(
+function _superstruct<T extends StructObject<Infer<T>>>(
 	schema: T,
 	options: RequiredDefaultsOptions<Infer<T>>
 ): ValidationAdapter<Infer<T>> {
@@ -52,7 +46,9 @@ function _superstruct<T extends Struct<any, any>>(
 	});
 }
 
-function _superstructClient<T extends Struct>(schema: T): ClientValidationAdapter<Infer<T>> {
+function _superstructClient<T extends StructObject<Infer<T>>>(
+	schema: T
+): ClientValidationAdapter<Infer<T>> {
 	return {
 		superFormValidationLibrary: 'superstruct',
 		validate: async (data) => validate(schema, data)

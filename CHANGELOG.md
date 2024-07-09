@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Type inference for validation errors didn't include `_errors` for objects, only for arrays.
+- Type inference for validation errors didn't include `_errors` for all objects, only for arrays.
 
 ## [2.15.2] - 2024-06-26
 

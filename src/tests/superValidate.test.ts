@@ -761,7 +761,7 @@ describe('vine', () => {
 });
 
 describe('superstruct', () => {
-	const email = () => ssDefine('email', (value) => String(value).includes('@'));
+	const email = () => ssDefine<string>('email', (value) => String(value).includes('@'));
 
 	const schema = ssObject({
 		name: ssOptional(ssString()),

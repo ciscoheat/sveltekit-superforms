@@ -11,6 +11,7 @@ import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
+import type { Struct, Infer as Infer$2 } from 'superstruct';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -19,7 +20,6 @@ import type { Schema as Schema$1 } from '@effect/schema/Schema';
 import type { Any, OutputOf, TypeOf } from 'io-ts';
 import type { Predicate, Infer as Infer$1 } from 'ow';
 import type { Runtype, Static } from 'runtypes';
-import type { Struct, Infer as Infer$2 } from 'superstruct';
 */
 
 type Replace<T, From, To> =
@@ -133,6 +133,15 @@ interface SchemasafeResolver<Schema extends JSONSchema, Data = FromSchema<Schema
 	output: this['schema'] extends Schema ? Data : never;
 }
 
+interface SuperstructResolver extends Resolver {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	base: Struct<any, any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	input: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	output: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
+}
+
 /*
 interface AjvResolver extends Resolver {
 	base: SchemaObject;
@@ -166,10 +175,6 @@ interface RuntypesResolver extends Resolver {
     output: this['schema'] extends Runtype ? Static<this['schema']> : never;
 }
 
-interface SuperstructResolver extends Resolver {
-    base: Struct<any, any>;
-    output: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
-}
 */
 
 type Registry = {
@@ -182,6 +187,7 @@ type Registry = {
 	zod: ZodResolver;
 	vine: VineResolver;
 	schemasafe: SchemasafeResolver<JSONSchema>;
+	superstruct: SuperstructResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;
@@ -189,7 +195,6 @@ type Registry = {
     'io-ts': IoTsResolver;
     ow: OwResolver;
     runtypes: RuntypesResolver;
-    superstruct: SuperstructResolver;
     */
 };
 

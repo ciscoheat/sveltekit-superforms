@@ -47,6 +47,21 @@ import {
 import { vine } from '$lib/adapters/vine.js';
 import Vine from '@vinejs/vine';
 
+import { superstruct } from '$lib/adapters/superstruct.js';
+import {
+	object as ssObject,
+	string as ssString,
+	number as ssNumber,
+	array as ssArray,
+	date as ssDate,
+	optional as ssOptional,
+	define as ssDefine,
+	size as ssSize,
+	min as ssMin,
+	pattern as ssPattern,
+	nullable as ssNullable
+} from 'superstruct';
+
 import { schemasafe } from '$lib/adapters/schemasafe.js';
 
 import { traversePath } from '$lib/traversal.js';
@@ -743,6 +758,24 @@ describe('vine', () => {
 	});
 
 	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', 'stringToDate');
+});
+
+describe('superstruct', () => {
+	const email = () => ssDefine('email', (value) => String(value).includes('@'));
+
+	const schema = ssObject({
+		name: ssOptional(ssString()),
+		email: email(),
+		tags: ssSize(ssArray(ssSize(ssString(), 2, Infinity)), 3, Infinity),
+		score: ssMin(ssNumber(), 0),
+		date: ssOptional(ssDate()),
+		nospace: ssOptional(ssPattern(ssString(), nospacePattern)),
+		extra: ssNullable(ssString())
+	});
+
+	const adapter = superstruct(schema, { defaults });
+
+	schemaTest(adapter, undefined, 'simple');
 });
 
 ///// Common ////////////////////////////////////////////////////////

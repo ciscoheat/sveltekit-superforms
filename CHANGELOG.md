@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New validation library: [Superstruct](https://docs.superstructjs.org/)!
+
 ### Fixed
 
 - Type inference for validation errors didn't include `_errors` for objects, only for arrays.

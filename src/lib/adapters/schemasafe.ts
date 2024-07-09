@@ -5,15 +5,16 @@ import {
 	type ClientValidationAdapter,
 	type ValidationAdapter
 } from './adapters.js';
-import {
-	validator,
-	type Json,
-	type Schema,
-	type Validate,
-	type ValidatorOptions
-} from '@exodus/schemasafe';
+import type { Json, Schema, Validate, ValidatorOptions } from '@exodus/schemasafe';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { JSONSchema as JSONSchema7 } from '$lib/jsonSchema/index.js';
+
+async function modules() {
+	const { validator } = await import(/* webpackIgnore: true */ '@exodus/schemasafe');
+	return { validator };
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
 
 /*
  * Adapter specificts:
@@ -33,7 +34,9 @@ const defaultOptions = {
 	allErrors: true
 };
 
-function cachedValidator(currentSchema: JSONSchema7, config?: ValidatorOptions) {
+async function cachedValidator(currentSchema: JSONSchema7, config?: ValidatorOptions) {
+	const { validator } = await fetchModule();
+
 	if (!cache.has(currentSchema)) {
 		cache.set(
 			currentSchema,
@@ -60,7 +63,7 @@ function _schemasafe<
 		jsonSchema: schema as JSONSchema7,
 		defaults: options?.defaults,
 		async validate(data: unknown) {
-			const validator = cachedValidator(schema as JSONSchema7, options?.config);
+			const validator = await cachedValidator(schema as JSONSchema7, options?.config);
 			const isValid = validator(data as Json);
 
 			if (isValid) {
@@ -91,7 +94,7 @@ function _schemasafeClient<
 	return {
 		superFormValidationLibrary: 'schemasafe',
 		async validate(data: unknown) {
-			const validator = cachedValidator(schema as JSONSchema7, options?.config);
+			const validator = await cachedValidator(schema as JSONSchema7, options?.config);
 			const isValid = validator(data as Json);
 
 			if (isValid) {

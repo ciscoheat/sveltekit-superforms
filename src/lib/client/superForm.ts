@@ -25,7 +25,7 @@ import {
 import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
 import { SuperFormError, flattenErrors, mapErrors, updateErrors } from '$lib/errors.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
-import { applyAction, enhance as kitEnhance } from '$app/forms';
+import { applyAction, deserialize, enhance as kitEnhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
 import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
@@ -105,6 +105,13 @@ export type FormOptions<
 			 * Override client validation temporarily for this form submission.
 			 */
 			validators: (validators: Exclude<ValidatorsOption<T>, 'clear'>) => void;
+			/**
+			 * Use a custom fetch or XMLHttpRequest implementation for this form submission. It must return an ActionResult in the response body.
+			 * If the request is using a XMLHttprequest, the promise must be resolved when the request is complete.
+			 */
+			customRequest: (
+				validators: (input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest>
+			) => void;
 		}
 	) => MaybePromise<unknown | void>;
 	onResult: (event: {
@@ -1588,10 +1595,14 @@ export function superForm<
 		);
 
 		let currentRequest: AbortController | null;
+		let customRequest:
+			| ((input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest>)
+			| undefined = undefined;
 
 		return kitEnhance(FormElement, async (submitParams) => {
 			let jsonData: Record<string, unknown> | undefined = undefined;
 			let validationAdapter = options.validators;
+			undefined;
 
 			const submit = {
 				...submitParams,
@@ -1603,8 +1614,11 @@ export function superForm<
 				},
 				validators(adapter: Exclude<ValidatorsOption<T>, 'clear'>) {
 					validationAdapter = adapter;
+				},
+				customRequest(request: typeof customRequest) {
+					customRequest = request;
 				}
-			};
+			} satisfies Parameters<NonNullable<FormOptions<T, M>['onSubmit']>>[0];
 
 			const _submitCancel = submit.cancel;
 			let cancelled = false;
@@ -1957,6 +1971,18 @@ export function superForm<
 				}
 
 				unsubCheckforNav();
+			}
+
+			if (customRequest) {
+				if (!cancelled) _submitCancel();
+				const response = await customRequest(submitParams);
+				const result: ActionResult =
+					response instanceof Response
+						? deserialize(await response.text())
+						: deserialize(response.responseText);
+
+				if (result.type === 'error') result.status = response.status;
+				validationResponse({ result });
 			}
 
 			return validationResponse;

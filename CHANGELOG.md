@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New validation library: [Superstruct](https://docs.superstructjs.org/)!
+- `customRequest` added to the [onSubmit](https://superforms.rocks/concepts/events#onsubmit) options, that lets you use a custom [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) or [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) when submitting the form. Very useful for progress bars when uploading large files.
 
 ### Fixed
 

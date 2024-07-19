@@ -18,6 +18,9 @@ export const actions = {
 
 		if (!form.valid) return fail(400, removeFiles({ form }));
 
-		return message(form, 'Posted OK!');
+		return message(
+			form,
+			(form.data.image?.name ?? 'NoImage') + '-' + form.data.images.map((i) => i.name).join('#')
+		);
 	}
 };

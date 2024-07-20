@@ -20,7 +20,7 @@
 
 # Feature list
 
-- Server- and client-side validation with your favorite validation libraries, and more to come: 💥 **Arktype** 💥 **Joi** 💥 **TypeBox** 💥 **Valibot** 💥 **VineJS** 💥 **Yup** 💥 **Zod** 💥
+- Server- and client-side validation with your favorite validation libraries, and more to come: 💥 **Arktype** 💥 **Joi** 💥 **Superstruct** 💥 **TypeBox** 💥 **Valibot** 💥 **VineJS** 💥 **Yup** 💥 **Zod** 💥 or use **JSON Schema** directly.
 - Seamless merging of `PageData` and `ActionData` - Forget about which one to use and how, just focus on your form data.
 - [Auto-centering and focusing](https://superforms.rocks/concepts/error-handling#usage-client) on invalid form fields.
 - [Tainted form detection](https://superforms.rocks/concepts/tainted), prevents the user from losing data if navigating away from an unsaved form. Or use [snapshots](https://superforms.rocks/concepts/snapshots) to save the form state.

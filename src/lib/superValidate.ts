@@ -2,7 +2,7 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail as kitFail, type RequestEvent } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
-import type { ErrorStatus } from './utils.js';
+import type { DeepPartial, ErrorStatus } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
@@ -47,7 +47,7 @@ type SuperValidateData<In extends Record<string, unknown>> =
 	| FormData
 	| URLSearchParams
 	| URL
-	| Partial<In>
+	| DeepPartial<In>
 	| null
 	| undefined;
 
@@ -116,7 +116,7 @@ export async function superValidate<
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
 
 	// Merge with defaults in non-strict mode.
-	const parsedData = options?.strict ? parsed.data ?? {} : mergeDefaults(parsed.data, defaults);
+	const parsedData = options?.strict ? (parsed.data ?? {}) : mergeDefaults(parsed.data, defaults);
 
 	let status: ValidationResult<Out>;
 

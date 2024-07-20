@@ -1628,9 +1628,9 @@ export function superForm<
 
 				const status = validationResult.valid
 					? 200
-					: (typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
+					: ((typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
 							? undefined
-							: options.SPA?.failStatus) ?? 400;
+							: options.SPA?.failStatus) ?? 400);
 
 				const data = { form: validationResult };
 

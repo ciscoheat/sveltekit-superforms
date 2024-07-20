@@ -11,6 +11,13 @@
 	export let form: SuperForm<T>;
 	// eslint-disable-next-line svelte/valid-compile
 	export let name: U;
+
+	///// Preventing warnings /////
+	$: form2 = form;
+	$: name2 = name;
+	form2;
+	name2;
+	///////////////////////////////
 </script>
 
 <!--

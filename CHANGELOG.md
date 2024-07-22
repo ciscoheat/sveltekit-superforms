@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- `descriptionAsErrors` option for the JSON Schema validator, so you can specify error messages directly in the schema with the `description` field.
+
 ## [2.16.1] - 2024-07-18
 
 ### Changed

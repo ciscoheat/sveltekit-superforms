@@ -8,6 +8,7 @@ import {
 import type { Json, Schema, Validate, ValidatorOptions } from '@exodus/schemasafe';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { JSONSchema as JSONSchema7 } from '$lib/jsonSchema/index.js';
+import { pathExists } from '$lib/traversal.js';
 
 async function modules() {
 	const { validator } = await import(/* webpackIgnore: true */ '@exodus/schemasafe');
@@ -56,7 +57,7 @@ function _schemasafe<
 	Out = [Data] extends [never] ? Record<string, unknown> : Data
 >(
 	schema: T,
-	options?: AdapterOptions<Out> & { config?: ValidatorOptions }
+	options?: AdapterOptions<Out> & { descriptionAsErrors?: boolean; config?: ValidatorOptions }
 ): ValidationAdapter<Out> {
 	return createAdapter({
 		superFormValidationLibrary: 'schemasafe',
@@ -74,7 +75,9 @@ function _schemasafe<
 			}
 			return {
 				issues: (validator.errors ?? []).map(({ instanceLocation, keywordLocation }) => ({
-					message: keywordLocation,
+					message: options?.descriptionAsErrors
+						? errorDescription(schema as Record<string, unknown>, keywordLocation)
+						: keywordLocation,
 					path: instanceLocation.split('/').slice(1)
 				})),
 				success: false
@@ -118,3 +121,10 @@ export const schemasafe = /* @__PURE__ */ memoize(_schemasafe);
 export const schemasafeClient = /* @__PURE__ */ memoize(_schemasafeClient);
 
 const cache = new WeakMap<JSONSchema7, Validate>();
+
+function errorDescription(schema: Record<string, unknown>, keywordLocation: string) {
+	if (!keywordLocation.startsWith('#/')) return keywordLocation;
+	const searchPath = keywordLocation.slice(2).split('/');
+	const path = pathExists(schema, searchPath);
+	return path?.parent.description ?? keywordLocation;
+}

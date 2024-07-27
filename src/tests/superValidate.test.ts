@@ -402,7 +402,30 @@ describe('Valibot', () => {
 			)
 		});
 
+		const photoSchema = v.object({
+			photo: v.pipe(
+				v.file('Please select an image file.'),
+				v.mimeType(
+					['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+					'Please select a JPEG, PNG, WEBP, or GIF file.'
+				),
+				v.maxSize(1024 * 1024 * 10, 'Please select a file smaller than 10MB.')
+			)
+		});
+
 		expect(() => valibot(schema)).not.toThrow();
+		expect(() => valibot(photoSchema)).not.toThrow();
+
+		expect(() =>
+			valibot(schema, {
+				customSchemaConversion: {
+					custom: () => ({}),
+					instance: () => ({}),
+					file: () => ({}),
+					blob: () => ({})
+				}
+			})
+		).not.toThrow();
 	});
 
 	/*

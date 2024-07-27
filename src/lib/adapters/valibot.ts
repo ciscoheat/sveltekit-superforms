@@ -29,7 +29,12 @@ const defaultOptions = {
 	strictObjectTypes: true,
 	dateStrategy: 'integer' as const,
 	ignoreUnknownValidation: true,
-	customSchemaConversion: { custom: () => ({}), instance: () => ({}) }
+	customSchemaConversion: {
+		custom: () => ({}),
+		instance: () => ({}),
+		file: () => ({}),
+		blob: () => ({})
+	}
 } satisfies ToJSONSchemaOptions;
 
 /* @__NO_SIDE_EFFECTS__ */

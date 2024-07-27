@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `descriptionAsErrors` option for the JSON Schema validator, so you can specify error messages directly in the schema with the `description` field.
 
+### Fixed
+
+- File uploads required extra configuration for the valibot adapter, now it works directly.
+
 ## [2.16.1] - 2024-07-18
 
 ### Changed

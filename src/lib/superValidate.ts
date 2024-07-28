@@ -47,6 +47,7 @@ type SuperValidateData<In extends Record<string, unknown>> =
 	| FormData
 	| URLSearchParams
 	| URL
+	| Partial<In>
 	| DeepPartial<In>
 	| null
 	| undefined;

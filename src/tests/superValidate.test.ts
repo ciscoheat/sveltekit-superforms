@@ -981,6 +981,22 @@ function schemaTest(
 			expect(output.message).toBeUndefined();
 			expectConstraints(output.constraints);
 		});
+
+		it('should handle deep partial data', async () => {
+			const schema = z.object({
+				name: z.string(),
+				account: z.object({
+					id: z.number().int().positive(),
+					comment: z.string()
+				})
+			});
+
+			const form = await superValidate(
+				{ name: 'Test', account: { comment: 'Comment' } },
+				zod(schema)
+			);
+			expect(form.data.account.id).toBe(0);
+		});
 	});
 }
 

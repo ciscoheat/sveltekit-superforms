@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>">
-	import type { FormPathLeaves } from 'sveltekit-superforms';
+	import type { FormPathLeaves } from '$lib/index.js';
 	export let name: FormPathLeaves<T>;
 </script>
 

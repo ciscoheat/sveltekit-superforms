@@ -1,5 +1,5 @@
-import { superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { superValidate } from '$lib/superValidate.js';
+import { zod } from '$lib/adapters/zod.js';
 import { schema } from './schema.js';
 
 export const load = async () => {

@@ -3,11 +3,11 @@ import type { JSONSchema } from './jsonSchema/index.js';
 import justClone from 'just-clone';
 import { SchemaError } from './errors.js';
 
-export type DeepPartial<T> = T extends object
-	? {
-			[P in keyof T]?: DeepPartial<T[P]>;
-		}
-	: T;
+// export type DeepPartial<T> = T extends object
+// 	? {
+// 			[P in keyof T]?: DeepPartial<T[P]>;
+// 		}
+// 	: T;
 
 // Thanks to: https://dev.to/tylim88/typescript-numeric-range-type-15a5#comment-22mld
 export type NumericRange<

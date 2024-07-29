@@ -31,7 +31,7 @@ import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
-import type { DeepPartial as RealDeepPartial, MaybePromise } from '$lib/utils.js';
+import type { MaybePromise } from '$lib/utils.js';
 import type {
 	ClientValidationAdapter,
 	ValidationAdapter,
@@ -40,8 +40,6 @@ import type {
 import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { fieldProxy, type ProxyOptions } from './proxies.js';
 import { shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
-
-type DeepPartial<T> = Partial<T> | RealDeepPartial<T>;
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -70,7 +68,7 @@ export type FormResult<T extends Record<string, unknown> | null | undefined> = F
 export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
 
 type ValidatorsOption<T extends Record<string, unknown>> =
-	| ValidationAdapter<DeepPartial<T>, Record<string, unknown>>
+	| ValidationAdapter<Partial<T>, Record<string, unknown>>
 	| false
 	| 'clear';
 
@@ -150,9 +148,7 @@ export type FormOptions<
 	dataType: 'form' | 'json';
 	jsonChunkSize: number;
 	// TODO: Use NoInfer<T> on ClientValidationAdapter when available, so T can be used instead of Partial<T>
-	validators:
-		| ClientValidationAdapter<DeepPartial<T>, Record<string, unknown>>
-		| ValidatorsOption<T>;
+	validators: ClientValidationAdapter<Partial<T>, Record<string, unknown>> | ValidatorsOption<T>;
 	validationMethod: 'auto' | 'oninput' | 'onblur' | 'onsubmit' | 'submit-only';
 	customValidity: boolean;
 	clearOnSubmit: 'errors' | 'message' | 'errors-and-message' | 'none';
@@ -210,8 +206,8 @@ type SuperFormErrors<T extends Record<string, unknown>> = {
 
 type ResetOptions<T extends Record<string, unknown>> = {
 	keepMessage?: boolean;
-	data?: DeepPartial<T>;
-	newState?: DeepPartial<T>;
+	data?: Partial<T>;
+	newState?: Partial<T>;
 	id?: string;
 };
 
@@ -258,7 +254,7 @@ export type SuperForm<
 	restore: T extends T ? Restore<T, M> : never;
 
 	validate: <
-		Out extends DeepPartial<T> = T,
+		Out extends Partial<T> = T,
 		Path extends FormPathLeaves<T> = FormPathLeaves<T>,
 		In extends Record<string, unknown> = Record<string, unknown>
 	>(
@@ -267,7 +263,7 @@ export type SuperForm<
 	) => Promise<string[] | undefined>;
 
 	validateForm: <
-		Out extends DeepPartial<T> = T,
+		Out extends Partial<T> = T,
 		In extends Record<string, unknown> = Record<string, unknown>
 	>(opts?: {
 		update?: boolean;
@@ -669,7 +665,7 @@ export function superForm<
 		const dataToValidate = opts.formData ?? Data.form;
 
 		let errors: ValidationErrors<T> = {};
-		let status: ValidationResult<DeepPartial<T>>;
+		let status: ValidationResult<Partial<T>>;
 		const validator = opts.adapter ?? options.validators;
 
 		if (typeof validator == 'object') {
@@ -762,7 +758,7 @@ export function superForm<
 	async function Form_clientValidation(
 		event: FullChangeEvent | null,
 		force = false,
-		adapter?: ValidationAdapter<DeepPartial<T>>
+		adapter?: ValidationAdapter<Partial<T>>
 	) {
 		if (event) {
 			if (options.validators == 'clear') {
@@ -2107,7 +2103,7 @@ export function superForm<
 			return error?.value;
 		},
 
-		async validateForm<P extends DeepPartial<T> = T>(
+		async validateForm<P extends Partial<T> = T>(
 			opts: {
 				update?: boolean;
 				schema?: ValidationAdapter<P>;
@@ -2124,7 +2120,7 @@ export function superForm<
 				? await Form_clientValidation(
 						{ paths: [] },
 						true,
-						opts.schema as ValidationAdapter<DeepPartial<T>> | undefined
+						opts.schema as ValidationAdapter<Partial<T>> | undefined
 					)
 				: Form_validate({ adapter: opts.schema });
 

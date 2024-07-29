@@ -119,13 +119,13 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	// Objects
 	if (info.properties) {
-		for (const [key, value] of Object.entries(info.properties)) {
-			assertSchema(value, [...path, key]);
+		for (const [key, objSchema] of Object.entries(info.properties)) {
+			assertSchema(objSchema, [...path, key]);
 
 			const def =
 				objectDefaults && objectDefaults[key] !== undefined
 					? objectDefaults[key]
-					: _defaultValues(value, !info.required?.includes(key), [...path, key]);
+					: _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
 
 			//if (def !== undefined) output[key] = def;
 			output[key] = def;
@@ -134,6 +134,14 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	} else if (objectDefaults) {
 		return objectDefaults;
 	}
+
+	// TODO: [v3] Handle default values for array elements
+	// if (info.array && info.array.length) {
+	// 	console.log('===== Array default =====');
+	// 	console.dir(info.array, { depth: 10 }); //debug
+	// 	//if (info.array.length > 1) throw new SchemaError('Only one array type is supported.', path);
+	// 	console.dir(_defaultValues(info.array[0], info.isOptional, path), { depth: 10 }); //debug
+	// }
 
 	// Enums, return the first value so it can be a required field
 	if (schema.enum) {

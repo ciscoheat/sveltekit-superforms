@@ -2,7 +2,7 @@ import { traversePath } from './traversal.js';
 import { type ActionFailure, fail as kitFail, type RequestEvent } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
-import type { DeepPartial, ErrorStatus } from './utils.js';
+import type { ErrorStatus } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
@@ -48,7 +48,6 @@ type SuperValidateData<In extends Record<string, unknown>> =
 	| URLSearchParams
 	| URL
 	| Partial<In>
-	| DeepPartial<In>
 	| null
 	| undefined;
 

@@ -45,7 +45,15 @@ export type FormPathLeavesWithErrors<T extends object, Type = any> = string &
  * List all arrays in an object as string accessors.
  */
 export type FormPathArrays<T extends object, Type = any> = string &
-	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
+	StringPath<
+		T,
+		{
+			filter: 'arrays';
+			objAppend: never;
+			path: '';
+			type: Type extends Array<any> ? Type : Array<Type>;
+		}
+	>;
 
 type Concat<
 	Path extends string,
@@ -83,95 +91,95 @@ type StringPath<
 		type: never;
 	}
 > = T extends (infer U)[]
-		?
-				| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>, never, T>
-				| If<Options, 'filter', 'arrays' | 'all', Options['path'], never, T>
-				| (NonNullable<U> extends DictOrArray
-						? StringPath<
-								NonNullable<U>,
-								{
-									filter: Options['filter'];
-									objAppend: Options['objAppend'];
-									path: `${Options['path']}[${number}]`;
-									type: Options['type'];
-								}
-							>
-						: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`, never, T>)
-		: {
-				[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends DictOrArray
+	?
+			| If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>, never, T>
+			| If<Options, 'filter', 'arrays' | 'all', Options['path'], never, T>
+			| (NonNullable<U> extends DictOrArray
+					? StringPath<
+							NonNullable<U>,
+							{
+								filter: Options['filter'];
+								objAppend: Options['objAppend'];
+								path: `${Options['path']}[${number}]`;
+								type: Options['type'];
+							}
+						>
+					: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`, never, T>)
+	: {
+			[K in Extract<AllKeys<T>, string>]: NonNullable<T[K]> extends DictOrArray
+				?
+						| If<
+								Options,
+								'objAppend',
+								string,
+								Concat<Options['path'], Options['objAppend']>,
+								never,
+								T[K]
+						  >
+						| NonNullable<T[K]> extends (infer U)[]
 					?
-							| If<
-									Options,
-									'objAppend',
-									string,
-									Concat<Options['path'], Options['objAppend']>,
-									never,
-									T[K]
-							  >
-							| NonNullable<T[K]> extends (infer U)[]
-						?
-								| If<Options, 'filter', 'arrays' | 'all', Concat<Options['path'], K>, never, T[K]>
-								| (NonNullable<U> extends unknown[]
-										? If<
-												Options,
-												'filter',
-												'arrays' | 'all',
-												Concat<Options['path'], `${K}[${number}]`>,
-												never,
-												T[K]
-											>
-										: NonNullable<U> extends DictOrArray
-											? IsAny<T[K]> extends true
-												? Concat<Options['path'], `${K}[${number}]`>
-												: If<
-														Options,
-														'filter',
-														'all',
-														Concat<Options['path'], `${K}[${number}]`>,
-														never,
-														U
-													>
+							| If<Options, 'filter', 'arrays' | 'all', Concat<Options['path'], K>, never, T[K]>
+							| (NonNullable<U> extends unknown[]
+									? If<
+											Options,
+											'filter',
+											'arrays' | 'all',
+											Concat<Options['path'], `${K}[${number}]`>,
+											never,
+											T[K]
+										>
+									: NonNullable<U> extends DictOrArray
+										? IsAny<T[K]> extends true
+											? Concat<Options['path'], `${K}[${number}]`>
 											: If<
 													Options,
 													'filter',
-													'leaves' | 'all',
+													'all',
 													Concat<Options['path'], `${K}[${number}]`>,
 													never,
 													U
-												>)
-								| (NonNullable<U> extends DictOrArray
-										? StringPath<
-												NonNullable<U>,
-												{
-													filter: Options['filter'];
-													objAppend: Options['objAppend'];
-													path: Concat<Options['path'], `${K}[${number}]`>;
-													type: Options['type'];
-												}
-											>
-										: never)
-						: IsAny<T[K]> extends true
-							? Concat<Options['path'], K>
-							:
-									| If<
-											Options,
-											'filter',
-											'all',
-											Concat<Options['path'], K>,
-											unknown extends T[K] ? Concat<Options['path'], K> : never,
-											T[K]
-									  >
-									| StringPath<
-											NonNullable<T[K]>,
+												>
+										: If<
+												Options,
+												'filter',
+												'leaves' | 'all',
+												Concat<Options['path'], `${K}[${number}]`>,
+												never,
+												U
+											>)
+							| (NonNullable<U> extends DictOrArray
+									? StringPath<
+											NonNullable<U>,
 											{
 												filter: Options['filter'];
 												objAppend: Options['objAppend'];
-												path: Concat<Options['path'], K>;
+												path: Concat<Options['path'], `${K}[${number}]`>;
 												type: Options['type'];
 											}
-									  >
-					: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>, never, T[K]>;
-			}[Extract<AllKeys<T>, string>];
+										>
+									: never)
+					: IsAny<T[K]> extends true
+						? Concat<Options['path'], K>
+						:
+								| If<
+										Options,
+										'filter',
+										'all',
+										Concat<Options['path'], K>,
+										unknown extends T[K] ? Concat<Options['path'], K> : never,
+										T[K]
+								  >
+								| StringPath<
+										NonNullable<T[K]>,
+										{
+											filter: Options['filter'];
+											objAppend: Options['objAppend'];
+											path: Concat<Options['path'], K>;
+											type: Options['type'];
+										}
+								  >
+				: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>, never, T[K]>;
+		}[Extract<AllKeys<T>, string>];
 
 export type FormPathType<T, P extends string> = P extends keyof T
 	? T[P]

@@ -4,7 +4,7 @@ import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
 export const load = async () => {
-	const form = await superValidate(zod(schema));
+	const form = await superValidate({ message: { en: 'Hi', sv: 'Hej' } }, zod(schema));
 	return { form };
 };
 

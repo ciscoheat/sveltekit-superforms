@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import RecordField from './RecordField.svelte';
+	import Record from './Record.svelte';
+	//import RecordField from './RecordField.svelte';
 
 	export let data;
 
@@ -17,8 +18,9 @@
 {#if $message}<h4>{$message}</h4>{/if}
 
 <form method="POST" use:enhance>
-	<RecordField field="message.name" form={superform} />
-	<RecordField field="message.id" form={superform} />
+	<Record form={superform} field="message" />
+	<!-- <RecordField field="message" form={superform} />
+	<RecordField field="message" form={superform} /> -->
 	<div>
 		<button>Submit</button>
 	</div>

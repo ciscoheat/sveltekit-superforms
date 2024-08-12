@@ -29,6 +29,9 @@ export type SuperValidated<
 > = {
 	id: string;
 	valid: boolean;
+	/**
+	 * @deprecated posted is inconsistent between server and client validation, and SPA mode. Will be removed in v3. Use a status message or return your own data in the form action to handle form post status.
+	 */
 	posted: boolean;
 	errors: ValidationErrors<Out>;
 	data: Out;

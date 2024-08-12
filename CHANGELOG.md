@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Deprecated
+
+- `posted` is deprecated, due to inconsistencies between server and client validation, and SPA mode. It will be removed in v3. Use a [status message](https://superforms.rocks/concepts/messages) or return your own data in the form action to handle form post status.
+
 ### Added
 
 - `descriptionAsErrors` option for the JSON Schema validator, so you can specify error messages directly in the schema with the `description` field.

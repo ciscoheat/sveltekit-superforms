@@ -239,6 +239,9 @@ export type SuperForm<
 	submitting: Readable<boolean>;
 	delayed: Readable<boolean>;
 	timeout: Readable<boolean>;
+	/**
+	 * @deprecated posted is inconsistent between server and client validation, and SPA mode. Will be removed in v3. Use a status message or return your own data in the form action to handle form post status.
+	 */
 	posted: Readable<boolean>;
 
 	allErrors: Readable<{ path: string; messages: string[] }[]>;

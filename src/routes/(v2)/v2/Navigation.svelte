@@ -62,7 +62,8 @@
 		'schemasafe-types',
 		'discriminated-union',
 		'simple-tainted',
-		'validity-objects'
+		'validity-objects',
+		'issue-466'
 	].sort();
 </script>
 

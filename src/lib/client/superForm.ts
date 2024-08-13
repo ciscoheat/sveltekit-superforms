@@ -1602,7 +1602,7 @@ export function superForm<
 			| ((input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest>)
 			| undefined = undefined;
 
-		return kitEnhance(FormElement, async (submitParams) => {
+		const enhanced = kitEnhance(FormElement, async (submitParams) => {
 			let jsonData: Record<string, unknown> | undefined = undefined;
 			let validationAdapter = options.validators;
 			undefined;
@@ -1990,6 +1990,18 @@ export function superForm<
 
 			return validationResponse;
 		});
+
+		return {
+			destroy: () => {
+				// Remove only events added in enhance
+				for (const [name, events] of Object.entries(formEvents)) {
+					// @ts-expect-error formEvents and options have the same keys
+					formEvents[name] = events.filter((e) => e === options[name]);
+				}
+
+				enhanced.destroy();
+			}
+		};
 	}
 
 	function removeFiles(formData: T) {

@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { registerSchema } from './schema.js';
 
-	import SuperForm from './Form.svelte';
+	import Form from './Form.svelte';
 	import TextField from './TextField.svelte';
 	import { zod } from '$lib/adapters/zod.js';
+	import type { Infer, SuperForm } from '$lib/index.js';
 
 	let visible = $state(true);
 	let { data } = $props();
@@ -16,7 +17,7 @@
 
 <button onclick={() => (visible = !visible)}>Toggle</button>
 
-{#snippet msg(message)}
+{#snippet msg(message: { status: number; text: string })}
 	{#if message}
 		<div
 			class="status"
@@ -28,7 +29,7 @@
 	{/if}
 {/snippet}
 
-{#snippet fields(form)}
+{#snippet fields(form: SuperForm<Infer<typeof registerSchema>>)}
 	<TextField type="text" {form} field="name" label="Name" />
 	<TextField type="text" {form} field="email" label="E-Mail" />
 	<p>
@@ -38,14 +39,14 @@
 
 {#if visible}
 	<!-- SuperForm with dataType 'form' -->
-	<SuperForm
+	<Form
 		action="?/register"
 		schema={zod(registerSchema)}
 		data={data.regForm}
 		invalidateAll={false}
 		{msg}
 		{fields}
-	></SuperForm>
+	></Form>
 {/if}
 
 <style>

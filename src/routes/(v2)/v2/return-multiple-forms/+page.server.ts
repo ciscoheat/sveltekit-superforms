@@ -7,9 +7,6 @@ import { schema, other } from './schema.js';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(zod(schema));
-
-	// this does work
-	// const otherForm = await superValidate({provider: "some provider"}, zod(other));
 	const otherForm = await superValidate(zod(other));
 
 	return { form, otherForm };

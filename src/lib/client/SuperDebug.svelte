@@ -205,7 +205,7 @@
 
 			data = { collapsed: data && data.collapsed ? data.collapsed : {} };
 
-			data.collapsed[route] = status === undefined ? data.collapsed[route] ?? collapsed : status;
+			data.collapsed[route] = status === undefined ? (data.collapsed[route] ?? collapsed) : status;
 		} catch {
 			data = {
 				collapsed: {

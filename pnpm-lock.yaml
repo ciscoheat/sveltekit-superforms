@@ -106,6 +106,9 @@ importers:
       eslint-plugin-svelte:
         specifier: 2.36.0-next.13
         version: 2.36.0-next.13(eslint@8.57.0)(svelte@5.0.0-next.216)
+      i18next:
+        specifier: ^23.12.3
+        version: 23.12.3
       only-allow:
         specifier: ^1.2.1
         version: 1.2.1
@@ -154,6 +157,9 @@ importers:
       vitest:
         specifier: ^1.6.0
         version: 1.6.0(@types/node@20.14.15)(sass@1.77.8)
+      zod-i18n-map:
+        specifier: ^2.27.0
+        version: 2.27.0(i18next@23.12.3)(zod@3.23.8)
 
 packages:
 
@@ -1171,6 +1177,9 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==}
     engines: {node: '>=16.17.0'}
 
+  i18next@23.12.3:
+    resolution: {integrity: sha512-DyigQmrR10V9U2N6pjhbfahW13GY7n8BQD9swN09JuRRropgsksWVi4vRLeex0Qf7zCPnBfIqQfhcBzdZBQBYw==}
+
   ignore-walk@5.0.1:
     resolution: {integrity: sha512-yemi4pMf51WKT7khInJqAvsIGzoqYXblnsz0ql8tM+yi1EKYTY1evX4NAbJrLL/Aanr2HyZeluqU+Oi7MGHokw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
@@ -1948,6 +1957,12 @@ packages:
   zimmerframe@1.1.2:
     resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
 
+  zod-i18n-map@2.27.0:
+    resolution: {integrity: sha512-ORu9XpiVh3WDiEUs5Cr9siGgnpeODoBsTIgSD8sQCH9B//f9KowlzqHUEdPYb3vFonaSH8yPvPCOFM4niwp3Sg==}
+    peerDependencies:
+      i18next: '>=21.3.0'
+      zod: '>=3.17.0'
+
   zod-to-json-schema@3.23.2:
     resolution: {integrity: sha512-uSt90Gzc/tUfyNqxnjlfBs8W6WSGpNBv0rVsNxP/BVSMHMKGdthPYff4xtCHYloJGM0CFxFsb3NbC0eqPhfImw==}
     peerDependencies:
@@ -1974,7 +1989,6 @@ snapshots:
   '@babel/runtime@7.25.0':
     dependencies:
       regenerator-runtime: 0.14.1
-    optional: true
 
   '@esbuild/aix-ppc64@0.21.5':
     optional: true
@@ -2949,6 +2963,10 @@ snapshots:
 
   human-signals@5.0.0: {}
 
+  i18next@23.12.3:
+    dependencies:
+      '@babel/runtime': 7.25.0
+
   ignore-walk@5.0.1:
     dependencies:
       minimatch: 5.1.6
@@ -3267,8 +3285,7 @@ snapshots:
     dependencies:
       picomatch: 2.3.1
 
-  regenerator-runtime@0.14.1:
-    optional: true
+  regenerator-runtime@0.14.1: {}
 
   resolve-from@4.0.0: {}
 
@@ -3653,10 +3670,14 @@ snapshots:
 
   zimmerframe@1.1.2: {}
 
+  zod-i18n-map@2.27.0(i18next@23.12.3)(zod@3.23.8):
+    dependencies:
+      i18next: 23.12.3
+      zod: 3.23.8
+
   zod-to-json-schema@3.23.2(zod@3.23.8):
     dependencies:
       zod: 3.23.8
     optional: true
 
-  zod@3.23.8:
-    optional: true
+  zod@3.23.8: {}

@@ -165,9 +165,9 @@
 		"ts-deepmerge": "^7.0.1"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^3.2.3",
-		"@sveltejs/kit": "^2.5.21",
-		"@sveltejs/package": "^2.3.3",
+		"@sveltejs/adapter-auto": "^3.2.4",
+		"@sveltejs/kit": "^2.5.22",
+		"@sveltejs/package": "^2.3.4",
 		"@sveltejs/vite-plugin-svelte": "^3.1.1",
 		"@types/json-schema": "^7.0.15",
 		"@types/node": "^20.14.15",
@@ -179,7 +179,7 @@
 		"eslint": "^8.57.0",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-dci-lint": "^0.3.2",
-		"eslint-plugin-svelte": "2.36.0-next.13",
+		"eslint-plugin-svelte": "^2.43.0",
 		"i18next": "^23.12.3",
 		"only-allow": "^1.2.1",
 		"prettier": "^3.3.3",

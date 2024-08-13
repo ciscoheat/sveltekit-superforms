@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - File uploads required extra configuration for the valibot adapter, now it works directly.
-- Events added in `enhance` weren't cleaned up when the form was destroyed. Note that this could be deprecated in a future version. Please add events only when calling `superForm`.
+- Events added in `enhance` weren't cleaned up when the form was destroyed. Note that this _could_ be deprecated in a future version. It's advised to use events only when calling `superForm`, not with `enhance`.
 
 ## [2.16.1] - 2024-07-18
 

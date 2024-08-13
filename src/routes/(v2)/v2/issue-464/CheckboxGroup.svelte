@@ -1,4 +1,9 @@
-<script lang="ts" generics="T extends Record<string, unknown>, TItem">
+<script lang="ts" context="module">
+	type T = Record<string, unknown>;
+	type TItem = unknown;
+</script>
+
+<script lang="ts" generics="T extends Record<string, unknown>, TItem extends unknown">
 	import { type SuperForm, arrayProxy, type FormPathArrays } from '$lib/index.js';
 
 	export let form: SuperForm<T>;

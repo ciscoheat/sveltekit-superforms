@@ -51,7 +51,7 @@ export type FormPathArrays<T extends object, Type = any> = string &
 			filter: 'arrays';
 			objAppend: never;
 			path: '';
-			type: Type extends Array<any> ? Type : Array<Type>;
+			type: Type extends any[] ? Type : Type[];
 		}
 	>;
 

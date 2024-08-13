@@ -15,6 +15,9 @@
 <h3>Making FormPathArrays handle single value</h3>
 
 <form method="POST" use:enhance>
+	<!-- This will give an error, but can't be ignored in svelte/ts -->
+	<!-- CheckboxGroup field="testString" {form} label="test"	options={[ { label: 'Option 1', value: 1 },	{ label: 'Option 2', value: 2 }]} / -->
+
 	<CheckboxGroup
 		{form}
 		label="test"
@@ -34,30 +37,6 @@
 </p>
 
 <style>
-	.invalid {
-		color: red;
-	}
-
-	.status {
-		color: white;
-		padding: 4px;
-		padding-left: 8px;
-		border-radius: 2px;
-		font-weight: 500;
-	}
-
-	.status.success {
-		background-color: seagreen;
-	}
-
-	.status.error {
-		background-color: #ff2a02;
-	}
-
-	input {
-		background-color: #ddd;
-	}
-
 	a {
 		text-decoration: underline;
 	}

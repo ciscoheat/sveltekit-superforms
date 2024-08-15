@@ -1481,7 +1481,7 @@ export function superForm<
 							initialForm.data = newForm.data as T;
 						}
 
-						const resetStatus = Form_shouldReset(true, true);
+						const resetStatus = Form_shouldReset(newForm.valid, true);
 
 						rebind({
 							form: newForm as SuperValidated<T, M, In>,

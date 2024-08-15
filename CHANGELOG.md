@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- Using [setError](https://superforms.rocks/concepts/error-handling#seterror) in the load function and navigating to the same page client-side removed the errors.
+
 ## [2.17.0] - 2024-08-13
 
 ### Deprecated

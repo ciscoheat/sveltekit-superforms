@@ -1,52 +1,74 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { superForm } from '$lib/index.js';
+	import { zod } from '$lib/adapters/index.js';
+	import { superForm, superValidate, message as formMessage } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
-	import FileInput from './FileInput.svelte';
 	import type { PageData } from './$types.js';
-	import type { SubmitFunction } from '@sveltejs/kit';
+	import { type ActionResult, type SubmitFunction } from '@sveltejs/kit';
+	import { schema } from './schema.js';
 
 	export let data: PageData;
-	let progress = 0;
 
-	function fileUploadWithProgressbar(input: Parameters<SubmitFunction>[0]) {
-		return new Promise<XMLHttpRequest>((res) => {
-			let xhr = new XMLHttpRequest();
+	async function sleep(ms: number) {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
 
-			// listen for upload progress
-			xhr.upload.onprogress = function (event) {
-				progress = Math.round((100 * event.loaded) / event.total);
-				console.log(`File is ${progress}% uploaded.`);
-			};
+	async function post(message: string) {
+		// calling an external API that does not return an action result response.
+		const number = Math.floor(Math.random() * 100);
+		if (number < 50) throw new Error('Random error');
 
-			// handle error
-			xhr.upload.onerror = function () {
-				console.log(`Error during the upload: ${xhr.status}.`);
-			};
+		if (number > 50 && number < 80) return { code: 'message-might-be-jackpot', message } as const;
+		return { code: 'message-posted', message } as const;
+	}
 
-			// upload completed successfully
-			xhr.onload = function () {
-				if (xhr.readyState === xhr.DONE) {
-					console.log('Upload completed successfully.');
-					progress = 0;
-					res(xhr);
-				}
-			};
+	function success<T>(data: T) {
+		return {
+			type: 'success',
+			status: 200,
+			data
+		} as ActionResult;
+	}
 
-			xhr.open('POST', input.action, true);
-			xhr.send(input.formData);
+	function error<T>(status: number, data: T): ActionResult {
+		return {
+			type: 'error',
+			status,
+			error: data
+		};
+	}
 
-			return xhr;
-		});
+	async function submitMessage(input: Parameters<SubmitFunction>[0]) {
+		await sleep(1000);
+
+		const formData = input.formData;
+		console.log('posting form', formData);
+
+		const form = await superValidate(formData, zod(schema));
+		console.log('validated form', form);
+
+		if (!form.valid) return error(400, { form });
+		
+		try {
+			const result = await post(form.message)
+			
+			if (result.code === 'message-might-be-jackpot') {
+				return success(formMessage(form, 'You might be a jackpot!'));
+			} else {
+				return success(formMessage(form, `Message posted: ${result.message}`));
+			}
+
+		} catch (e) {
+			return error(400, { form });
+		}
 	}
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		taintedMessage: null,
 		onSubmit({ customRequest }) {
-			customRequest(fileUploadWithProgressbar);
+			customRequest(submitMessage);
 		}
 	});
-	const acceptedExtensions = '.flac, .mp3';
 </script>
 
 <SuperDebug data={$form} />
@@ -60,15 +82,8 @@
 	</div>
 {/if}
 
-<form method="POST" enctype="multipart/form-data" use:enhance>
-	<FileInput
-		name="track"
-		label="Track"
-		accept={acceptedExtensions}
-		bind:value={$form.track}
-		errors={$errors.track}
-	/>
-	<br /><progress max="100" value={progress}>{progress}%</progress>
+<form method="POST" use:enhance>
+	<textarea name="message" bind:value={$form.message}></textarea>
 
 	<div><button>Submit</button></div>
 </form>

@@ -13,7 +13,7 @@ export const actions = {
 		const formData = await request.formData();
 		console.log(formData);
 
-		const form = await superValidate(formData, zod(schema), { allowFiles: true });
+		const form = await superValidate(formData, zod(schema));
 		console.log(form);
 
 		if (!form.valid) return fail(400, withFiles({ form }));

@@ -107,10 +107,10 @@ export type FormOptions<
 			validators: (validators: Exclude<ValidatorsOption<T>, 'clear'>) => void;
 			/**
 			 * Use a custom fetch or XMLHttpRequest implementation for this form submission. It must return an ActionResult in the response body.
-			 * If the request is using a XMLHttprequest, the promise must be resolved when the request is complete.
+			 * If the request is using a XMLHttprequest, the promise must be resolved when the request is complete. or the action result itself.
 			 */
 			customRequest: (
-				validators: (input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest>
+				validators: (input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest | ActionResult>
 			) => void;
 		}
 	) => MaybePromise<unknown | void>;
@@ -1599,7 +1599,7 @@ export function superForm<
 
 		let currentRequest: AbortController | null;
 		let customRequest:
-			| ((input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest>)
+			| ((input: Parameters<SubmitFunction>[0]) => Promise<Response | XMLHttpRequest | ActionResult>)
 			| undefined = undefined;
 
 		const enhanced = kitEnhance(FormElement, async (submitParams) => {
@@ -1979,10 +1979,15 @@ export function superForm<
 			if (customRequest) {
 				if (!cancelled) _submitCancel();
 				const response = await customRequest(submitParams);
-				const result: ActionResult =
-					response instanceof Response
-						? deserialize(await response.text())
-						: deserialize(response.responseText);
+				let result: ActionResult;
+
+				if (response instanceof Response) {
+					result = deserialize(await response.text());
+				} else if (response instanceof XMLHttpRequest) {
+					result = deserialize(response.responseText);
+				} else {
+					result = response;
+				}
 
 				if (result.type === 'error') result.status = response.status;
 				validationResponse({ result });

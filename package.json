@@ -105,6 +105,8 @@
 		"@exodus/schemasafe": "^1.3.0",
 		"@sinclair/typebox": ">=0.32.30 <1",
 		"@sveltejs/kit": "1.x || 2.x",
+		"@typeschema/class-validator": "^0.2.0",
+		"class-validator": "^0.14.1",
 		"@vinejs/vine": "^1.8.0",
 		"arktype": ">=2.0.0-beta.0",
 		"joi": "^17.13.1",
@@ -119,6 +121,12 @@
 			"optional": true
 		},
 		"@sinclair/typebox": {
+			"optional": true
+		},
+		"@typeschema/class-validator": {
+			"optional": true
+		},
+		"class-validator": {
 			"optional": true
 		},
 		"arktype": {
@@ -148,6 +156,8 @@
 		"@gcornut/valibot-json-schema": "^0.31.0",
 		"@sinclair/typebox": "^0.32.35",
 		"@sodaru/yup-to-json-schema": "^2.0.1",
+		"@typeschema/class-validator": "^0.2.0",
+		"class-validator": "^0.14.1",
 		"@vinejs/vine": "^1.8.0",
 		"arktype": "2.0.0-beta.0",
 		"joi": "^17.13.3",

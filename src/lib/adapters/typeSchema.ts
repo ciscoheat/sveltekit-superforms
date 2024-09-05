@@ -2,6 +2,12 @@ import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
 import type { Type } from 'arktype';
 import type { AnySchema } from 'joi';
 import type {
+	Infer as ClassValidatorInfer,
+	InferIn  as ClassValidatorInferIn,
+	Schema as ClassValidatorSchema
+} from '@typeschema/class-validator';
+
+import type {
 	GenericSchema,
 	GenericSchemaAsync,
 	InferInput as Input,
@@ -70,6 +76,12 @@ interface ArkTypeResolver extends Resolver {
 	base: Type;
 	input: this['schema'] extends Type ? this['schema']['inferIn'] : never;
 	output: this['schema'] extends Type ? this['schema']['infer'] : never;
+}
+
+interface ClassValidatorResolver extends Resolver {
+	base: ClassValidatorSchema;
+	input: this['schema'] extends ClassValidatorSchema ? ClassValidatorInferIn<this['schema']> : never;
+	output: this['schema'] extends ClassValidatorSchema ? ClassValidatorInfer<this['schema']> : never;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -179,6 +191,7 @@ interface RuntypesResolver extends Resolver {
 
 type Registry = {
 	arktype: ArkTypeResolver;
+	classValidator: ClassValidatorResolver;
 	custom: CustomResolver;
 	joi: JoiResolver;
 	typebox: TypeBoxResolver;

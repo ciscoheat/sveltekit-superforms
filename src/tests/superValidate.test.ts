@@ -23,6 +23,9 @@ import { z, type ZodErrorMap } from 'zod';
 import { valibot } from '$lib/adapters/valibot.js';
 import * as v from 'valibot';
 
+import { classValidator } from '$lib/adapters/class-validator.js';
+import { ArrayMinSize, IsOptional, IsString, IsEmail, IsArray, MinLength, IsInt, Min, IsDate, Matches } from 'class-validator';
+
 //import { ajv } from '$lib/adapters/ajv.js';
 //import type { JSONSchema } from '$lib/jsonSchema/index.js';
 
@@ -70,7 +73,7 @@ import { SchemaError, type JSONSchema } from '$lib/index.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
-/* 
+/*
 TEST SCHEMA TEMPLATE:
 
 | field   | type     | opt/null | constraints             | default   |
@@ -465,6 +468,40 @@ describe('Valibot', () => {
 		type In = InferIn<typeof logSchema>;
 	});
  */
+});
+
+describe('class-validator', () => {
+	class ClassValidatorSchema {
+		@IsString()
+		name: string = 'Unknown';
+
+		@IsString()
+		@IsEmail()
+		email: string | undefined;
+
+		@IsArray()
+		@MinLength(2, { each: true })
+		@ArrayMinSize(3)
+		tags: string[] | undefined;
+
+		@IsInt()
+		@Min(0)
+		score: number | undefined;
+
+		@IsDate()
+		date: Date | undefined;
+
+		@IsOptional()
+		@Matches(/^\S*$/, { message: 'No spaces allowed' })
+		nospace: string | undefined;
+
+		@IsOptional()
+		@IsString()
+		extra: string | null = null;
+	}
+
+	const adapter = classValidator(ClassValidatorSchema, { defaults });
+	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
 });
 
 /////////////////////////////////////////////////////////////////////

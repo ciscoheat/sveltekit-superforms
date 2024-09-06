@@ -3,7 +3,7 @@ import type { Type } from 'arktype';
 import type { AnySchema } from 'joi';
 import type {
 	Infer as ClassValidatorInfer,
-	InferIn  as ClassValidatorInferIn,
+	InferIn as ClassValidatorInferIn,
 	Schema as ClassValidatorSchema
 } from '@typeschema/class-validator';
 
@@ -80,7 +80,9 @@ interface ArkTypeResolver extends Resolver {
 
 interface ClassValidatorResolver extends Resolver {
 	base: ClassValidatorSchema;
-	input: this['schema'] extends ClassValidatorSchema ? ClassValidatorInferIn<this['schema']> : never;
+	input: this['schema'] extends ClassValidatorSchema
+		? ClassValidatorInferIn<this['schema']>
+		: never;
 	output: this['schema'] extends ClassValidatorSchema ? ClassValidatorInfer<this['schema']> : never;
 }
 
@@ -191,7 +193,7 @@ interface RuntypesResolver extends Resolver {
 
 type Registry = {
 	arktype: ArkTypeResolver;
-	classValidator: ClassValidatorResolver;
+	classvalidator: ClassValidatorResolver;
 	custom: CustomResolver;
 	joi: JoiResolver;
 	typebox: TypeBoxResolver;

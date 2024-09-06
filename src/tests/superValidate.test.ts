@@ -23,8 +23,19 @@ import { z, type ZodErrorMap } from 'zod';
 import { valibot } from '$lib/adapters/valibot.js';
 import * as v from 'valibot';
 
-import { classValidator } from '$lib/adapters/class-validator.js';
-import { ArrayMinSize, IsOptional, IsString, IsEmail, IsArray, MinLength, IsInt, Min, IsDate, Matches } from 'class-validator';
+import { classvalidator } from '$lib/adapters/classvalidator.js';
+import {
+	ArrayMinSize,
+	IsOptional,
+	IsString,
+	IsEmail,
+	IsArray,
+	MinLength,
+	IsInt,
+	Min,
+	IsDate,
+	Matches
+} from 'class-validator';
 
 //import { ajv } from '$lib/adapters/ajv.js';
 //import type { JSONSchema } from '$lib/jsonSchema/index.js';
@@ -500,7 +511,7 @@ describe('class-validator', () => {
 		extra: string | null = null;
 	}
 
-	const adapter = classValidator(ClassValidatorSchema, { defaults });
+	const adapter = classvalidator(ClassValidatorSchema, { defaults });
 	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
 });
 

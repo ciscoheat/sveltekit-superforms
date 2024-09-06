@@ -6,20 +6,24 @@ import {
 	type InferIn,
 	type ValidationResult,
 	type ClientValidationAdapter,
-	type RequiredDefaultsOptions,
+	type RequiredDefaultsOptions
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
+import type { Schema } from '@typeschema/class-validator';
 
-import {
-	validate as classValidatorValidate,
-	type Schema
-} from '@typeschema/class-validator';
+async function modules() {
+	const { validate } = await import(/* webpackIgnore: true */ '@typeschema/class-validator');
+	return { validate };
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
 
 async function validate<T extends Schema>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
-	const result = await classValidatorValidate<T>(schema, data);
+	const { validate } = await fetchModule();
+	const result = await validate<T>(schema, data);
 	if (result.success) {
 		return {
 			data: result.data as Infer<T>,
@@ -35,26 +39,26 @@ async function validate<T extends Schema>(
 	};
 }
 
-function _classValidator<T extends Schema>(
+function _classvalidator<T extends Schema>(
 	schema: T,
 	options: RequiredDefaultsOptions<Infer<T>>
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
-		superFormValidationLibrary: 'classValidator',
+		superFormValidationLibrary: 'classvalidator',
 		validate: async (data: unknown) => validate(schema, data),
 		jsonSchema: createJsonSchema(options),
 		defaults: options.defaults
 	});
 }
 
-function _classValidatorClient<T extends Schema>(
+function _classvalidatorClient<T extends Schema>(
 	schema: T
 ): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
-		superFormValidationLibrary: 'classValidator',
+		superFormValidationLibrary: 'classvalidator',
 		validate: async (data) => validate(schema, data)
 	};
 }
 
-export const classValidator = /* @__PURE__ */ memoize(_classValidator);
-export const classValidatorClient = /* @__PURE__ */ memoize(_classValidatorClient);
+export const classvalidator = /* @__PURE__ */ memoize(_classvalidator);
+export const classvalidatorClient = /* @__PURE__ */ memoize(_classvalidatorClient);

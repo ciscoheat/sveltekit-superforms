@@ -5,10 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [2.18.0] - 2024-09-13
 
 ### Added
 
+- New validation library: [class-validator](https://github.com/typestack/class-validator)!
 - Exported `SuperFormData` and `SuperFormErrors` types for superForm.
 - Exported `ZodObjectTypes` and `ZodValidation` types for the Zod adapter.
 

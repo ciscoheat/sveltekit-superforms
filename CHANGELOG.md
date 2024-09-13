@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New validation library: [class-validator](https://github.com/typestack/class-validator)!
 - Exported `SuperFormData` and `SuperFormErrors` types for superForm.
-- Exported `ZodObjectTypes` and `ZodValidation` types for the Zod adapter.
+- Exported `ZodObjectType`, `ZodObjectTypes` and `ZodValidation` types for the Zod adapter.
 
 ### Fixed
 

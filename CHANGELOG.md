@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New validation library: [class-validator](https://github.com/typestack/class-validator)!
 - Exported `SuperFormData` and `SuperFormErrors` types for superForm.
 - Exported `ZodObjectType`, `ZodObjectTypes` and `ZodValidation` types for the Zod adapter.
+- [customRequest](https://superforms.rocks/concepts/events#customrequest) can now handle an `ActionResult` as well, for better error handling.
 
 ### Fixed
 

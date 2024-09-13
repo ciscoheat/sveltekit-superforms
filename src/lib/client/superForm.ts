@@ -191,13 +191,13 @@ export type SuperFormSnapshot<
 	In extends Record<string, unknown> = T
 > = SuperFormValidated<T, M, In> & { tainted: TaintedFields<T> | undefined };
 
-type SuperFormData<T extends Record<string, unknown>> = {
+export type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
 	set(this: void, value: T, options?: { taint?: TaintOption }): void;
 	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
-type SuperFormErrors<T extends Record<string, unknown>> = {
+export type SuperFormErrors<T extends Record<string, unknown>> = {
 	subscribe: Writable<ValidationErrors<T>>['subscribe'];
 	set(this: void, value: ValidationErrors<T>, options?: { force?: boolean }): void;
 	update(this: void, updater: Updater<ValidationErrors<T>>, options?: { force?: boolean }): void;

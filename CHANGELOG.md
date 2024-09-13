@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Exported `SuperFormData` and `SuperFormErrors` types for superForm.
+- Exported `ZodObjectTypes` and `ZodValidation` types for the Zod adapter.
+
 ### Fixed
 
 - Using [setError](https://superforms.rocks/concepts/error-handling#seterror) in the load function and navigating to the same page client-side removed the errors.

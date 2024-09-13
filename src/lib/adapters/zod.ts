@@ -38,7 +38,7 @@ type ZodObjectUnion<T extends AnyZodObject> = ZodUnion<
 
 type ZodObjectType = ZodType<Record<string, unknown>, ZodTypeDef, Record<string, unknown>>;
 
-type ZodObjectTypes = AnyZodObject | ZodObjectUnion<AnyZodObject> | ZodObjectType;
+export type ZodObjectTypes = AnyZodObject | ZodObjectUnion<AnyZodObject> | ZodObjectType;
 
 export type ZodValidation<T extends ZodObjectTypes> =
 	| T

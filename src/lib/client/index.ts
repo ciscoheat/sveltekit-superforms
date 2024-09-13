@@ -49,6 +49,8 @@ export type {
 	FormResult,
 	FormOptions,
 	SuperForm,
+	SuperFormData,
+	SuperFormErrors,
 	SuperFormEventList,
 	SuperFormEvents,
 	SuperFormSnapshot,

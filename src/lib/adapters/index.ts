@@ -1,6 +1,7 @@
 export type { ValidationAdapter, Infer, InferIn } from './adapters.js';
 
 export { arktype, arktypeClient } from './arktype.js';
+export { classvalidator, classvalidatorClient } from './classvalidator.js';
 export { joi, joiClient } from './joi.js';
 export { superformClient } from './superform.js';
 export { typebox, typeboxClient } from './typebox.js';

@@ -1,79 +1,8 @@
-<script context="module">
-	/*! clipboard-copy. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
-
-	function makeError() {
-		return new DOMException('The request is not allowed', 'NotAllowedError');
-	}
-
-	/**
-	 * @param {string} text
-	 */
-	async function copyClipboardApi(text) {
-		// Use the Async Clipboard API when available. Requires a secure browsing
-		// context (i.e. HTTPS)
-		if (!navigator.clipboard) {
-			throw makeError();
-		}
-		return navigator.clipboard.writeText(text);
-	}
-
-	/**
-	 * @param {string} text
-	 */
-	async function copyExecCommand(text) {
-		// Put the text to copy into a <span>
-		const span = document.createElement('span');
-		span.textContent = text;
-
-		// Preserve consecutive spaces and newlines
-		span.style.whiteSpace = 'pre';
-		span.style.webkitUserSelect = 'auto';
-		span.style.userSelect = 'all';
-
-		// Add the <span> to the page
-		document.body.appendChild(span);
-
-		// Make a selection object representing the range of text selected by the user
-		const selection = window.getSelection();
-		const range = window.document.createRange();
-		selection?.removeAllRanges();
-		range.selectNode(span);
-		selection?.addRange(range);
-
-		// Copy text to the clipboard
-		let success = false;
-		try {
-			success = window.document.execCommand('copy');
-		} finally {
-			// Cleanup
-			selection?.removeAllRanges();
-			window.document.body.removeChild(span);
-		}
-
-		if (!success) throw makeError();
-	}
-
-	/**
-	 * @param {string} text
-	 */
-	async function clipboardCopy(text) {
-		try {
-			await copyClipboardApi(text);
-		} catch (err) {
-			// ...Otherwise, use document.execCommand() fallback
-			try {
-				await copyExecCommand(text);
-			} catch (err2) {
-				throw err2 || err || makeError();
-			}
-		}
-	}
-</script>
-
 <script>
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { readable, get } from 'svelte/store';
+	import { clipboardCopy } from './clipboardCopy.js';
 
 	let styleInit = false;
 

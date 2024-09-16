@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Arktype updated to require `2.0.0-rc.8` (last update before 2.0).
 
+### Fixed
+
+- Factorized [SuperDebug](https://superforms.rocks/super-debug) clipboard script
+
 ## [2.18.1] - 2024-09-13
 
 ### Added

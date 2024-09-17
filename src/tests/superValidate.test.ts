@@ -342,9 +342,9 @@ describe('Schemasafe', () => {
 describe('Arktype', () => {
 	const schema = type({
 		name: 'string',
-		email: 'email',
+		email: 'string.email',
 		tags: '(string>=2)[]>=3',
-		score: 'integer>=0',
+		score: 'number.integer>=0',
 		'date?': 'Date',
 		'nospace?': nospacePattern,
 		extra: 'string|null'

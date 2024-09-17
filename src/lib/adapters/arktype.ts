@@ -1,4 +1,4 @@
-import type { Type } from 'arktype';
+import type { type } from 'arktype';
 import {
 	type ValidationAdapter,
 	type RequiredDefaultsOptions,
@@ -18,7 +18,7 @@ async function modules() {
 
 const fetchModule = /* @__PURE__ */ memoize(modules);
 
-async function _validate<T extends Type>(
+async function _validate<T extends type.Any>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T>>> {
@@ -40,7 +40,7 @@ async function _validate<T extends Type>(
 	};
 }
 
-function _arktype<T extends Type>(
+function _arktype<T extends type.Any>(
 	schema: T,
 	options: RequiredDefaultsOptions<Infer<T>>
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
@@ -52,7 +52,9 @@ function _arktype<T extends Type>(
 	});
 }
 
-function _arktypeClient<T extends Type>(schema: T): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+function _arktypeClient<T extends type.Any>(
+	schema: T
+): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'arktype',
 		validate: async (data) => _validate(schema, data)

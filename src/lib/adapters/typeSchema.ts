@@ -1,5 +1,5 @@
 import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
-import type { Type } from 'arktype';
+import type { type } from 'arktype';
 import type { AnySchema } from 'joi';
 import type {
 	Infer as ClassValidatorInfer,
@@ -73,9 +73,9 @@ type ValidationResult<TOutput = any> =
 	  };
 
 interface ArkTypeResolver extends Resolver {
-	base: Type;
-	input: this['schema'] extends Type ? this['schema']['inferIn'] : never;
-	output: this['schema'] extends Type ? this['schema']['infer'] : never;
+	base: type.Any;
+	input: this['schema'] extends type.Any ? this['schema']['inferIn'] : never;
+	output: this['schema'] extends type.Any ? this['schema']['infer'] : never;
 }
 
 interface ClassValidatorResolver extends Resolver {

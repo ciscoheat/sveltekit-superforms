@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	type UnknownRecord = Record<string, unknown>;
 	type T = UnknownRecord;
 </script>

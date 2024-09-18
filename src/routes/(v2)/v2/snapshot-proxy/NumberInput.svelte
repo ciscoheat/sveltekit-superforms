@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
 	import type { FormPathLeaves } from '$lib/index.js';
 	type T = Record<string, unknown>;
 </script>

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	import type { FormPath } from '$lib/index.js';
 	type T = Record<string, unknown>;

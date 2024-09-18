@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	type T = Record<string, unknown>;
 	type F = FormPathArrays<T>;
 </script>

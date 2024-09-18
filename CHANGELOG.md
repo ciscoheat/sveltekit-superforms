@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Arktype updated to require `2.0.0-rc.8` (last update before 2.0).
+- Arktype updated to require `2.0.0-rc.8`, fixing some types (last update before 2.0).
+
+### Deprecated
+
+- The `failStatus` and SPA action form (`string`) options of [single page application mode](https://superforms.rocks/concepts/spa) are now deprecated. `failStatus` is rarely used, and SPA action form can be created just by setting [invalidateAll](https://superforms.rocks/concepts/enhance#invalidateall) and [applyAction](https://superforms.rocks/concepts/enhance#applyaction) to `false`. See [this example](https://github.com/ciscoheat/superforms-examples/blob/username-available-zod/src/routes/%2Bpage.svelte) for details.
+
+### Added
+
+- Exceptions thrown in the `onSubmit`, `onResult` and `onUpdate` [events](https://superforms.rocks/concepts/events) will now be caught and sent to `onError`, if it exists.
 
 ### Fixed
 

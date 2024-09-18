@@ -63,7 +63,8 @@
 		'discriminated-union',
 		'simple-tainted',
 		'validity-objects',
-		'issue-466'
+		'issue-466',
+		'spa-error'
 	].sort();
 </script>
 

@@ -334,10 +334,7 @@ const initialForms = new WeakMap<
 >();
 
 const defaultOnError = (event: { result: { error: unknown } }) => {
-	console.warn(
-		'Unhandled error caught by Superforms, use onError event to handle it:',
-		event.result.error
-	);
+	throw event.result.error;
 };
 
 const defaultFormOptions = {
@@ -658,6 +655,16 @@ export function superForm<
 
 	function Form_isSPA() {
 		return options.SPA === true || typeof options.SPA === 'object';
+	}
+
+	function Form_errorStatus(defaultStatus?: number) {
+		return (
+			defaultStatus ||
+			(typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
+				? undefined
+				: options.SPA?.failStatus) ||
+			500
+		);
 	}
 
 	async function Form_validate(
@@ -1633,11 +1640,7 @@ export function superForm<
 			function clientValidationResult(validation: SuperFormValidated<T, M, In>) {
 				const validationResult = { ...validation, posted: true };
 
-				const status = validationResult.valid
-					? 200
-					: ((typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
-							? undefined
-							: options.SPA?.failStatus) ?? 400);
+				const status = validationResult.valid ? 200 : Form_errorStatus();
 
 				const data = { form: validationResult };
 
@@ -1665,6 +1668,46 @@ export function superForm<
 				}
 			}
 
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			async function triggerOnError(result: { type: 'error'; status?: number; error: any }) {
+				if (options.applyAction) {
+					if (options.onError == 'apply') {
+						await applyAction(result);
+					} else {
+						// Transform to failure, to avoid data loss
+						// Set the data to the error result, so it will be
+						// picked up in page.subscribe in superForm.
+						const failResult = {
+							type: 'failure',
+							status: Form_errorStatus(Math.floor(result.status ?? NaN)),
+							data: result
+						} as const;
+						await applyAction(failResult);
+					}
+				}
+
+				// Check if the error message should be replaced
+				if (options.onError !== 'apply') {
+					const data = { result, message: Message };
+
+					for (const onErrorEvent of formEvents.onError) {
+						if (
+							onErrorEvent !== 'apply' &&
+							(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
+						) {
+							await onErrorEvent(data);
+						}
+					}
+				}
+
+				if (options.flashMessage && options.flashMessage.onError) {
+					await options.flashMessage.onError({
+						result,
+						flashMessage: options.flashMessage.module.getFlash(page)
+					});
+				}
+			}
+
 			function cancel(
 				opts: { resetTimers?: boolean } = {
 					resetTimers: true
@@ -1689,7 +1732,12 @@ export function superForm<
 				currentRequest = submit.controller;
 
 				for (const event of formEvents.onSubmit) {
-					await event(submit);
+					try {
+						await event(submit);
+					} catch (error) {
+						cancel();
+						triggerOnError({ type: 'error', error, status: Form_errorStatus() });
+					}
 				}
 			}
 
@@ -1821,7 +1869,7 @@ export function superForm<
 						? (event.result as ActionResult)
 						: {
 								type: 'error',
-								status: parseInt(String(event.result.status)) || 500,
+								status: Form_errorStatus(parseInt(String(event.result.status))),
 								error: event.result.error instanceof Error ? event.result.error : event.result
 							};
 
@@ -1843,15 +1891,27 @@ export function superForm<
 								cancel();
 							});
 
+				function setErrorResult(error: unknown, data: { result: ActionResult }) {
+					data.result = {
+						type: 'error',
+						error,
+						status: result.status && result.status >= 400 ? result.status : Form_errorStatus()
+					};
+				}
+
 				for (const event of formEvents.onResult) {
-					await event(data);
+					try {
+						await event(data);
+					} catch (error) {
+						setErrorResult(error, data);
+					}
 				}
 
 				// In case it was modified in the event
 				result = data.result;
 
 				if (!cancelled) {
-					if ((result.type === 'success' || result.type == 'failure') && result.data) {
+					if ((result.type === 'success' || result.type === 'failure') && result.data) {
 						const forms = Context_findValidationForms(result.data);
 						if (!forms.length) {
 							throw new SuperFormError(
@@ -1871,7 +1931,11 @@ export function superForm<
 							};
 
 							for (const event of formEvents.onUpdate) {
-								await event(data);
+								try {
+									await event(data);
+								} catch (error) {
+									setErrorResult(error, data);
+								}
 							}
 
 							// In case it was modified in the event
@@ -1907,46 +1971,7 @@ export function superForm<
 								await Form_updateFromActionResult(result);
 							}
 						} else {
-							// Error result
-							if (options.applyAction) {
-								if (options.onError == 'apply') {
-									await applyAction(result);
-								} else {
-									// Transform to failure, to avoid data loss
-									// Set the data to the error result, so it will be
-									// picked up in page.subscribe in superForm.
-									const failResult = {
-										type: 'failure',
-										status: Math.floor(result.status || 500),
-										data: result
-									} as const;
-									await applyAction(failResult);
-								}
-							}
-
-							// Check if the error message should be replaced
-							if (options.onError !== 'apply') {
-								const data = { result, message: Message };
-
-								for (const onErrorEvent of formEvents.onError) {
-									if (
-										onErrorEvent !== 'apply' &&
-										(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
-									) {
-										await onErrorEvent(data);
-									}
-								}
-							}
-						}
-
-						// Trigger flash message event if there was an error
-						if (options.flashMessage) {
-							if (result.type == 'error' && options.flashMessage.onError) {
-								await options.flashMessage.onError({
-									result,
-									flashMessage: options.flashMessage.module.getFlash(page)
-								});
-							}
+							await triggerOnError(result);
 						}
 					}
 				}

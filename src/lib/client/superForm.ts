@@ -1282,9 +1282,9 @@ export function superForm<
 					return currentlyTainted;
 				});
 			}
-		}
 
-		NextChange_setHtmlEvent({ paths });
+			NextChange_setHtmlEvent({ paths });
+		}
 	}
 
 	/**

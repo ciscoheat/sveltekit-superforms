@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Updating the same variable to the same value prevented the [onChange](https://superforms.rocks/concepts/events#onchange) event from being triggered.
 - Factorized [SuperDebug](https://superforms.rocks/super-debug) clipboard script
 
 ## [2.18.1] - 2024-09-13

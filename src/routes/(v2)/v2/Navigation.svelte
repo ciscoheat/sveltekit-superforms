@@ -64,7 +64,8 @@
 		'simple-tainted',
 		'validity-objects',
 		'issue-466',
-		'spa-error'
+		'spa-error',
+		'issue-470'
 	].sort();
 </script>
 

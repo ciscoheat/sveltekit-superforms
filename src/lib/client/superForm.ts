@@ -91,7 +91,12 @@ export type FormOptions<
 	selectErrorText: boolean;
 	stickyNavbar: string;
 	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
-	SPA: true | { failStatus?: number } | string;
+	/**
+	 * Enable single page application (SPA) mode.
+	 * **The string and failStatus options are deprecated** and will be removed in the next major release.
+	 * @see https://superforms.rocks/concepts/spa
+	 */
+	SPA: true | /** @deprecated */ string | /** @deprecated */ { failStatus?: number };
 
 	onSubmit: (
 		input: Parameters<SubmitFunction>[0] & {
@@ -657,13 +662,12 @@ export function superForm<
 		return options.SPA === true || typeof options.SPA === 'object';
 	}
 
-	function Form_errorStatus(defaultStatus?: number) {
+	function Form_resultStatus(defaultStatus: number) {
+		if (defaultStatus >= 500) return defaultStatus;
 		return (
-			defaultStatus ||
 			(typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
 				? undefined
-				: options.SPA?.failStatus) ||
-			500
+				: options.SPA?.failStatus) || defaultStatus
 		);
 	}
 
@@ -1640,7 +1644,7 @@ export function superForm<
 			function clientValidationResult(validation: SuperFormValidated<T, M, In>) {
 				const validationResult = { ...validation, posted: true };
 
-				const status = validationResult.valid ? 200 : Form_errorStatus();
+				const status = validationResult.valid ? 200 : Form_resultStatus(400);
 
 				const data = { form: validationResult };
 
@@ -1679,7 +1683,7 @@ export function superForm<
 						// picked up in page.subscribe in superForm.
 						const failResult = {
 							type: 'failure',
-							status: Form_errorStatus(Math.floor(result.status ?? NaN)),
+							status: Form_resultStatus(Math.floor(result.status ?? 400)),
 							data: result
 						} as const;
 						await applyAction(failResult);
@@ -1736,7 +1740,7 @@ export function superForm<
 						await event(submit);
 					} catch (error) {
 						cancel();
-						triggerOnError({ type: 'error', error, status: Form_errorStatus() });
+						triggerOnError({ type: 'error', error, status: Form_resultStatus(500) });
 					}
 				}
 			}
@@ -1869,7 +1873,7 @@ export function superForm<
 						? (event.result as ActionResult)
 						: {
 								type: 'error',
-								status: Form_errorStatus(parseInt(String(event.result.status))),
+								status: Form_resultStatus(parseInt(String(event.result.status)) || 500),
 								error: event.result.error instanceof Error ? event.result.error : event.result
 							};
 
@@ -1895,7 +1899,7 @@ export function superForm<
 					data.result = {
 						type: 'error',
 						error,
-						status: result.status && result.status >= 400 ? result.status : Form_errorStatus()
+						status: Form_resultStatus(Math.max(result.status ?? 500, 500))
 					};
 				}
 

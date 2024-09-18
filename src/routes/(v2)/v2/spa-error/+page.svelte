@@ -10,35 +10,26 @@
 	const adapter = arktype(schema, { defaults: defaultData });
 	const data = defaults(adapter);
 
-	let options = ['onSubmit', 'onResult', 'onUpdate'];
-	let option = 'onSubmit';
+	let options = ['onSubmit', 'onResult', 'onUpdate'] as const;
+	let option: (typeof options)[number] = 'onSubmit';
 
 	let error: Extract<ActionResult, { type: 'error' }>;
 
-	const {
-		form,
-		message,
-		enhance,
-		submitting,
-		options: formOptions
-	} = superForm(data, {
+	const { form, message, enhance, submitting } = superForm(data, {
 		SPA: true,
 		validators: arktype(schema, { defaults: defaultData }),
 		async onSubmit() {
-			formOptions.SPA = true;
 			if (option == 'onSubmit') {
 				throw new Error('onSubmit error');
 			}
 		},
 		async onResult() {
 			if (option == 'onResult') {
-				formOptions.SPA = { failStatus: 501 };
 				throw new Error('onResult error');
 			}
 		},
 		async onUpdate() {
 			if (option == 'onUpdate') {
-				formOptions.SPA = { failStatus: 502 };
 				throw new Error('onUpdate error');
 			}
 		},

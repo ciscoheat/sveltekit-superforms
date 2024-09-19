@@ -61,7 +61,7 @@ function _effectClient<T extends AnySchema>(
 	options?: AdapterOptions<Infer<T>> & { parseOptions?: ParseOptions }
 ): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
-		superFormValidationLibrary: 'zod',
+		superFormValidationLibrary: 'effect',
 		validate: async (data) => validate(schema, data, options)
 	};
 }

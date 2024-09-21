@@ -47,7 +47,7 @@ optionalDependencies:
     specifier: ^0.14.1
     version: 0.14.1
   effect:
-    specifier: ^3.8.3
+    specifier: ^3.8.2
     version: 3.8.3
   joi:
     specifier: ^17.13.3

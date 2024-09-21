@@ -20,8 +20,8 @@ dependencies:
 
 optionalDependencies:
   '@effect/schema':
-    specifier: ^0.73.2
-    version: 0.73.2(effect@3.8.2)
+    specifier: ^0.73.4
+    version: 0.73.4(effect@3.8.3)
   '@exodus/schemasafe':
     specifier: ^1.3.0
     version: 1.3.0
@@ -47,14 +47,14 @@ optionalDependencies:
     specifier: ^0.14.1
     version: 0.14.1
   effect:
-    specifier: ^3.8.2
-    version: 3.8.2
+    specifier: ^3.8.3
+    version: 3.8.3
   joi:
     specifier: ^17.13.3
     version: 17.13.3
   json-schema-to-ts:
     specifier: ^3.1.0
-    version: 3.1.0
+    version: 3.1.1
   superstruct:
     specifier: ^2.0.2
     version: 2.0.2
@@ -69,7 +69,7 @@ optionalDependencies:
     version: 3.23.8
   zod-to-json-schema:
     specifier: ^3.23.2
-    version: 3.23.2(zod@3.23.8)
+    version: 3.23.3(zod@3.23.8)
 
 devDependencies:
   '@sveltejs/adapter-auto':
@@ -200,13 +200,13 @@ packages:
     dependencies:
       regenerator-runtime: 0.14.1
 
-  /@effect/schema@0.73.2(effect@3.8.2):
-    resolution: {integrity: sha512-nzDAiyGzqr6dSLeI7FyYyYLkdcQBopZbkhr6f/VDutHATE2NgA/hxg6Z9lFJxI1PWo5OUE5YgeM+Pqpy3+cqDw==}
+  /@effect/schema@0.73.4(effect@3.8.3):
+    resolution: {integrity: sha512-Vjgu+EuG6eyh3oB21jpHv0l9ZgGZCyVZf3lXs+2X18UEUOkppvpw11heHiK02iJCVchgp3Qjw/GDPUqhQvKpSg==}
     requiresBuild: true
     peerDependencies:
-      effect: ^3.8.2
+      effect: ^3.8.3
     dependencies:
-      effect: 3.8.2
+      effect: 3.8.3
       fast-check: 3.22.0
     dev: false
     optional: true
@@ -1632,8 +1632,8 @@ packages:
       esutils: 2.0.3
     dev: true
 
-  /effect@3.8.2:
-    resolution: {integrity: sha512-MuzjpmffWLUfXz0mzYikaHxbU5J4pYNg83/LAMQAwhD6SR9V35JxLQbqjwnhNkzeMV5jl6/ObDY3WqwtKp1OLg==}
+  /effect@3.8.3:
+    resolution: {integrity: sha512-ZHTNRik0mJWK+g12/HHwsouOux0OE2v+qRD7zsEJLtZ1RJdrlxvCpSXdJ+KgOqJ4wigIToDSb5e5HG885uKs/w==}
     requiresBuild: true
     dev: false
     optional: true
@@ -2202,8 +2202,8 @@ packages:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
     dev: true
 
-  /json-schema-to-ts@3.1.0:
-    resolution: {integrity: sha512-UeVN/ery4/JeXI8h4rM8yZPxsH+KqPi/84qFxHfTGHZnWnK9D0UU9ZGYO+6XAaJLqCWMiks+ARuFOKAiSxJCHA==}
+  /json-schema-to-ts@3.1.1:
+    resolution: {integrity: sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g==}
     engines: {node: '>=16'}
     requiresBuild: true
     dependencies:
@@ -3408,8 +3408,8 @@ packages:
       zod: 3.23.8
     dev: true
 
-  /zod-to-json-schema@3.23.2(zod@3.23.8):
-    resolution: {integrity: sha512-uSt90Gzc/tUfyNqxnjlfBs8W6WSGpNBv0rVsNxP/BVSMHMKGdthPYff4xtCHYloJGM0CFxFsb3NbC0eqPhfImw==}
+  /zod-to-json-schema@3.23.3(zod@3.23.8):
+    resolution: {integrity: sha512-TYWChTxKQbRJp5ST22o/Irt9KC5nj7CdBKYB/AosCRdj/wxEMvv4NNaj9XVUHDOIp53ZxArGhnw5HMZziPFjog==}
     requiresBuild: true
     peerDependencies:
       zod: ^3.23.3

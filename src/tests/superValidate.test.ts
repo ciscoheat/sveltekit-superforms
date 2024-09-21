@@ -876,11 +876,7 @@ describe('Effect', async () => {
 	});
 
 	const adapter = effect(schema);
-	// ArrayFormatter does something weird with the tags error message
-	// such that either tags[1] or tags are returned
-	// but if both occur, only tags[1] is returned
-	// so for now i'm just disabling the tags check
-	schemaTest(adapter, ['email', 'nospace', 'tags[1]']);
+	schemaTest(adapter);
 });
 
 ///// Common ////////////////////////////////////////////////////////

@@ -102,13 +102,15 @@
 		"!dist/**/*.spec.*"
 	],
 	"peerDependencies": {
+		"@effect/schema": "^0.73.4",
 		"@exodus/schemasafe": "^1.3.0",
 		"@sinclair/typebox": ">=0.32.30 <1",
 		"@sveltejs/kit": "1.x || 2.x",
 		"@typeschema/class-validator": "^0.2.0",
-		"class-validator": "^0.14.1",
 		"@vinejs/vine": "^1.8.0",
 		"arktype": ">=2.0.0-rc.8",
+		"class-validator": "^0.14.1",
+		"effect": "^3.8.2",
 		"joi": "^17.13.1",
 		"superstruct": "^2.0.2",
 		"svelte": "3.x || 4.x || >=5.0.0-next.51",
@@ -149,17 +151,25 @@
 		},
 		"@vinejs/vine": {
 			"optional": true
+		},
+		"effect": {
+			"optional": true
+		},
+		"@effect/schema": {
+			"optional": true
 		}
 	},
 	"optionalDependencies": {
+		"@effect/schema": "^0.73.4",
 		"@exodus/schemasafe": "^1.3.0",
 		"@gcornut/valibot-json-schema": "^0.31.0",
 		"@sinclair/typebox": "^0.32.35",
 		"@sodaru/yup-to-json-schema": "^2.0.1",
 		"@typeschema/class-validator": "^0.2.0",
-		"class-validator": "^0.14.1",
 		"@vinejs/vine": "^1.8.0",
 		"arktype": "2.0.0-rc.8",
+		"class-validator": "^0.14.1",
+		"effect": "^3.8.2",
 		"joi": "^17.13.3",
 		"json-schema-to-ts": "^3.1.0",
 		"superstruct": "^2.0.2",

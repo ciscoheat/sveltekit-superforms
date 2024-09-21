@@ -30,7 +30,8 @@ export type ValidationLibrary =
 	| 'zod'
 	| 'vine'
 	| 'schemasafe'
-	| 'superstruct';
+	| 'superstruct'
+	| 'effect';
 
 export type AdapterOptions<T> = {
 	jsonSchema?: JSONSchema;

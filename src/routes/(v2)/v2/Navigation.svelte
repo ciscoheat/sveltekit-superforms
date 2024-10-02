@@ -65,7 +65,9 @@
 		'validity-objects',
 		'issue-466',
 		'spa-error',
-		'issue-470'
+		'issue-470',
+		'issue-484',
+		'component-regen'
 	].sort();
 </script>
 

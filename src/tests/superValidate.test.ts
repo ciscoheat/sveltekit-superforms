@@ -559,9 +559,24 @@ describe('Zod', () => {
 		.refine((a) => a)
 		.refine((a) => a);
 
-	it('with defaultValues', () => {
-		const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJSONSchema(bigZodSchema));
-		expect(values.foo).toEqual(Foo.A);
+	describe('with defaults', () => {
+		it('defaultValues should return the schema defaults', () => {
+			const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJSONSchema(bigZodSchema));
+			expect(values.foo).toEqual(Foo.A);
+		});
+
+		it('should work with a function as default value, in strict mode', async () => {
+			const schema = z.object({
+				id: z.number().default(Math.random)
+			});
+
+			const v1 = await superValidate(zod(schema), { strict: true });
+			const v2 = await superValidate(zod(schema), { strict: true });
+
+			expect(v1.data.id).toBeGreaterThan(0);
+			expect(v2.data.id).toBeGreaterThan(0);
+			expect(v1.data.id).not.toBeCloseTo(v2.data.id, 6);
+		});
 	});
 
 	it('with constraints', () => {

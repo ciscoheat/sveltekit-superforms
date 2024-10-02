@@ -143,11 +143,11 @@ export type FormOptions<
 	onUpdated: (event: { form: Readonly<SuperValidated<T, M, In>> }) => MaybePromise<unknown | void>;
 	onError:
 		| 'apply'
-		| ((event: {
+		| (<Err = App.Error | Error | { message: string }>(event: {
 				result: {
 					type: 'error';
 					status?: number;
-					error: App.Error | Error | { message: string };
+					error: Err;
 				};
 		  }) => MaybePromise<unknown | void>);
 	onChange: (event: ChangeEvent<T>) => void;
@@ -168,11 +168,11 @@ export type FormOptions<
 			getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
 			updateFlash(page: Readable<Page>, update?: () => Promise<void>): Promise<boolean>;
 		};
-		onError?: (event: {
+		onError?: <Err = App.Error | Error | { message: string }>(event: {
 			result: {
 				type: 'error';
 				status?: number;
-				error: App.Error;
+				error: Err;
 			};
 			flashMessage: Writable<App.PageData['flash']>;
 		}) => MaybePromise<unknown | void>;

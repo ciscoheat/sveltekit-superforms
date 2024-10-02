@@ -47,6 +47,8 @@
 	<h4>ERROR {error.status}: {error.error}</h4>
 {/if}
 
+<h5>Submitting: {String($submitting)}</h5>
+
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
 	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>

@@ -30,9 +30,6 @@ importers:
       '@sinclair/typebox':
         specifier: ^0.32.35
         version: 0.32.35
-      '@sodaru/yup-to-json-schema':
-        specifier: ^2.0.1
-        version: 2.0.1
       '@typeschema/class-validator':
         specifier: ^0.2.0
         version: 0.2.0(@types/json-schema@7.0.15)(class-validator@0.14.1)
@@ -648,9 +645,6 @@ packages:
 
   '@sinclair/typebox@0.32.35':
     resolution: {integrity: sha512-Ul3YyOTU++to8cgNkttakC0dWvpERr6RYoHO2W47DLbFvrwBDJUY31B1sImH6JZSYc4Kt4PyHtoPNu+vL2r2dA==}
-
-  '@sodaru/yup-to-json-schema@2.0.1':
-    resolution: {integrity: sha512-lWb0Wiz8KZ9ip/dY1eUqt7fhTPmL24p6Hmv5Fd9pzlzAdw/YNcWZr+tiCT4oZ4Zyxzi9+1X4zv82o7jYvcFxYA==}
 
   '@sveltejs/adapter-auto@3.2.5':
     resolution: {integrity: sha512-27LR+uKccZ62lgq4N/hvyU2G+hTP9fxWEAfnZcl70HnyfAjMSsGk1z/SjAPXNCD1mVJIE7IFu3TQ8cQ/UH3c0A==}
@@ -2318,9 +2312,6 @@ snapshots:
   '@sinclair/typebox@0.27.8': {}
 
   '@sinclair/typebox@0.32.35':
-    optional: true
-
-  '@sodaru/yup-to-json-schema@2.0.1':
     optional: true
 
   '@sveltejs/adapter-auto@3.2.5(@sveltejs/kit@2.5.28(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.247)(vite@5.4.6(@types/node@20.16.5)(sass@1.79.1)))(svelte@5.0.0-next.247)(vite@5.4.6(@types/node@20.16.5)(sass@1.79.1)))':

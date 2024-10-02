@@ -665,6 +665,7 @@
 				type="button"
 				on:click|preventDefault={() => setCollapse(!collapsed)}
 				class="super-debug--collapse"
+				aria-label="Collapse"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

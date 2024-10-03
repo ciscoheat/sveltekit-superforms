@@ -140,8 +140,8 @@ importers:
         specifier: ^2.4.4
         version: 2.4.4(@sveltejs/kit@2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)
       sveltekit-rate-limiter:
-        specifier: ^0.5.2
-        version: 0.5.2(@sveltejs/kit@2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))
+        specifier: ^0.6.1
+        version: 0.6.1(@sveltejs/kit@2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))
       throttle-debounce:
         specifier: ^5.0.2
         version: 5.0.2
@@ -1764,8 +1764,8 @@ packages:
       '@sveltejs/kit': 1.x || 2.x
       svelte: 3.x || 4.x || >=5.0.0-next.51
 
-  sveltekit-rate-limiter@0.5.2:
-    resolution: {integrity: sha512-7CELKmTffNjj0i/RUxT9SKYFA9IO/tQabjgT39clOlkKvlcGozNy8nqoIx+24amWfqEqC/WXYMEIek04PiFdyA==}
+  sveltekit-rate-limiter@0.6.1:
+    resolution: {integrity: sha512-5b0ZAuJsGeFt3k8qe+SvPZXeg8f0XVcnUnL/5cOZVh1tLoi8NE9bDOtAkGN3L+66hjSkbBayhd7FVyjN4DV7pw==}
     peerDependencies:
       '@sveltejs/kit': 1.x || 2.x
 
@@ -3531,7 +3531,7 @@ snapshots:
       '@sveltejs/kit': 2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))
       svelte: 5.0.0-next.260
 
-  sveltekit-rate-limiter@0.5.2(@sveltejs/kit@2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))):
+  sveltekit-rate-limiter@0.6.1(@sveltejs/kit@2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))):
     dependencies:
       '@isaacs/ttlcache': 1.4.1
       '@sveltejs/kit': 2.6.1(@sveltejs/vite-plugin-svelte@4.0.0-next.7(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4)))(svelte@5.0.0-next.260)(vite@5.4.8(@types/node@22.7.4)(sass@1.79.4))

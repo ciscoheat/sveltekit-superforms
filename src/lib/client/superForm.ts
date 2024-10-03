@@ -663,7 +663,7 @@ export function superForm<
 	}
 
 	function Form_resultStatus(defaultStatus: number) {
-		if (defaultStatus >= 500) return defaultStatus;
+		if (defaultStatus >= 400) return defaultStatus;
 		return (
 			(typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
 				? undefined
@@ -1672,34 +1672,21 @@ export function superForm<
 				}
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			async function triggerOnError(result: { type: 'error'; status?: number; error: any }) {
-				if (options.applyAction) {
-					if (options.onError == 'apply') {
-						await applyAction(result);
-					} else {
-						// Transform to failure, to avoid data loss
-						// Set the data to the error result, so it will be
-						// picked up in page.subscribe in superForm.
-						const failResult = {
-							type: 'failure',
-							status: Form_resultStatus(Math.floor(result.status ?? 400)),
-							data: result
-						} as const;
-						await applyAction(failResult);
-					}
-				}
-
+			async function triggerOnError(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				result: { type: 'error'; status?: number; error: any },
+				thrown: boolean
+			) {
 				// Check if the error message should be replaced
 				if (options.onError !== 'apply') {
-					const data = { result, message: Message };
+					const event = { result, message: Message };
 
 					for (const onErrorEvent of formEvents.onError) {
 						if (
 							onErrorEvent !== 'apply' &&
 							(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
 						) {
-							await onErrorEvent(data);
+							await onErrorEvent(event);
 						}
 					}
 				}
@@ -1709,6 +1696,27 @@ export function superForm<
 						result,
 						flashMessage: options.flashMessage.module.getFlash(page)
 					});
+				}
+
+				// Set error http status, unless already set
+				if (!result.status || result.status < 400) {
+					result.status = thrown ? 500 : 400;
+				}
+
+				if (options.applyAction) {
+					if (options.onError == 'apply') {
+						await applyAction(result);
+					} else {
+						// Transform to failure, to avoid data loss
+						// Set the data to the error result, so it will be
+						// picked up in page.subscribe in superForm.
+						const failResult = {
+							type: 'failure',
+							status: Form_resultStatus(result.status),
+							data: result
+						} as const;
+						await applyAction(failResult);
+					}
 				}
 			}
 
@@ -1740,7 +1748,7 @@ export function superForm<
 						await event(submit);
 					} catch (error) {
 						cancel();
-						triggerOnError({ type: 'error', error, status: Form_resultStatus(500) });
+						triggerOnError({ type: 'error', error, status: Form_resultStatus(500) }, true);
 					}
 				}
 			}
@@ -1899,7 +1907,7 @@ export function superForm<
 					data.result = {
 						type: 'error',
 						error,
-						status: Form_resultStatus(Math.max(result.status ?? 500, 500))
+						status: Form_resultStatus(Math.max(result.status ?? 500, 400))
 					};
 				}
 
@@ -1975,7 +1983,7 @@ export function superForm<
 								await Form_updateFromActionResult(result);
 							}
 						} else {
-							await triggerOnError(result);
+							await triggerOnError(result, false);
 						}
 					}
 				}

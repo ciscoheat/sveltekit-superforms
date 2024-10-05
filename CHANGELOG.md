@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Exported `ClientValidationAdapter` from `sveltekit-supoerforms/adapters`.
+- `form` is now available as an argument in [onError](https://superforms.rocks/concepts/events#onerror), so it can be modified as in `onUpdate`.
 
 ### Fixed
 

@@ -144,6 +144,7 @@ export type FormOptions<
 	onError:
 		| 'apply'
 		| ((event: {
+				form: SuperValidated<T, M, In>;
 				result: {
 					type: 'error';
 					status?: number;
@@ -965,6 +966,34 @@ export function superForm<
 		);
 	}
 
+	function Form_capture(removeFilesfromData = true): SuperFormSnapshot<T, M, In> {
+		let data = Data.form;
+		let tainted = Data.tainted;
+
+		if (removeFilesfromData) {
+			const removed = removeFiles(Data.form);
+			data = removed.data;
+			const paths = removed.paths;
+
+			if (paths.length) {
+				tainted = clone(tainted) ?? {};
+				setPaths(tainted, paths, false);
+			}
+		}
+
+		return {
+			valid: Data.valid,
+			posted: Data.posted,
+			errors: Data.errors,
+			data,
+			constraints: Data.constraints,
+			message: Data.message,
+			id: Data.formId,
+			tainted,
+			shape: Data.shape
+		};
+	}
+
 	async function Form_updateFromValidation(form: SuperValidated<T, M, In>, successResult: boolean) {
 		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
 			Form_reset({ message: form.message, posted: true });
@@ -1466,9 +1495,6 @@ export function superForm<
 				if (options.applyAction && pageUpdate.form && typeof pageUpdate.form === 'object') {
 					const actionData = pageUpdate.form;
 
-					// Check if it is an error result, sent here from formEnhance
-					if (actionData.type == 'error') return;
-
 					for (const newForm of Context_findValidationForms(actionData)) {
 						const isInitial = initialForms.has(newForm);
 
@@ -1675,11 +1701,15 @@ export function superForm<
 			async function triggerOnError(
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				result: { type: 'error'; status?: number; error: any },
-				thrown: boolean
+				status: number
 			) {
+				const form: SuperValidated<T, M, In> = Form_capture(false);
+
+				result.status = status;
+
 				// Check if the error message should be replaced
 				if (options.onError !== 'apply') {
-					const event = { result, message: Message };
+					const event = { result, message: Message, form };
 
 					for (const onErrorEvent of formEvents.onError) {
 						if (
@@ -1698,11 +1728,6 @@ export function superForm<
 					});
 				}
 
-				// Set error http status, unless already set
-				if (!result.status || result.status < 400) {
-					result.status = thrown ? 500 : 400;
-				}
-
 				if (options.applyAction) {
 					if (options.onError == 'apply') {
 						await applyAction(result);
@@ -1710,12 +1735,11 @@ export function superForm<
 						// Transform to failure, to avoid data loss
 						// Set the data to the error result, so it will be
 						// picked up in page.subscribe in superForm.
-						const failResult = {
+						await applyAction({
 							type: 'failure',
 							status: Form_resultStatus(result.status),
-							data: result
-						} as const;
-						await applyAction(failResult);
+							data: { form }
+						});
 					}
 				}
 			}
@@ -1748,7 +1772,7 @@ export function superForm<
 						await event(submit);
 					} catch (error) {
 						cancel();
-						triggerOnError({ type: 'error', error, status: Form_resultStatus(500) }, true);
+						triggerOnError({ type: 'error', error }, 500);
 					}
 				}
 			}
@@ -1983,7 +2007,7 @@ export function superForm<
 								await Form_updateFromActionResult(result);
 							}
 						} else {
-							await triggerOnError(result, false);
+							await triggerOnError(result, Math.max(result.status ?? 500, 500));
 						}
 					}
 				}
@@ -2091,26 +2115,7 @@ export function superForm<
 
 		options: options as T extends T ? FormOptions<T, M> : never,
 
-		capture() {
-			const { data, paths } = removeFiles(Data.form);
-			let tainted = Data.tainted;
-			if (paths.length) {
-				tainted = clone(tainted) ?? {};
-				setPaths(tainted, paths, false);
-			}
-
-			return {
-				valid: Data.valid,
-				posted: Data.posted,
-				errors: Data.errors,
-				data,
-				constraints: Data.constraints,
-				message: Data.message,
-				id: Data.formId,
-				tainted,
-				shape: Data.shape
-			};
-		},
+		capture: Form_capture,
 
 		restore: ((snapshot: SuperFormSnapshot<T, M>) => {
 			rebind({ form: snapshot, untaint: snapshot.tainted ?? true });

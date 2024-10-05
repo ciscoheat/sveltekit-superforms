@@ -7,23 +7,21 @@
 	import { debounce } from 'throttle-debounce';
 
 	const { form, errors, message, enhance, submit, submitting } = superForm(
-		defaults({ email: 'test@test.com' }, zod(schema)),
+		defaults({ email: 'test@test.com', name: 'aaa' }, zod(schema)),
 		{
-			onError(event) {
+			onError({ result, form }) {
 				console.log('=== onError ===');
 
-				/* 
-					1. It's not possible to use the SuperValidated data from onError, 
-					as it can be caught in onSubmit where it doesn't exist.
-					
-					You need to update the stores directly.
-				*/
-				$message = JSON.stringify(event, null, 2);
+				form.message = JSON.stringify(result.error, null, 2);
 
 				// Cast the error, as its type isn't unknown.
-				const error = event.result.error as Record<string, unknown>;
+				const error = result.error as unknown as {
+					status: number;
+					errors: Record<string, string[]>;
+				} & Record<string, unknown>;
 
-				$errors = error.errors as Record<string, string[]>;
+				result.status = error.status;
+				form.errors = error.errors;
 			},
 			async onUpdate({ form, result }) {
 				console.log('=== onUpdate ===');
@@ -33,7 +31,7 @@
 					return;
 				}
 
-				const isSuccess = Math.random() >= 0.5;
+				const isSuccess = false; //Math.random() >= 0.5;
 				console.log('isSuccess', isSuccess);
 
 				if (isSuccess) {
@@ -56,12 +54,11 @@
 						}
 					};
 
-					const shouldThrow = Math.random() >= 0.5;
+					const shouldThrow = false; //Math.random() >= 0.5;
 					console.log('shouldThrow', shouldThrow);
 
 					if (shouldThrow) {
 						// 3. This will update the status in the next release:
-						result.status = 422;
 						throw madeupProblemDetails;
 					}
 
@@ -75,7 +72,7 @@
 			},
 			SPA: true,
 			validators: zod(schema),
-			resetForm: true
+			resetForm: false
 		}
 	);
 
@@ -84,7 +81,7 @@
 
 <SuperDebug data={$form} />
 
-<h3>Superforms testing ground - Zod</h3>
+<h3>onError testing</h3>
 
 {#if $message}
 	<pre

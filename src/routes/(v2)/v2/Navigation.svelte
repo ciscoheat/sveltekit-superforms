@@ -67,7 +67,8 @@
 		'spa-error',
 		'issue-470',
 		'issue-484',
-		'component-regen'
+		'component-regen',
+		'issue-485'
 	].sort();
 </script>
 

@@ -664,7 +664,7 @@ export function superForm<
 	}
 
 	function Form_resultStatus(defaultStatus: number) {
-		if (defaultStatus >= 400) return defaultStatus;
+		if (defaultStatus > 400) return defaultStatus;
 		return (
 			(typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
 				? undefined
@@ -1927,11 +1927,11 @@ export function superForm<
 								cancel();
 							});
 
-				function setErrorResult(error: unknown, data: { result: ActionResult }) {
+				function setErrorResult(error: unknown, data: { result: ActionResult }, status: number) {
 					data.result = {
 						type: 'error',
 						error,
-						status: Form_resultStatus(Math.max(result.status ?? 500, 400))
+						status: Form_resultStatus(status)
 					};
 				}
 
@@ -1939,7 +1939,7 @@ export function superForm<
 					try {
 						await event(data);
 					} catch (error) {
-						setErrorResult(error, data);
+						setErrorResult(error, data, Math.max(result.status ?? 500, 400));
 					}
 				}
 
@@ -1970,7 +1970,7 @@ export function superForm<
 								try {
 									await event(data);
 								} catch (error) {
-									setErrorResult(error, data);
+									setErrorResult(error, data, Math.max(result.status ?? 500, 400));
 								}
 							}
 
@@ -2007,7 +2007,7 @@ export function superForm<
 								await Form_updateFromActionResult(result);
 							}
 						} else {
-							await triggerOnError(result, Math.max(result.status ?? 500, 500));
+							await triggerOnError(result, Math.max(result.status ?? 500, 400));
 						}
 					}
 				}

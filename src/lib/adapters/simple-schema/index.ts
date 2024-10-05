@@ -15,8 +15,8 @@ export function simpleSchema(value: unknown): JSONSchema {
 				return { type: 'integer', format: 'unix-time' };
 			}
 
-			const output: JSONSchema = { type: 'array' };
 			if (Array.isArray(value)) {
+				const output: JSONSchema = { type: 'array' };
 				if (value.length) output.items = simpleSchema(value[0]);
 				return output;
 			} else {

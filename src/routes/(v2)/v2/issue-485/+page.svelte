@@ -6,6 +6,10 @@
 	import { schema } from './schema.js';
 	import { debounce } from 'throttle-debounce';
 
+	let isSuccess = true;
+	let shouldThrowIfNotSuccess = true;
+	let defaultStatus = false;
+
 	const { form, errors, message, enhance, submit, submitting } = superForm(
 		defaults({ email: 'test@test.com', name: 'aaa' }, zod(schema)),
 		{
@@ -20,7 +24,7 @@
 					errors: Record<string, string[]>;
 				} & Record<string, unknown>;
 
-				result.status = error.status;
+				if (!defaultStatus) result.status = error.status;
 				form.errors = error.errors;
 			},
 			async onUpdate({ form, result }) {
@@ -31,7 +35,6 @@
 					return;
 				}
 
-				const isSuccess = false; //Math.random() >= 0.5;
 				console.log('isSuccess', isSuccess);
 
 				if (isSuccess) {
@@ -54,16 +57,15 @@
 						}
 					};
 
-					const shouldThrow = false; //Math.random() >= 0.5;
-					console.log('shouldThrow', shouldThrow);
+					console.log('shouldThrow', shouldThrowIfNotSuccess);
 
-					if (shouldThrow) {
+					if (shouldThrowIfNotSuccess) {
 						// 3. This will update the status in the next release:
 						throw madeupProblemDetails;
 					}
 
 					setError(form, 'name', ['random error']);
-					result.status = 422;
+					if (!defaultStatus) result.status = 423;
 					result.type = 'failure';
 					// 3. Cannot set data to anything else than a SuperValidated object. In general, tamper as little as possible with the result
 					// 4. Focus will be kept when this is commented out.
@@ -82,6 +84,14 @@
 <SuperDebug data={$form} />
 
 <h3>onError testing</h3>
+
+<div>
+	<input type="checkbox" bind:checked={isSuccess} /> Succeed
+	<br />
+	<input type="checkbox" bind:checked={shouldThrowIfNotSuccess} /> Throw if not success
+	<br />
+	<input type="checkbox" bind:checked={defaultStatus} /> Status 500 on error
+</div>
 
 {#if $message}
 	<pre

@@ -144,7 +144,6 @@ export type FormOptions<
 	onError:
 		| 'apply'
 		| ((event: {
-				form: SuperValidated<T, M, In>;
 				result: {
 					type: 'error';
 					status?: number;
@@ -1495,6 +1494,9 @@ export function superForm<
 				if (options.applyAction && pageUpdate.form && typeof pageUpdate.form === 'object') {
 					const actionData = pageUpdate.form;
 
+					// If actionData is an error, it's sent here from triggerOnError
+					if (actionData.type === 'error') return;
+
 					for (const newForm of Context_findValidationForms(actionData)) {
 						const isInitial = initialForms.has(newForm);
 
@@ -1703,7 +1705,8 @@ export function superForm<
 				result: { type: 'error'; status?: number; error: any },
 				status: number
 			) {
-				const form: SuperValidated<T, M, In> = Form_capture(false);
+				// For v3, then return { form } as data in applyAction below:
+				//const form: SuperValidated<T, M, In> = Form_capture(false);
 
 				result.status = status;
 
@@ -1738,7 +1741,7 @@ export function superForm<
 						await applyAction({
 							type: 'failure',
 							status: Form_resultStatus(result.status),
-							data: { form }
+							data: result
 						});
 					}
 				}

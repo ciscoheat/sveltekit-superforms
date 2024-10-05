@@ -13,10 +13,10 @@
 	const { form, errors, message, enhance, submit, submitting } = superForm(
 		defaults({ email: 'test@test.com', name: 'aaa' }, zod(schema)),
 		{
-			onError({ result, form }) {
+			onError({ result }) {
 				console.log('=== onError ===');
 
-				form.message = JSON.stringify(result.error, null, 2);
+				$message = JSON.stringify(result.error, null, 2);
 
 				// Cast the error, as its type isn't unknown.
 				const error = result.error as unknown as {
@@ -25,7 +25,7 @@
 				} & Record<string, unknown>;
 
 				if (!defaultStatus) result.status = error.status;
-				form.errors = error.errors;
+				$errors = error.errors;
 			},
 			async onUpdate({ form, result }) {
 				console.log('=== onUpdate ===');
@@ -90,7 +90,7 @@
 	<br />
 	<input type="checkbox" bind:checked={shouldThrowIfNotSuccess} /> Throw if not success
 	<br />
-	<input type="checkbox" bind:checked={defaultStatus} /> Status 500 on error
+	<input type="checkbox" bind:checked={defaultStatus} /> Status 400 on error
 </div>
 
 {#if $message}

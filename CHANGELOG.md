@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Exported `ClientValidationAdapter` from `sveltekit-supoerforms/adapters`.
+
 ### Fixed
 
 - Result can now be modified in [onError](https://superforms.rocks/concepts/events#onerror), for setting a status code for example.

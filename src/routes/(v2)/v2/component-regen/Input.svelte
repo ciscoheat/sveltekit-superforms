@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let value: unknown;
+	export let value: unknown;
 </script>
 
 <input bind:value />

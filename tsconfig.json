@@ -12,7 +12,6 @@
 		"sourceMap": true,
 		"strict": true,
 		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
-		"exactOptionalPropertyTypes": true
+		"moduleResolution": "NodeNext"
 	}
 }

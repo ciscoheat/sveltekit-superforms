@@ -22,8 +22,8 @@ importers:
         version: 7.0.1
     optionalDependencies:
       '@effect/schema':
-        specifier: ^0.73.4
-        version: 0.73.4(effect@3.9.1)
+        specifier: ^0.75.3
+        version: 0.75.3(effect@3.9.1)
       '@exodus/schemasafe':
         specifier: ^1.3.0
         version: 1.3.0
@@ -46,7 +46,7 @@ importers:
         specifier: ^0.14.1
         version: 0.14.1
       effect:
-        specifier: ^3.8.2
+        specifier: ^3.9.1
         version: 3.9.1
       joi:
         specifier: ^17.13.3
@@ -186,10 +186,10 @@ packages:
     resolution: {integrity: sha512-VBj9MYyDb9tuLq7yzqjgzt6Q+IBQLrGZfdjOekyEirZPHxXWoTSGUTMrpsfi58Up73d13NfYLv8HT9vmznjzhQ==}
     engines: {node: '>=6.9.0'}
 
-  '@effect/schema@0.73.4':
-    resolution: {integrity: sha512-Vjgu+EuG6eyh3oB21jpHv0l9ZgGZCyVZf3lXs+2X18UEUOkppvpw11heHiK02iJCVchgp3Qjw/GDPUqhQvKpSg==}
+  '@effect/schema@0.75.3':
+    resolution: {integrity: sha512-U+ZKRh8VLuzkYpvbn1APNRAtlNyxhqTr91NA2dR8LJ31duziAmPOnts8IF4HsbBrUCQ1LbP1IrRPW5Isw5Hj4w==}
     peerDependencies:
-      effect: ^3.8.3
+      effect: ^3.9.1
 
   '@esbuild/aix-ppc64@0.21.5':
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -2037,7 +2037,7 @@ snapshots:
     dependencies:
       regenerator-runtime: 0.14.1
 
-  '@effect/schema@0.73.4(effect@3.9.1)':
+  '@effect/schema@0.75.3(effect@3.9.1)':
     dependencies:
       effect: 3.9.1
       fast-check: 3.22.0

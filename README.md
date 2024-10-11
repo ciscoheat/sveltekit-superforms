@@ -20,7 +20,7 @@
 
 # Feature list
 
-- Server- and client-side validation with your favorite validation libraries, and more to come: 💥 [Arktype](https://arktype.io/) 💥 [class-validator](https://github.com/typestack/class-validator) 💥 [Joi](https://joi.dev/) 💥 [Superstruct](https://docs.superstructjs.org/) 💥 [TypeBox](https://github.com/sinclairzx81/typebox) 💥 [Valibot](https://valibot.dev/) 💥 [VineJS](https://vinejs.dev/) 💥 [Yup](https://github.com/jquense/yup) 💥 [Zod](https://zod.dev/) 💥 or use [JSON Schema](https://json-schema.org/) directly.
+- Server- and client-side validation with your favorite validation libraries, and more to come: 💥 [Arktype](https://arktype.io/) 💥 [class-validator](https://github.com/typestack/class-validator) 💥 [Effect](https://effect.website/) 💥 [Joi](https://joi.dev/) 💥 [Superstruct](https://docs.superstructjs.org/) 💥 [TypeBox](https://github.com/sinclairzx81/typebox) 💥 [Valibot](https://valibot.dev/) 💥 [VineJS](https://vinejs.dev/) 💥 [Yup](https://github.com/jquense/yup) 💥 [Zod](https://zod.dev/) 💥 or use [JSON Schema](https://json-schema.org/) directly.
 - Seamless merging of `PageData` and `ActionData` - Forget about how to combine them, just focus on your form data, always strongly typed.
 - [Auto-centering and focusing](https://superforms.rocks/concepts/error-handling#usage-client) on invalid form fields.
 - [Tainted form detection](https://superforms.rocks/concepts/tainted), prevents the user from losing data if navigating away from an unsaved form. Or use [snapshots](https://superforms.rocks/concepts/snapshots) to save the form state.

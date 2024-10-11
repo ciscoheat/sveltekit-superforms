@@ -68,7 +68,9 @@
 		'issue-470',
 		'issue-484',
 		'component-regen',
-		'issue-485'
+		'issue-485',
+		'arktype',
+		'effect'
 	].sort();
 </script>
 

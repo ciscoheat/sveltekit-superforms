@@ -2,6 +2,7 @@ export type { ValidationAdapter, ClientValidationAdapter, Infer, InferIn } from 
 
 export { arktype, arktypeClient } from './arktype.js';
 export { classvalidator, classvalidatorClient } from './classvalidator.js';
+export { effect, effectClient } from './effect.js';
 export { joi, joiClient } from './joi.js';
 export { superformClient } from './superform.js';
 export { typebox, typeboxClient } from './typebox.js';

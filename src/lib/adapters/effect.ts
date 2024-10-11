@@ -47,7 +47,6 @@ function _effect<T extends AnySchema>(
 	schema: T,
 	options?: AdapterOptions<Infer<T>> & { parseOptions?: ParseOptions }
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
-	// @ts-expect-error idk why this happens, it seems to happen in other adapters too
 	return createAdapter({
 		superFormValidationLibrary: 'effect',
 		validate: async (data) => validate(schema, data, options),

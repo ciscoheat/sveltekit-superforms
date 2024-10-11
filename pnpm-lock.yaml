@@ -52,8 +52,8 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
       valibot:
-        specifier: ^0.35.0
-        version: 0.35.0
+        specifier: ^0.41.0
+        version: 0.41.0(typescript@5.6.2)
       yup:
         specifier: ^1.4.0
         version: 1.4.0
@@ -96,7 +96,7 @@ importers:
         version: 6.21.0(eslint@8.57.1)(typescript@5.6.2)
       '@valibot/i18n':
         specifier: ^0.16.0
-        version: 0.16.0(valibot@0.35.0)
+        version: 0.16.0(valibot@0.41.0(typescript@5.6.2))
       eslint:
         specifier: ^8.57.1
         version: 8.57.1
@@ -1863,8 +1863,13 @@ packages:
   valibot@0.31.1:
     resolution: {integrity: sha512-2YYIhPrnVSz/gfT2/iXVTrSj92HwchCt9Cga/6hX4B26iCz9zkIsGTS0HjDYTZfTi1Un0X6aRvhBi1cfqs/i0Q==}
 
-  valibot@0.35.0:
-    resolution: {integrity: sha512-+i2aCRkReTrd5KBN/dW2BrPOvFnU5LXTV2xjZnjnqUIO8YUx6P2+MgRrkwF2FhkexgyKq/NIZdPdknhHf5A/Ww==}
+  valibot@0.41.0:
+    resolution: {integrity: sha512-igDBb8CTYr8YTQlOKgaN9nSS0Be7z+WRuaeYqGf3Cjz3aKmSnqEmYnkfVjzIuumGqfHpa3fLIvMEAfhrpqN8ng==}
+    peerDependencies:
+      typescript: '>=5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   validator@13.12.0:
     resolution: {integrity: sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg==}
@@ -2490,9 +2495,9 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@valibot/i18n@0.16.0(valibot@0.35.0)':
+  '@valibot/i18n@0.16.0(valibot@0.41.0(typescript@5.6.2))':
     dependencies:
-      valibot: 0.35.0
+      valibot: 0.41.0(typescript@5.6.2)
 
   '@vinejs/compiler@2.5.0':
     optional: true
@@ -3605,7 +3610,9 @@ snapshots:
   valibot@0.31.1:
     optional: true
 
-  valibot@0.35.0: {}
+  valibot@0.41.0(typescript@5.6.2):
+    optionalDependencies:
+      typescript: 5.6.2
 
   validator@13.12.0:
     optional: true

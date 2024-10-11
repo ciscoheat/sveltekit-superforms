@@ -162,7 +162,7 @@
 		"joi": "^17.13.3",
 		"json-schema-to-ts": "^3.1.1",
 		"superstruct": "^2.0.2",
-		"valibot": "^0.35.0",
+		"valibot": "^0.41.0",
 		"yup": "^1.4.0",
 		"zod": "^3.23.8",
 		"zod-to-json-schema": "^3.23.3"

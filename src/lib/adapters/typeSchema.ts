@@ -18,6 +18,7 @@ import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
+import type { Schema as Schema$1 } from '@effect/schema/Schema';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -156,6 +157,15 @@ interface SuperstructResolver extends Resolver {
 	output: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
 }
 
+interface EffectResolver extends Resolver {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	base: Schema$1<any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	input: this['schema'] extends Schema$1<any> ? Schema$1.Encoded<this['schema']> : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	output: this['schema'] extends Schema$1<any> ? Schema$1.Type<this['schema']> : never;
+}
+
 /*
 interface AjvResolver extends Resolver {
 	base: SchemaObject;
@@ -163,12 +173,6 @@ interface AjvResolver extends Resolver {
 
 interface DeepkitResolver extends Resolver {
   base: Type$1;
-}
-
-interface EffectResolver extends Resolver {
-  base: Schema$1<any>;
-  input: this['schema'] extends Schema$1<any> ? Schema$1.From<this['schema']> : never;
-  output: this['schema'] extends Schema$1<any> ? Schema$1.To<this['schema']> : never;
 }
 
 interface IoTsResolver extends Resolver {
@@ -203,10 +207,10 @@ type Registry = {
 	vine: VineResolver;
 	schemasafe: SchemasafeResolver<JSONSchema>;
 	superstruct: SuperstructResolver;
+	effect: EffectResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;
-    effect: EffectResolver;
     'io-ts': IoTsResolver;
     ow: OwResolver;
     runtypes: RuntypesResolver;

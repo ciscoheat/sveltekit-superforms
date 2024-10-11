@@ -78,6 +78,9 @@ import {
 
 import { schemasafe } from '$lib/adapters/schemasafe.js';
 
+import { effect } from '$lib/adapters/effect.js';
+import { Schema } from '@effect/schema';
+
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 import { SchemaError, type JSONSchema } from '$lib/index.js';
@@ -862,6 +865,33 @@ describe('superstruct', () => {
 	const adapter = superstruct(schema, { defaults });
 
 	schemaTest(adapter, undefined, 'simple');
+});
+
+describe('Effect', async () => {
+	// effect deliberately does not provide email parsing out of the box
+	// https://github.com/Effect-TS/schema/issues/294
+	// i just found this regex online, does the job
+	const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+	const schema = Schema.Struct({
+		name: Schema.String.annotations({ default: 'Unknown' }),
+		email: Schema.String.pipe(
+			Schema.filter((s) => emailRegex.test(s) || 'must be a valid email', {
+				jsonSchema: {}
+			})
+		),
+		tags: Schema.Array(Schema.String.pipe(Schema.minLength(2))).pipe(Schema.minItems(3)),
+		score: Schema.Number.pipe(Schema.int(), Schema.greaterThanOrEqualTo(0)),
+		date: Schema.DateFromSelf.annotations({
+			jsonSchema: {
+				type: 'date'
+			}
+		}).pipe(Schema.optional),
+		nospace: Schema.String.pipe(Schema.pattern(nospacePattern), Schema.optional),
+		extra: Schema.String.pipe(Schema.NullOr).annotations({ default: null })
+	});
+
+	const adapter = effect(schema);
+	schemaTest(adapter);
 });
 
 ///// Common ////////////////////////////////////////////////////////

@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
 - New validation library: [Effect](https://effect.website/)!
+
+### Changed
+
+- `@typeschema/class-validator` version bump to `^0.3.0`.
 
 ## [2.19.1]
 

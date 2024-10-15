@@ -34,8 +34,8 @@ importers:
         specifier: ^0.32.35
         version: 0.32.35
       '@typeschema/class-validator':
-        specifier: ^0.2.0
-        version: 0.2.0(@types/json-schema@7.0.15)(class-validator@0.14.1)
+        specifier: ^0.3.0
+        version: 0.3.0(@types/json-schema@7.0.15)(class-validator@0.14.1)
       '@vinejs/vine':
         specifier: ^1.8.0
         version: 1.8.0
@@ -720,8 +720,8 @@ packages:
   '@types/validator@13.12.2':
     resolution: {integrity: sha512-6SlHBzUW8Jhf3liqrGGXyTJSIFe4nqlJ5A5KaMZ2l/vbM3Wh3KSybots/wfWVzNLK4D1NZluDlSQIbIEPx6oyA==}
 
-  '@typeschema/class-validator@0.2.0':
-    resolution: {integrity: sha512-zq0qeflVu1Z6D0ttkqAWZMtxJeNEQ70yo/025sV0jujiOOgQx38JXrky77nSWWPp2E1KIMtgkToQbkzkXyW5yg==}
+  '@typeschema/class-validator@0.3.0':
+    resolution: {integrity: sha512-OJSFeZDIQ8EK1HTljKLT5CItM2wsbgczLN8tMEfz3I1Lmhc5TBfkZ0eikFzUC16tI3d1Nag7um6TfCgp2I2Bww==}
     peerDependencies:
       class-validator: ^0.14.1
     peerDependenciesMeta:
@@ -2420,7 +2420,7 @@ snapshots:
   '@types/validator@13.12.2':
     optional: true
 
-  '@typeschema/class-validator@0.2.0(@types/json-schema@7.0.15)(class-validator@0.14.1)':
+  '@typeschema/class-validator@0.3.0(@types/json-schema@7.0.15)(class-validator@0.14.1)':
     dependencies:
       '@typeschema/core': 0.14.0(@types/json-schema@7.0.15)
     optionalDependencies:

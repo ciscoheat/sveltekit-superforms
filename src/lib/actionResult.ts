@@ -8,7 +8,7 @@ import { stringify } from 'devalue';
 export interface CookieSerializeOptions {
 	path?: string | undefined;
 	maxAge?: number | undefined;
-	sameSite?: 'Lax' | 'Strict' | 'None';
+	sameSite?: 'lax' | 'strict' | 'none';
 	secure?: boolean | undefined;
 }
 

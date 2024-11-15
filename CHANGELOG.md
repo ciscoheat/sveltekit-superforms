@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Valibot updated to require `1.0.0-beta.3` (hoping for a stable release soon).
+- Arktype updated to require `2.0.0-rc.23` (hoping for a stable release soon).
 
 ### Added
 

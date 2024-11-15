@@ -25,7 +25,7 @@
 	const { form, message, delayed, errors, allErrors, enhance } = superform;
 </script>
 
-<form method="POST" enctype="application/json" use:enhance {...$$restProps}>
+<form method="POST" use:enhance {...$$restProps}>
 	<slot
 		form={superform}
 		data={$form}

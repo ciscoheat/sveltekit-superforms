@@ -2,8 +2,6 @@ import type { type } from 'arktype';
 import {
 	type ValidationAdapter,
 	type RequiredDefaultsOptions,
-	type Infer,
-	type InferIn,
 	createAdapter,
 	type ClientValidationAdapter,
 	type ValidationResult,
@@ -21,12 +19,12 @@ const fetchModule = /* @__PURE__ */ memoize(modules);
 async function _validate<T extends type.Any>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<T['infer']>> {
 	const { type } = await fetchModule();
 	const result = schema(data);
 	if (!(result instanceof type.errors)) {
 		return {
-			data: result as Infer<T>,
+			data: result as T['infer'],
 			success: true
 		};
 	}
@@ -42,22 +40,22 @@ async function _validate<T extends type.Any>(
 
 function _arktype<T extends type.Any>(
 	schema: T,
-	options: RequiredDefaultsOptions<Infer<T>>
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options: RequiredDefaultsOptions<T['infer']>
+): ValidationAdapter<T['infer'], T['inferIn']> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
 		defaults: options.defaults,
 		jsonSchema: createJsonSchema(options),
-		validate: async (data) => _validate(schema, data)
+		validate: async (data) => _validate<T>(schema, data)
 	});
 }
 
 function _arktypeClient<T extends type.Any>(
 	schema: T
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<T['infer'], T['inferIn']> {
 	return {
 		superFormValidationLibrary: 'arktype',
-		validate: async (data) => _validate(schema, data)
+		validate: async (data) => _validate<T>(schema, data)
 	};
 }
 

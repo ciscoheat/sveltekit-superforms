@@ -42,7 +42,7 @@ export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
 	return valibotToJSON({ ...defaultOptions, ...options }) as JSONSchema;
 };
 
-async function validate<T extends SupportedSchemas>(
+async function _validate<T extends SupportedSchemas>(
 	schema: T,
 	data: unknown,
 	config?: Config<GenericIssue<unknown>>
@@ -72,7 +72,7 @@ function _valibot<T extends SupportedSchemas>(
 ): ValidationAdapter<Infer<T>, InferIn<T>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
-		validate: async (data) => validate(schema, data, options?.config),
+		validate: async (data) => _validate<T>(schema, data, options?.config),
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		jsonSchema: options?.jsonSchema ?? valibotToJSONSchema({ schema: schema as any, ...options }),
 		defaults: 'defaults' in options ? options.defaults : undefined
@@ -84,7 +84,7 @@ function _valibotClient<T extends SupportedSchemas>(
 ): ClientValidationAdapter<Infer<T>, InferIn<T>> {
 	return {
 		superFormValidationLibrary: 'valibot',
-		validate: async (data) => validate(schema, data)
+		validate: async (data) => _validate<T>(schema, data)
 	};
 }
 

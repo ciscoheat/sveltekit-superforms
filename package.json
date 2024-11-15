@@ -114,7 +114,7 @@
 		"joi": "^17.13.1",
 		"superstruct": "^2.0.2",
 		"svelte": "3.x || 4.x || >=5.0.0-next.51",
-		"valibot": ">=0.33.0 <1",
+		"valibot": ">=1.0.0-beta.3",
 		"yup": "^1.4.0",
 		"zod": "^3.23.8"
 	},
@@ -172,7 +172,7 @@
 		"joi": "^17.13.3",
 		"json-schema-to-ts": "^3.1.1",
 		"superstruct": "^2.0.2",
-		"valibot": "^0.41.0",
+		"valibot": "^1.0.0-beta.3",
 		"yup": "^1.4.0",
 		"zod": "^3.23.8",
 		"zod-to-json-schema": "^3.23.3"

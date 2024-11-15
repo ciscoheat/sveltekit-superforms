@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Valibot updated to require `1.0.0-beta.3` (hoping for a stable release soon).
+
 ### Added
 
 - Support for Vine 2.0.

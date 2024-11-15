@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for Vine 2.0.
 
+### Fixed
+
+- [customRequest](https://superforms.rocks/concepts/events#customrequest) didn't cancel when client-side validation failed.
+
 ## [2.20.0] - 2024-10-18
 
 ### Added

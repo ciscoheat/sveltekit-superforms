@@ -2044,8 +2044,8 @@ export function superForm<
 				unsubCheckforNav();
 			}
 
-			if (customRequest) {
-				if (!cancelled) _submitCancel();
+			if (!cancelled && customRequest) {
+				_submitCancel();
 				const response = await customRequest(submitParams);
 
 				let result: ActionResult;

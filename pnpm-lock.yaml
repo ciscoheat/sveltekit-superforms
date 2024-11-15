@@ -37,8 +37,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(@types/json-schema@7.0.15)(class-validator@0.14.1)
       '@vinejs/vine':
-        specifier: ^1.8.0
-        version: 1.8.0
+        specifier: ^2.0.0
+        version: 2.1.0
       arktype:
         specifier: 2.0.0-rc.8
         version: 2.0.0-rc.8
@@ -806,8 +806,8 @@ packages:
     resolution: {integrity: sha512-hg4ekaB5Y2zh+IWzBiC/WCDWrIfpVnKu/ubUvelKlidc/VbulsexoFRw5kJGHZenPVI5YzNnDeTdYSALkTV7jQ==}
     engines: {node: '>=18.0.0'}
 
-  '@vinejs/vine@1.8.0':
-    resolution: {integrity: sha512-Qq3XxbA26jzqS9ICifkqzT399lMQZ2fWtqeV3luI2as+UIK7qDifJFU2Q4W3q3IB5VXoWxgwAZSZEO0em9I/qQ==}
+  '@vinejs/vine@2.1.0':
+    resolution: {integrity: sha512-09aJ2OauxpblqiNqd8qC9RAzzm5SV6fTqZhE4e25j4cM7fmNoXRTjM7Oo8llFADMO4eSA44HqYEO3mkRRYdbYw==}
     engines: {node: '>=18.16.0'}
 
   '@vitest/expect@1.6.0':
@@ -2529,7 +2529,7 @@ snapshots:
   '@vinejs/compiler@2.5.0':
     optional: true
 
-  '@vinejs/vine@1.8.0':
+  '@vinejs/vine@2.1.0':
     dependencies:
       '@poppinss/macroable': 1.0.3
       '@types/validator': 13.12.2

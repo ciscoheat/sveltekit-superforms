@@ -5,12 +5,16 @@ import { stringify } from 'devalue';
 import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
 
-async function validate(data: unknown, schema: ValidationAdapter<Record<string, unknown>>) {
+async function validate(
+	data: unknown,
+	schema: ValidationAdapter<Record<string, unknown>>,
+	strict = false
+) {
 	const formInput = new FormData();
 
 	formInput.set('__superform_json', stringify(data));
 	try {
-		return await superValidate(formInput, schema);
+		return await superValidate(formInput, schema, { strict });
 	} catch (err) {
 		console.error(err);
 		//
@@ -24,8 +28,15 @@ describe('Default discriminated union values 1', () => {
 		z.object({ type: z.literal('extra'), options: z.string().array() })
 	]);
 
-	test('Union with schema', async () => {
-		const form = await validate({ type: 'extra' }, zod(schema));
+	test('Union with schema 1', async () => {
+		const form = await validate({ type: 'empty' }, zod(schema));
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({ type: 'empty' });
+	});
+
+	test('Union with schema 2', async () => {
+		const form = await validate({ type: 'extra' }, zod(schema), true);
+		expect(form.valid).toBe(false);
 		expect(form.data).toEqual({ type: 'extra', options: [] });
 	});
 });

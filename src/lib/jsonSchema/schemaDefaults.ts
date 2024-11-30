@@ -70,7 +70,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return _multiType.size > 1;
 	};
 
-	let output: Record<string, unknown> = {};
+	let output: Record<string, unknown> | undefined = undefined;
 
 	// Check unions first, so default values can take precedence over nullable and optional
 	if (!objectDefaults && info.union) {
@@ -98,6 +98,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 			// Objects must have default values to avoid setting undefined properties on nested data
 			if (info.union.length && info.types[0] == 'object') {
+				if (output === undefined) output = {};
 				output =
 					info.union.length > 1
 						? merge.withOptions(
@@ -128,9 +129,9 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 					: _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
 
 			//if (def !== undefined) output[key] = def;
+			if (output === undefined) output = {};
 			output[key] = def;
 		}
-		return output;
 	} else if (objectDefaults) {
 		return objectDefaults;
 	}
@@ -159,7 +160,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	const [formatType] = info.types;
 
-	return defaultValue(formatType, schema.enum);
+	return output ?? defaultValue(formatType, schema.enum);
 }
 
 function formatDefaultValue(type: SchemaType, value: unknown) {

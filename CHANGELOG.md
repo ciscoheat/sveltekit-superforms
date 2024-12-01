@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - All properties for object unions weren't added to the adapter defaults.
 
+### Changed
+
+- Typebox updated to require `^0.34.9` (hoping for a stable release soon).
+
 ## [2.20.1] - 2024-11-15
 
 ### Changed

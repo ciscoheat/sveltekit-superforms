@@ -70,7 +70,8 @@
 		'component-regen',
 		'issue-485',
 		'arktype',
-		'effect'
+		'effect',
+		'issue-500'
 	].sort();
 </script>
 

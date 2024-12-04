@@ -1,13 +1,13 @@
-import type { ValidationAdapter } from '$lib/adapters/adapters.js';
+import type { Infer, ValidationAdapter } from '$lib/adapters/adapters.js';
 import { zod } from '$lib/adapters/zod.js';
 import { superValidate } from '$lib/superValidate.js';
 import { stringify } from 'devalue';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { z } from 'zod';
 
-async function validate(
-	data: unknown,
-	schema: ValidationAdapter<Record<string, unknown>>,
+async function validate<T extends Record<string, unknown>>(
+	data: T,
+	schema: ValidationAdapter<T>,
 	strict = false
 ) {
 	const formInput = new FormData();
@@ -35,9 +35,48 @@ describe('Default discriminated union values 1', () => {
 	});
 
 	test('Union with schema 2', async () => {
-		const form = await validate({ type: 'extra' }, zod(schema), true);
+		const form = await validate({ type: 'extra' } as Infer<typeof schema>, zod(schema), true);
 		expect(form.valid).toBe(false);
 		expect(form.data).toEqual({ type: 'extra', options: [] });
+	});
+
+	test('Nested discriminated union with default value', async () => {
+		const nested = z.object({
+			addresses: z.object({
+				additional: z
+					.discriminatedUnion('type', [
+						z.object({
+							type: z.literal('poBox'),
+							name: z.string().min(1, 'min len').max(10, 'max len')
+						}),
+						z.object({
+							type: z.literal('none')
+						})
+					])
+					.default({
+						type: 'none'
+					})
+			})
+		});
+
+		const form1 = await superValidate(zod(nested));
+		expect(form1.data.addresses.additional).toEqual({ type: 'none' });
+
+		const form2 = await validate(
+			{
+				addresses: {
+					additional: {
+						type: 'poBox',
+						name: '#123'
+					}
+				}
+			},
+			zod(nested)
+		);
+
+		expect(form2.valid).toBe(true);
+		assert(form2.data.addresses.additional?.type === 'poBox');
+		expect(form2.data.addresses.additional.name).toBe('#123');
 	});
 });
 

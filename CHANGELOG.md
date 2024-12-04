@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.1] - 2024-12-04
+
+### Fixed
+
+- Default values for nested discriminated unions didn't work.
+
 ## [2.21.0] - 2024-12-01
 
 ### Fixed

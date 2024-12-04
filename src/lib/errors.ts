@@ -286,14 +286,9 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 			}
 
 			const fieldType = pathTypes.value ?? defaultType;
-			if (!fieldType) {
-				throw new SchemaError(
-					'No default value specified for field (can be undefined, but must be explicit)',
-					currentPath
-				);
+			if (fieldType) {
+				Data_setValue(currentPath, Types_correctValue(dataValue, defValue, fieldType));
 			}
-
-			Data_setValue(currentPath, Types_correctValue(dataValue, defValue, fieldType));
 		}
 	}
 

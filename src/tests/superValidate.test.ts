@@ -79,7 +79,7 @@ import {
 import { schemasafe } from '$lib/adapters/schemasafe.js';
 
 import { effect } from '$lib/adapters/effect.js';
-import { Schema } from '@effect/schema';
+import { Schema } from 'effect';
 
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';

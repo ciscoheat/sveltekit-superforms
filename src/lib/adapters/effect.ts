@@ -1,5 +1,6 @@
-import { Schema, JSONSchema, ArrayFormatter } from '@effect/schema';
-import { Either } from 'effect';
+import { Schema, JSONSchema, Either } from 'effect';
+import type { ParseOptions } from 'effect/SchemaAST';
+import { ArrayFormatter } from 'effect/ParseResult';
 import type { JSONSchema as TJSONSchema } from '../jsonSchema/index.js';
 import {
 	createAdapter,
@@ -10,7 +11,6 @@ import {
 	type ValidationAdapter,
 	type ValidationResult
 } from './adapters.js';
-import type { ParseOptions } from '@effect/schema/AST';
 import { memoize } from '$lib/memoize.js';
 
 export const effectToJSONSchema = <A, I>(schema: Schema.Schema<A, I>) => {

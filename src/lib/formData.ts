@@ -297,6 +297,11 @@ function parseFormDataEntry(
 		);
 	}
 
+        // Special case for integer with format int64
+        if (type == 'integer' && info.schema?.format === 'int64') {
+                return BigInt(value ?? '.');
+        }
+
 	switch (type) {
 		case 'string':
 		case 'any':

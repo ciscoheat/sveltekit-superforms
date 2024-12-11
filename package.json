@@ -174,7 +174,7 @@
 		"superstruct": "^2.0.2",
 		"valibot": "^1.0.0-beta.3",
 		"yup": "^1.4.0",
-		"zod": "^3.23.8",
+		"zod": "^3.24.0",
 		"zod-to-json-schema": "^3.23.3"
 	},
 	"dependencies": {

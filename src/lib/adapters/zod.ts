@@ -35,8 +35,6 @@ export type ZodObjectTypes = ZodObjectType;
 
 // left in for compatibility reasons
 export type ZodValidation<T extends ZodObjectTypes = ZodObjectTypes> = T;
-// type asdf = ZodValidation['_output']
-// type asdf2 = ZodValidation['_input']
 
 async function validate<T extends ZodValidation>(
 	schema: T,

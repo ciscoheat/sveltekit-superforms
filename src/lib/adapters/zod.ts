@@ -1,11 +1,7 @@
-import type {
-	AnyZodObject,
-	ZodDefault,
-	ZodEffects,
-	ZodErrorMap,
-	ZodType,
-	ZodTypeDef,
-	ZodUnion
+import {
+	type ZodErrorMap,
+	type ZodType,
+	type ZodTypeDef,
 } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
@@ -32,68 +28,55 @@ export const zodToJSONSchema = (...params: Parameters<typeof zodToJson>) => {
 	return zodToJson(...params) as JSONSchema7;
 };
 
-type ZodObjectUnion<T extends AnyZodObject> = ZodUnion<
-	[ZodValidation<T>, ZodValidation<T>, ...ZodValidation<T>[]]
->;
 
-export type ZodObjectType = ZodType<Record<string, unknown>, ZodTypeDef, Record<string, unknown>>;
+// allows for any object schema
+// allows `undefined` in the input type to account for ZodDefault
+export type ZodObjectType = ZodType<Record<string, unknown>, ZodTypeDef, Record<string, unknown> | undefined>;
+export type ZodObjectTypes = ZodObjectType;
 
-export type ZodObjectTypes = AnyZodObject | ZodObjectUnion<AnyZodObject> | ZodObjectType;
+// left in for compatibility reasons
+export type ZodValidation<T extends ZodObjectTypes = ZodObjectTypes> = T;
+// type asdf = ZodValidation['_output']
+// type asdf2 = ZodValidation['_input']
 
-export type ZodValidation<T extends ZodObjectTypes> =
-	| T
-	| ZodEffects<T>
-	| ZodEffects<ZodEffects<T>>
-	| ZodEffects<ZodEffects<ZodEffects<T>>>
-	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
-	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>
-	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>
-	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
-	| ZodDefault<T>
-	| ZodDefault<ZodEffects<T>>
-	| ZodDefault<ZodEffects<ZodEffects<T>>>
-	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<T>>>>
-	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>
-	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>
-	| ZodDefault<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
-	| ZodDefault<
-			ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>>>
-	  >;
-
-async function validate<T extends ZodValidation<ZodObjectTypes>>(
+async function validate<T extends ZodValidation>(
 	schema: T,
 	data: unknown,
 	errorMap: ZodErrorMap | undefined
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, "zod">>> {
 	const result = await schema.safeParseAsync(data, { errorMap });
 	if (result.success) {
 		return {
-			data: result.data as Infer<T>,
+			data: result.data as Infer<T, "zod">,
 			success: true
 		};
 	}
+
 	return {
 		issues: result.error.issues.map(({ message, path }) => ({ message, path })),
 		success: false
 	};
 }
 
-function _zod<T extends ZodValidation<ZodObjectTypes>>(
+function _zod<T extends ZodValidation>(
 	schema: T,
-	options?: AdapterOptions<Infer<T>> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options?: AdapterOptions<Infer<T, "zod">> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
+): ValidationAdapter<Infer<T, "zod">, InferIn<T, "zod">> {
 	return createAdapter({
-		superFormValidationLibrary: 'zod',
-		validate: async (data) => validate(schema, data, options?.errorMap),
+		superFormValidationLibrary: "zod",
+		async validate (data){
+			// options?.defaults
+			return validate(schema, data, options?.errorMap)
+		},
 		jsonSchema: options?.jsonSchema ?? zodToJSONSchema(schema, options?.config),
-		defaults: options?.defaults
+		defaults: options?.defaults,
 	});
 }
 
-function _zodClient<T extends ZodValidation<ZodObjectTypes>>(
+function _zodClient<T extends ZodValidation>(
 	schema: T,
 	options?: { errorMap?: ZodErrorMap }
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<Infer<T, "zod">, InferIn<T, "zod">> {
 	return {
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => validate(schema, data, options?.errorMap)

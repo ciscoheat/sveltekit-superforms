@@ -63,8 +63,7 @@ function _zod<T extends ZodValidation>(
 ): ValidationAdapter<Infer<T, 'zod'>, InferIn<T, 'zod'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
-		async validate(data) {
-			// options?.defaults
+		validate: async (data) => {
 			return validate(schema, data, options?.errorMap);
 		},
 		jsonSchema: options?.jsonSchema ?? zodToJSONSchema(schema, options?.config),

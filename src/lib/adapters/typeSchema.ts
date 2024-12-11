@@ -129,8 +129,8 @@ interface YupResolver extends Resolver {
 
 interface ZodResolver extends Resolver {
 	base: ZodTypeAny;
-	input: this['schema'] extends ZodType<any, any, infer I>  ? I : never;
-	output: this['schema'] extends ZodType<infer O, any,any> ? O : never;
+	input: this['schema'] extends ZodType<any, any, infer I> ? I : never;
+	output: this['schema'] extends ZodType<infer O, any, any> ? O : never;
 }
 
 interface VineResolver extends Resolver {

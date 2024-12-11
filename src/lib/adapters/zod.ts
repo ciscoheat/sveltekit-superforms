@@ -1,8 +1,4 @@
-import {
-	type ZodErrorMap,
-	type ZodType,
-	type ZodTypeDef,
-} from 'zod';
+import { type ZodErrorMap, type ZodType, type ZodTypeDef } from 'zod';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	type AdapterOptions,
@@ -28,10 +24,13 @@ export const zodToJSONSchema = (...params: Parameters<typeof zodToJson>) => {
 	return zodToJson(...params) as JSONSchema7;
 };
 
-
 // allows for any object schema
 // allows `undefined` in the input type to account for ZodDefault
-export type ZodObjectType = ZodType<Record<string, unknown>, ZodTypeDef, Record<string, unknown> | undefined>;
+export type ZodObjectType = ZodType<
+	Record<string, unknown>,
+	ZodTypeDef,
+	Record<string, unknown> | undefined
+>;
 export type ZodObjectTypes = ZodObjectType;
 
 // left in for compatibility reasons
@@ -43,11 +42,11 @@ async function validate<T extends ZodValidation>(
 	schema: T,
 	data: unknown,
 	errorMap: ZodErrorMap | undefined
-): Promise<ValidationResult<Infer<T, "zod">>> {
+): Promise<ValidationResult<Infer<T, 'zod'>>> {
 	const result = await schema.safeParseAsync(data, { errorMap });
 	if (result.success) {
 		return {
-			data: result.data as Infer<T, "zod">,
+			data: result.data as Infer<T, 'zod'>,
 			success: true
 		};
 	}
@@ -60,23 +59,23 @@ async function validate<T extends ZodValidation>(
 
 function _zod<T extends ZodValidation>(
 	schema: T,
-	options?: AdapterOptions<Infer<T, "zod">> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
-): ValidationAdapter<Infer<T, "zod">, InferIn<T, "zod">> {
+	options?: AdapterOptions<Infer<T, 'zod'>> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
+): ValidationAdapter<Infer<T, 'zod'>, InferIn<T, 'zod'>> {
 	return createAdapter({
-		superFormValidationLibrary: "zod",
-		async validate (data){
+		superFormValidationLibrary: 'zod',
+		async validate(data) {
 			// options?.defaults
-			return validate(schema, data, options?.errorMap)
+			return validate(schema, data, options?.errorMap);
 		},
 		jsonSchema: options?.jsonSchema ?? zodToJSONSchema(schema, options?.config),
-		defaults: options?.defaults,
+		defaults: options?.defaults
 	});
 }
 
 function _zodClient<T extends ZodValidation>(
 	schema: T,
 	options?: { errorMap?: ZodErrorMap }
-): ClientValidationAdapter<Infer<T, "zod">, InferIn<T, "zod">> {
+): ClientValidationAdapter<Infer<T, 'zod'>, InferIn<T, 'zod'>> {
 	return {
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => validate(schema, data, options?.errorMap)

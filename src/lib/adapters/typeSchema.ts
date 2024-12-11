@@ -14,7 +14,7 @@ import type {
 	InferOutput as Output
 } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
-import type { ZodType, ZodTypeAny } from 'zod';
+import type { ZodTypeAny, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
@@ -129,8 +129,8 @@ interface YupResolver extends Resolver {
 
 interface ZodResolver extends Resolver {
 	base: ZodTypeAny;
-	input: this['schema'] extends ZodTypeAny ? this['schema']['_input'] : never;
-	output: this['schema'] extends ZodTypeAny ? this['schema']['_output'] : never;
+	input: this['schema'] extends ZodTypeAny ? input<this['schema']> : never;
+	output: this['schema'] extends ZodTypeAny ? output<this['schema']> : never;
 }
 
 interface VineResolver extends Resolver {

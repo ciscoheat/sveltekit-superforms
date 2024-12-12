@@ -20,15 +20,16 @@
 
 # Feature list
 
-- Server- and client-side validation with your favorite validation libraries, and more to come: 💥 **Arktype** 💥 **Joi** 💥 **TypeBox** 💥 **Valibot** 💥 **VineJS** 💥 **Yup** 💥 **Zod** 💥
-- Seamless merging of `PageData` and `ActionData` - Forget about which one to use and how, just focus on your form data.
+- Server- and client-side validation with your favorite validation libraries, and more to come: 💥 [Arktype](https://arktype.io/) 💥 [class-validator](https://github.com/typestack/class-validator) 💥 [Effect](https://effect.website/) 💥 [Joi](https://joi.dev/) 💥 [Superstruct](https://docs.superstructjs.org/) 💥 [TypeBox](https://github.com/sinclairzx81/typebox) 💥 [Valibot](https://valibot.dev/) 💥 [VineJS](https://vinejs.dev/) 💥 [Yup](https://github.com/jquense/yup) 💥 [Zod](https://zod.dev/) 💥 or use [JSON Schema](https://json-schema.org/) directly.
+- Seamless merging of `PageData` and `ActionData` - Forget about how to combine them, just focus on your form data, always strongly typed.
 - [Auto-centering and focusing](https://superforms.rocks/concepts/error-handling#usage-client) on invalid form fields.
 - [Tainted form detection](https://superforms.rocks/concepts/tainted), prevents the user from losing data if navigating away from an unsaved form. Or use [snapshots](https://superforms.rocks/concepts/snapshots) to save the form state.
-- Automatically coerces the `FormData` into correct types.
-- For advanced data structures, forget about the limitations of `FormData` - Use [nested data structures](https://superforms.rocks/concepts/nested-data) transparently.
-- Generates [default form values](https://superforms.rocks/default-values) from validation schemas.
+- Automatically coerces `FormData` into correct types, including arrays and files.
+- For advanced data structures, forget about the limitations of `FormData` - Post [nested data structures](https://superforms.rocks/concepts/nested-data) like a RPC call.
+- Generates [default form values](https://superforms.rocks/default-values) from many validation schemas.
 - Handles [multiple forms](https://superforms.rocks/concepts/multiple-forms) on the same page.
 - Works both on the server and with [single-page applications](https://superforms.rocks/concepts/spa) (SPA)!
+- Convenient handling and validation of [file uploads](https://superforms.rocks/concepts/files), both on server and client and even in nested data.
 - [Proxy objects](https://superforms.rocks/concepts/proxy-objects) for handling data conversions to string and back again.
 - Realtime [client-side validation](https://superforms.rocks/concepts/client-validation) for the best possible UX.
 - Create loading spinners easily with three [auto-updating timers](https://superforms.rocks/concepts/timers), based on human perception research.

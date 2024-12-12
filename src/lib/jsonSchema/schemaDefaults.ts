@@ -70,7 +70,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return _multiType.size > 1;
 	};
 
-	let output: Record<string, unknown> = {};
+	let output: Record<string, unknown> | undefined = undefined;
 
 	// Check unions first, so default values can take precedence over nullable and optional
 	if (!objectDefaults && info.union) {
@@ -98,6 +98,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 			// Objects must have default values to avoid setting undefined properties on nested data
 			if (info.union.length && info.types[0] == 'object') {
+				if (output === undefined) output = {};
 				output =
 					info.union.length > 1
 						? merge.withOptions(
@@ -119,21 +120,29 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	// Objects
 	if (info.properties) {
-		for (const [key, value] of Object.entries(info.properties)) {
-			assertSchema(value, [...path, key]);
+		for (const [key, objSchema] of Object.entries(info.properties)) {
+			assertSchema(objSchema, [...path, key]);
 
 			const def =
 				objectDefaults && objectDefaults[key] !== undefined
 					? objectDefaults[key]
-					: _defaultValues(value, !info.required?.includes(key), [...path, key]);
+					: _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
 
 			//if (def !== undefined) output[key] = def;
+			if (output === undefined) output = {};
 			output[key] = def;
 		}
-		return output;
 	} else if (objectDefaults) {
 		return objectDefaults;
 	}
+
+	// TODO: [v3] Handle default values for array elements
+	// if (info.array && info.array.length) {
+	// 	console.log('===== Array default =====');
+	// 	console.dir(info.array, { depth: 10 }); //debug
+	// 	//if (info.array.length > 1) throw new SchemaError('Only one array type is supported.', path);
+	// 	console.dir(_defaultValues(info.array[0], info.isOptional, path), { depth: 10 }); //debug
+	// }
 
 	// Enums, return the first value so it can be a required field
 	if (schema.enum) {
@@ -151,7 +160,7 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 
 	const [formatType] = info.types;
 
-	return defaultValue(formatType, schema.enum);
+	return output ?? defaultValue(formatType, schema.enum);
 }
 
 function formatDefaultValue(type: SchemaType, value: unknown) {
@@ -257,6 +266,20 @@ function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) 
 				...path,
 				key
 			]);
+		}
+	}
+
+	// Check if a Record type is used for additionalProperties
+	if (info.additionalProperties && info.types.includes('object')) {
+		const additionalInfo = schemaInfo(info.additionalProperties, info.isOptional, path);
+		if (additionalInfo.properties && additionalInfo.types.includes('object')) {
+			for (const [key] of Object.entries(additionalInfo.properties)) {
+				output[key] = _defaultTypes(
+					additionalInfo.properties[key],
+					!additionalInfo.required?.includes(key),
+					[...path, key]
+				);
+			}
 		}
 	}
 

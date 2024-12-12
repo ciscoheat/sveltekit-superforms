@@ -20,6 +20,7 @@ export type InferIn<T extends Schema> = NonNullable<InferInSchema<T>>;
 
 export type ValidationLibrary =
 	| 'arktype'
+	| 'classvalidator'
 	| 'custom'
 	| 'joi'
 	| 'superform'
@@ -28,7 +29,9 @@ export type ValidationLibrary =
 	| 'yup'
 	| 'zod'
 	| 'vine'
-	| 'schemasafe';
+	| 'schemasafe'
+	| 'superstruct'
+	| 'effect';
 
 export type AdapterOptions<T> = {
 	jsonSchema?: JSONSchema;

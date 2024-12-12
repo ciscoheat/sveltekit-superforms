@@ -29,6 +29,9 @@ export type SuperValidated<
 > = {
 	id: string;
 	valid: boolean;
+	/**
+	 * @deprecated posted is inconsistent between server and client validation, and SPA mode. Will be removed in v3. Use a status message or return your own data in the form action to handle form post status.
+	 */
 	posted: boolean;
 	errors: ValidationErrors<Out>;
 	data: Out;
@@ -116,7 +119,7 @@ export async function superValidate<
 	const addErrors = options?.errors ?? (options?.strict ? true : !!parsed.data);
 
 	// Merge with defaults in non-strict mode.
-	const parsedData = options?.strict ? parsed.data ?? {} : mergeDefaults(parsed.data, defaults);
+	const parsedData = options?.strict ? (parsed.data ?? {}) : mergeDefaults(parsed.data, defaults);
 
 	let status: ValidationResult<Out>;
 

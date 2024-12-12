@@ -1,11 +1,24 @@
 import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
-import type { Type } from 'arktype';
+import type { type } from 'arktype';
 import type { AnySchema } from 'joi';
-import type { BaseSchema, BaseSchemaAsync, Input, Output } from 'valibot';
+import type {
+	Infer as ClassValidatorInfer,
+	InferIn as ClassValidatorInferIn,
+	Schema as ClassValidatorSchema
+} from '@typeschema/class-validator';
+
+import type {
+	GenericSchema,
+	GenericSchemaAsync,
+	InferInput as Input,
+	InferOutput as Output
+} from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
+import type { Struct, Infer as Infer$2 } from 'superstruct';
+import type { Schema as Schema$1 } from '@effect/schema/Schema';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -14,7 +27,6 @@ import type { Schema as Schema$1 } from '@effect/schema/Schema';
 import type { Any, OutputOf, TypeOf } from 'io-ts';
 import type { Predicate, Infer as Infer$1 } from 'ow';
 import type { Runtype, Static } from 'runtypes';
-import type { Struct, Infer as Infer$2 } from 'superstruct';
 */
 
 type Replace<T, From, To> =
@@ -62,9 +74,17 @@ type ValidationResult<TOutput = any> =
 	  };
 
 interface ArkTypeResolver extends Resolver {
-	base: Type;
-	input: this['schema'] extends Type ? this['schema']['inferIn'] : never;
-	output: this['schema'] extends Type ? this['schema']['infer'] : never;
+	base: type.Any;
+	input: this['schema'] extends type.Any ? this['schema']['inferIn'] : never;
+	output: this['schema'] extends type.Any ? this['schema']['infer'] : never;
+}
+
+interface ClassValidatorResolver extends Resolver {
+	base: ClassValidatorSchema;
+	input: this['schema'] extends ClassValidatorSchema
+		? ClassValidatorInferIn<this['schema']>
+		: never;
+	output: this['schema'] extends ClassValidatorSchema ? ClassValidatorInfer<this['schema']> : never;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,9 +114,11 @@ interface TypeBoxResolver extends Resolver {
 }
 
 interface ValibotResolver extends Resolver {
-	base: BaseSchema | BaseSchemaAsync;
-	input: this['schema'] extends BaseSchema | BaseSchemaAsync ? Input<this['schema']> : never;
-	output: this['schema'] extends BaseSchema | BaseSchemaAsync ? Output<this['schema']> : never;
+	base: GenericSchema | GenericSchemaAsync;
+	input: this['schema'] extends GenericSchema | GenericSchemaAsync ? Input<this['schema']> : never;
+	output: this['schema'] extends GenericSchema | GenericSchemaAsync
+		? Output<this['schema']>
+		: never;
 }
 
 interface YupResolver extends Resolver {
@@ -126,6 +148,24 @@ interface SchemasafeResolver<Schema extends JSONSchema, Data = FromSchema<Schema
 	output: this['schema'] extends Schema ? Data : never;
 }
 
+interface SuperstructResolver extends Resolver {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	base: Struct<any, any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	input: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	output: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
+}
+
+interface EffectResolver extends Resolver {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	base: Schema$1<any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	input: this['schema'] extends Schema$1<any> ? Schema$1.Encoded<this['schema']> : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	output: this['schema'] extends Schema$1<any> ? Schema$1.Type<this['schema']> : never;
+}
+
 /*
 interface AjvResolver extends Resolver {
 	base: SchemaObject;
@@ -133,12 +173,6 @@ interface AjvResolver extends Resolver {
 
 interface DeepkitResolver extends Resolver {
   base: Type$1;
-}
-
-interface EffectResolver extends Resolver {
-  base: Schema$1<any>;
-  input: this['schema'] extends Schema$1<any> ? Schema$1.From<this['schema']> : never;
-  output: this['schema'] extends Schema$1<any> ? Schema$1.To<this['schema']> : never;
 }
 
 interface IoTsResolver extends Resolver {
@@ -159,14 +193,11 @@ interface RuntypesResolver extends Resolver {
     output: this['schema'] extends Runtype ? Static<this['schema']> : never;
 }
 
-interface SuperstructResolver extends Resolver {
-    base: Struct<any, any>;
-    output: this['schema'] extends Struct<any, any> ? Infer$2<this['schema']> : never;
-}
 */
 
 type Registry = {
 	arktype: ArkTypeResolver;
+	classvalidator: ClassValidatorResolver;
 	custom: CustomResolver;
 	joi: JoiResolver;
 	typebox: TypeBoxResolver;
@@ -175,14 +206,14 @@ type Registry = {
 	zod: ZodResolver;
 	vine: VineResolver;
 	schemasafe: SchemasafeResolver<JSONSchema>;
+	superstruct: SuperstructResolver;
+	effect: EffectResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;
-    effect: EffectResolver;
     'io-ts': IoTsResolver;
     ow: OwResolver;
     runtypes: RuntypesResolver;
-    superstruct: SuperstructResolver;
     */
 };
 

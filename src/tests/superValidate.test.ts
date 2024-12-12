@@ -18,10 +18,24 @@ import { defaults as schemaDefaults } from '$lib/defaults.js';
 ///// Adapters //////////////////////////////////////////////////////
 
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
-import { z } from 'zod';
+import { z, type ZodErrorMap } from 'zod';
 
 import { valibot } from '$lib/adapters/valibot.js';
 import * as v from 'valibot';
+
+import { classvalidator } from '$lib/adapters/classvalidator.js';
+import {
+	ArrayMinSize,
+	IsOptional,
+	IsString,
+	IsEmail,
+	IsArray,
+	MinLength,
+	IsInt,
+	Min,
+	IsDate,
+	Matches
+} from 'class-validator';
 
 //import { ajv } from '$lib/adapters/ajv.js';
 //import type { JSONSchema } from '$lib/jsonSchema/index.js';
@@ -47,7 +61,25 @@ import {
 import { vine } from '$lib/adapters/vine.js';
 import Vine from '@vinejs/vine';
 
+import { superstruct } from '$lib/adapters/superstruct.js';
+import {
+	object as ssObject,
+	string as ssString,
+	number as ssNumber,
+	array as ssArray,
+	date as ssDate,
+	optional as ssOptional,
+	define as ssDefine,
+	size as ssSize,
+	min as ssMin,
+	pattern as ssPattern,
+	nullable as ssNullable
+} from 'superstruct';
+
 import { schemasafe } from '$lib/adapters/schemasafe.js';
+
+import { effect } from '$lib/adapters/effect.js';
+import { Schema } from '@effect/schema';
 
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
@@ -55,7 +87,7 @@ import { SchemaError, type JSONSchema } from '$lib/index.js';
 
 ///// Test data /////////////////////////////////////////////////////
 
-/* 
+/*
 TEST SCHEMA TEMPLATE:
 
 | field   | type     | opt/null | constraints             | default   |
@@ -313,9 +345,9 @@ describe('Schemasafe', () => {
 describe('Arktype', () => {
 	const schema = type({
 		name: 'string',
-		email: 'email',
+		email: 'string.email',
 		tags: '(string>=2)[]>=3',
-		score: 'integer>=0',
+		score: 'number.integer>=0',
 		'date?': 'Date',
 		'nospace?': nospacePattern,
 		extra: 'string|null'
@@ -330,11 +362,11 @@ describe('Arktype', () => {
 describe('Valibot', () => {
 	const schema = v.object({
 		name: v.optional(v.string(), 'Unknown'),
-		email: v.string([v.email()]),
-		tags: v.array(v.string([v.minLength(2)]), [v.minLength(3)]),
-		score: v.number([v.integer(), v.minValue(0)]),
+		email: v.pipe(v.string(), v.email()),
+		tags: v.pipe(v.array(v.pipe(v.string(), v.minLength(2))), v.minLength(3)),
+		score: v.pipe(v.number(), v.integer(), v.minValue(0)),
 		date: v.optional(v.date()),
-		nospace: v.optional(v.string([v.regex(nospacePattern)])),
+		nospace: v.optional(v.pipe(v.string(), v.regex(nospacePattern))),
 		extra: v.nullable(v.string())
 	});
 
@@ -377,16 +409,40 @@ describe('Valibot', () => {
 
 	it('should handle non-JSON Schema validators by returning any', async () => {
 		const schema = v.object({
-			file: v.instance(File, [
+			file: v.pipe(
+				v.instance(File),
 				v.mimeType(['image/jpeg', 'image/png']),
 				v.maxSize(1024 * 1024 * 10)
-			]),
-			size: v.special<`${number}px`>((val) =>
+			),
+			size: v.custom<`${number}px`>((val) =>
 				typeof val === 'string' ? /^\d+px$/.test(val) : false
 			)
 		});
 
+		const photoSchema = v.object({
+			photo: v.pipe(
+				v.file('Please select an image file.'),
+				v.mimeType(
+					['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+					'Please select a JPEG, PNG, WEBP, or GIF file.'
+				),
+				v.maxSize(1024 * 1024 * 10, 'Please select a file smaller than 10MB.')
+			)
+		});
+
 		expect(() => valibot(schema)).not.toThrow();
+		expect(() => valibot(photoSchema)).not.toThrow();
+
+		expect(() =>
+			valibot(schema, {
+				customSchemaConversion: {
+					custom: () => ({}),
+					instance: () => ({}),
+					file: () => ({}),
+					blob: () => ({})
+				}
+			})
+		).not.toThrow();
 	});
 
 	/*
@@ -426,6 +482,40 @@ describe('Valibot', () => {
 		type In = InferIn<typeof logSchema>;
 	});
  */
+});
+
+describe('class-validator', () => {
+	class ClassValidatorSchema {
+		@IsString()
+		name: string = 'Unknown';
+
+		@IsString()
+		@IsEmail()
+		email: string | undefined;
+
+		@IsArray()
+		@MinLength(2, { each: true })
+		@ArrayMinSize(3)
+		tags: string[] | undefined;
+
+		@IsInt()
+		@Min(0)
+		score: number | undefined;
+
+		@IsDate()
+		date: Date | undefined;
+
+		@IsOptional()
+		@Matches(/^\S*$/, { message: 'No spaces allowed' })
+		nospace: string | undefined;
+
+		@IsOptional()
+		@IsString()
+		extra: string | null = null;
+	}
+
+	const adapter = classvalidator(ClassValidatorSchema, { defaults });
+	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -472,9 +562,24 @@ describe('Zod', () => {
 		.refine((a) => a)
 		.refine((a) => a);
 
-	it('with defaultValues', () => {
-		const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJSONSchema(bigZodSchema));
-		expect(values.foo).toEqual(Foo.A);
+	describe('with defaults', () => {
+		it('defaultValues should return the schema defaults', () => {
+			const values = defaultValues<z.infer<typeof bigZodSchema>>(zodToJSONSchema(bigZodSchema));
+			expect(values.foo).toEqual(Foo.A);
+		});
+
+		it('should work with a function as default value, in strict mode', async () => {
+			const schema = z.object({
+				id: z.number().default(Math.random)
+			});
+
+			const v1 = await superValidate(zod(schema), { strict: true });
+			const v2 = await superValidate(zod(schema), { strict: true });
+
+			expect(v1.data.id).toBeGreaterThan(0);
+			expect(v2.data.id).toBeGreaterThan(0);
+			expect(v1.data.id).not.toBeCloseTo(v2.data.id, 6);
+		});
 	});
 
 	it('with constraints', () => {
@@ -628,6 +733,93 @@ describe('Zod', () => {
 		expect(() => zod(schema)).toThrow(Error);
 	});
 
+	it('with the errorMap option', async () => {
+		const schema = z.object({
+			num: z.number().int()
+		});
+
+		const options: { errorMap?: ZodErrorMap } = {
+			errorMap: (error, ctx) => {
+				if (error.code === z.ZodIssueCode.invalid_type) {
+					return { message: 'Not an integer.' };
+				}
+				return { message: ctx.defaultError };
+			}
+		};
+
+		const adapter = zod(schema, options);
+
+		const form = await superValidate(
+			// @ts-expect-error Testing errorMap with invalid type
+			{ num: 'abc' },
+			adapter
+		);
+		expect(form.valid).toBe(false);
+		expect(form.errors.num).toEqual(['Not an integer.']);
+
+		const sameAdapter = zod(schema, options);
+		expect(sameAdapter).toBe(adapter);
+	});
+
+	describe('with z.record', () => {
+		it('should work with additionalProperties for records', async () => {
+			/*
+			{
+				type: 'object',
+				properties: {
+					id: { type: 'string' },
+					options: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							properties: { label: { type: 'string' } },
+							required: [ 'label' ],
+							additionalProperties: false
+						}
+					}
+				},
+				required: [ 'id', 'options' ],
+				additionalProperties: false,
+				'$schema': 'http://json-schema.org/draft-07/schema#'
+			}
+			*/
+			const schema = z.object({
+				id: z.string(),
+				options: z.record(
+					z.string(),
+					z.object({
+						label: z.string().refine((value) => value.length > 0, {
+							message: 'Label is required'
+						})
+					})
+				)
+			});
+
+			const row = {
+				id: '1',
+				options: {
+					'1': {
+						label: 'Option 1'
+					},
+					'2': {
+						label: ''
+					}
+				}
+			};
+
+			const adapter = zod(schema);
+			const form = await superValidate(row, adapter);
+
+			assert(!form.valid);
+
+			expect(form.errors).toStrictEqual({
+				options: { '2': { label: ['Label is required'] } }
+			});
+
+			expect(form.data).toEqual(row);
+		});
+	});
+
 	schemaTest(zod(schema));
 });
 
@@ -655,6 +847,51 @@ describe('vine', () => {
 	});
 
 	schemaTest(adapter, ['email', 'nospace', 'tags'], 'simple', 'stringToDate');
+});
+
+describe('superstruct', () => {
+	const email = () => ssDefine<string>('email', (value) => String(value).includes('@'));
+
+	const schema = ssObject({
+		name: ssOptional(ssString()),
+		email: email(),
+		tags: ssSize(ssArray(ssSize(ssString(), 2, Infinity)), 3, Infinity),
+		score: ssMin(ssNumber(), 0),
+		date: ssOptional(ssDate()),
+		nospace: ssOptional(ssPattern(ssString(), nospacePattern)),
+		extra: ssNullable(ssString())
+	});
+
+	const adapter = superstruct(schema, { defaults });
+
+	schemaTest(adapter, undefined, 'simple');
+});
+
+describe('Effect', async () => {
+	// effect deliberately does not provide email parsing out of the box
+	// https://github.com/Effect-TS/schema/issues/294
+	// i just found this regex online, does the job
+	const emailRegex = /^[^@]+@[^@]+\.[^@]+$/;
+	const schema = Schema.Struct({
+		name: Schema.String.annotations({ default: 'Unknown' }),
+		email: Schema.String.pipe(
+			Schema.filter((s) => emailRegex.test(s) || 'must be a valid email', {
+				jsonSchema: {}
+			})
+		),
+		tags: Schema.Array(Schema.String.pipe(Schema.minLength(2))).pipe(Schema.minItems(3)),
+		score: Schema.Number.pipe(Schema.int(), Schema.greaterThanOrEqualTo(0)),
+		date: Schema.DateFromSelf.annotations({
+			jsonSchema: {
+				type: 'date'
+			}
+		}).pipe(Schema.optional),
+		nospace: Schema.String.pipe(Schema.pattern(nospacePattern), Schema.optional),
+		extra: Schema.String.pipe(Schema.NullOr).annotations({ default: null })
+	});
+
+	const adapter = effect(schema);
+	schemaTest(adapter);
 });
 
 ///// Common ////////////////////////////////////////////////////////
@@ -689,7 +926,10 @@ describe('Schema In/Out transformations', () => {
 
 	it('does not fully work with Valibot', async () => {
 		const schema = v.object({
-			len: v.transform(v.string(), (s) => s.length)
+			len: v.pipe(
+				v.string(),
+				v.transform((s) => s.length)
+			)
 		});
 
 		// @ts-expect-error Using schema Out type as In - Not allowed
@@ -723,15 +963,22 @@ function schemaTest(
 ) {
 	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
+	function missingError(error: string) {
+		return `Validation error "${error}" not found`;
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
 		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
 
-		if (errors.includes('nospace')) expect(errorMessages.nospace).toBeTruthy();
-		if (errors.includes('email')) expect(errorMessages.email).toBeTruthy();
-		if (errors.includes('date')) expect(errorMessages.date).toBeTruthy();
-		if (errors.includes('tags')) expect(errorMessages?.tags?._errors?.[0]).toBeTruthy();
-		if (errors.includes('tags[1]')) expect(errorMessages?.tags?.['1']?.[0]).toBeTruthy();
+		if (errors.includes('nospace'))
+			expect(errorMessages.nospace, missingError('nospace')).toBeTruthy();
+		if (errors.includes('email')) expect(errorMessages.email, missingError('email')).toBeTruthy();
+		if (errors.includes('date')) expect(errorMessages.date, missingError('date')).toBeTruthy();
+		if (errors.includes('tags'))
+			expect(errorMessages?.tags?._errors?.[0], missingError('tags')).toBeTruthy();
+		if (errors.includes('tags[1]'))
+			expect(errorMessages?.tags?.['1']?.[0], missingError('tags[1]')).toBeTruthy();
 
 		const errorCount = errors.filter((path) => traversePath(errorMessages, splitPath(path))?.value);
 
@@ -827,6 +1074,27 @@ function schemaTest(
 			expect(output.message).toBeUndefined();
 			expectConstraints(output.constraints);
 		});
+
+		// it('should handle deep partial data', async () => {
+		// 	const schema = z.object({
+		// 		name: z.string(),
+		// 		account: z
+		// 			.object({
+		// 				id: z.number().int().positive(),
+		// 				comment: z.string()
+		// 			})
+		// 			.array()
+		// 	});
+
+		// 	const form = await superValidate(
+		// 		{ name: 'Test', account: [{ comment: 'Comment' }, { id: 123 }] },
+		// 		zod(schema)
+		// 	);
+		// 	expect(form.data.account).toEqual([
+		// 		{ id: 0, comment: 'Comment' },
+		// 		{ id: 123, comment: '' }
+		// 	]);
+		// });
 	});
 }
 

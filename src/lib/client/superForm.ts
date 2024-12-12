@@ -25,7 +25,7 @@ import {
 import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
 import { SuperFormError, flattenErrors, mapErrors, updateErrors } from '$lib/errors.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
-import { applyAction, enhance as kitEnhance } from '$app/forms';
+import { applyAction, deserialize, enhance as kitEnhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
 import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
@@ -91,7 +91,12 @@ export type FormOptions<
 	selectErrorText: boolean;
 	stickyNavbar: string;
 	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
-	SPA: true | { failStatus?: number } | string;
+	/**
+	 * Enable single page application (SPA) mode.
+	 * **The string and failStatus options are deprecated** and will be removed in the next major release.
+	 * @see https://superforms.rocks/concepts/spa
+	 */
+	SPA: true | /** @deprecated */ string | /** @deprecated */ { failStatus?: number };
 
 	onSubmit: (
 		input: Parameters<SubmitFunction>[0] & {
@@ -105,6 +110,15 @@ export type FormOptions<
 			 * Override client validation temporarily for this form submission.
 			 */
 			validators: (validators: Exclude<ValidatorsOption<T>, 'clear'>) => void;
+			/**
+			 * Use a custom fetch or XMLHttpRequest implementation for this form submission. It must return an ActionResult in the response body.
+			 * If the request is using a XMLHttpRequest, the promise must be resolved when the request has been completed, not before.
+			 */
+			customRequest: (
+				validators: (
+					input: Parameters<SubmitFunction>[0]
+				) => Promise<Response | XMLHttpRequest | ActionResult>
+			) => void;
 		}
 	) => MaybePromise<unknown | void>;
 	onResult: (event: {
@@ -158,7 +172,7 @@ export type FormOptions<
 			result: {
 				type: 'error';
 				status?: number;
-				error: App.Error;
+				error: App.Error | Error | { message: string };
 			};
 			flashMessage: Writable<App.PageData['flash']>;
 		}) => MaybePromise<unknown | void>;
@@ -184,13 +198,13 @@ export type SuperFormSnapshot<
 	In extends Record<string, unknown> = T
 > = SuperFormValidated<T, M, In> & { tainted: TaintedFields<T> | undefined };
 
-type SuperFormData<T extends Record<string, unknown>> = {
+export type SuperFormData<T extends Record<string, unknown>> = {
 	subscribe: Readable<T>['subscribe'];
 	set(this: void, value: T, options?: { taint?: TaintOption }): void;
 	update(this: void, updater: Updater<T>, options?: { taint?: TaintOption }): void;
 };
 
-type SuperFormErrors<T extends Record<string, unknown>> = {
+export type SuperFormErrors<T extends Record<string, unknown>> = {
 	subscribe: Writable<ValidationErrors<T>>['subscribe'];
 	set(this: void, value: ValidationErrors<T>, options?: { force?: boolean }): void;
 	update(this: void, updater: Updater<ValidationErrors<T>>, options?: { force?: boolean }): void;
@@ -232,6 +246,9 @@ export type SuperForm<
 	submitting: Readable<boolean>;
 	delayed: Readable<boolean>;
 	timeout: Readable<boolean>;
+	/**
+	 * @deprecated posted is inconsistent between server and client validation, and SPA mode. Will be removed in v3. Use a status message or return your own data in the form action to handle form post status.
+	 */
 	posted: Readable<boolean>;
 
 	allErrors: Readable<{ path: string; messages: string[] }[]>;
@@ -322,10 +339,7 @@ const initialForms = new WeakMap<
 >();
 
 const defaultOnError = (event: { result: { error: unknown } }) => {
-	console.warn(
-		'Unhandled error caught by Superforms, use onError event to handle it:',
-		event.result.error
-	);
+	throw event.result.error;
 };
 
 const defaultFormOptions = {
@@ -648,6 +662,15 @@ export function superForm<
 		return options.SPA === true || typeof options.SPA === 'object';
 	}
 
+	function Form_resultStatus(defaultStatus: number) {
+		if (defaultStatus > 400) return defaultStatus;
+		return (
+			(typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
+				? undefined
+				: options.SPA?.failStatus) || defaultStatus
+		);
+	}
+
 	async function Form_validate(
 		opts: {
 			adapter?: FormOptions<T, M>['validators'];
@@ -778,7 +801,7 @@ export function superForm<
 		if (skipValidation || !event || !options.validators || options.validators == 'clear') {
 			if (event?.paths) {
 				const formElement = event?.formElement ?? EnhancedForm_get();
-				if (formElement) Form__clearCustomValidity(formElement, event.paths);
+				if (formElement) Form__clearCustomValidity(formElement);
 			}
 			return;
 		}
@@ -797,20 +820,14 @@ export function superForm<
 		return result;
 	}
 
-	function Form__clearCustomValidity(
-		formElement: HTMLFormElement,
-		paths: (string | number | symbol)[][]
-	) {
+	function Form__clearCustomValidity(formElement: HTMLFormElement) {
 		const validity = new Map<string, { el: HTMLElement; message: string }>();
 		if (options.customValidity && formElement) {
-			for (const path of paths) {
-				const name = CSS.escape(mergePath(path));
-				const el = formElement.querySelector<HTMLElement>(`[name="${name}"]`);
-				if (el) {
-					const message = 'validationMessage' in el ? String(el.validationMessage) : '';
-					validity.set(path.join('.'), { el, message });
-					updateCustomValidity(el, undefined);
-				}
+			for (const el of formElement.querySelectorAll<HTMLElement & { name: string }>(`[name]`)) {
+				if (typeof el.name !== 'string' || !el.name.length) continue;
+				const message = 'validationMessage' in el ? String(el.validationMessage) : '';
+				validity.set(el.name, { el, message });
+				updateCustomValidity(el, undefined);
 			}
 		}
 		return validity;
@@ -828,7 +845,7 @@ export function superForm<
 		let validity = new Map<string, { el: HTMLElement; message: string }>();
 
 		const formElement = event.formElement ?? EnhancedForm_get();
-		if (formElement) validity = Form__clearCustomValidity(formElement, event.paths);
+		if (formElement) validity = Form__clearCustomValidity(formElement);
 
 		traversePaths(errors, (error) => {
 			if (!Array.isArray(error.value)) return;
@@ -848,7 +865,7 @@ export function superForm<
 					const { el, message } = validity.get(joinedPath)!;
 
 					if (message != error.value) {
-						updateCustomValidity(el, error.value);
+						setTimeout(() => updateCustomValidity(el, error.value));
 						// Only need one error to display
 						validity.clear();
 					}
@@ -946,6 +963,34 @@ export function superForm<
 			options.resetForm &&
 			(options.resetForm === true || options.resetForm())
 		);
+	}
+
+	function Form_capture(removeFilesfromData = true): SuperFormSnapshot<T, M, In> {
+		let data = Data.form;
+		let tainted = Data.tainted;
+
+		if (removeFilesfromData) {
+			const removed = removeFiles(Data.form);
+			data = removed.data;
+			const paths = removed.paths;
+
+			if (paths.length) {
+				tainted = clone(tainted) ?? {};
+				setPaths(tainted, paths, false);
+			}
+		}
+
+		return {
+			valid: Data.valid,
+			posted: Data.posted,
+			errors: Data.errors,
+			data,
+			constraints: Data.constraints,
+			message: Data.message,
+			id: Data.formId,
+			tainted,
+			shape: Data.shape
+		};
 	}
 
 	async function Form_updateFromValidation(form: SuperValidated<T, M, In>, successResult: boolean) {
@@ -1207,10 +1252,11 @@ export function superForm<
 	function Tainted_isTainted(
 		path?: FormPath<T> | Record<string, unknown> | boolean | undefined
 	): boolean {
+		if (!arguments.length) return Tainted__isObjectTainted(Data.tainted);
+
 		if (typeof path === 'boolean') return path;
 		if (typeof path === 'object') return Tainted__isObjectTainted(path);
-		if (!Data.tainted) return false;
-		if (!path) return Tainted__isObjectTainted(Data.tainted);
+		if (!Data.tainted || path === undefined) return false;
 
 		const field = pathExists(Data.tainted, splitPath(path));
 		return Tainted__isObjectTainted(field?.value);
@@ -1264,9 +1310,9 @@ export function superForm<
 					return currentlyTainted;
 				});
 			}
-		}
 
-		NextChange_setHtmlEvent({ paths });
+			NextChange_setHtmlEvent({ paths });
+		}
 	}
 
 	/**
@@ -1448,8 +1494,8 @@ export function superForm<
 				if (options.applyAction && pageUpdate.form && typeof pageUpdate.form === 'object') {
 					const actionData = pageUpdate.form;
 
-					// Check if it is an error result, sent here from formEnhance
-					if (actionData.type == 'error') return;
+					// If actionData is an error, it's sent here from triggerOnError
+					if (actionData.type === 'error') return;
 
 					for (const newForm of Context_findValidationForms(actionData)) {
 						const isInitial = initialForms.has(newForm);
@@ -1476,7 +1522,7 @@ export function superForm<
 							initialForm.data = newForm.data as T;
 						}
 
-						const resetStatus = Form_shouldReset(true, true);
+						const resetStatus = Form_shouldReset(newForm.valid, true);
 
 						rebind({
 							form: newForm as SuperValidated<T, M, In>,
@@ -1593,10 +1639,16 @@ export function superForm<
 		);
 
 		let currentRequest: AbortController | null;
+		let customRequest:
+			| ((
+					input: Parameters<SubmitFunction>[0]
+			  ) => Promise<Response | XMLHttpRequest | ActionResult>)
+			| undefined = undefined;
 
-		return kitEnhance(FormElement, async (submitParams) => {
+		const enhanced = kitEnhance(FormElement, async (submitParams) => {
 			let jsonData: Record<string, unknown> | undefined = undefined;
 			let validationAdapter = options.validators;
+			undefined;
 
 			const submit = {
 				...submitParams,
@@ -1608,8 +1660,11 @@ export function superForm<
 				},
 				validators(adapter: Exclude<ValidatorsOption<T>, 'clear'>) {
 					validationAdapter = adapter;
+				},
+				customRequest(request: typeof customRequest) {
+					customRequest = request;
 				}
-			};
+			} satisfies Parameters<NonNullable<FormOptions<T, M>['onSubmit']>>[0];
 
 			const _submitCancel = submit.cancel;
 			let cancelled = false;
@@ -1617,11 +1672,7 @@ export function superForm<
 			function clientValidationResult(validation: SuperFormValidated<T, M, In>) {
 				const validationResult = { ...validation, posted: true };
 
-				const status = validationResult.valid
-					? 200
-					: (typeof options.SPA === 'boolean' || typeof options.SPA === 'string'
-							? undefined
-							: options.SPA?.failStatus) ?? 400;
+				const status = validationResult.valid ? 200 : Form_resultStatus(400);
 
 				const data = { form: validationResult };
 
@@ -1649,6 +1700,53 @@ export function superForm<
 				}
 			}
 
+			async function triggerOnError(
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				result: { type: 'error'; status?: number; error: any },
+				status: number
+			) {
+				// For v3, then return { form } as data in applyAction below:
+				//const form: SuperValidated<T, M, In> = Form_capture(false);
+
+				result.status = status;
+
+				// Check if the error message should be replaced
+				if (options.onError !== 'apply') {
+					const event = { result, message: Message, form };
+
+					for (const onErrorEvent of formEvents.onError) {
+						if (
+							onErrorEvent !== 'apply' &&
+							(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
+						) {
+							await onErrorEvent(event);
+						}
+					}
+				}
+
+				if (options.flashMessage && options.flashMessage.onError) {
+					await options.flashMessage.onError({
+						result,
+						flashMessage: options.flashMessage.module.getFlash(page)
+					});
+				}
+
+				if (options.applyAction) {
+					if (options.onError == 'apply') {
+						await applyAction(result);
+					} else {
+						// Transform to failure, to avoid data loss
+						// Set the data to the error result, so it will be
+						// picked up in page.subscribe in superForm.
+						await applyAction({
+							type: 'failure',
+							status: Form_resultStatus(result.status),
+							data: result
+						});
+					}
+				}
+			}
+
 			function cancel(
 				opts: { resetTimers?: boolean } = {
 					resetTimers: true
@@ -1673,7 +1771,12 @@ export function superForm<
 				currentRequest = submit.controller;
 
 				for (const event of formEvents.onSubmit) {
-					await event(submit);
+					try {
+						await event(submit);
+					} catch (error) {
+						cancel();
+						triggerOnError({ type: 'error', error }, 500);
+					}
 				}
 			}
 
@@ -1805,7 +1908,7 @@ export function superForm<
 						? (event.result as ActionResult)
 						: {
 								type: 'error',
-								status: parseInt(String(event.result.status)) || 500,
+								status: Form_resultStatus(parseInt(String(event.result.status)) || 500),
 								error: event.result.error instanceof Error ? event.result.error : event.result
 							};
 
@@ -1827,15 +1930,27 @@ export function superForm<
 								cancel();
 							});
 
+				function setErrorResult(error: unknown, data: { result: ActionResult }, status: number) {
+					data.result = {
+						type: 'error',
+						error,
+						status: Form_resultStatus(status)
+					};
+				}
+
 				for (const event of formEvents.onResult) {
-					await event(data);
+					try {
+						await event(data);
+					} catch (error) {
+						setErrorResult(error, data, Math.max(result.status ?? 500, 400));
+					}
 				}
 
 				// In case it was modified in the event
 				result = data.result;
 
 				if (!cancelled) {
-					if ((result.type === 'success' || result.type == 'failure') && result.data) {
+					if ((result.type === 'success' || result.type === 'failure') && result.data) {
 						const forms = Context_findValidationForms(result.data);
 						if (!forms.length) {
 							throw new SuperFormError(
@@ -1855,7 +1970,11 @@ export function superForm<
 							};
 
 							for (const event of formEvents.onUpdate) {
-								await event(data);
+								try {
+									await event(data);
+								} catch (error) {
+									setErrorResult(error, data, Math.max(result.status ?? 500, 400));
+								}
 							}
 
 							// In case it was modified in the event
@@ -1891,46 +2010,7 @@ export function superForm<
 								await Form_updateFromActionResult(result);
 							}
 						} else {
-							// Error result
-							if (options.applyAction) {
-								if (options.onError == 'apply') {
-									await applyAction(result);
-								} else {
-									// Transform to failure, to avoid data loss
-									// Set the data to the error result, so it will be
-									// picked up in page.subscribe in superForm.
-									const failResult = {
-										type: 'failure',
-										status: Math.floor(result.status || 500),
-										data: result
-									} as const;
-									await applyAction(failResult);
-								}
-							}
-
-							// Check if the error message should be replaced
-							if (options.onError !== 'apply') {
-								const data = { result, message: Message };
-
-								for (const onErrorEvent of formEvents.onError) {
-									if (
-										onErrorEvent !== 'apply' &&
-										(onErrorEvent != defaultOnError || !options.flashMessage?.onError)
-									) {
-										await onErrorEvent(data);
-									}
-								}
-							}
-						}
-
-						// Trigger flash message event if there was an error
-						if (options.flashMessage) {
-							if (result.type == 'error' && options.flashMessage.onError) {
-								await options.flashMessage.onError({
-									result,
-									flashMessage: options.flashMessage.module.getFlash(page)
-								});
-							}
+							await triggerOnError(result, Math.max(result.status ?? 500, 400));
 						}
 					}
 				}
@@ -1964,8 +2044,38 @@ export function superForm<
 				unsubCheckforNav();
 			}
 
+			if (!cancelled && customRequest) {
+				_submitCancel();
+				const response = await customRequest(submitParams);
+
+				let result: ActionResult;
+
+				if (response instanceof Response) {
+					result = deserialize(await response.text());
+				} else if (response instanceof XMLHttpRequest) {
+					result = deserialize(response.responseText);
+				} else {
+					result = response;
+				}
+
+				if (result.type === 'error') result.status = response.status;
+				validationResponse({ result });
+			}
+
 			return validationResponse;
 		});
+
+		return {
+			destroy: () => {
+				// Remove only events added in enhance
+				for (const [name, events] of Object.entries(formEvents)) {
+					// @ts-expect-error formEvents and options have the same keys
+					formEvents[name] = events.filter((e) => e === options[name]);
+				}
+
+				enhanced.destroy();
+			}
+		};
 	}
 
 	function removeFiles(formData: T) {
@@ -2008,26 +2118,7 @@ export function superForm<
 
 		options: options as T extends T ? FormOptions<T, M> : never,
 
-		capture() {
-			const { data, paths } = removeFiles(Data.form);
-			let tainted = Data.tainted;
-			if (paths.length) {
-				tainted = clone(tainted) ?? {};
-				setPaths(tainted, paths, false);
-			}
-
-			return {
-				valid: Data.valid,
-				posted: Data.posted,
-				errors: Data.errors,
-				data,
-				constraints: Data.constraints,
-				message: Data.message,
-				id: Data.formId,
-				tainted,
-				shape: Data.shape
-			};
-		},
+		capture: Form_capture,
 
 		restore: ((snapshot: SuperFormSnapshot<T, M>) => {
 			rebind({ form: snapshot, untaint: snapshot.tainted ?? true });

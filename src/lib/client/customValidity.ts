@@ -18,16 +18,19 @@ export function setCustomValidityForm(
 	formElement: HTMLFormElement,
 	errors: ValidationErrors<Record<string, unknown>>
 ) {
-	for (const el of formElement.querySelectorAll<
-		HTMLInputElement & HTMLSelectElement & HTMLTextAreaElement & HTMLButtonElement
-	>('input,select,textarea,button')) {
-		if (noCustomValidityDataAttribute in el.dataset) {
+	for (const el of formElement.querySelectorAll<HTMLInputElement>('input,select,textarea,button')) {
+		if (('dataset' in el && noCustomValidityDataAttribute in el.dataset) || !el.name) {
 			continue;
 		}
 
-		const error = traversePath(errors, splitPath(el.name));
-		setCustomValidity(el, error?.value);
-		if (error?.value) return;
+		const path = traversePath(errors, splitPath(el.name));
+		const error =
+			path && typeof path.value === 'object' && '_errors' in path.value
+				? path.value._errors
+				: path?.value;
+
+		setCustomValidity(el, error);
+		if (error) return;
 	}
 }
 

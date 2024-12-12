@@ -22,6 +22,8 @@
 		return output;
 	});
 
+	$: isValid = $valid;
+
 	async function log(data: Record<string, string | Date>) {
 		logs.update((logs) => [...logs, schemaToStr(data)]);
 	}
@@ -78,7 +80,7 @@
 			</tr>
 		{/each}
 		<tr>
-			{#each Object.values($valid) as valid}
+			{#each Object.values(isValid) as valid}
 				<td class="result" class:valid>{valid ? 'OK' : 'Mismatch'}</td>
 			{/each}
 		</tr>

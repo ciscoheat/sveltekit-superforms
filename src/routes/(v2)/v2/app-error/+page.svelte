@@ -12,7 +12,8 @@
 			console.log(e.result);
 			// @ts-expect-error Does not follow the App.Error shape
 			error = 'code' in e.result.error ? e.result.error.code : e.result.error.message;
-		}
+		},
+		taintedMessage: false
 	});
 
 	const { enhance, form } = spForm;

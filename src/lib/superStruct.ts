@@ -4,7 +4,7 @@ export type SuperStructArray<T extends Record<string, unknown>, Data, ArrayData 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[Property in AllKeys<T>]?: [T] extends [any]
 		? NonNullable<T[Property]> extends Record<string, unknown>
-			? SuperStructArray<MergeUnion<NonNullable<T[Property]>>, Data, ArrayData>
+			? ArrayData & SuperStructArray<MergeUnion<NonNullable<T[Property]>>, Data, ArrayData>
 			: NonNullable<T[Property]> extends (infer A)[]
 				? ArrayData &
 						Record<

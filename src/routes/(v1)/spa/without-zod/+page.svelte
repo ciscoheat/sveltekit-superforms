@@ -74,7 +74,7 @@
 		margin-right: 20px;
 	}
 
-	input:not([type='checkbox']) {
+	:global(input:not([type='checkbox'])) {
 		width: 100px;
 	}
 

@@ -1,9 +1,7 @@
-import type { Type } from 'arktype';
+import type { type } from 'arktype';
 import {
 	type ValidationAdapter,
 	type RequiredDefaultsOptions,
-	type Infer,
-	type InferIn,
 	createAdapter,
 	type ClientValidationAdapter,
 	type ValidationResult,
@@ -11,57 +9,53 @@ import {
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
 
-async function validate<T extends Type>(
+async function modules() {
+	const { type } = await import(/* webpackIgnore: true */ 'arktype');
+	return { type };
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
+
+async function _validate<T extends type.Any>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<T['infer']>> {
+	const { type } = await fetchModule();
 	const result = schema(data);
-	if (result.problems == null) {
+	if (!(result instanceof type.errors)) {
 		return {
-			data: result.data as Infer<T>,
+			data: result as T['infer'],
 			success: true
 		};
 	}
+	const issues = [];
+	for (const error of result) {
+		issues.push({ message: error.message, path: Array.from(error.path) });
+	}
 	return {
-		issues: Array.from(result.problems).map(({ message, path }) => ({
-			message,
-			path
-		})),
+		issues,
 		success: false
 	};
 }
 
-function _arktype<T extends Type>(
+function _arktype<T extends type.Any>(
 	schema: T,
-	options: RequiredDefaultsOptions<Infer<T>>
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options: RequiredDefaultsOptions<T['infer']>
+): ValidationAdapter<T['infer'], T['inferIn']> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
 		defaults: options.defaults,
 		jsonSchema: createJsonSchema(options),
-		async validate(data) {
-			const result = schema(data);
-			if (result.problems == null) {
-				return {
-					data: result.data as Infer<T>,
-					success: true
-				};
-			}
-			return {
-				issues: Array.from(result.problems).map(({ message, path }) => ({
-					message,
-					path
-				})),
-				success: false
-			};
-		}
+		validate: async (data) => _validate<T>(schema, data)
 	});
 }
 
-function _arktypeClient<T extends Type>(schema: T): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+function _arktypeClient<T extends type.Any>(
+	schema: T
+): ClientValidationAdapter<T['infer'], T['inferIn']> {
 	return {
 		superFormValidationLibrary: 'arktype',
-		validate: async (data) => validate(schema, data)
+		validate: async (data) => _validate<T>(schema, data)
 	};
 }
 

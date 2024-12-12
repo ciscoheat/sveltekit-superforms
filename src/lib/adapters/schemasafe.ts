@@ -5,15 +5,17 @@ import {
 	type ClientValidationAdapter,
 	type ValidationAdapter
 } from './adapters.js';
-import {
-	validator,
-	type Json,
-	type Schema,
-	type Validate,
-	type ValidatorOptions
-} from '@exodus/schemasafe';
+import type { Json, Schema, Validate, ValidatorOptions } from '@exodus/schemasafe';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { JSONSchema as JSONSchema7 } from '$lib/jsonSchema/index.js';
+import { pathExists } from '$lib/traversal.js';
+
+async function modules() {
+	const { validator } = await import(/* webpackIgnore: true */ '@exodus/schemasafe');
+	return { validator };
+}
+
+const fetchModule = /* @__PURE__ */ memoize(modules);
 
 /*
  * Adapter specificts:
@@ -33,7 +35,9 @@ const defaultOptions = {
 	allErrors: true
 };
 
-function cachedValidator(currentSchema: JSONSchema7, config?: ValidatorOptions) {
+async function cachedValidator(currentSchema: JSONSchema7, config?: ValidatorOptions) {
+	const { validator } = await fetchModule();
+
 	if (!cache.has(currentSchema)) {
 		cache.set(
 			currentSchema,
@@ -53,14 +57,14 @@ function _schemasafe<
 	Out = [Data] extends [never] ? Record<string, unknown> : Data
 >(
 	schema: T,
-	options?: AdapterOptions<Out> & { config?: ValidatorOptions }
+	options?: AdapterOptions<Out> & { descriptionAsErrors?: boolean; config?: ValidatorOptions }
 ): ValidationAdapter<Out> {
 	return createAdapter({
 		superFormValidationLibrary: 'schemasafe',
 		jsonSchema: schema as JSONSchema7,
 		defaults: options?.defaults,
 		async validate(data: unknown) {
-			const validator = cachedValidator(schema as JSONSchema7, options?.config);
+			const validator = await cachedValidator(schema as JSONSchema7, options?.config);
 			const isValid = validator(data as Json);
 
 			if (isValid) {
@@ -71,7 +75,9 @@ function _schemasafe<
 			}
 			return {
 				issues: (validator.errors ?? []).map(({ instanceLocation, keywordLocation }) => ({
-					message: keywordLocation,
+					message: options?.descriptionAsErrors
+						? errorDescription(schema as Record<string, unknown>, keywordLocation)
+						: keywordLocation,
 					path: instanceLocation.split('/').slice(1)
 				})),
 				success: false
@@ -91,7 +97,7 @@ function _schemasafeClient<
 	return {
 		superFormValidationLibrary: 'schemasafe',
 		async validate(data: unknown) {
-			const validator = cachedValidator(schema as JSONSchema7, options?.config);
+			const validator = await cachedValidator(schema as JSONSchema7, options?.config);
 			const isValid = validator(data as Json);
 
 			if (isValid) {
@@ -115,3 +121,10 @@ export const schemasafe = /* @__PURE__ */ memoize(_schemasafe);
 export const schemasafeClient = /* @__PURE__ */ memoize(_schemasafeClient);
 
 const cache = new WeakMap<JSONSchema7, Validate>();
+
+function errorDescription(schema: Record<string, unknown>, keywordLocation: string) {
+	if (!keywordLocation.startsWith('#/')) return keywordLocation;
+	const searchPath = keywordLocation.slice(2).split('/');
+	const path = pathExists(schema, searchPath);
+	return path?.parent.description ?? keywordLocation;
+}

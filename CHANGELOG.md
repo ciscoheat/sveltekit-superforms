@@ -5,6 +5,151 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.1] - 2024-12-04
+
+### Fixed
+
+- Default values for nested discriminated unions didn't work.
+
+## [2.21.0] - 2024-12-01
+
+### Fixed
+
+- All properties for object unions weren't added to the adapter defaults.
+
+### Changed
+
+- Typebox updated to require `^0.34.9` (hoping for a stable release soon).
+
+## [2.20.1] - 2024-11-15
+
+### Changed
+
+- Valibot updated to require `1.0.0-beta.3` (hoping for a stable release soon).
+- Arktype updated to require `2.0.0-rc.23` (hoping for a stable release soon).
+
+### Added
+
+- Support for Vine 2.0.
+
+### Fixed
+
+- [customRequest](https://superforms.rocks/concepts/events#customrequest) didn't cancel when client-side validation failed.
+
+## [2.20.0] - 2024-10-18
+
+### Added
+
+- New validation library: [Effect](https://effect.website/)!
+
+### Changed
+
+- `@typeschema/class-validator` version bump to `^0.3.0`.
+
+## [2.19.1] - 2024-10-05
+
+### Added
+
+- Exported `ClientValidationAdapter` from `sveltekit-superforms/adapters`.
+
+### Fixed
+
+- Result can now be modified in [onError](https://superforms.rocks/concepts/events#onerror), for setting a status code for example.
+- Status codes above 400 but below 500 were not applied to the page status when the result was modified in `onUpdate`.
+
+## [2.19.0] - 2024-09-18
+
+### Changed
+
+- Arktype updated to require `2.0.0-rc.8`, fixing some types (last update before 2.0).
+
+### Deprecated
+
+- The `failStatus` and SPA action form (`string`) options of [single page application mode](https://superforms.rocks/concepts/spa) are now deprecated. `failStatus` is rarely used, and SPA action form can be created just by setting [invalidateAll](https://superforms.rocks/concepts/enhance#invalidateall) and [applyAction](https://superforms.rocks/concepts/enhance#applyaction) to `false`. See [this example](https://github.com/ciscoheat/superforms-examples/blob/username-available-zod/src/routes/%2Bpage.svelte) for details.
+
+### Added
+
+- Exceptions thrown in the `onSubmit`, `onResult` and `onUpdate` [events](https://superforms.rocks/concepts/events) will now be caught and sent to `onError`, if it exists.
+
+### Fixed
+
+- Updating the same variable to the same value prevented the [onChange](https://superforms.rocks/concepts/events#onchange) event from being triggered.
+- Factorized [SuperDebug](https://superforms.rocks/super-debug) clipboard script
+
+## [2.18.1] - 2024-09-13
+
+### Added
+
+- New validation library: [class-validator](https://github.com/typestack/class-validator)!
+- Exported `SuperFormData` and `SuperFormErrors` types for superForm.
+- Exported `ZodObjectType`, `ZodObjectTypes` and `ZodValidation` types for the Zod adapter.
+- [customRequest](https://superforms.rocks/concepts/events#customrequest) can now handle an `ActionResult` as well, for better error handling.
+
+### Fixed
+
+- Using [setError](https://superforms.rocks/concepts/error-handling#seterror) in the load function and navigating to the same page client-side removed the errors.
+
+## [2.17.0] - 2024-08-13
+
+### Deprecated
+
+- `posted` is deprecated, due to inconsistencies between server and client validation, and SPA mode. It will be removed in v3. Use a [status message](https://superforms.rocks/concepts/messages) or return your own data in the form action to handle form post status.
+
+### Added
+
+- `descriptionAsErrors` option for the JSON Schema validator, so you can specify error messages directly in the schema with the `description` field.
+
+### Fixed
+
+- File uploads required extra configuration for the valibot adapter, now it works directly.
+- Events added in `enhance` weren't cleaned up when the form was destroyed. Note that this _could_ be deprecated in a future version. It's advised to use events only when calling `superForm`, not with `enhance`.
+
+## [2.16.1] - 2024-07-18
+
+### Changed
+
+- Arktype updated to require `2.0.0-beta.0`, which should fix some typing issues with the adapter.
+
+## [2.16.0] - 2024-07-09
+
+### Added
+
+- New validation library: [Superstruct](https://docs.superstructjs.org/)!
+- `customRequest` added to the [onSubmit](https://superforms.rocks/concepts/events#onsubmit) options, that lets you use a custom [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) or [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) when submitting the form. Very useful for progress bars when uploading large files.
+
+### Fixed
+
+- Type inference for validation errors didn't include `_errors` for all objects, only for arrays.
+
+## [2.15.2] - 2024-06-26
+
+### Changed
+
+- Valibot minimum dependency is now `>=0.33.0` to fix a type issue. Please follow the [migration guide](https://valibot.dev/guides/migrate-to-v0.31.0/) to update your Valibot schemas if your version is below v0.31.0.
+
+## [2.15.1] - 2024-06-10
+
+### Changed
+
+- Valibot updated to `0.31.0`, which ends support for any version below that. Please follow the [migration guide](https://valibot.dev/guides/migrate-to-v0.31.0/) to update your Valibot schemas.
+
+### Fixed
+
+- Inlined the [SuperDebug](https://superforms.rocks/super-debug) css, to prevent it from being automatically bundled due to it being a default import.
+- The [customValidity](https://superforms.rocks/concepts/error-handling#customvalidity) option now handles object errors, and can refer to any part of the schema.
+- Arktype code wasn't excluded from bundle due to not being dynamically loaded.
+
+## [2.14.0] - 2024-05-26
+
+### Added
+
+- `errorMap` option for the Zod adapter, for simplified error handling in localization. ([Zod docs](https://zod.dev/ERROR_HANDLING?id=customizing-errors-with-zoderrormap))
+
+### Fixed
+
+- `isTainted` now works with undefined values in the `$tainted` store.
+- Fixed default properties for Record in schemas.
+
 ## [2.13.1] - 2024-05-07
 
 ### Fixed

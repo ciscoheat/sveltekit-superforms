@@ -22,6 +22,7 @@ export type SchemaInfo = {
 	union?: JSONSchema7[];
 	array?: JSONSchema7[];
 	properties?: { [key: string]: JSONSchema7 };
+	additionalProperties?: { [key: string]: JSONSchema7 };
 	required?: string[];
 };
 
@@ -57,6 +58,17 @@ export function schemaInfo(
 				) as JSONSchema7[])
 			: undefined;
 
+	const additionalProperties =
+		schema.additionalProperties &&
+		typeof schema.additionalProperties === 'object' &&
+		types.includes('object')
+			? (Object.fromEntries(
+					Object.entries(schema.additionalProperties).filter(
+						([, value]) => typeof value !== 'boolean'
+					)
+				) as { [key: string]: JSONSchema7 })
+			: undefined;
+
 	const properties =
 		schema.properties && types.includes('object')
 			? (Object.fromEntries(
@@ -74,6 +86,7 @@ export function schemaInfo(
 		union: union?.length ? union : undefined,
 		array,
 		properties,
+		additionalProperties,
 		required: schema.required
 	};
 }

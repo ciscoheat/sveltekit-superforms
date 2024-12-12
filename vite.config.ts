@@ -8,5 +8,12 @@ export default defineConfig({
 	},
 	define: {
 		SUPERFORMS_LEGACY: true
+	},
+	css: {
+		preprocessorOptions: {
+			scss: {
+				api: `modern`
+			}
+		}
 	}
 });

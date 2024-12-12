@@ -385,7 +385,7 @@ test('FormPath with any type', () => {
 test('Schemas with built-in objects', () => {
 	const schema = v.object({
 		id: v.nullish(v.string(), ''),
-		name: v.string([v.minLength(1)]),
+		name: v.pipe(v.string(), v.minLength(1)),
 		date: v.date()
 	});
 

@@ -45,7 +45,15 @@ export type FormPathLeavesWithErrors<T extends object, Type = any> = string &
  * List all arrays in an object as string accessors.
  */
 export type FormPathArrays<T extends object, Type = any> = string &
-	StringPath<T, { filter: 'arrays'; objAppend: never; path: ''; type: Type }>;
+	StringPath<
+		T,
+		{
+			filter: 'arrays';
+			objAppend: never;
+			path: '';
+			type: Type extends any[] ? Type : Type[];
+		}
+	>;
 
 type Concat<
 	Path extends string,

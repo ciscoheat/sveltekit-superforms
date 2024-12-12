@@ -1,12 +1,16 @@
-<script lang="ts">
-	import { formFieldProxy } from '$lib/client/index.js';
+<script lang="ts" module>
+	type T = Record<string, unknown>;
+</script>
+
+<script lang="ts" generics="T extends Record<string, unknown>">
+	import { formFieldProxy, type FormPathLeaves, type SuperForm } from '$lib/client/index.js';
 
 	let _class = '';
 
 	export { _class as class };
 	export let label: string | undefined = undefined;
-	export let field: string;
-	export let form;
+	export let field: FormPathLeaves<T>;
+	export let form: SuperForm<T>;
 
 	const { value, errors } = formFieldProxy(form, field);
 </script>

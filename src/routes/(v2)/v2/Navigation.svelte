@@ -61,7 +61,19 @@
 		'nested-traverse',
 		'reset-errors',
 		'schemasafe-types',
-		'discriminated-union'
+		'discriminated-union',
+		'simple-tainted',
+		'validity-objects',
+		'issue-466',
+		'spa-error',
+		'issue-470',
+		'issue-484',
+		'component-regen',
+		'issue-485',
+		'arktype',
+		'effect',
+		'issue-500',
+		'typebox'
 	].sort();
 </script>
 

@@ -65,7 +65,7 @@ describe('FormData parsing', () => {
 
 	it('should throw an error if literals are different from the other types', () => {
 		const schema = v.object({
-			urltest: v.union([v.literal(123), v.string([v.startsWith('https://')])])
+			urltest: v.union([v.literal(123), v.pipe(v.string(), v.startsWith('https://'))])
 		});
 
 		expect(() => valibot(schema)).toThrowError(SchemaError);
@@ -73,7 +73,7 @@ describe('FormData parsing', () => {
 
 	it('should treat literals as their typeof type', () => {
 		const schema = v.object({
-			urltest: v.union([v.literal(''), v.string([v.startsWith('https://')])])
+			urltest: v.union([v.literal(''), v.pipe(v.string(), v.startsWith('https://'))])
 		});
 
 		expect(valibot(schema).defaults.urltest).toBe('');

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	import type { FormPath } from '$lib/index.js';
 	type T = Record<string, unknown>;
@@ -11,6 +11,8 @@
 	export let form: SuperForm<T>;
 	// eslint-disable-next-line svelte/valid-compile
 	export let name: U;
+
+	console.log(form, name);
 </script>
 
 <!--

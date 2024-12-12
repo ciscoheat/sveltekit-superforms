@@ -1,4 +1,4 @@
-import { array, integer, minLength, minValue, number, object, string } from 'valibot';
+import { array, integer, minLength, minValue, number, object, pipe, string } from 'valibot';
 
 /*
 export const schema2 = z
@@ -15,11 +15,11 @@ export const schema2 = z
 */
 
 export const schema = object({
-	name: string([minLength(1, 'Name is too short')]),
+	name: pipe(string(), minLength(1, 'Name is too short')),
 	tags: array(
 		object({
-			id: number([integer(), minValue(3)]),
-			name: string([minLength(2)])
+			id: pipe(number(), integer(), minValue(3)),
+			name: pipe(string(), minLength(2))
 		})
 	)
 });

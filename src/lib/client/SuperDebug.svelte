@@ -1,79 +1,10 @@
-<script context="module">
-	/*! clipboard-copy. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
-
-	function makeError() {
-		return new DOMException('The request is not allowed', 'NotAllowedError');
-	}
-
-	/**
-	 * @param {string} text
-	 */
-	async function copyClipboardApi(text) {
-		// Use the Async Clipboard API when available. Requires a secure browsing
-		// context (i.e. HTTPS)
-		if (!navigator.clipboard) {
-			throw makeError();
-		}
-		return navigator.clipboard.writeText(text);
-	}
-
-	/**
-	 * @param {string} text
-	 */
-	async function copyExecCommand(text) {
-		// Put the text to copy into a <span>
-		const span = document.createElement('span');
-		span.textContent = text;
-
-		// Preserve consecutive spaces and newlines
-		span.style.whiteSpace = 'pre';
-		span.style.webkitUserSelect = 'auto';
-		span.style.userSelect = 'all';
-
-		// Add the <span> to the page
-		document.body.appendChild(span);
-
-		// Make a selection object representing the range of text selected by the user
-		const selection = window.getSelection();
-		const range = window.document.createRange();
-		selection?.removeAllRanges();
-		range.selectNode(span);
-		selection?.addRange(range);
-
-		// Copy text to the clipboard
-		let success = false;
-		try {
-			success = window.document.execCommand('copy');
-		} finally {
-			// Cleanup
-			selection?.removeAllRanges();
-			window.document.body.removeChild(span);
-		}
-
-		if (!success) throw makeError();
-	}
-
-	/**
-	 * @param {string} text
-	 */
-	async function clipboardCopy(text) {
-		try {
-			await copyClipboardApi(text);
-		} catch (err) {
-			// ...Otherwise, use document.execCommand() fallback
-			try {
-				await copyExecCommand(text);
-			} catch (err2) {
-				throw err2 || err || makeError();
-			}
-		}
-	}
-</script>
-
 <script>
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { readable, get } from 'svelte/store';
+	import { clipboardCopy } from './clipboardCopy.js';
+
+	let styleInit = false;
 
 	/**
 	 * @typedef {unknown | Promise<unknown>} EncodeableData
@@ -203,7 +134,7 @@
 
 			data = { collapsed: data && data.collapsed ? data.collapsed : {} };
 
-			data.collapsed[route] = status === undefined ? data.collapsed[route] ?? collapsed : status;
+			data.collapsed[route] = status === undefined ? (data.collapsed[route] ?? collapsed) : status;
 		} catch {
 			data = {
 				collapsed: {
@@ -275,6 +206,7 @@
 					return '#}#undefined';
 				}
 				if (typeof this === 'object' && this[key] instanceof Date) {
+					// @ts-expect-error Date checking works with isNaN
 					return '#}D#' + (isNaN(this[key]) ? 'Invalid Date' : value);
 				}
 				if (typeof value === 'number') {
@@ -430,6 +362,226 @@
 	$: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
+{#if !styleInit}
+	<style>
+		.super-debug--absolute {
+			position: absolute;
+		}
+
+		.super-debug--top-0 {
+			top: 0;
+		}
+
+		.super-debug--inset-x-0 {
+			left: 0px;
+			right: 0px;
+		}
+
+		.super-debug--hidden {
+			height: 0;
+			overflow: hidden;
+		}
+
+		.super-debug--hidden:not(.super-debug--with-label) {
+			height: 1.5em;
+		}
+
+		.super-debug--rotated {
+			transform: rotate(180deg);
+		}
+
+		.super-debug {
+			--_sd-bg-color: var(--sd-bg-color, var(--sd-vscode-bg-color, rgb(30, 41, 59)));
+			position: relative;
+			background-color: var(--_sd-bg-color);
+			border-radius: 0.5rem;
+			overflow: hidden;
+		}
+
+		.super-debug--pre {
+			overflow-x: auto;
+		}
+
+		.super-debug--collapse {
+			display: block;
+			width: 100%;
+			color: rgba(255, 255, 255, 0.25);
+			background-color: rgba(255, 255, 255, 0.15);
+			padding: 5px 0;
+			display: flex;
+			justify-content: center;
+			border-color: transparent;
+			margin: 0;
+			padding: 3px 0;
+		}
+
+		.super-debug--collapse:focus {
+			color: #fafafa;
+			background-color: rgba(255, 255, 255, 0.25);
+		}
+
+		.super-debug--collapse:is(:hover) {
+			color: rgba(255, 255, 255, 0.35);
+			background-color: rgba(255, 255, 255, 0.25);
+		}
+
+		.super-debug--status {
+			display: flex;
+			padding: 1em;
+			padding-bottom: 0;
+			justify-content: space-between;
+			font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier,
+				monospace;
+		}
+
+		.super-debug--right-status {
+			display: flex;
+			gap: 0.55em;
+		}
+
+		.super-debug--copy {
+			margin: 0;
+			padding: 0;
+			padding-top: 2px;
+			background-color: transparent;
+			border: 0;
+			color: #666;
+			cursor: pointer;
+		}
+
+		.super-debug--copy:hover {
+			background-color: transparent;
+			color: #666;
+		}
+
+		.super-debug--copy:focus {
+			background-color: transparent;
+			color: #666;
+		}
+
+		.super-debug--label {
+			color: var(--sd-label-color, var(--sd-vscode-label-color, white));
+		}
+
+		.super-debug--promise-loading {
+			color: var(--sd-promise-loading-color, var(--sd-vscode-promise-loading-color, #999));
+		}
+
+		.super-debug--promise-rejected {
+			color: var(--sd-promise-rejected-color, var(--sd-vscode-promise-rejected-color, #ff475d));
+		}
+
+		.super-debug pre {
+			color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
+			background-color: var(--_sd-bg-color);
+			font-size: 1em;
+			margin-bottom: 0;
+			padding: 1em 0 1em 1em;
+		}
+
+		.super-debug--info {
+			color: var(--sd-info, var(--sd-vscode-info, rgb(85, 85, 255)));
+		}
+
+		.super-debug--success {
+			color: var(--sd-success, var(--sd-vscode-success, #2cd212));
+		}
+
+		.super-debug--redirect {
+			color: var(--sd-redirect, var(--sd-vscode-redirect, #03cae5));
+		}
+
+		.super-debug--error {
+			color: var(--sd-error, var(--sd-vscode-error, #ff475d));
+		}
+
+		.super-debug--code .key {
+			color: var(--sd-code-key, var(--sd-vscode-code-key, #eab308));
+		}
+
+		.super-debug--code .string {
+			color: var(--sd-code-string, var(--sd-vscode-code-string, #6ec687));
+		}
+
+		.super-debug--code .date {
+			color: var(--sd-code-date, var(--sd-vscode-code-date, #f06962));
+		}
+
+		.super-debug--code .boolean {
+			color: var(--sd-code-boolean, var(--sd-vscode-code-boolean, #79b8ff));
+		}
+
+		.super-debug--code .number {
+			color: var(--sd-code-number, var(--sd-vscode-code-number, #af77e9));
+		}
+
+		.super-debug--code .bigint {
+			color: var(--sd-code-bigint, var(--sd-vscode-code-bigint, #af77e9));
+		}
+
+		.super-debug--code .null {
+			color: var(--sd-code-null, var(--sd-vscode-code-null, #238afe));
+		}
+
+		.super-debug--code .nan {
+			color: var(--sd-code-nan, var(--sd-vscode-code-nan, #af77e9));
+		}
+
+		.super-debug--code .undefined {
+			color: var(--sd-code-undefined, var(--sd-vscode-code-undefined, #238afe));
+		}
+
+		.super-debug--code .function {
+			color: var(--sd-code-function, var(--sd-vscode-code-function, #f06962));
+		}
+
+		.super-debug--code .symbol {
+			color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
+		}
+
+		.super-debug--code .error {
+			color: var(--sd-code-error, var(--sd-vscode-code-error, #ff475d));
+		}
+
+		.super-debug pre::-webkit-scrollbar {
+			width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1rem));
+			height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1rem));
+		}
+
+		.super-debug pre::-webkit-scrollbar-track {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-track-color,
+				var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
+			);
+		}
+		.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-track-color-focus,
+				var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
+			);
+		}
+
+		.super-debug pre::-webkit-scrollbar-thumb {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-thumb-color,
+				var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
+			);
+		}
+		.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
+			border-radius: 12px;
+			background-color: var(
+				--sd-sb-thumb-color-focus,
+				var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))
+			);
+		}
+	</style>
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{@const init = styleInit = true}
+{/if}
+
 <!-- eslint-disable svelte/no-at-html-tags -->
 {#if display}
 	<div
@@ -438,7 +590,11 @@
 		style={themeStyle}
 		dir="ltr"
 	>
-		<div class="super-debug--status {label === '' ? 'absolute inset-x-0 top-0' : ''}">
+		<div
+			class="super-debug--status {label === ''
+				? 'super-debug--absolute super-debug--inset-x-0 super-debug--top-0'
+				: ''}"
+		>
 			<div class="super-debug--label">{label}</div>
 			<div class="super-debug--right-status">
 				<button type="button" class="super-debug--copy" on:click={copyContent}>
@@ -479,10 +635,10 @@
 				</button>
 				{#if status}
 					<div
-						class:info={$page.status < 200}
-						class:success={$page.status >= 200 && $page.status < 300}
-						class:redirect={$page.status >= 300 && $page.status < 400}
-						class:error={$page.status >= 400}
+						class:super-debug--info={$page.status < 200}
+						class:super-debug--success={$page.status >= 200 && $page.status < 300}
+						class:super-debug--redirect={$page.status >= 300 && $page.status < 400}
+						class:super-debug--error={$page.status >= 400}
 					>
 						{$page.status}
 					</div>
@@ -509,13 +665,14 @@
 				type="button"
 				on:click|preventDefault={() => setCollapse(!collapsed)}
 				class="super-debug--collapse"
+				aria-label="Collapse"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="20"
 					height="20"
 					viewBox="0 0 24 24"
-					class:rotated={collapsed}
+					class:super-debug--rotated={collapsed}
 					><path
 						fill="currentColor"
 						d="M4.08 11.92L12 4l7.92 7.92l-1.42 1.41l-5.5-5.5V22h-2V7.83l-5.5 5.5l-1.42-1.41M12 4h10V2H2v2h10Z"
@@ -550,218 +707,3 @@
   <SuperDebug data={$form} label="My form data" />
   ```
 -->
-
-<style>
-	.absolute {
-		position: absolute;
-	}
-
-	.top-0 {
-		top: 0;
-	}
-
-	.inset-x-0 {
-		left: 0px;
-		right: 0px;
-	}
-
-	.super-debug--hidden {
-		height: 0;
-		overflow: hidden;
-	}
-
-	.super-debug--hidden:not(.super-debug--with-label) {
-		height: 1.5em;
-	}
-
-	.rotated {
-		transform: rotate(180deg);
-	}
-
-	.super-debug {
-		--_sd-bg-color: var(--sd-bg-color, var(--sd-vscode-bg-color, rgb(30, 41, 59)));
-		position: relative;
-		background-color: var(--_sd-bg-color);
-		border-radius: 0.5rem;
-		overflow: hidden;
-	}
-
-	.super-debug--pre {
-		overflow-x: auto;
-	}
-
-	.super-debug--collapse {
-		display: block;
-		width: 100%;
-		color: rgba(255, 255, 255, 0.25);
-		background-color: rgba(255, 255, 255, 0.15);
-		padding: 5px 0;
-		display: flex;
-		justify-content: center;
-		border-color: transparent;
-		margin: 0;
-		padding: 3px 0;
-	}
-
-	.super-debug--collapse:focus {
-		color: #fafafa;
-		background-color: rgba(255, 255, 255, 0.25);
-	}
-
-	.super-debug--collapse:is(:hover) {
-		color: rgba(255, 255, 255, 0.35);
-		background-color: rgba(255, 255, 255, 0.25);
-	}
-
-	.super-debug--status {
-		display: flex;
-		padding: 1em;
-		padding-bottom: 0;
-		justify-content: space-between;
-		font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier, monospace;
-	}
-
-	.super-debug--right-status {
-		display: flex;
-		gap: 0.55em;
-	}
-
-	.super-debug--copy {
-		margin: 0;
-		padding: 0;
-		padding-top: 2px;
-		background-color: transparent;
-		border: 0;
-		color: #666;
-		cursor: pointer;
-	}
-
-	.super-debug--copy:hover {
-		background-color: transparent;
-		color: #666;
-	}
-
-	.super-debug--copy:focus {
-		background-color: transparent;
-		color: #666;
-	}
-
-	.super-debug--label {
-		color: var(--sd-label-color, var(--sd-vscode-label-color, white));
-	}
-
-	.super-debug--promise-loading {
-		color: var(--sd-promise-loading-color, var(--sd-vscode-promise-loading-color, #999));
-	}
-
-	.super-debug--promise-rejected {
-		color: var(--sd-promise-rejected-color, var(--sd-vscode-promise-rejected-color, #ff475d));
-	}
-
-	.super-debug pre {
-		color: var(--sd-code-default, var(--sd-vscode-code-default, #999));
-		background-color: var(--_sd-bg-color);
-		font-size: 1em;
-		margin-bottom: 0;
-		padding: 1em 0 1em 1em;
-	}
-
-	.info {
-		color: var(--sd-info, var(--sd-vscode-info, rgb(85, 85, 255)));
-	}
-
-	.success {
-		color: var(--sd-success, var(--sd-vscode-success, #2cd212));
-	}
-
-	.redirect {
-		color: var(--sd-redirect, var(--sd-vscode-redirect, #03cae5));
-	}
-
-	.error {
-		color: var(--sd-error, var(--sd-vscode-error, #ff475d));
-	}
-
-	:global(.super-debug--code .key) {
-		color: var(--sd-code-key, var(--sd-vscode-code-key, #eab308));
-	}
-
-	:global(.super-debug--code .string) {
-		color: var(--sd-code-string, var(--sd-vscode-code-string, #6ec687));
-	}
-
-	:global(.super-debug--code .date) {
-		color: var(--sd-code-date, var(--sd-vscode-code-date, #f06962));
-	}
-
-	:global(.super-debug--code .boolean) {
-		color: var(--sd-code-boolean, var(--sd-vscode-code-boolean, #79b8ff));
-	}
-
-	:global(.super-debug--code .number) {
-		color: var(--sd-code-number, var(--sd-vscode-code-number, #af77e9));
-	}
-
-	:global(.super-debug--code .bigint) {
-		color: var(--sd-code-bigint, var(--sd-vscode-code-bigint, #af77e9));
-	}
-
-	:global(.super-debug--code .null) {
-		color: var(--sd-code-null, var(--sd-vscode-code-null, #238afe));
-	}
-
-	:global(.super-debug--code .nan) {
-		color: var(--sd-code-nan, var(--sd-vscode-code-nan, #af77e9));
-	}
-
-	:global(.super-debug--code .undefined) {
-		color: var(--sd-code-undefined, var(--sd-vscode-code-undefined, #238afe));
-	}
-
-	:global(.super-debug--code .function) {
-		color: var(--sd-code-function, var(--sd-vscode-code-function, #f06962));
-	}
-
-	:global(.super-debug--code .symbol) {
-		color: var(--sd-code-symbol, var(--sd-vscode-code-symbol, #4de0c5));
-	}
-
-	:global(.super-debug--code .error) {
-		color: var(--sd-code-error, var(--sd-vscode-code-error, #ff475d));
-	}
-
-	.super-debug pre::-webkit-scrollbar {
-		width: var(--sd-sb-width, var(--sd-vscode-sb-width, 1rem));
-		height: var(--sd-sb-height, var(--sd-vscode-sb-height, 1rem));
-	}
-
-	.super-debug pre::-webkit-scrollbar-track {
-		border-radius: 12px;
-		background-color: var(
-			--sd-sb-track-color,
-			var(--sd-vscode-sb-track-color, hsl(0, 0%, 40%, 0.2))
-		);
-	}
-	.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-track {
-		border-radius: 12px;
-		background-color: var(
-			--sd-sb-track-color-focus,
-			var(--sd-vscode-sb-track-color-focus, hsl(0, 0%, 50%, 0.2))
-		);
-	}
-
-	.super-debug pre::-webkit-scrollbar-thumb {
-		border-radius: 12px;
-		background-color: var(
-			--sd-sb-thumb-color,
-			var(--sd-vscode-sb-thumb-color, hsl(217, 50%, 50%, 0.5))
-		);
-	}
-	.super-debug:is(:focus-within, :hover) pre::-webkit-scrollbar-thumb {
-		border-radius: 12px;
-		background-color: var(
-			--sd-sb-thumb-color-focus,
-			var(--sd-vscode-sb-thumb-color-focus, hsl(217, 50%, 50%))
-		);
-	}
-</style>

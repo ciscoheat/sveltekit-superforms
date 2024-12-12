@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-superforms",
-	"version": "2.13.1",
+	"version": "2.21.1",
 	"author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
 	"description": "Making SvelteKit forms a pleasure to use!",
 	"keywords": [
@@ -102,23 +102,33 @@
 		"!dist/**/*.spec.*"
 	],
 	"peerDependencies": {
+		"@effect/schema": "^0.75.3",
 		"@exodus/schemasafe": "^1.3.0",
-		"@sinclair/typebox": ">=0.32.27 <1",
+		"@sinclair/typebox": "^0.34.9",
 		"@sveltejs/kit": "1.x || 2.x",
-		"@vinejs/vine": "^1.7.1",
-		"arktype": "1.0.29-alpha",
+		"@typeschema/class-validator": "^0.3.0",
+		"@vinejs/vine": "^1.8.0 || ^2.0.0",
+		"arktype": ">=2.0.0-rc.23",
+		"class-validator": "^0.14.1",
+		"effect": "^3.8.2",
 		"joi": "^17.13.1",
-		"superstruct": "^1.0.3",
+		"superstruct": "^2.0.2",
 		"svelte": "3.x || 4.x || >=5.0.0-next.51",
-		"valibot": ">=0.28.1 <1",
-		"yup": "^1.3.3",
-		"zod": "^3.23.5"
+		"valibot": ">=1.0.0-beta.3",
+		"yup": "^1.4.0",
+		"zod": "^3.23.8"
 	},
 	"peerDependenciesMeta": {
 		"@exodus/schemasafe": {
 			"optional": true
 		},
 		"@sinclair/typebox": {
+			"optional": true
+		},
+		"@typeschema/class-validator": {
+			"optional": true
+		},
+		"class-validator": {
 			"optional": true
 		},
 		"arktype": {
@@ -141,60 +151,72 @@
 		},
 		"@vinejs/vine": {
 			"optional": true
+		},
+		"effect": {
+			"optional": true
+		},
+		"@effect/schema": {
+			"optional": true
 		}
 	},
 	"optionalDependencies": {
+		"@effect/schema": "^0.75.3",
 		"@exodus/schemasafe": "^1.3.0",
-		"@gcornut/valibot-json-schema": "^0.0.27",
-		"@sinclair/typebox": "^0.32.27",
-		"@sodaru/yup-to-json-schema": "^2.0.1",
-		"@vinejs/vine": "^1.8.0",
-		"arktype": "1.0.29-alpha",
-		"joi": "^17.13.1",
-		"json-schema-to-ts": "^3.0.1",
-		"superstruct": "^1.0.4",
-		"valibot": "^0.30.0",
+		"@gcornut/valibot-json-schema": "^0.31.0",
+		"@sinclair/typebox": "^0.34.9",
+		"@typeschema/class-validator": "^0.3.0",
+		"@vinejs/vine": "^2.0.0",
+		"arktype": "^2.0.0-rc.23",
+		"class-validator": "^0.14.1",
+		"effect": "^3.9.1",
+		"joi": "^17.13.3",
+		"json-schema-to-ts": "^3.1.1",
+		"superstruct": "^2.0.2",
+		"valibot": "^1.0.0-beta.3",
 		"yup": "^1.4.0",
-		"zod": "^3.23.5",
-		"zod-to-json-schema": "^3.23.0"
+		"zod": "^3.23.8",
+		"zod-to-json-schema": "^3.23.3"
 	},
 	"dependencies": {
-		"devalue": "^5.0.0",
+		"devalue": "^5.1.1",
 		"just-clone": "^6.2.0",
 		"memoize-weak": "^1.0.2",
-		"ts-deepmerge": "^7.0.0"
+		"ts-deepmerge": "^7.0.1"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^3.2.0",
-		"@sveltejs/kit": "^2.5.7",
-		"@sveltejs/package": "^2.3.1",
-		"@sveltejs/vite-plugin-svelte": "^3.1.0",
+		"@sveltejs/adapter-auto": "^3.2.5",
+		"@sveltejs/kit": "^2.6.1",
+		"@sveltejs/package": "^2.3.5",
+		"@sveltejs/vite-plugin-svelte": "4.0.0-next.7",
 		"@types/json-schema": "^7.0.15",
-		"@types/node": "^20.12.8",
+		"@types/node": "^22.7.4",
 		"@types/throttle-debounce": "^5.0.2",
 		"@types/uuid": "^9.0.8",
 		"@typescript-eslint/eslint-plugin": "^6.21.0",
 		"@typescript-eslint/parser": "^6.21.0",
-		"eslint": "^8.57.0",
+		"@valibot/i18n": "^0.16.0",
+		"eslint": "^8.57.1",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-dci-lint": "^0.3.2",
-		"eslint-plugin-svelte": "2.36.0-next.13",
+		"eslint-plugin-svelte": "^2.44.1",
+		"i18next": "^23.15.1",
 		"only-allow": "^1.2.1",
-		"prettier": "^3.2.5",
-		"prettier-plugin-svelte": "^3.2.3",
-		"publint": "^0.2.7",
-		"sass": "^1.76.0",
-		"svelte": "5.0.0-next.121",
-		"svelte-check": "^3.7.0",
+		"prettier": "^3.3.3",
+		"prettier-plugin-svelte": "^3.2.7",
+		"publint": "^0.2.11",
+		"sass": "^1.79.4",
+		"svelte": "^5.0.0",
+		"svelte-check": "^3.8.6",
 		"svelte-french-toast": "^1.2.0",
 		"sveltekit-flash-message": "^2.4.4",
-		"sveltekit-rate-limiter": "^0.5.1",
-		"throttle-debounce": "^5.0.0",
-		"tslib": "^2.6.2",
-		"typescript": "^5.4.5",
+		"sveltekit-rate-limiter": "^0.6.1",
+		"throttle-debounce": "^5.0.2",
+		"tslib": "^2.7.0",
+		"typescript": "^5.6.2",
 		"uuid": "^9.0.1",
-		"vite": "^5.2.11",
-		"vitest": "^1.5.3"
+		"vite": "^5.4.8",
+		"vitest": "^1.6.0",
+		"zod-i18n-map": "^2.27.0"
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",

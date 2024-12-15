@@ -203,6 +203,7 @@ export function defaultValue(type: SchemaType, enumType: unknown[] | undefined):
 		case 'unix-time':
 			// Cannot add default for Date due to https://github.com/Rich-Harris/devalue/issues/51
 			return undefined;
+		case 'int64':
 		case 'bigint':
 			return BigInt(0);
 		case 'set':

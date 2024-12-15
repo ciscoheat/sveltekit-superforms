@@ -8,6 +8,7 @@ export type SchemaType =
 	| 'date'
 	| 'unix-time'
 	| 'bigint'
+	| 'int64'
 	| 'any'
 	| 'symbol'
 	| 'set'
@@ -26,7 +27,7 @@ export type SchemaInfo = {
 	required?: string[];
 };
 
-const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set'];
+const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set', 'int64'];
 
 /**
  * Normalizes the different kind of schema variations (anyOf, union, const null, etc)
@@ -113,7 +114,9 @@ function schemaTypes(
 	} else if (schema.format && conversionFormatTypes.includes(schema.format)) {
 		types.unshift(schema.format as SchemaType);
 
-		if (schema.format == 'unix-time') {
+		// Remove the integer type, as the schema format will be used
+		// instead in the following cases
+		if (schema.format == 'unix-time' || schema.format == 'int64') {
 			const i = types.findIndex((t) => t == 'integer');
 			types.splice(i, 1);
 		}

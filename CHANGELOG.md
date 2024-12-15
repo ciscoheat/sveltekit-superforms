@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Arbitrary types can now be sent in the form using the [transport](https://svelte.dev/docs/kit/hooks#Universal-hooks-transport) feature in SvelteKit hooks. There is a `transport` option both for `superValidate` and `superForm` that the `transport` export in `hooks.ts` can be used in directly. **Note:** Requires SvelteKit `^2.11.0`.
 
+### Fixed
+
+- `z.bigint()` was interpreted as a number instead of a [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt).
+
 ## [2.21.1] - 2024-12-04
 
 ### Fixed

@@ -73,7 +73,8 @@
 		'effect',
 		'issue-500',
 		'typebox',
-		'transport'
+		'transport',
+		'bigint'
 	].sort();
 </script>
 

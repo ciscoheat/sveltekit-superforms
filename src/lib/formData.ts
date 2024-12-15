@@ -317,6 +317,7 @@ function parseFormDataEntry(
 			const date = new Date(value ?? '');
 			return !isNaN(date as unknown as number) ? date : undefined;
 		}
+		case 'int64':
 		case 'bigint':
 			return BigInt(value ?? '.');
 		case 'symbol':

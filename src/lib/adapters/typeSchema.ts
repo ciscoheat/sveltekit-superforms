@@ -18,12 +18,12 @@ import type { ZodSchema, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
-import type { Schema as Schema$1 } from '@effect/schema/Schema';
+import type { Schema as Schema$1 } from 'effect';
 
 /*
 import type { SchemaObject } from 'ajv';
 import type { Type as Type$1 } from '@deepkit/type';
-import type { Schema as Schema$1 } from '@effect/schema/Schema';
+import type { Schema as Schema$1 } from 'effect';
 import type { Any, OutputOf, TypeOf } from 'io-ts';
 import type { Predicate, Infer as Infer$1 } from 'ow';
 import type { Runtype, Static } from 'runtypes';
@@ -159,11 +159,15 @@ interface SuperstructResolver extends Resolver {
 
 interface EffectResolver extends Resolver {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	base: Schema$1<any>;
+	base: Schema$1.Schema<any>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	input: this['schema'] extends Schema$1<any> ? Schema$1.Encoded<this['schema']> : never;
+	input: this['schema'] extends Schema$1.Schema<any>
+		? Schema$1.Schema.Encoded<this['schema']>
+		: never;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	output: this['schema'] extends Schema$1<any> ? Schema$1.Type<this['schema']> : never;
+	output: this['schema'] extends Schema$1.Schema<any>
+		? Schema$1.Schema.Type<this['schema']>
+		: never;
 }
 
 /*

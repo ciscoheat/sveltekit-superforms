@@ -9,14 +9,19 @@ import type {
 	Schema,
 	ValidationResult,
 	Infer as InferSchema,
-	InferIn as InferInSchema
+	InferIn as InferInSchema,
+	Registry
 } from './typeSchema.js';
 import { simpleSchema } from './simple-schema/index.js';
 
 export type { Schema, ValidationIssue, ValidationResult } from './typeSchema.js';
 
-export type Infer<T extends Schema> = NonNullable<InferSchema<T>>;
-export type InferIn<T extends Schema> = NonNullable<InferInSchema<T>>;
+export type Infer<T extends Schema, K extends keyof Registry = keyof Registry> = NonNullable<
+	InferSchema<T, K>
+>;
+export type InferIn<T extends Schema, K extends keyof Registry = keyof Registry> = NonNullable<
+	InferInSchema<T, K>
+>;
 
 export type ValidationLibrary =
 	| 'arktype'

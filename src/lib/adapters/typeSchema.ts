@@ -14,7 +14,7 @@ import type {
 	InferOutput as Output
 } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
-import type { ZodSchema, input, output } from 'zod';
+import type { ZodTypeAny, input, output } from 'zod';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
@@ -128,9 +128,9 @@ interface YupResolver extends Resolver {
 }
 
 interface ZodResolver extends Resolver {
-	base: ZodSchema;
-	input: this['schema'] extends ZodSchema ? input<this['schema']> : never;
-	output: this['schema'] extends ZodSchema ? output<this['schema']> : never;
+	base: ZodTypeAny;
+	input: this['schema'] extends ZodTypeAny ? input<this['schema']> : never;
+	output: this['schema'] extends ZodTypeAny ? output<this['schema']> : never;
 }
 
 interface VineResolver extends Resolver {
@@ -198,8 +198,7 @@ interface RuntypesResolver extends Resolver {
 }
 
 */
-
-type Registry = {
+export type Registry = {
 	arktype: ArkTypeResolver;
 	classvalidator: ClassValidatorResolver;
 	custom: CustomResolver;
@@ -221,15 +220,15 @@ type Registry = {
     */
 };
 
-type Infer<TSchema extends Schema> = UnknownIfNever<
+type Infer<TSchema extends Schema, Keys extends keyof Registry = keyof Registry> = UnknownIfNever<
 	{
-		[K in keyof Registry]: IfDefined<InferOutput<Registry[K], TSchema>>;
-	}[keyof Registry]
+		[K in Keys]: IfDefined<InferOutput<Registry[K], TSchema>>;
+	}[Keys]
 >;
-type InferIn<TSchema extends Schema> = UnknownIfNever<
+type InferIn<TSchema extends Schema, Keys extends keyof Registry = keyof Registry> = UnknownIfNever<
 	{
-		[K in keyof Registry]: IfDefined<InferInput<Registry[K], TSchema>>;
-	}[keyof Registry]
+		[K in Keys]: IfDefined<InferInput<Registry[K], TSchema>>;
+	}[Keys]
 >;
 
 /*

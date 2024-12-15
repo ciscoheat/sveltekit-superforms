@@ -33,7 +33,7 @@ export function yupToJSONSchema(schema: AnySchema) {
 async function validate<T extends Schema>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, 'yup'>>> {
 	const { ValidationError } = await fetchModule();
 	try {
 		return {
@@ -56,8 +56,8 @@ async function validate<T extends Schema>(
 /* @__NO_SIDE_EFFECTS__ */
 function _yup<T extends Schema>(
 	schema: T,
-	options?: AdapterOptions<Infer<T>>
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options?: AdapterOptions<Infer<T, 'yup'>>
+): ValidationAdapter<Infer<T, 'yup'>, InferIn<T, 'yup'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'yup',
 		validate: async (data: unknown) => validate(schema, data),
@@ -66,7 +66,9 @@ function _yup<T extends Schema>(
 	});
 }
 
-function _yupClient<T extends Schema>(schema: T): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+function _yupClient<T extends Schema>(
+	schema: T
+): ClientValidationAdapter<Infer<T, 'yup'>, InferIn<T, 'yup'>> {
 	return {
 		superFormValidationLibrary: 'yup',
 		validate: async (data) => validate(schema, data)

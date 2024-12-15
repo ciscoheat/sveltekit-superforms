@@ -33,7 +33,7 @@ async function validate<T extends ObjectSchema>(
 /* @__NO_SIDE_EFFECTS__ */
 function _joi<T extends ObjectSchema>(
 	schema: T,
-	options?: AdapterOptions<Infer<T>>
+	options?: AdapterOptions<Infer<T, 'joi'>>
 ): ValidationAdapter<Record<string, unknown>> {
 	return createAdapter({
 		superFormValidationLibrary: 'joi',

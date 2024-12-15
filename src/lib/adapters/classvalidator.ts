@@ -21,12 +21,12 @@ const fetchModule = /* @__PURE__ */ memoize(modules);
 async function validate<T extends Schema>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, 'classvalidator'>>> {
 	const { validate } = await fetchModule();
 	const result = await validate<T>(schema, data);
 	if (result.success) {
 		return {
-			data: result.data as Infer<T>,
+			data: result.data as Infer<T, 'classvalidator'>,
 			success: true
 		};
 	}
@@ -41,8 +41,8 @@ async function validate<T extends Schema>(
 
 function _classvalidator<T extends Schema>(
 	schema: T,
-	options: RequiredDefaultsOptions<Infer<T>>
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options: RequiredDefaultsOptions<Infer<T, 'classvalidator'>>
+): ValidationAdapter<Infer<T, 'classvalidator'>, InferIn<T, 'classvalidator'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'classvalidator',
 		validate: async (data: unknown) => validate(schema, data),
@@ -53,7 +53,7 @@ function _classvalidator<T extends Schema>(
 
 function _classvalidatorClient<T extends Schema>(
 	schema: T
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<Infer<T, 'classvalidator'>, InferIn<T, 'classvalidator'>> {
 	return {
 		superFormValidationLibrary: 'classvalidator',
 		validate: async (data) => validate(schema, data)

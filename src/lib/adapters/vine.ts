@@ -21,13 +21,13 @@ const fetchModule = /* @__PURE__ */ memoize(modules);
 async function validate<T extends SchemaTypes>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, 'vine'>>> {
 	const { Vine, errors } = await fetchModule();
 	try {
 		const output = await new Vine().validate({ schema, data });
 		return {
 			success: true,
-			data: output as Infer<T>
+			data: output as Infer<T, 'vine'>
 		};
 	} catch (e) {
 		if (e instanceof errors.E_VALIDATION_ERROR) {
@@ -46,8 +46,8 @@ async function validate<T extends SchemaTypes>(
 
 function _vine<T extends SchemaTypes>(
 	schema: T,
-	options: RequiredDefaultsOptions<Infer<T>>
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options: RequiredDefaultsOptions<Infer<T, 'vine'>>
+): ValidationAdapter<Infer<T, 'vine'>, InferIn<T, 'vine'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'vine',
 		validate: async (data: unknown) => validate(schema, data),
@@ -58,7 +58,7 @@ function _vine<T extends SchemaTypes>(
 
 function _vineClient<T extends SchemaTypes>(
 	schema: T
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<Infer<T, 'vine'>, InferIn<T, 'vine'>> {
 	return {
 		superFormValidationLibrary: 'vine',
 		validate: async (data) => validate(schema, data)

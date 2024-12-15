@@ -13,14 +13,14 @@ import { memoize } from '$lib/memoize.js';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StructObject<T extends Record<string, unknown>> = Struct<T, any>;
 
-async function validate<T extends StructObject<Infer<T>>>(
+async function validate<T extends StructObject<Infer<T, 'superstruct'>>>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, 'superstruct'>>> {
 	const result = schema.validate(data, { coerce: true });
 	if (!result[0]) {
 		return {
-			data: result[1] as Infer<T>,
+			data: result[1] as Infer<T, 'superstruct'>,
 			success: true
 		};
 	}
@@ -34,10 +34,10 @@ async function validate<T extends StructObject<Infer<T>>>(
 	};
 }
 
-function _superstruct<T extends StructObject<Infer<T>>>(
+function _superstruct<T extends StructObject<Infer<T, 'superstruct'>>>(
 	schema: T,
-	options: RequiredDefaultsOptions<Infer<T>>
-): ValidationAdapter<Infer<T>> {
+	options: RequiredDefaultsOptions<Infer<T, 'superstruct'>>
+): ValidationAdapter<Infer<T, 'superstruct'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'superstruct',
 		defaults: options.defaults,
@@ -46,9 +46,9 @@ function _superstruct<T extends StructObject<Infer<T>>>(
 	});
 }
 
-function _superstructClient<T extends StructObject<Infer<T>>>(
+function _superstructClient<T extends StructObject<Infer<T, 'superstruct'>>>(
 	schema: T
-): ClientValidationAdapter<Infer<T>> {
+): ClientValidationAdapter<Infer<T, 'superstruct'>> {
 	return {
 		superFormValidationLibrary: 'superstruct',
 		validate: async (data) => validate(schema, data)

@@ -25,7 +25,7 @@ const fetchModule = /* @__PURE__ */ memoize(modules);
 async function validate<T extends TSchema>(
 	schema: T,
 	data: unknown
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, 'typebox'>>> {
 	const { TypeCompiler, FormatRegistry } = await fetchModule();
 
 	if (!compiled.has(schema)) {
@@ -40,7 +40,7 @@ async function validate<T extends TSchema>(
 	const errors = [...(validator?.Errors(data) ?? [])];
 
 	if (!errors.length) {
-		return { success: true, data: data as Infer<T> };
+		return { success: true, data: data as Infer<T, 'typebox'> };
 	}
 
 	return {
@@ -52,7 +52,9 @@ async function validate<T extends TSchema>(
 	};
 }
 
-function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>, InferIn<T>> {
+function _typebox<T extends TSchema>(
+	schema: T
+): ValidationAdapter<Infer<T, 'typebox'>, InferIn<T, 'typebox'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'typebox',
 		validate: async (data: unknown) => validate(schema, data),
@@ -62,7 +64,7 @@ function _typebox<T extends TSchema>(schema: T): ValidationAdapter<Infer<T>, Inf
 
 function _typeboxClient<T extends TSchema>(
 	schema: T
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<Infer<T, 'typebox'>, InferIn<T, 'typebox'>> {
 	return {
 		superFormValidationLibrary: 'typebox',
 		validate: async (data) => validate(schema, data)

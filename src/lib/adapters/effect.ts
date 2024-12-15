@@ -24,12 +24,12 @@ type AnySchema = Schema.Schema<any, any>;
 async function validate<T extends AnySchema>(
 	schema: T,
 	data: unknown,
-	options?: AdapterOptions<Infer<T>> & { parseOptions?: ParseOptions }
-): Promise<ValidationResult<Infer<T>>> {
+	options?: AdapterOptions<Infer<T, 'effect'>> & { parseOptions?: ParseOptions }
+): Promise<ValidationResult<Infer<T, 'effect'>>> {
 	const result = Schema.decodeUnknownEither(schema, { errors: 'all' })(data, options?.parseOptions);
 	if (Either.isRight(result)) {
 		return {
-			data: result.right as Infer<T>,
+			data: result.right as Infer<T, 'effect'>,
 			success: true
 		};
 	}
@@ -40,13 +40,13 @@ async function validate<T extends AnySchema>(
 			path: [...path] // path is readonly array so we have to copy it
 		})),
 		success: false
-	} satisfies ValidationResult<Infer<T>>;
+	} satisfies ValidationResult<Infer<T, 'effect'>>;
 }
 
 function _effect<T extends AnySchema>(
 	schema: T,
-	options?: AdapterOptions<Infer<T>> & { parseOptions?: ParseOptions }
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+	options?: AdapterOptions<Infer<T, 'effect'>> & { parseOptions?: ParseOptions }
+): ValidationAdapter<Infer<T, 'effect'>, InferIn<T, 'effect'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'effect',
 		validate: async (data) => validate(schema, data, options),
@@ -57,8 +57,8 @@ function _effect<T extends AnySchema>(
 
 function _effectClient<T extends AnySchema>(
 	schema: T,
-	options?: AdapterOptions<Infer<T>> & { parseOptions?: ParseOptions }
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+	options?: AdapterOptions<Infer<T, 'effect'>> & { parseOptions?: ParseOptions }
+): ClientValidationAdapter<Infer<T, 'effect'>, InferIn<T, 'effect'>> {
 	return {
 		superFormValidationLibrary: 'effect',
 		validate: async (data) => validate(schema, data, options)

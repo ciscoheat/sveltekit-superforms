@@ -46,11 +46,11 @@ async function _validate<T extends SupportedSchemas>(
 	schema: T,
 	data: unknown,
 	config?: Config<GenericIssue<unknown>>
-): Promise<ValidationResult<Infer<T>>> {
+): Promise<ValidationResult<Infer<T, 'valibot'>>> {
 	const result = await safeParseAsync(schema, data, config);
 	if (result.success) {
 		return {
-			data: result.output as Infer<T>,
+			data: result.output as Infer<T, 'valibot'>,
 			success: true
 		};
 	}
@@ -66,10 +66,10 @@ async function _validate<T extends SupportedSchemas>(
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
 	options: Omit<ToJSONSchemaOptions, 'schema'> &
-		AdapterOptions<Infer<T>> & {
+		AdapterOptions<Infer<T, 'valibot'>> & {
 			config?: Config<GenericIssue<unknown>>;
 		} = {}
-): ValidationAdapter<Infer<T>, InferIn<T>> {
+): ValidationAdapter<Infer<T, 'valibot'>, InferIn<T, 'valibot'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'valibot',
 		validate: async (data) => _validate<T>(schema, data, options?.config),
@@ -81,7 +81,7 @@ function _valibot<T extends SupportedSchemas>(
 
 function _valibotClient<T extends SupportedSchemas>(
 	schema: T
-): ClientValidationAdapter<Infer<T>, InferIn<T>> {
+): ClientValidationAdapter<Infer<T, 'valibot'>, InferIn<T, 'valibot'>> {
 	return {
 		superFormValidationLibrary: 'valibot',
 		validate: async (data) => _validate<T>(schema, data)

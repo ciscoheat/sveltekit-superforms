@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `z.bigint()` was interpreted as a number instead of a [BigInt](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt).
 
+### Changed
+
+- Effect updated to require `^3.10.0`. **Only the `effect` package is required now**, not `@effect/schema` as before. See the 3.10 [release notes](https://effect.website/blog/releases/effect/310/) for details.
+
 ## [2.21.1] - 2024-12-04
 
 ### Fixed

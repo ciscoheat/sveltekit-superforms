@@ -153,13 +153,9 @@
 		},
 		"effect": {
 			"optional": true
-		},
-		"@effect/schema": {
-			"optional": true
 		}
 	},
 	"optionalDependencies": {
-		"@effect/schema": "^0.75.5",
 		"@exodus/schemasafe": "^1.3.0",
 		"@gcornut/valibot-json-schema": "^0.31.0",
 		"@sinclair/typebox": "^0.34.11",

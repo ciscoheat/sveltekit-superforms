@@ -1,5 +1,10 @@
 import { traversePath } from './traversal.js';
-import { type ActionFailure, fail as kitFail, type RequestEvent } from '@sveltejs/kit';
+import {
+	type ActionFailure,
+	fail as kitFail,
+	type RequestEvent,
+	type Transport
+} from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
 import type { ErrorStatus } from './utils.js';
@@ -62,6 +67,7 @@ export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<
 	jsonSchema: JSONSchema;
 	strict: boolean;
 	allowFiles: boolean;
+	transport: Transport;
 }>;
 
 export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<T, boolean>;

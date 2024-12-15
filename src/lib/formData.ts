@@ -109,7 +109,12 @@ export function parseFormData<T extends Record<string, unknown>>(
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
 			try {
-				const output = parse(formData.getAll('__superform_json').join('') ?? '');
+				const transport =
+					options && options.transport
+						? Object.fromEntries(Object.entries(options.transport).map(([k, v]) => [k, v.decode]))
+						: undefined;
+
+				const output = parse(formData.getAll('__superform_json').join('') ?? '', transport);
 				if (typeof output === 'object') {
 					// Restore uploaded files and add to data
 					const filePaths = Array.from(formData.keys());

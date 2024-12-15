@@ -1,6 +1,6 @@
 /* eslint-disable dci-lint/atomic-role-binding */
 import type { TaintedFields, SuperFormValidated, SuperValidated } from '$lib/superValidate.js';
-import type { ActionResult, BeforeNavigate, Page, SubmitFunction } from '@sveltejs/kit';
+import type { ActionResult, BeforeNavigate, Page, SubmitFunction, Transport } from '@sveltejs/kit';
 import {
 	derived,
 	get,
@@ -182,6 +182,7 @@ export type FormOptions<
 	warnings: {
 		duplicateId?: boolean;
 	};
+	transport: Transport;
 
 	/**
 	 * Version 1 compatibilty mode if true.
@@ -1863,8 +1864,15 @@ export function superForm<
 							}
 						});
 
+						const transport = options.transport
+							? Object.fromEntries(Object.entries(options.transport).map(([k, v]) => [k, v.encode]))
+							: undefined;
+
 						// Split the form data into chunks, in case it gets too large for proxy servers
-						const chunks = chunkSubstr(stringify(postData), options.jsonChunkSize ?? 500000);
+						const chunks = chunkSubstr(
+							stringify(postData, transport),
+							options.jsonChunkSize ?? 500000
+						);
 						for (const chunk of chunks) {
 							submitData.append('__superform_json', chunk);
 						}

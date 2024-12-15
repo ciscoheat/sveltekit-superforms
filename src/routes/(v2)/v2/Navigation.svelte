@@ -72,7 +72,8 @@
 		'arktype',
 		'effect',
 		'issue-500',
-		'typebox'
+		'typebox',
+		'transport'
 	].sort();
 </script>
 

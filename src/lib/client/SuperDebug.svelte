@@ -229,6 +229,13 @@
 				if (value instanceof Map) {
 					return Array.from(value.entries());
 				}
+				if (
+					typeof this === 'object' &&
+					typeof this[key] == 'object' &&
+					'toExponential' in this[key]
+				) {
+					return '#}DE#' + this[key].toString();
+				}
 				if (browser && typeof this === 'object' && this[key] instanceof File) {
 					return fileToJSON(this[key]);
 				}
@@ -291,6 +298,9 @@
 						} else if (match.startsWith('"#}E#')) {
 							cls = 'error';
 							match = match.slice(5, -1);
+						} else if (match.startsWith('"#}DE#')) {
+							cls = 'number';
+							match = match.slice(6, -1);
 						}
 					}
 				} else if (/true|false/.test(match)) {

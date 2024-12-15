@@ -74,7 +74,8 @@
 		'issue-500',
 		'typebox',
 		'transport',
-		'bigint'
+		'bigint',
+		'issue-455'
 	].sort();
 </script>
 

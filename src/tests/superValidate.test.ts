@@ -1491,11 +1491,11 @@ describe('Customized superValidate', () => {
 	type ZodSchema = Parameters<typeof zod>[0];
 
 	function zodValidate<T extends ZodSchema, M>(
-		data: SuperParams<InferIn<T>>[0],
+		data: SuperParams<InferIn<T, 'zod'>>[0],
 		schema: T,
-		options?: SuperParams<Infer<T>>[2]
+		options?: SuperParams<Infer<T, 'zod'>>[2]
 	) {
-		return superValidate<Infer<T>, M, InferIn<T>>(data, zod(schema), options);
+		return superValidate<Infer<T, 'zod'>, M, InferIn<T, 'zod'>>(data, zod(schema), options);
 	}
 
 	const zodSchema = z.object({

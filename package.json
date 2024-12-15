@@ -189,7 +189,7 @@
 		"@types/uuid": "^9.0.8",
 		"@typescript-eslint/eslint-plugin": "^6.21.0",
 		"@typescript-eslint/parser": "^6.21.0",
-		"@valibot/i18n": "^0.16.0",
+		"@valibot/i18n": "^1.0.0-beta.1",
 		"decimal.js": "^10.4.3",
 		"eslint": "^8.57.1",
 		"eslint-config-prettier": "^9.1.0",

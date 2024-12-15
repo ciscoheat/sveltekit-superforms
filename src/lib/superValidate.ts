@@ -7,7 +7,7 @@ import {
 } from '@sveltejs/kit';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
-import type { ErrorStatus } from './utils.js';
+import type { ErrorStatus, IsAny } from './utils.js';
 import { splitPath, type FormPathLeavesWithErrors } from './stringPath.js';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { mapErrors, mergeDefaults, replaceInvalidDefaults } from './errors.js';
@@ -67,7 +67,7 @@ export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<
 	jsonSchema: JSONSchema;
 	strict: boolean;
 	allowFiles: boolean;
-	transport: Transport;
+	transport: IsAny<Transport> extends true ? never : Transport;
 }>;
 
 export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<T, boolean>;

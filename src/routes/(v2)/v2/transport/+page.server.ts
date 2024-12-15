@@ -14,7 +14,9 @@ export const actions = {
 		const formData = await request.formData();
 		console.log(formData);
 
-		const form = await superValidate(formData, zod(schema), { transport });
+		const form = await superValidate(formData, zod(schema), {
+			transport
+		});
 		if (!form.valid) return fail(400, { form });
 
 		form.data.luckyNumber = form.data.luckyNumber.mul(2);

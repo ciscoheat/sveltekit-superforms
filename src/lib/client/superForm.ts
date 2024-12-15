@@ -31,7 +31,7 @@ import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
 import { stringify } from 'devalue';
 import type { ValidationErrors } from '$lib/superValidate.js';
-import type { MaybePromise } from '$lib/utils.js';
+import type { IsAny, MaybePromise } from '$lib/utils.js';
 import type {
 	ClientValidationAdapter,
 	ValidationAdapter,
@@ -182,7 +182,7 @@ export type FormOptions<
 	warnings: {
 		duplicateId?: boolean;
 	};
-	transport: Transport;
+	transport: IsAny<Transport> extends true ? never : Transport;
 
 	/**
 	 * Version 1 compatibilty mode if true.

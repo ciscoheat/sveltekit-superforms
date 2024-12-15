@@ -5,11 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.22.0] - 2024-12-15
 
 ### Added
 
-- Arbitrary types can now be sent in the form using the [transport](https://svelte.dev/docs/kit/hooks#Universal-hooks-transport) feature in SvelteKit hooks. There is a `transport` option both for `superValidate` and `superForm` that the `transport` export in `hooks.ts` can be used in directly. **Note:** Requires SvelteKit `^2.11.0`.
+- Support for Zod 3.24 and `Infer` improvements for all adapters, by no other than the Zod creator himself, [Colin McDonnell](https://github.com/colinhacks)! What a christmas present! 🎄
+- Arbitrary types can now be used in the form with the [transport](https://svelte.dev/docs/kit/hooks#Universal-hooks-transport) feature in SvelteKit hooks. There is a `transport` option both for `superValidate` and `superForm` that the `transport` export in `hooks.ts` can be directly used in. **Note:** Requires SvelteKit `^2.11.0`.
 
 ### Fixed
 

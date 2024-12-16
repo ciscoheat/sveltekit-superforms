@@ -5,11 +5,11 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.22.1] - 2024-12-16
 
 ### Fixed
 
-- The [transport feature](https://superforms.rocks/concepts/nested-data#arbitrary-types-in-the-form) released in 2.22.0 didn't fully handle classes. It should work better now, but the classes must be very simple to work. Let me know if you have any problems with a certain class.
+- The [transport feature](https://superforms.rocks/concepts/nested-data#arbitrary-types-in-the-form) released in 2.22.0 didn't fully handle classes. It should work better now, but the classes must be quite simple to work. Let me know if you have any problems with a certain class.
 - Fixed Decimal.js detection in [SuperDebug](https://superforms.rocks/super-debug).
 
 ## [2.22.0] - 2024-12-15

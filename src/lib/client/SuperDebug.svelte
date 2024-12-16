@@ -232,6 +232,7 @@
 				if (
 					typeof this === 'object' &&
 					typeof this[key] == 'object' &&
+					this[key] &&
 					'toExponential' in this[key]
 				) {
 					return '#}DE#' + this[key].toString();

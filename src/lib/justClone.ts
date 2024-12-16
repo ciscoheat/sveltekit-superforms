@@ -29,16 +29,14 @@ export function clone<T>(obj: T): T {
 		// @ts-expect-error Known type
 		return RegExp(obj.source, (obj as RegExp).flags);
 	}
-	if (type == 'Array') {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = [] as any;
+	if (type == 'Array' || type == 'Object') {
+		const result = type == 'Object' ? Object.create(Object.getPrototypeOf(obj)) : [];
+
 		for (const key in obj) {
 			result[key] = clone(obj[key]);
 		}
+
 		return result;
-	}
-	if (type == 'Object') {
-		return Object.assign(Object.create(Object.getPrototypeOf(obj)), obj);
 	}
 
 	// primitives and non-supported objects (e.g. functions) land here

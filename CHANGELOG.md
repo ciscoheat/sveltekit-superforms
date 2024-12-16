@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The [transport feature](https://superforms.rocks/concepts/nested-data#arbitrary-types-in-the-form) released in 2.22.0 didn't fully handle classes. It should work better now, but the classes must be very simple to work. Let me know if you have any problems with a certain class.
+- Fixed Decimal.js detection in [SuperDebug](https://superforms.rocks/super-debug).
 
 ## [2.22.0] - 2024-12-15
 

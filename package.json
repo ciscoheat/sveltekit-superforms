@@ -174,7 +174,6 @@
 	},
 	"dependencies": {
 		"devalue": "^5.1.1",
-		"just-clone": "^6.2.0",
 		"memoize-weak": "^1.0.2",
 		"ts-deepmerge": "^7.0.2"
 	},

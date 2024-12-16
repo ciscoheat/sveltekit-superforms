@@ -1,6 +1,6 @@
 import type { JSONSchema7Definition } from 'json-schema';
 import type { JSONSchema } from './jsonSchema/index.js';
-import justClone from 'just-clone';
+import { clone as justClone } from './justClone.js';
 import { SchemaError } from './errors.js';
 
 // export type DeepPartial<T> = T extends object

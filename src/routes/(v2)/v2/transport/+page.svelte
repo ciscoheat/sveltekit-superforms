@@ -29,6 +29,8 @@
 
 {#if $message}<h4>{$message}</h4>{/if}
 
+<p id="record">$form.id: {$form.id}</p>
+
 <form method="POST" use:enhance>
 	<label>
 		Name: <input

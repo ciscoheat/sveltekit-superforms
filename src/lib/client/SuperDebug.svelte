@@ -373,6 +373,8 @@
 	$: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
+<svelte:options runes={false} />
+
 {#if !styleInit}
 	<style>
 		.super-debug--absolute {

@@ -9,6 +9,7 @@ import {
 import type { TSchema } from '@sinclair/typebox';
 import type { TypeCheck } from '@sinclair/typebox/compiler';
 import { memoize } from '$lib/memoize.js';
+import { Value } from '@sinclair/typebox/value';
 
 // From https://github.com/sinclairzx81/typebox/tree/ca4d771b87ee1f8e953036c95a21da7150786d3e/example/formats
 const Email =
@@ -52,12 +53,43 @@ async function validate<T extends TSchema>(
 	};
 }
 
+
+async function validateNoCompile<T extends TSchema>(
+	schema: T,
+	data: unknown
+): Promise<ValidationResult<Infer<T, 'typebox'>>> {
+
+	const errors = [...(Value.Errors(schema, data) ?? [])];
+
+	if (!errors.length) {
+		return { success: true, data: data as Infer<T, 'typebox'> };
+	}
+
+	return {
+		success: false,
+		issues: errors.map((issue) => ({
+			path: issue.path.substring(1).split('/'),
+			message: issue.message
+		}))
+	};
+}
+
 function _typebox<T extends TSchema>(
 	schema: T
 ): ValidationAdapter<Infer<T, 'typebox'>, InferIn<T, 'typebox'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'typebox',
 		validate: async (data: unknown) => validate(schema, data),
+		jsonSchema: schema
+	});
+}
+
+function _typeboxNoCompile<T extends TSchema>(
+	schema: T
+): ValidationAdapter<Infer<T, 'typebox'>, InferIn<T, 'typebox'>> {
+	return createAdapter({
+		superFormValidationLibrary: 'typebox',
+		validate: async (data: unknown) => validateNoCompile(schema, data),
 		jsonSchema: schema
 	});
 }
@@ -71,7 +103,18 @@ function _typeboxClient<T extends TSchema>(
 	};
 }
 
+function _typeboxClientNoCompile<T extends TSchema>(
+	schema: T
+): ClientValidationAdapter<Infer<T, 'typebox'>, InferIn<T, 'typebox'>> {
+	return {
+		superFormValidationLibrary: 'typebox',
+		validate: async (data) => validateNoCompile(schema, data)
+	};
+}
+
 export const typebox = /* @__PURE__ */ memoize(_typebox);
+export const typeboxNoCompile = /* @__PURE__ */ memoize(_typeboxNoCompile);
 export const typeboxClient = /* @__PURE__ */ memoize(_typeboxClient);
+export const typeboxClientNoCompile = /* @__PURE__ */ memoize(_typeboxClientNoCompile);
 
 const compiled = new WeakMap<TSchema, TypeCheck<TSchema>>();

@@ -6,7 +6,7 @@ export { classvalidator, classvalidatorClient } from './classvalidator.js';
 export { effect, effectClient } from './effect.js';
 export { joi, joiClient } from './joi.js';
 export { superformClient } from './superform.js';
-export { typebox, typeboxClient } from './typebox.js';
+export { typebox, typeboxClient, typeboxNoCompile, typeboxClientNoCompile } from './typebox.js';
 export { valibot, valibotClient } from './valibot.js';
 export { yup, yupClient } from './yup.js';
 export {

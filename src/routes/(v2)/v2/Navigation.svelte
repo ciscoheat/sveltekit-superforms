@@ -73,6 +73,7 @@
 		'effect',
 		'issue-500',
 		'typebox',
+    'typeboxNoCompile',
 		'transport',
 		'bigint',
 		'issue-455'

@@ -10,6 +10,7 @@ import type { TSchema } from '@sinclair/typebox';
 import type { TypeCheck } from '@sinclair/typebox/compiler';
 import { memoize } from '$lib/memoize.js';
 import { Value } from '@sinclair/typebox/value';
+import { FormatRegistry } from '@sinclair/typebox';
 
 // From https://github.com/sinclairzx81/typebox/tree/ca4d771b87ee1f8e953036c95a21da7150786d3e/example/formats
 const Email =
@@ -58,6 +59,10 @@ async function validateNoCompile<T extends TSchema>(
 	schema: T,
 	data: unknown
 ): Promise<ValidationResult<Infer<T, 'typebox'>>> {
+
+	if (!FormatRegistry.Has('email')) {
+		FormatRegistry.Set('email', (value) => Email.test(value));
+	}
 
 	const errors = [...(Value.Errors(schema, data) ?? [])];
 

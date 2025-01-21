@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- [Arktype 2.0](https://arktype.io/) is finally released! Adapter updated, please check it out, it's validation on the next level.
+- Arktype is now displaying errors with `problem` instead of `message`, for nicer output.
 - Zod peerDependency updated to 3.24.1 to be compatible with its latest fix.
 - VineJS adapter updated to 3.0.0.
 

@@ -30,7 +30,7 @@ async function _validate<T extends type.Any>(
 	}
 	const issues = [];
 	for (const error of result) {
-		issues.push({ message: error.message, path: Array.from(error.path) });
+		issues.push({ message: error.problem, path: Array.from(error.path) });
 	}
 	return {
 		issues,

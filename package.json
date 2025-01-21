@@ -165,7 +165,7 @@
 		"@sinclair/typebox": "^0.34.14",
 		"@typeschema/class-validator": "^0.3.0",
 		"@vinejs/vine": "^3.0.0",
-		"arktype": "2.0.0-rc.26",
+		"arktype": "^2.0.0",
 		"class-validator": "^0.14.1",
 		"effect": "^3.12.5",
 		"joi": "^17.13.3",

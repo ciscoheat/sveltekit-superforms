@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.23.1] - 2025-01-21
+
+### Removed
+
+- Rolled back runes option for SuperDebug, it wasn't compatible with Svelte 4.
+
 ## [2.23.0] - 2025-01-21
 
 ### Added

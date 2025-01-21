@@ -50,11 +50,13 @@ type DefaultOptions = {
 	empty?: 'null' | 'undefined' | 'zero';
 	initiallyEmptyIfZero?: boolean;
 	taint?: TaintOption;
+	step: number;
 };
 
 const defaultOptions = {
 	trueStringValue: 'true',
-	dateFormat: 'iso'
+	dateFormat: 'iso',
+	step: 60
 } satisfies DefaultOptions;
 
 ///// Proxy functions ///////////////////////////////////////////////
@@ -99,12 +101,14 @@ export function dateProxy<T extends Record<string, unknown>, Path extends FormPa
 		format?: DefaultOptions['dateFormat'];
 		empty?: Exclude<DefaultOptions['empty'], 'zero'>;
 		taint?: TaintOption;
+		step?: number;
 	}
 ) {
 	return _stringProxy(form, path, 'date', {
 		...defaultOptions,
 		dateFormat: options?.format ?? 'iso',
-		empty: options?.empty
+		empty: options?.empty,
+		step: options?.step ?? 60
 	}) as CorrectProxyType<Date, string, T, Path>;
 }
 
@@ -289,7 +293,13 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<
 
 		if (type == 'string') return stringValue;
 		else if (type == 'boolean') return !!stringValue;
-		else if (type == 'date') return new Date(stringValue);
+		else if (type == 'date') {
+			if (stringValue.indexOf('-') === -1) {
+				const utc = options.dateFormat.indexOf('utc') >= 0;
+				const date = utc ? UTCDate(new Date()) : localDate(new Date());
+				return new Date(date + 'T' + stringValue + (utc ? 'Z' : ''));
+			} else return new Date(stringValue);
+		}
 
 		const numberToConvert = options.delimiter
 			? stringValue.replace(options.delimiter, '.')
@@ -349,21 +359,21 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<
 				case 'date':
 					return date.toISOString().slice(0, 10);
 				case 'datetime':
-					return date.toISOString().slice(0, 16);
+					return date.toISOString().slice(0, options.step % 60 ? 19 : 16);
 				case 'time':
-					return date.toISOString().slice(11, 16);
+					return date.toISOString().slice(11, options.step % 60 ? 19 : 16);
 				case 'date-utc':
 					return UTCDate(date);
 				case 'datetime-utc':
-					return UTCDate(date) + 'T' + UTCTime(date);
+					return UTCDate(date) + 'T' + UTCTime(date, options.step);
 				case 'time-utc':
-					return UTCTime(date);
+					return UTCTime(date, options.step);
 				case 'date-local':
 					return localDate(date);
 				case 'datetime-local':
-					return localDate(date) + 'T' + localTime(date);
+					return localDate(date) + 'T' + localTime(date, options.step);
 				case 'time-local':
-					return localTime(date);
+					return localTime(date, options.step);
 			}
 		} else {
 			// boolean
@@ -655,9 +665,12 @@ function localDate(date: Date) {
 	);
 }
 
-function localTime(date: Date) {
+function localTime(date: Date, step: number) {
 	return (
-		String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0')
+		String(date.getHours()).padStart(2, '0') +
+		':' +
+		String(date.getMinutes()).padStart(2, '0') +
+		(step % 60 ? ':' + String(date.getSeconds()).padStart(2, '0') : '')
 	);
 }
 
@@ -671,11 +684,12 @@ function UTCDate(date: Date) {
 	);
 }
 
-function UTCTime(date: Date) {
+function UTCTime(date: Date, step: number) {
 	return (
 		String(date.getUTCHours()).padStart(2, '0') +
 		':' +
-		String(date.getUTCMinutes()).padStart(2, '0')
+		String(date.getUTCMinutes()).padStart(2, '0') +
+		(step % 60 ? ':' + String(date.getUTCSeconds()).padStart(2, '0') : '')
 	);
 }
 

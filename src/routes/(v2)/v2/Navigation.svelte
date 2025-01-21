@@ -76,7 +76,8 @@
 		'transport',
 		'bigint',
 		'issue-455',
-		'vine'
+		'vine',
+		'timeproxy'
 	].sort();
 </script>
 

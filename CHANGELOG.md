@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `dateProxy` now has a `step` option, to support seconds (when [not divisible by 60](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/time#using_the_step_attribute)).
 - [SuperDebug](https://superforms.rocks/super-debug) now opts out of runes mode as default.
 
 ### Fixed
 
+- Fixed `dateProxy` for `time` formats, previously it returned an invalid date. If you only care about the time part in the date, use `time-utc` as format to avoid timezone changes.
 - Vite 6 bundling fixed by introducing a `default` field into exports in package.json.
 
 ### Changed

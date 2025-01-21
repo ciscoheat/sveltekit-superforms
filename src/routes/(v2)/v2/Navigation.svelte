@@ -75,7 +75,8 @@
 		'typebox',
 		'transport',
 		'bigint',
-		'issue-455'
+		'issue-455',
+		'vine'
 	].sort();
 </script>
 

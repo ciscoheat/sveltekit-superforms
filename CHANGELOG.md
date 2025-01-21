@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Zod peerDependency updated to 3.24.1 to be compatible with its latest fix.
+- VineJS adapter updated to 3.0.0.
 
 ## [2.22.1] - 2024-12-16
 

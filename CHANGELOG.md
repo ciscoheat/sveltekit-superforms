@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [SuperDebug](https://superforms.rocks/super-debug) now opts out of runes mode as default.
 
+### Fixed
+
+- Vite 6 bundling fixed by introducing a `default` field into exports in package.json.
+
 ### Changed
 
 - Zod peerDependency updated to 3.24.1 to be compatible with its latest fix.

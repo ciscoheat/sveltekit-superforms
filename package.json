@@ -58,11 +58,13 @@
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
-			"svelte": "./dist/index.js"
+			"svelte": "./dist/index.js",
+			"default": "./dist/index.js"
 		},
 		"./client": {
 			"types": "./dist/client/index.d.ts",
-			"svelte": "./dist/client/index.js"
+			"svelte": "./dist/client/index.js",
+			"default": "./dist/client/index.js"
 		},
 		"./client/SuperDebug.svelte": {
 			"types": "./dist/client/SuperDebug.svelte.d.ts",
@@ -70,11 +72,13 @@
 		},
 		"./server": {
 			"types": "./dist/server/index.d.ts",
-			"svelte": "./dist/server/index.js"
+			"svelte": "./dist/server/index.js",
+			"default": "./dist/server/index.js"
 		},
 		"./adapters": {
 			"types": "./dist/adapters/index.d.ts",
-			"svelte": "./dist/adapters/index.js"
+			"svelte": "./dist/adapters/index.js",
+			"default": "./dist/adapters/index.js"
 		}
 	},
 	"typesVersions": {

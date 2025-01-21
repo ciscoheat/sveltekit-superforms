@@ -9,63 +9,6 @@ type YupParams = {
 	Schema: any;
 };
 
-declare module 'yup' {
-	interface ArraySchema<TIn, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface BooleanSchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface DateSchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface LazySchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface MixedSchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface NumberSchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface ObjectSchema<TIn, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface StringSchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-	interface TupleSchema<TType, TContext, TDefault, TFlags> {
-		example(example: any): this;
-		examples(examples: any[]): this;
-		description(description: string): this;
-		jsonSchema(callback: JsonSchemaCallback): this;
-	}
-}
-
 function addMethod(yup: YupParams, name: string) {
 	yup.addMethod(yup.Schema, name, function (this: AnySchema, value: any): AnySchema {
 		const meta: Meta = this.describe().meta || {};

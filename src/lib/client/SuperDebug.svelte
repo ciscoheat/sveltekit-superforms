@@ -1,3 +1,5 @@
+<svelte:options runes={false} />
+
 <script>
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
@@ -372,8 +374,6 @@
 	/** @type {import('svelte/store').Readable<EncodeableData>} */
 	$: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
-
-<svelte:options runes={false} />
 
 {#if !styleInit}
 	<style>

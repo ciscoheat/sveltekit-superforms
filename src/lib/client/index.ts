@@ -37,6 +37,7 @@ export {
 	removeFiles,
 	fail,
 	type SuperValidated,
+	type SuperValidateOptions,
 	type TaintedFields,
 	type ValidationErrors
 } from '../superValidate.js';

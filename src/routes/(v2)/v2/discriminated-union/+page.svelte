@@ -1,17 +1,19 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
+	import type { Writable } from 'svelte/store';
+	import type { MergeUnion } from '$lib/utils.js';
 
-	export let data;
+	let { data } = $props();
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		taintedMessage: null,
 		resetForm: true
 	});
 
-	// eslint-disable-next-line svelte/valid-compile
-	$page;
+	// Need to merge union so all fields are available in the form
+	const formData = $derived(form) as Writable<MergeUnion<typeof $form>>;
 </script>
 
 <SuperDebug data={$form} />
@@ -19,7 +21,7 @@
 <h3>Superforms testing ground - Zod</h3>
 
 {#if $message}
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}
@@ -31,9 +33,19 @@
 			name="type"
 			type="text"
 			aria-invalid={$errors.type ? 'true' : undefined}
-			bind:value={$form.type}
+			bind:value={$formData.type}
 		/>
 		{#if $errors.type}<span class="invalid">{$errors.type}</span>{/if}
+	</label>
+	<label>
+		RoleId<br />
+		<input
+			name="roleId"
+			type="text"
+			aria-invalid={$errors.roleId ? 'true' : undefined}
+			bind:value={$formData.roleId}
+		/>
+		{#if $errors.roleId}<span class="invalid">{$errors.roleId}</span>{/if}
 	</label>
 
 	<button>Submit</button>

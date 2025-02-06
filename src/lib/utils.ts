@@ -2,6 +2,7 @@ import type { JSONSchema7Definition } from 'json-schema';
 import type { JSONSchema } from './jsonSchema/index.js';
 import { clone as justClone } from './justClone.js';
 import { SchemaError } from './errors.js';
+import type { Writable } from 'svelte/store';
 
 // export type DeepPartial<T> = T extends object
 // 	? {
@@ -47,7 +48,26 @@ export type AllKeys<T> = T extends T ? keyof T : never;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
 
-// Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
+/**
+ * Merges a union to a single type which includes the properties of each type in the union.
+ *
+ * Thanks to https://dev.to/lucianbc/union-type-merging-in-typescript-9al
+ */
 export type MergeUnion<T> = {
 	[K in AllKeys<T>]: PickType<T, K>;
 };
+
+/**
+ * Transforms a Svelte store of a Record<string, unknown> type to a merged type of its unions.
+ */
+export type MergeFormUnion<Store extends Writable<Record<string, unknown>>> =
+	Store extends Writable<infer M> ? Writable<MergeUnion<M>> : never;
+
+/**
+ * Casts a Svelte store of a Record<string, unknown> type to a merged type of its unions.
+ * @param store A Svelte store of a Record<string, unknown> type
+ * @returns The same store but casted to a merged type of its unions.
+ */
+export function mergeFormUnion<Store extends Record<string, unknown>>(store: Writable<Store>) {
+	return store as Writable<MergeUnion<Store>>;
+}

@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
+	import { mergeFormUnion } from '$lib/utils.js';
 	import SuperDebug from '$lib/index.js';
-	import type { Writable } from 'svelte/store';
-	import type { MergeUnion } from '$lib/utils.js';
 
 	let { data } = $props();
 
@@ -13,7 +12,7 @@
 	});
 
 	// Need to merge union so all fields are available in the form
-	const formData = $derived(form) as Writable<MergeUnion<typeof $form>>;
+	const formData = $derived(mergeFormUnion(form));
 </script>
 
 <SuperDebug data={$form} />

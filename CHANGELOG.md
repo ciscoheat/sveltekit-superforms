@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Exported `SuperValidateOptions` type.
+- Exported `MergeUnion`, `MergeFormUnion` and a `mergeFormUnion` utility, for handling discriminated unions in forms.
 
 ## [2.23.1] - 2025-01-21
 

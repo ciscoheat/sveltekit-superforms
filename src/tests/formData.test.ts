@@ -2,8 +2,8 @@ import { describe, it, expect, assert } from 'vitest';
 import { parseFormData } from '$lib/formData.js';
 import { z } from 'zod';
 import * as v from 'valibot';
-import { zodToJSONSchema } from '$lib/adapters/zod.js';
-import { SchemaError } from '$lib/index.js';
+import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
+import { SchemaError, superValidate } from '$lib/index.js';
 import { valibot } from '$lib/adapters/valibot.js';
 
 enum Foo {
@@ -77,5 +77,37 @@ describe('FormData parsing', () => {
 		});
 
 		expect(valibot(schema).defaults.urltest).toBe('');
+	});
+
+	it('should parse unions', async () => {
+		const schema = z.object({
+			test: z.union([z.literal('one'), z.literal('two')])
+		});
+
+		const formData = new FormData();
+
+		{
+			formData.set('test', 'one');
+
+			const form = await superValidate(formData, zod(schema));
+			expect(form.valid).toBe(true);
+			expect(form.data.test).toBe('one');
+		}
+
+		{
+			formData.set('test', 'two');
+
+			const form = await superValidate(formData, zod(schema));
+			expect(form.valid).toBe(true);
+			expect(form.data.test).toBe('two');
+		}
+
+		{
+			formData.set('test', 'three');
+
+			const form = await superValidate(formData, zod(schema));
+			expect(form.valid).toBe(false);
+			expect(form.data.test).toBe('three');
+		}
 	});
 });

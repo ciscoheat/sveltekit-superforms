@@ -9,6 +9,7 @@
 		'defaults-fail',
 		'dynamic-validators',
 		'empty-enum',
+		'formdata-unions',
 		'issue-309-unions',
 		'issue-332-arrays',
 		'issue-337-checkboxes',

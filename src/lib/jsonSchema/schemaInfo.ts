@@ -40,16 +40,6 @@ export function schemaInfo(
 ): SchemaInfo {
 	assertSchema(schema, path);
 
-	if (schema.allOf && schema.allOf.length) {
-		return {
-			...merge.withOptions(
-				{ allowUndefinedOverrides: false },
-				...schema.allOf.map((s) => schemaInfo(s, false, []))
-			),
-			schema
-		};
-	}
-
 	const types = schemaTypes(schema, path);
 
 	const array =
@@ -79,7 +69,7 @@ export function schemaInfo(
 
 	const union = unionInfo(schema)?.filter((u) => u.type !== 'null' && u.const !== null);
 
-	return {
+	const result: SchemaInfo = {
 		types: types.filter((s) => s !== 'null') as SchemaInfo['types'],
 		isOptional,
 		isNullable: types.includes('null'),
@@ -89,6 +79,19 @@ export function schemaInfo(
 		properties,
 		additionalProperties,
 		required: schema.required
+	};
+
+	if (!schema.allOf || !schema.allOf.length) {
+		return result;
+	}
+
+	return {
+		...merge.withOptions(
+			{ allowUndefinedOverrides: false },
+			result,
+			...schema.allOf.map((s) => schemaInfo(s, false, []))
+		),
+		schema
 	};
 }
 

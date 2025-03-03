@@ -1,24 +1,24 @@
-import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
-import type { type } from 'arktype';
-import type { AnySchema } from 'joi';
+import type { Static as Static$1, TSchema } from '@sinclair/typebox';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type {
 	Infer as ClassValidatorInfer,
 	InferIn as ClassValidatorInferIn,
 	Schema as ClassValidatorSchema
 } from '@typeschema/class-validator';
-
+import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
+import type { type } from 'arktype';
+import type { Schema as Schema$1 } from 'effect';
+import type { AnySchema } from 'joi';
+import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
+import type { Infer as Infer$2, Struct } from 'superstruct';
 import type {
 	GenericSchema,
 	GenericSchemaAsync,
 	InferInput as Input,
 	InferOutput as Output
 } from 'valibot';
-import type { Schema as Schema$2, InferType } from 'yup';
+import type { InferType, Schema as Schema$2 } from 'yup';
 import type { ZodTypeAny, input, output } from 'zod';
-import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
-import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
-import type { Struct, Infer as Infer$2 } from 'superstruct';
-import type { Schema as Schema$1 } from 'effect';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -141,6 +141,15 @@ interface VineResolver extends Resolver {
 	output: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
 }
 
+interface StandardResolver extends Resolver {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	base: StandardSchemaV1<any, any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	input: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferInput<this['schema']> : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	output: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferOutput<this['schema']> : never;
+}
+
 interface SchemasafeResolver<Schema extends JSONSchema, Data = FromSchema<Schema>>
 	extends Resolver {
 	base: JSONSchema;
@@ -211,6 +220,7 @@ export type Registry = {
 	schemasafe: SchemasafeResolver<JSONSchema>;
 	superstruct: SuperstructResolver;
 	effect: EffectResolver;
+	standard: StandardResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;

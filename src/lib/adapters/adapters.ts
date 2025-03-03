@@ -1,18 +1,18 @@
-import type { JSONSchema } from '$lib/jsonSchema/index.js';
-import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
-import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
-import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
-import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { SuperFormError } from '$lib/errors.js';
-import type {
-	Schema,
-	ValidationResult,
-	Infer as InferSchema,
-	InferIn as InferInSchema,
-	Registry
-} from './typeSchema.js';
+import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
+import type { JSONSchema } from '$lib/jsonSchema/index.js';
+import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
+import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
+import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { simpleSchema } from './simple-schema/index.js';
+import type {
+	InferIn as InferInSchema,
+	Infer as InferSchema,
+	Registry,
+	Schema,
+	ValidationResult
+} from './typeSchema.js';
 
 export type { Schema, ValidationIssue, ValidationResult } from './typeSchema.js';
 
@@ -36,7 +36,8 @@ export type ValidationLibrary =
 	| 'vine'
 	| 'schemasafe'
 	| 'superstruct'
-	| 'effect';
+	| 'effect'
+	| 'standard';
 
 export type AdapterOptions<T> = {
 	jsonSchema?: JSONSchema;

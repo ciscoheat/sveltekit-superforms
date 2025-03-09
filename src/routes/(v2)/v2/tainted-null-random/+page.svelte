@@ -12,18 +12,7 @@
 		dataType: 'json',
 		validators: zodClient(clientSchema)
 	});
-	const {
-		form: formData,
-		enhance,
-		errors,
-		tainted,
-		isTainted,
-		delayed,
-		allErrors,
-		reset,
-		message,
-		constraints
-	} = form;
+	const { form: formData, tainted } = form;
 </script>
 
 <h3>Bugged Form</h3>

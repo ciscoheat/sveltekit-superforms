@@ -441,8 +441,8 @@
 			padding: 1em;
 			padding-bottom: 0;
 			justify-content: space-between;
-			font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier,
-				monospace;
+			font-family:
+				Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier, monospace;
 		}
 
 		.super-debug--right-status {

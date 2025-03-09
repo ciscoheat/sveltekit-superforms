@@ -7,16 +7,20 @@ import { schema } from './schema.js';
 
 export const load: PageServerLoad = async () => {
 	const adapter = schemasafe(schema);
-  const defaultValue = {
-    arr: [{ 
-      arr: [{ 
-        tryInvalidValue: ''
-      }] 
-    }]
-  }
-	return { 
-    form: await superValidate(defaultValue, adapter)
-  };
+	const defaultValue = {
+		arr: [
+			{
+				arr: [
+					{
+						tryInvalidValue: ''
+					}
+				]
+			}
+		]
+	};
+	return {
+		form: await superValidate(defaultValue, adapter)
+	};
 };
 
 export const actions: Actions = {

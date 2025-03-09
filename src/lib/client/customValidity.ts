@@ -35,6 +35,8 @@ export function setCustomValidityForm(
 }
 
 function setCustomValidity(el: HTMLInputElement, errors: string[] | undefined) {
+	if (!('setCustomValidity' in el)) return;
+
 	const message = errors && errors.length ? errors.join('\n') : '';
 	el.setCustomValidity(message);
 	if (message) el.reportValidity();

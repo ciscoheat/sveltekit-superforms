@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed diff algorithm problem with tainted objects.
+- Prevented crash when custom validity doesn't exist for an element.
 
 ### Added
 

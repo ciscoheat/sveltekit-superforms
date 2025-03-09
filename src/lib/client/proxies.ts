@@ -350,7 +350,9 @@ function _stringProxy<T extends Record<string, unknown>, Path extends FormPaths<
 			if (typeof value === 'number' && isNaN(value)) return '';
 			return String(value);
 		} else if (type == 'date') {
-			const date = value as unknown as Date;
+			const date =
+				typeof value === 'string' || typeof value === 'number' ? new Date(value) : (value as Date);
+
 			if (isNaN(date as unknown as number)) return '';
 
 			switch (options.dateFormat) {

@@ -163,6 +163,9 @@ export type FormOptions<
 	timeoutMs: number;
 	multipleSubmits: 'prevent' | 'allow' | 'abort';
 	syncFlashMessage?: boolean;
+	/**
+	 * @deprecated SvelteKit has moved to $app/state instead of $app/stores, making it hard to support both. Use the flash library directly (setFlash or redirect) instead of integrating it with Superforms.
+	 */
 	flashMessage: {
 		module: {
 			getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;

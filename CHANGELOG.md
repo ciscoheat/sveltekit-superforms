@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped Valibot peerDep requirement to 1.0.0-rc.3.
 - Bumped Zod peerDep requirement to 3.24.2.
 
+### Deprecated
+
+- The `flashMessage` option is now deprecated, since SvelteKit has moved to [$app/state](https://svelte.dev/docs/kit/$app-state) instead of `$app/stores`, making it hard to support both. Use [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message) directly (`setFlash` or `redirect`) instead of integrating it with Superforms, it's less complicated as well.
+
 ## [2.23.1] - 2025-01-21
 
 ### Removed

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed diff algorithm problem with tainted objects.
 - Prevented crash when custom validity doesn't exist for an element.
 - `dateProxy` didn't restore properly with [snapshots](https://superforms.rocks/concepts/snapshots).
+- Fixed JSON Schema for simple adapters with empty arrays.
 
 ### Changed
 

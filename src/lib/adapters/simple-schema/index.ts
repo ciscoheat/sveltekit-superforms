@@ -17,7 +17,7 @@ export function simpleSchema(value: unknown): JSONSchema {
 
 			if (Array.isArray(value)) {
 				const output: JSONSchema = { type: 'array' };
-				if (value.length) output.items = simpleSchema(value[0]);
+				output.items = value.length ? simpleSchema(value[0]) : {};
 				return output;
 			} else {
 				const obj = value as Record<string, unknown>;

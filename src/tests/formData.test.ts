@@ -5,6 +5,8 @@ import * as v from 'valibot';
 import { zodToJSONSchema } from '$lib/adapters/zod.js';
 import { SchemaError } from '$lib/index.js';
 import { valibot } from '$lib/adapters/valibot.js';
+import { type } from 'arktype';
+import { arktype } from '$lib/adapters/arktype.js';
 
 enum Foo {
 	A = 2,
@@ -27,11 +29,14 @@ const schema = z.object({
 
 const bigJsonSchema = zodToJSONSchema(schema);
 
-function dataToFormData(data: Record<string, string | number | string[] | number[]>) {
+function dataToFormData(
+	data: Record<string, string | number | File | string[] | number[] | File[]>
+) {
 	const output = new FormData();
 	for (const [key, value] of Object.entries(data)) {
-		if (Array.isArray(value)) value.forEach((v) => output.append(key, String(v)));
-		else output.set(key, String(value));
+		if (Array.isArray(value))
+			value.forEach((v) => output.append(key, v instanceof File ? v : String(v)));
+		else output.set(key, value instanceof File ? value : String(value));
 	}
 	return output;
 }
@@ -77,5 +82,23 @@ describe('FormData parsing', () => {
 		});
 
 		expect(valibot(schema).defaults.urltest).toBe('');
+	});
+
+	it('should handle empty arrays with simple adapters as "any"', () => {
+		const uploadSchema = type({
+			files: type.instanceOf(File).array()
+		});
+
+		const defaults = { defaults: { files: [] as File[] } };
+		const adapter = arktype(uploadSchema, defaults);
+
+		const formData = dataToFormData({
+			files: [new File(['123123'], 'test.png')]
+		});
+		const parsed = parseFormData(formData, adapter.jsonSchema, { allowFiles: true });
+		const file = parsed.data?.files as File[];
+
+		expect(file[0].size).toBe(6);
+		expect(file[0].name).toBe('test.png');
 	});
 });

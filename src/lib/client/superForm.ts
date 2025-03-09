@@ -1287,7 +1287,9 @@ export function superForm<
 		if (taintOptions == 'ignore') return;
 
 		const paths = comparePaths(newData, Data.form);
+		//console.log('paths:', JSON.stringify(paths));
 		const newTainted = comparePaths(newData, Tainted.clean).map((path) => path.join());
+		//console.log('newTainted:', JSON.stringify(newTainted));
 
 		if (paths.length) {
 			if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
@@ -1302,13 +1304,17 @@ export function superForm<
 
 						const currentValue = traversePath(newData, path);
 						const cleanPath = traversePath(Tainted.clean, path);
-						return currentValue && cleanPath && currentValue.value === cleanPath.value
+						const identical = currentValue && cleanPath && currentValue.value === cleanPath.value;
+
+						const output = identical
 							? undefined
 							: taintOptions === true
 								? true
 								: taintOptions === 'untaint'
 									? undefined
 									: data.value;
+
+						return output;
 					});
 
 					return currentlyTainted;

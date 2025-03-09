@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped TypeBox peerDep requirement to 0.34.28.
 - Bumped Effect peerDep requirement to 3.13.7.
 - Bumped Valibot peerDep requirement to 1.0.0-rc.3.
+- Bumped Zod peerDep requirement to 3.24.2.
 
 ## [2.23.1] - 2025-01-21
 

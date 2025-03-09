@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Exported `SuperValidateOptions` type.
+- Exported `MergeUnion`, `MergeFormUnion` and a `mergeFormUnion` utility, for handling discriminated unions in forms.
+
 ### Fixed
 
 - Fixed diff algorithm problem with tainted objects.
 - Prevented crash when custom validity doesn't exist for an element.
 
-### Added
+### Changed
 
-- Exported `SuperValidateOptions` type.
-- Exported `MergeUnion`, `MergeFormUnion` and a `mergeFormUnion` utility, for handling discriminated unions in forms.
+- Bumped TypeBox version requirement to 0.34.28.
 
 ## [2.23.1] - 2025-01-21
 

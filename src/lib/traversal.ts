@@ -140,8 +140,10 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 
 	function checkPath(data: PathData, compareTo: object) {
 		const otherData = compareTo ? traversePath(compareTo, data.path) : undefined;
+		//console.log('Compare', data.path, data.value, 'to', otherData?.path, otherData?.value);
 
 		function addDiff() {
+			//console.log('Diff', data.path);
 			diffPaths.set(data.path.join(' '), data.path);
 			return 'skip';
 		}
@@ -162,7 +164,23 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 	traversePaths(newObj as object, (data) => checkPath(data, oldObj as object));
 	traversePaths(oldObj as object, (data) => checkPath(data, newObj as object));
 
-	return Array.from(diffPaths.values());
+	// Need to add the object (non-leaf) path to diffPaths, otherwise the traversal could fail
+	// when being used elsewhere (Tainted_update)
+	for (const path of diffPaths.keys()) {
+		const arr = path.split(' ').slice(0, -1);
+		while (arr.length) {
+			const key = arr.join(' ');
+			if (!diffPaths.has(key)) {
+				diffPaths.set(key, [...arr]);
+			}
+			arr.pop();
+		}
+	}
+
+	// Need to sort it as well, so the shortest paths comes first
+	const output = Array.from(diffPaths.values());
+	output.sort((a, b) => a.length - b.length);
+	return output;
 }
 
 export function setPaths(

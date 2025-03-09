@@ -328,6 +328,19 @@ describe('Default values', () => {
 		const adapter = zod(userSchema);
 		expect(defaultValues(adapter.jsonSchema).gender).toBe('male');
 	});
+
+	it('should work with allOf', () => {
+		const userSchema = z.object({
+			username: z
+				.string()
+				.min(3)
+				.max(24)
+				.regex(/^[a-zA-Z](?!.*[_.-]{2})[a-zA-Z0-9_.-]*$/)
+				.regex(/^(?!guest).*/i)
+		});
+		const adapter = zod(userSchema);
+		expect(defaultValues(adapter.jsonSchema).username).toBe('');
+	});
 });
 
 describe('Unions (anyOf)', () => {

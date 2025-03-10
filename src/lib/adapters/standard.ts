@@ -3,10 +3,10 @@ import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
 	createAdapter,
 	createJsonSchema,
-	type AdapterOptions,
 	type ClientValidationAdapter,
 	type Infer,
 	type InferIn,
+	type RequiredDefaultsOptions,
 	type ValidationAdapter,
 	type ValidationResult
 } from './adapters.js';
@@ -32,13 +32,13 @@ async function _validate<T extends StandardSchemaV1>(
 
 function _standard<T extends StandardSchemaV1>(
 	schema: T,
-	options: AdapterOptions<Infer<T, 'standard'>> = {}
+	options: RequiredDefaultsOptions<Infer<T, 'standard'>>
 ): ValidationAdapter<Infer<T, 'standard'>, InferIn<T, 'standard'>> {
 	return createAdapter({
 		superFormValidationLibrary: 'standard',
-		validate: async (data) => _validate(schema, data),
+		validate: (data) => _validate(schema, data),
 		jsonSchema: createJsonSchema(options),
-		defaults: options?.defaults
+		defaults: options.defaults
 	});
 }
 

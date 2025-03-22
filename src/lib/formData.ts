@@ -5,7 +5,7 @@ import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo, type SchemaInfo, type SchemaType } from './jsonSchema/schemaInfo.js';
 import { defaultValues } from './jsonSchema/schemaDefaults.js';
 import type { JSONSchema } from './index.js';
-import { setPaths } from './traversal.js';
+import { setPaths, traversePath } from './traversal.js';
 import { splitPath } from './stringPath.js';
 import { assertSchema } from './utils.js';
 
@@ -147,7 +147,9 @@ export function parseFormData<T extends Record<string, unknown>>(
 		? { id, data, posted: true }
 		: {
 				id,
-				data: _parseFormData(formData, schemaData, options),
+				data: options?.unflatten
+					? parseFlattenedData(formData, schemaData, options)
+					: _parseFormData(formData, schemaData, options),
 				posted: true
 			};
 }
@@ -183,24 +185,6 @@ function _parseFormData<T extends Record<string, unknown>>(
 				...(schema.additionalProperties ? formData.keys() : [])
 			].filter((key) => !key.startsWith('__superform_'))
 		);
-	}
-
-	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
-		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
-			return entry;
-		}
-
-		if (entry && typeof entry !== 'string') {
-			const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;
-			return !allowFiles ? undefined : entry.size ? entry : info.isNullable ? null : undefined;
-		}
-
-		if (info.types.length > 1) {
-			throw new SchemaError(unionError, key);
-		}
-
-		const [type] = info.types;
-		return parseFormDataEntry(key, entry, type ?? 'any', info);
 	}
 
 	const defaultPropertyType =
@@ -248,12 +232,12 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 			// Check for empty files being posted (and filtered)
 			const isFileArray = entries.length && entries.some((e) => e && typeof e !== 'string');
-			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo));
+			const arrayData = entries.map((e) => parseSingleEntry(key, e, arrayInfo, options));
 			if (isFileArray && arrayData.every((file) => !file)) arrayData.length = 0;
 
 			output[key] = info.types.includes('set') ? new Set(arrayData) : arrayData;
 		} else {
-			output[key] = parseSingleEntry(key, entries[entries.length - 1], info);
+			output[key] = parseSingleEntry(key, entries[entries.length - 1], info, options);
 		}
 	}
 
@@ -331,4 +315,154 @@ function parseFormDataEntry(
 		default:
 			throw new SuperFormError('Unsupported schema type for FormData: ' + type);
 	}
+}
+
+function parseSingleEntry<T extends Record<string, unknown>>(
+	key: string,
+	entry: FormDataEntryValue,
+	info: SchemaInfo,
+	options?: SuperValidateOptions<T>
+) {
+	if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
+		return entry;
+	}
+
+	if (entry && typeof entry !== 'string') {
+		const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;
+		return !allowFiles ? undefined : entry.size ? entry : info.isNullable ? null : undefined;
+	}
+
+	if (info.types.length > 1) {
+		throw new SchemaError(unionError, key);
+	}
+
+	const [type] = info.types;
+	return parseFormDataEntry(key, entry, type ?? 'any', info);
+}
+
+function parseFlattenedData<T extends Record<string, unknown>>(
+	formData: FormData,
+	schema: JSONSchema,
+	options?: SuperValidateOptions<T>
+) {
+	const rootInfo = schemaInfo(schema, false, []);
+	const output: Record<string, unknown> = {};
+
+	function setValueOfArrayOrObject(
+		record: Record<string, unknown> | unknown[],
+		key: string,
+		value: unknown
+	) {
+		const isParentArray = Array.isArray(record);
+		const numericKey = parseInt(key, 10);
+
+		if (isParentArray) {
+			if (Number.isNaN(numericKey)) {
+				return;
+			}
+
+			(record as unknown[])[numericKey] = value;
+		} else {
+			(record as Record<string, unknown>)[key] = value;
+		}
+	}
+
+	function getParsedValue(paths: string[], initialValue: FormDataEntryValue | null) {
+		const schemaLeaf = traversePath(rootInfo, paths, ({ key, parent }) => {
+			const newParent = parent as SchemaInfo | undefined;
+			if (!newParent) {
+				return undefined;
+			}
+
+			if (
+				!Number.isNaN(parseInt(key, 10)) &&
+				(newParent.types.includes('array') || newParent.types.includes('set'))
+			) {
+				const items =
+					newParent.schema.items ?? (newParent.union?.length == 1 ? newParent.union[0] : undefined);
+				if (!items || typeof items == 'boolean' || (Array.isArray(items) && items.length != 1)) {
+					throw new SchemaError(
+						'Arrays must have a single "items" property that defines its type.',
+						key
+					);
+				}
+
+				const arrayType = Array.isArray(items) ? items[0] : items;
+
+				return schemaInfo(arrayType, !newParent.required?.includes(key), [key]);
+			}
+
+			const property: JSONSchema | undefined = ((parent as SchemaInfo).properties ?? {})[key];
+
+			if (!property) {
+				return undefined;
+			}
+
+			return schemaInfo(property, !newParent.required?.includes(key), []);
+		});
+
+		if (!schemaLeaf) {
+			return undefined;
+		}
+
+		const property = ((schemaLeaf?.parent as SchemaInfo)?.properties ?? {})[schemaLeaf.key];
+
+		if (!property) {
+			return undefined;
+		}
+
+		if (initialValue === null) {
+			return initialValue;
+		}
+
+		const propetyIsRequired = (schemaLeaf?.parent as SchemaInfo)?.required?.includes(
+			schemaLeaf.key
+		);
+
+		const isOptional = propetyIsRequired === undefined ? true : !propetyIsRequired;
+
+		return parseSingleEntry(
+			schemaLeaf.key,
+			initialValue,
+			schemaInfo(property, isOptional, []),
+			options
+		);
+	}
+
+	function initializePath(paths: string[], value: unknown) {
+		let parent: Record<string, unknown> | unknown[] = output;
+		paths.forEach((key, i) => {
+			const adjacentKey = paths[i + 1];
+			const numericAdjacentKey = parseInt(adjacentKey, 10);
+
+			//End of the paths, so we set the actual FormData value
+			if (!adjacentKey) {
+				setValueOfArrayOrObject(parent, key, value);
+				return;
+			}
+
+			const referenceValue = Array.isArray(parent)
+				? (parent[parseInt(key, 10)] as Record<string, unknown> | unknown[] | undefined)
+				: (parent[key] as Record<string, unknown> | unknown[] | undefined);
+
+			if (!referenceValue) {
+				const initializedValue = !Number.isNaN(numericAdjacentKey) ? [] : {};
+				setValueOfArrayOrObject(parent, key, initializedValue);
+				parent = initializedValue;
+				return;
+			}
+
+			parent = referenceValue;
+		});
+	}
+
+	for (const formDataKey of formData.keys().filter((key) => !key.startsWith('__superform_'))) {
+		const paths = splitPath(formDataKey);
+
+		const value = formData.get(formDataKey);
+		const parsedValue = getParsedValue(paths, value);
+		initializePath(paths, parsedValue);
+	}
+
+	return output;
 }

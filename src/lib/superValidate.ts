@@ -68,6 +68,7 @@ export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<
 	strict: boolean;
 	allowFiles: boolean;
 	transport: IsAny<Transport> extends true ? never : Transport;
+	unflatten: boolean;
 }>;
 
 export type TaintedFields<T extends Record<string, unknown>> = SuperStructArray<T, boolean>;
@@ -151,11 +152,98 @@ export async function superValidate<
 			);
 
 	let outputData: Record<string, unknown>;
+
+	function scrubDataToSchema(
+		schema: JSONSchema,
+		data: Record<string, unknown> | unknown[]
+	): unknown {
+		if (schema.type === 'array') {
+			if (!Array.isArray(data)) {
+				return [];
+			}
+
+			const { items } = schema;
+
+			if (!items) {
+				return [];
+			}
+
+			if (items === true) {
+				return [];
+			}
+
+			if (Array.isArray(items)) {
+				if (items.length === 1) {
+					const item = items[0];
+
+					if (typeof item === 'boolean') {
+						return [];
+					}
+					return data.map((datum) =>
+						scrubDataToSchema(item, datum as Record<string, unknown> | unknown[])
+					);
+				}
+
+				return [];
+			}
+
+			return data.map((datum) =>
+				scrubDataToSchema(items, datum as Record<string, unknown> | unknown[])
+			);
+		}
+
+		const ref: Record<string, unknown> = {};
+
+		for (const [key, subSchema] of Object.entries(schema.properties ?? {})) {
+			if (typeof subSchema === 'boolean') {
+				continue;
+			}
+
+			switch (subSchema.type) {
+				case 'object':
+					if (!Array.isArray(data)) {
+						ref[key] = scrubDataToSchema(subSchema, (data ?? {})[key] as Record<string, unknown>);
+					}
+					break;
+				case 'array': {
+					if (!Array.isArray(data)) {
+						const dataArray = (data ?? {})[key];
+						const itemsSchema = Array.isArray(subSchema.items)
+							? subSchema.items[0]
+							: subSchema.items;
+						if (Array.isArray(dataArray) && itemsSchema && itemsSchema !== true) {
+							ref[key] = dataArray.map((dataItem) => scrubDataToSchema(itemsSchema, dataItem));
+						}
+					}
+					break;
+				}
+				case 'boolean':
+				case 'integer':
+				case 'null':
+				case 'number':
+				case 'string': {
+					if (!Array.isArray(data)) {
+						ref[key] = (data ?? {})[key];
+					}
+					break;
+				}
+				default:
+					continue;
+			}
+		}
+
+		return ref;
+	}
+
 	if (jsonSchema.additionalProperties === false) {
 		// Strip keys not belonging to schema
 		outputData = {};
-		for (const key of Object.keys(jsonSchema.properties ?? {})) {
-			if (key in dataWithDefaults) outputData[key] = dataWithDefaults[key];
+		if (options?.unflatten) {
+			outputData = scrubDataToSchema(jsonSchema, dataWithDefaults) as Record<string, unknown>;
+		} else {
+			for (const key of Object.keys(jsonSchema.properties ?? {})) {
+				if (key in dataWithDefaults) outputData[key] = dataWithDefaults[key];
+			}
 		}
 	} else {
 		outputData = dataWithDefaults;

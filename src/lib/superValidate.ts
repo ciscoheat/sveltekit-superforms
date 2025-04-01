@@ -164,11 +164,7 @@ export async function superValidate<
 
 			const { items } = schema;
 
-			if (!items) {
-				return [];
-			}
-
-			if (items === true) {
+			if (!items || typeof items === 'boolean') {
 				return [];
 			}
 
@@ -179,6 +175,7 @@ export async function superValidate<
 					if (typeof item === 'boolean') {
 						return [];
 					}
+
 					return data.map((datum) =>
 						scrubDataToSchema(item, datum as Record<string, unknown> | unknown[])
 					);
@@ -193,6 +190,10 @@ export async function superValidate<
 		}
 
 		const ref: Record<string, unknown> = {};
+
+		if (!schema.properties && schema.type !== 'object') {
+			return data;
+		}
 
 		for (const [key, subSchema] of Object.entries(schema.properties ?? {})) {
 			if (typeof subSchema === 'boolean') {
@@ -211,8 +212,17 @@ export async function superValidate<
 						const itemsSchema = Array.isArray(subSchema.items)
 							? subSchema.items[0]
 							: subSchema.items;
+
 						if (Array.isArray(dataArray) && itemsSchema && itemsSchema !== true) {
-							ref[key] = dataArray.map((dataItem) => scrubDataToSchema(itemsSchema, dataItem));
+							const arrayItems = itemsSchema.anyOf
+								? itemsSchema.anyOf.filter((item) => typeof item !== 'boolean' && item.type)[0]
+								: itemsSchema;
+
+							if (typeof arrayItems === 'boolean') {
+								break;
+							}
+
+							ref[key] = dataArray.map((dataItem) => scrubDataToSchema(arrayItems, dataItem));
 						}
 					}
 					break;

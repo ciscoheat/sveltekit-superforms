@@ -20,4 +20,6 @@
 	$inspect({ $form, $proxy });
 </script>
 
+<p class="time">{$form.date.getTime()}</p>
+
 <input type="datetime-local" bind:value={$proxy} />

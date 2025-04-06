@@ -234,10 +234,13 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 		for (const error of Errors) {
 			if (!error.path) continue;
 
-			Defaults_traverseAndReplace({
-				path: error.path,
-				value: pathExists(Defaults, error.path)?.value
-			});
+			Defaults_traverseAndReplace(
+				{
+					path: error.path,
+					value: pathExists(Defaults, error.path)?.value
+				},
+				true
+			);
 		}
 	}
 
@@ -245,11 +248,14 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 
 	//#region Defaults
 
-	function Defaults_traverseAndReplace(defaultPath: {
-		path: (string | number | symbol)[];
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		value: any;
-	}): void {
+	function Defaults_traverseAndReplace(
+		defaultPath: {
+			path: (string | number | symbol)[];
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			value: any;
+		},
+		traversingErrors = false
+	): void {
 		const currentPath = defaultPath.path;
 		if (!currentPath || !currentPath[0]) return;
 		if (typeof currentPath[0] === 'string' && preprocessed?.includes(currentPath[0])) return;
@@ -279,9 +285,11 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 			const typePath = currentPath.filter((p) => /\D/.test(String(p)));
 			const pathTypes = traversePath(Types, typePath, (path) => {
 				//console.log(path.path, path.value); //debug
-				return '__items' in path.value ? path.value.__items : path.value;
+				return path.value && '__items' in path.value ? path.value.__items : path.value;
 			});
 			if (!pathTypes) {
+				// Return if checking for errors, as there may be deep errors that doesn't exist in the defaults.
+				if (traversingErrors) return;
 				throw new SchemaError('No types found for defaults', currentPath);
 			}
 

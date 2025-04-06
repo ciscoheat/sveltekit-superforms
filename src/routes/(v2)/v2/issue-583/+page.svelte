@@ -53,10 +53,6 @@
 		background-color: #ff2a02;
 	}
 
-	input {
-		background-color: #ddd;
-	}
-
 	a {
 		text-decoration: underline;
 	}

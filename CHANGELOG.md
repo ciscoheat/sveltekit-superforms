@@ -5,6 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Added `applyAction: 'never'` option, to prevent load function [invalidation](https://svelte.dev/tutorial/kit/invalidation) from overwriting the form data.
+- Added `invalidateAll: 'pessimistic'` option as an alternative to the `'force'` option (recommended to use instead for clarity).
+
 ## [2.24.1] - 2025-04-06
 
 ### Fixed

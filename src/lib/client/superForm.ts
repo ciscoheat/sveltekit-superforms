@@ -82,8 +82,13 @@ export type FormOptions<
 	In extends Record<string, unknown> = T
 > = Partial<{
 	id: string;
-	applyAction: boolean;
-	invalidateAll: boolean | 'force';
+	/**
+	 * If `false`, the form won't react to page state updates, except for page invalidations.
+	 * If `'never'`, not even page invalidations will affect the form.
+	 * @default true
+	 */
+	applyAction: boolean | 'never';
+	invalidateAll: boolean | 'force' | 'pessimistic';
 	resetForm: boolean | (() => boolean);
 	scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
 	autoFocusOnError: boolean | 'detect';
@@ -997,16 +1002,20 @@ export function superForm<
 		};
 	}
 
-	async function Form_updateFromValidation(form: SuperValidated<T, M, In>, successResult: boolean) {
-		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
-			Form_reset({ message: form.message, posted: true });
+	async function Form_updateFromValidation(
+		form2: SuperValidated<T, M, In>,
+		successResult: boolean
+	) {
+		if (form2.valid && successResult && Form_shouldReset(form2.valid, successResult)) {
+			Form_reset({ message: form2.message, posted: true });
 		} else {
 			rebind({
-				form,
+				form: form2,
 				untaint: successResult,
 				keepFiles: true,
 				// Check if the form data should be used for updating, or if the invalidateAll load function should be used:
-				skipFormData: options.invalidateAll == 'force'
+				pessimisticUpdate:
+					options.invalidateAll == 'force' || options.invalidateAll == 'pessimistic'
 			});
 		}
 
@@ -1017,7 +1026,7 @@ export function superForm<
 
 		// But do not await on onUpdated itself, since we're already finished with the request
 		for (const event of formEvents.onUpdated) {
-			event({ form });
+			event({ form: form2 });
 		}
 	}
 
@@ -1429,7 +1438,7 @@ export function superForm<
 		message?: M;
 		keepFiles?: boolean;
 		posted?: boolean;
-		skipFormData?: boolean;
+		pessimisticUpdate?: boolean;
 		resetted?: boolean;
 	}) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
@@ -1444,7 +1453,7 @@ export function superForm<
 		// Prevents object errors from being revalidated after rebind.
 		// Check if form was invalidated (usually with options.invalidateAll) to prevent data from being
 		// overwritten by the load function data
-		if (opts.skipFormData !== true) {
+		if (!opts.pessimisticUpdate) {
 			Form_set(form.data, {
 				taint: 'ignore',
 				keepFiles: opts.keepFiles
@@ -1518,7 +1527,11 @@ export function superForm<
 						initialForms.set(newForm, newForm);
 						await Form_updateFromValidation(newForm as SuperValidated<T, M, In>, successResult);
 					}
-				} else if (pageUpdate.data && typeof pageUpdate.data === 'object') {
+				} else if (
+					options.applyAction !== 'never' &&
+					pageUpdate.data &&
+					typeof pageUpdate.data === 'object'
+				) {
 					// It's a page reload, redirect or error/failure,
 					// so don't trigger any events, just update the data.
 					for (const newForm of Context_findValidationForms(pageUpdate.data)) {
@@ -1528,7 +1541,7 @@ export function superForm<
 							continue;
 						}
 
-						if (options.invalidateAll === 'force') {
+						if (options.invalidateAll === 'force' || options.invalidateAll === 'pessimistic') {
 							initialForm.data = newForm.data as T;
 						}
 

@@ -25,7 +25,7 @@
 
 <h3>Superforms testing ground</h3>
 
-<p>{data.count}</p>
+<p id="counter">{data.count}</p>
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->

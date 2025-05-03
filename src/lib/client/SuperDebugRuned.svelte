@@ -1,4 +1,5 @@
-<script>
+<script lang="ts">
+	import type { Readable } from 'svelte/store';
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { readable, get } from 'svelte/store';
@@ -6,19 +7,18 @@
 
 	let styleInit = false;
 
-	/**
-	 * @typedef {unknown | Promise<unknown>} EncodeableData
-	 * @typedef {import('svelte/store').Readable<EncodeableData>} EncodeableDataStore
-	 *
-	 * @typedef {EncodeableData | EncodeableDataStore} DebugData
-	 */
+	type EncodeableData = unknown | Promise<unknown>;
+
+	type EncodeableDataStore = Readable<EncodeableData>;
+
+	type DebugData = EncodeableData | EncodeableDataStore;
 
 	/**
 	 * Data to be displayed as pretty JSON.
 	 *
 	 * @type {DebugData}
 	 */
-	export let data;
+	export let data: DebugData;
 	/**
 	 * Controls when the component should be displayed.
 	 *
@@ -46,7 +46,7 @@
 	 *
 	 * @type {HTMLPreElement | undefined}
 	 */
-	export let ref = undefined;
+	export let ref: HTMLPreElement | undefined = undefined;
 	/**
 	 * Controls if the data prop should be treated as a promise (skips promise detection when true).
 	 *
@@ -101,7 +101,7 @@
 	 *
 	 * @type {"default" | "vscode"}
 	 */
-	export let theme = 'default';
+	export let theme: 'default' | 'vscode' = 'default';
 
 	///// Collapse behavior ///////////////////////////////////////////
 
@@ -122,7 +122,7 @@
 	/**
 	 * @param {boolean|undefined} status
 	 */
-	function setCollapse(status = undefined) {
+	function setCollapse(status: boolean | undefined = undefined) {
 		let data;
 		// eslint-disable-next-line svelte/valid-compile
 		const route = $page.route.id ?? '';
@@ -153,17 +153,24 @@
 	/**
 	 * @type {ReturnType<typeof setTimeout> | undefined}
 	 */
-	let copied;
+	let copied: ReturnType<typeof setTimeout> | undefined;
 
 	/**
-	 * @param {Event} e
+	 * @param {MouseEvent & {
+			currentTarget: EventTarget & HTMLButtonElement;
+		}} e
 	 */
-	async function copyContent(e) {
+	async function copyContent(
+		e: MouseEvent & {
+			currentTarget: EventTarget & HTMLButtonElement;
+		}
+	) {
 		if (!e.target) return;
-		const parent = /** @type {HTMLElement} */ (e.target).closest('.super-debug');
+		// @ts-expect-error why not use e.currentTarget here?
+		const parent = e.target.closest('.super-debug');
 		if (!parent) return;
 
-		const codeEl = /** @type {HTMLPreElement} */ (parent.querySelector('.super-debug--code'));
+		const codeEl = parent.querySelector<HTMLPreElement>('.super-debug--code');
 		if (!codeEl) return;
 
 		clearTimeout(copied);
@@ -174,7 +181,7 @@
 	/**
 	 * @param {File} file
 	 */
-	function fileToJSON(file) {
+	function fileToJSON(file: File) {
 		return {
 			name: file.name,
 			size: file.size,
@@ -189,7 +196,7 @@
 	 * @param {unknown} json
 	 * @returns {string}
 	 */
-	function syntaxHighlight(json) {
+	function syntaxHighlight(json: unknown): string {
 		switch (typeof json) {
 			case 'function': {
 				return `<span class="function">[function ${json.name ?? 'unnamed'}]</span>`;
@@ -242,7 +249,7 @@
 				}
 				if (browser && typeof this === 'object' && this[key] instanceof FileList) {
 					/** @type FileList */
-					const list = this[key];
+					const list: FileList = this[key];
 					const output = [];
 					for (let i = 0; i < list.length; i++) {
 						const file = list.item(i);
@@ -320,7 +327,11 @@
 	 * @param {boolean} promise
 	 * @returns {data is Promise<unknown>}
 	 */
-	function assertPromise(data, raw, promise) {
+	function assertPromise(
+		data: EncodeableData,
+		raw: boolean,
+		promise: boolean
+	): data is Promise<unknown> {
 		if (raw) {
 			return false;
 		}
@@ -338,7 +349,7 @@
 	 * @param {boolean} raw
 	 * @returns {data is EncodeableDataStore}
 	 */
-	function assertStore(data, raw) {
+	function assertStore(data: DebugData, raw: boolean): data is EncodeableDataStore {
 		if (raw) {
 			return false;
 		}

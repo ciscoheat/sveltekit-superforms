@@ -7,8 +7,7 @@
 	export let props: ComponentProps<SuperDebugLegacy> | ComponentProps<typeof SuperDebugRuned>;
 </script>
 
-
-{#if VERSION[0] == '3' || VERSION[0] == '4'}
+{#if VERSION.startsWith('3') || VERSION.startsWith('4')}
 	<SuperDebugLegacy {...props} />
 {:else}
 	<SuperDebugRuned {...props} />

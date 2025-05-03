@@ -1,149 +1,131 @@
-<script lang="ts">
-	import type { Readable } from 'svelte/store';
+<script>
 	import { browser } from '$app/environment';
-	import { page } from '$app/state';
+	import { page } from '$app/stores';
 	import { readable, get } from 'svelte/store';
 	import { clipboardCopy } from './clipboardCopy.js';
 
-	type EncodeableData = unknown | Promise<unknown>;
+	let styleInit = false;
 
-	type EncodeableDataStore = Readable<EncodeableData>;
+	/**
+	 * @typedef {unknown | Promise<unknown>} EncodeableData
+	 * @typedef {import('svelte/store').Readable<EncodeableData>} EncodeableDataStore
+	 *
+	 * @typedef {EncodeableData | EncodeableDataStore} DebugData
+	 */
 
-	type DebugData = EncodeableData | EncodeableDataStore;
-
-	interface Props {
-		/**
-		 * Data to be displayed as pretty JSON.
-		 *
-		 * @type {DebugData}
-		 */
-		data: DebugData;
-		/**
-		 * Controls when the component should be displayed.
-		 *
-		 * Default: `true`.
-		 */
-		display?: boolean;
-		/**
-		 * Controls when to show the HTTP status code of the current page (reflecs the status code of the last request).
-		 *
-		 * Default is `true`.
-		 */
-		status?: boolean;
-		/**
-		 * Optional label to identify the component easily.
-		 */
-		label?: string;
-		/**
-		 * Controls the maximum length of a string field of the data prop.
-		 *
-		 * Default is `120` characters. Set to `0` to disable trimming.
-		 */
-		stringTruncate?: number;
-		/**
-		 * Reference to the pre element that contains the data.
-		 *
-		 * @type {HTMLPreElement | undefined}
-		 */
-		ref?: HTMLPreElement | undefined;
-		/**
-		 * Controls if the data prop should be treated as a promise (skips promise detection when true).
-		 *
-		 * Default is `false`.
-		 * @deprecated Promises are auto-detected from 1.3.0.
-		 */
-		promise?: boolean;
-		/**
-		 * Controls if the data prop should be treated as a plain object (skips promise and store detection when true, prevails over promise prop).
-		 *
-		 * Default is `false`.
-		 */
-		raw?: boolean;
-		/**
-		 * Enables the display of fields of the data prop that are functions.
-		 *
-		 * Default is `false`.
-		 */
-		functions?: boolean;
-		/**
-		 * Theme, which can also be customized with CSS variables:
-		 *
-		 * ```txt
-		 * --sd-bg-color
-		 * --sd-label-color
-		 * --sd-promise-loading-color
-		 * --sd-promise-rejected-color
-		 * --sd-code-default
-		 * --sd-info
-		 * --sd-success
-		 * --sd-redirect
-		 * --sd-error
-		 * --sd-code-key
-		 * --sd-code-string
-		 * --sd-code-date
-		 * --sd-code-boolean
-		 * --sd-code-number
-		 * --sd-code-bigint
-		 * --sd-code-null
-		 * --sd-code-nan
-		 * --sd-code-undefined
-		 * --sd-code-function
-		 * --sd-code-symbol
-		 * --sd-code-error
-		 * --sd-sb-width
-		 * --sd-sb-height
-		 * --sd-sb-track-color
-		 * --sd-sb-track-color-focus
-		 * --sd-sb-thumb-color
-		 * --sd-sb-thumb-color-focus
-		 * ```
-		 *
-		 * @type {"default" | "vscode"}
-		 */
-		theme?: 'default' | 'vscode';
-		/**
-		 * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output. Default is `false`.
-		 * When toggled, the state is saved in session storage for all SuperDebug components on the page.
-		 */
-		collapsible?: boolean;
-		/**
-		 * Initial state for the collapsed component. Use together with the `collapsible` prop.
-		 * On subsequent page loads, the session storage will determine the state of all SuperDebug components on the page.
-		 */
-		collapsed?: boolean;
-		children?: import('svelte').Snippet;
-	}
-
-	let {
-		data,
-		display = true,
-		status = true,
-		label = '',
-		stringTruncate = 120,
-		ref = $bindable(undefined),
-		promise = false,
-		raw = false,
-		functions = false,
-		theme = 'default',
-		collapsible = false,
-		collapsed = $bindable(false),
-		children
-	}: Props = $props();
-
-	let copied = $state<ReturnType<typeof setTimeout> | undefined>();
-	let styleInit = $state(false);
+	/**
+	 * Data to be displayed as pretty JSON.
+	 *
+	 * @type {DebugData}
+	 */
+	export let data;
+	/**
+	 * Controls when the component should be displayed.
+	 *
+	 * Default: `true`.
+	 */
+	export let display = true;
+	/**
+	 * Controls when to show the HTTP status code of the current page (reflecs the status code of the last request).
+	 *
+	 * Default is `true`.
+	 */
+	export let status = true;
+	/**
+	 * Optional label to identify the component easily.
+	 */
+	export let label = '';
+	/**
+	 * Controls the maximum length of a string field of the data prop.
+	 *
+	 * Default is `120` characters. Set to `0` to disable trimming.
+	 */
+	export let stringTruncate = 120;
+	/**
+	 * Reference to the pre element that contains the data.
+	 *
+	 * @type {HTMLPreElement | undefined}
+	 */
+	export let ref = undefined;
+	/**
+	 * Controls if the data prop should be treated as a promise (skips promise detection when true).
+	 *
+	 * Default is `false`.
+	 * @deprecated Promises are auto-detected from 1.3.0.
+	 */
+	export let promise = false;
+	/**
+	 * Controls if the data prop should be treated as a plain object (skips promise and store detection when true, prevails over promise prop).
+	 *
+	 * Default is `false`.
+	 */
+	export let raw = false;
+	/**
+	 * Enables the display of fields of the data prop that are functions.
+	 *
+	 * Default is `false`.
+	 */
+	export let functions = false;
+	/**
+	 * Theme, which can also be customized with CSS variables:
+	 *
+	 * ```txt
+	 * --sd-bg-color
+	 * --sd-label-color
+	 * --sd-promise-loading-color
+	 * --sd-promise-rejected-color
+	 * --sd-code-default
+	 * --sd-info
+	 * --sd-success
+	 * --sd-redirect
+	 * --sd-error
+	 * --sd-code-key
+	 * --sd-code-string
+	 * --sd-code-date
+	 * --sd-code-boolean
+	 * --sd-code-number
+	 * --sd-code-bigint
+	 * --sd-code-null
+	 * --sd-code-nan
+	 * --sd-code-undefined
+	 * --sd-code-function
+	 * --sd-code-symbol
+	 * --sd-code-error
+	 * --sd-sb-width
+	 * --sd-sb-height
+	 * --sd-sb-track-color
+	 * --sd-sb-track-color-focus
+	 * --sd-sb-thumb-color
+	 * --sd-sb-thumb-color-focus
+	 * ```
+	 *
+	 * @type {"default" | "vscode"}
+	 */
+	export let theme = 'default';
 
 	///// Collapse behavior ///////////////////////////////////////////
+
+	/**
+	 * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output. Default is `false`.
+	 * When toggled, the state is saved in session storage for all SuperDebug components on the page.
+	 */
+	export let collapsible = false;
+
+	/**
+	 * Initial state for the collapsed component. Use together with the `collapsible` prop.
+	 * On subsequent page loads, the session storage will determine the state of all SuperDebug components on the page.
+	 */
+	export let collapsed = false;
 
 	if (browser && collapsible) setCollapse();
 
 	/**
 	 * @param {boolean|undefined} status
 	 */
-	function setCollapse(status: boolean | undefined = undefined) {
+	function setCollapse(status = undefined) {
 		let data;
 		// eslint-disable-next-line svelte/valid-compile
-		const route = page.route.id ?? '';
+		const route = $page.route.id ?? '';
 
 		try {
 			if (sessionStorage.SuperDebug) {
@@ -169,21 +151,19 @@
 	}
 
 	/**
-	 * @param {MouseEvent & {
-			currentTarget: EventTarget & HTMLButtonElement;
-		}} e
+	 * @type {ReturnType<typeof setTimeout> | undefined}
 	 */
-	async function copyContent(
-		e: MouseEvent & {
-			currentTarget: EventTarget & HTMLButtonElement;
-		}
-	) {
+	let copied;
+
+	/**
+	 * @param {Event} e
+	 */
+	async function copyContent(e) {
 		if (!e.target) return;
-		// @ts-expect-error why not use e.currentTarget here?
-		const parent = e.target.closest('.super-debug');
+		const parent = /** @type {HTMLElement} */ (e.target).closest('.super-debug');
 		if (!parent) return;
 
-		const codeEl = parent.querySelector<HTMLPreElement>('.super-debug--code');
+		const codeEl = /** @type {HTMLPreElement} */ (parent.querySelector('.super-debug--code'));
 		if (!codeEl) return;
 
 		clearTimeout(copied);
@@ -194,7 +174,7 @@
 	/**
 	 * @param {File} file
 	 */
-	function fileToJSON(file: File) {
+	function fileToJSON(file) {
 		return {
 			name: file.name,
 			size: file.size,
@@ -209,7 +189,7 @@
 	 * @param {unknown} json
 	 * @returns {string}
 	 */
-	function syntaxHighlight(json: unknown): string {
+	function syntaxHighlight(json) {
 		switch (typeof json) {
 			case 'function': {
 				return `<span class="function">[function ${json.name ?? 'unnamed'}]</span>`;
@@ -262,7 +242,7 @@
 				}
 				if (browser && typeof this === 'object' && this[key] instanceof FileList) {
 					/** @type FileList */
-					const list: FileList = this[key];
+					const list = this[key];
 					const output = [];
 					for (let i = 0; i < list.length; i++) {
 						const file = list.item(i);
@@ -340,11 +320,7 @@
 	 * @param {boolean} promise
 	 * @returns {data is Promise<unknown>}
 	 */
-	function assertPromise(
-		data: EncodeableData,
-		raw: boolean,
-		promise: boolean
-	): data is Promise<unknown> {
+	function assertPromise(data, raw, promise) {
 		if (raw) {
 			return false;
 		}
@@ -362,7 +338,7 @@
 	 * @param {boolean} raw
 	 * @returns {data is EncodeableDataStore}
 	 */
-	function assertStore(data: DebugData, raw: boolean): data is EncodeableDataStore {
+	function assertStore(data, raw) {
 		if (raw) {
 			return false;
 		}
@@ -374,7 +350,7 @@
 		);
 	}
 
-	const themeStyle = $derived(
+	$: themeStyle =
 		theme === 'vscode'
 			? `
       --sd-vscode-bg-color: #1f1f1f;
@@ -391,10 +367,10 @@
       --sd-vscode-sb-thumb-color: #35373a;
       --sd-vscode-sb-thumb-color-focus: #4b4d50;
     `
-			: undefined
-	);
+			: undefined;
 
-	let debugData = $derived(assertStore(data, raw) ? data : readable(data));
+	/** @type {import('svelte/store').Readable<EncodeableData>} */
+	$: debugData = assertStore(data, raw) ? data : readable(data);
 </script>
 
 {#if !styleInit}
@@ -632,7 +608,7 @@
 		>
 			<div class="super-debug--label">{label}</div>
 			<div class="super-debug--right-status">
-				<button type="button" class="super-debug--copy" onclick={copyContent}>
+				<button type="button" class="super-debug--copy" on:click={copyContent}>
 					{#if !copied}
 						<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"
 							><g
@@ -670,12 +646,12 @@
 				</button>
 				{#if status}
 					<div
-						class:super-debug--info={page.status < 200}
-						class:super-debug--success={page.status >= 200 && page.status < 300}
-						class:super-debug--redirect={page.status >= 300 && page.status < 400}
-						class:super-debug--error={page.status >= 400}
+						class:super-debug--info={$page.status < 200}
+						class:super-debug--success={$page.status >= 200 && $page.status < 300}
+						class:super-debug--redirect={$page.status >= 300 && $page.status < 400}
+						class:super-debug--error={$page.status >= 400}
 					>
-						{page.status}
+						{$page.status}
 					</div>
 				{/if}
 			</div>
@@ -685,21 +661,20 @@
 			class:super-debug--with-label={label}
 			class:super-debug--hidden={collapsed}
 			bind:this={ref}><code class="super-debug--code"
-				>{#if children}{@render children()}{:else if assertPromise($debugData, raw, promise)}{#await $debugData}<div
-							class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
-							assertStore(result, raw) ? get(result) : result
-						)}{:catch error}<span class="super-debug--promise-rejected">Rejected:</span
-						> {@html syntaxHighlight(error)}{/await}{:else}{@html syntaxHighlight(
-						$debugData
-					)}{/if}</code
+				><slot
+					>{#if assertPromise($debugData, raw, promise)}{#await $debugData}<div
+								class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
+								assertStore(result, raw) ? get(result) : result
+							)}{:catch error}<span class="super-debug--promise-rejected">Rejected:</span
+							> {@html syntaxHighlight(error)}{/await}{:else}{@html syntaxHighlight(
+							$debugData
+						)}{/if}</slot
+				></code
 			></pre>
 		{#if collapsible}
 			<button
 				type="button"
-				onclick={(e) => {
-					e.preventDefault();
-					setCollapse(!collapsed);
-				}}
+				on:click|preventDefault={() => setCollapse(!collapsed)}
 				class="super-debug--collapse"
 				aria-label="Collapse"
 			>
@@ -722,7 +697,7 @@
 <!--
   @component
 
-  SuperDebugRuned is a debugging component that gives you colorized and nicely formatted output for any data structure, usually $form.
+  SuperDebug is a debugging component that gives you colorized and nicely formatted output for any data structure, usually $form.
   
   Other use cases includes debugging plain objects, promises, stores and more.
 
@@ -735,11 +710,11 @@
     import SuperDebug from 'sveltekit-superforms';
     import { superForm } from 'sveltekit-superforms';
 
-    const { data } = $props();
+    export let data;
     
     const { errors, form, enhance } = superForm(data.form);
   </script>
   
-  <SuperDebugRuned data={$form} label="My form data" />
+  <SuperDebug data={$form} label="My form data" />
   ```
 -->

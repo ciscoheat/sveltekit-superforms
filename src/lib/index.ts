@@ -1,6 +1,8 @@
 import SuperDebug from './client/SuperDebug.svelte';
+import SuperDebugRuned from './client/SuperDebugRuned.svelte';
 
 export default SuperDebug;
+export { SuperDebugRuned };
 export { SuperFormError, SchemaError } from './errors.js';
 
 export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';

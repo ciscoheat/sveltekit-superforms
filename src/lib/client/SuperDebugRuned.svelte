@@ -1,11 +1,9 @@
 <script lang="ts">
 	import type { Readable } from 'svelte/store';
 	import { browser } from '$app/environment';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { readable, get } from 'svelte/store';
 	import { clipboardCopy } from './clipboardCopy.js';
-
-	let styleInit = false;
 
 	type EncodeableData = unknown | Promise<unknown>;
 
@@ -13,109 +11,129 @@
 
 	type DebugData = EncodeableData | EncodeableDataStore;
 
-	/**
-	 * Data to be displayed as pretty JSON.
-	 *
-	 * @type {DebugData}
-	 */
-	export let data: DebugData;
-	/**
-	 * Controls when the component should be displayed.
-	 *
-	 * Default: `true`.
-	 */
-	export let display = true;
-	/**
-	 * Controls when to show the HTTP status code of the current page (reflecs the status code of the last request).
-	 *
-	 * Default is `true`.
-	 */
-	export let status = true;
-	/**
-	 * Optional label to identify the component easily.
-	 */
-	export let label = '';
-	/**
-	 * Controls the maximum length of a string field of the data prop.
-	 *
-	 * Default is `120` characters. Set to `0` to disable trimming.
-	 */
-	export let stringTruncate = 120;
-	/**
-	 * Reference to the pre element that contains the data.
-	 *
-	 * @type {HTMLPreElement | undefined}
-	 */
-	export let ref: HTMLPreElement | undefined = undefined;
-	/**
-	 * Controls if the data prop should be treated as a promise (skips promise detection when true).
-	 *
-	 * Default is `false`.
-	 * @deprecated Promises are auto-detected from 1.3.0.
-	 */
-	export let promise = false;
-	/**
-	 * Controls if the data prop should be treated as a plain object (skips promise and store detection when true, prevails over promise prop).
-	 *
-	 * Default is `false`.
-	 */
-	export let raw = false;
-	/**
-	 * Enables the display of fields of the data prop that are functions.
-	 *
-	 * Default is `false`.
-	 */
-	export let functions = false;
-	/**
-	 * Theme, which can also be customized with CSS variables:
-	 *
-	 * ```txt
-	 * --sd-bg-color
-	 * --sd-label-color
-	 * --sd-promise-loading-color
-	 * --sd-promise-rejected-color
-	 * --sd-code-default
-	 * --sd-info
-	 * --sd-success
-	 * --sd-redirect
-	 * --sd-error
-	 * --sd-code-key
-	 * --sd-code-string
-	 * --sd-code-date
-	 * --sd-code-boolean
-	 * --sd-code-number
-	 * --sd-code-bigint
-	 * --sd-code-null
-	 * --sd-code-nan
-	 * --sd-code-undefined
-	 * --sd-code-function
-	 * --sd-code-symbol
-	 * --sd-code-error
-	 * --sd-sb-width
-	 * --sd-sb-height
-	 * --sd-sb-track-color
-	 * --sd-sb-track-color-focus
-	 * --sd-sb-thumb-color
-	 * --sd-sb-thumb-color-focus
-	 * ```
-	 *
-	 * @type {"default" | "vscode"}
-	 */
-	export let theme: 'default' | 'vscode' = 'default';
+	interface Props {
+		/**
+		 * Data to be displayed as pretty JSON.
+		 *
+		 * @type {DebugData}
+		 */
+		data: DebugData;
+		/**
+		 * Controls when the component should be displayed.
+		 *
+		 * Default: `true`.
+		 */
+		display?: boolean;
+		/**
+		 * Controls when to show the HTTP status code of the current page (reflecs the status code of the last request).
+		 *
+		 * Default is `true`.
+		 */
+		status?: boolean;
+		/**
+		 * Optional label to identify the component easily.
+		 */
+		label?: string;
+		/**
+		 * Controls the maximum length of a string field of the data prop.
+		 *
+		 * Default is `120` characters. Set to `0` to disable trimming.
+		 */
+		stringTruncate?: number;
+		/**
+		 * Reference to the pre element that contains the data.
+		 *
+		 * @type {HTMLPreElement | undefined}
+		 */
+		ref?: HTMLPreElement | undefined;
+		/**
+		 * Controls if the data prop should be treated as a promise (skips promise detection when true).
+		 *
+		 * Default is `false`.
+		 * @deprecated Promises are auto-detected from 1.3.0.
+		 */
+		promise?: boolean;
+		/**
+		 * Controls if the data prop should be treated as a plain object (skips promise and store detection when true, prevails over promise prop).
+		 *
+		 * Default is `false`.
+		 */
+		raw?: boolean;
+		/**
+		 * Enables the display of fields of the data prop that are functions.
+		 *
+		 * Default is `false`.
+		 */
+		functions?: boolean;
+		/**
+		 * Theme, which can also be customized with CSS variables:
+		 *
+		 * ```txt
+		 * --sd-bg-color
+		 * --sd-label-color
+		 * --sd-promise-loading-color
+		 * --sd-promise-rejected-color
+		 * --sd-code-default
+		 * --sd-info
+		 * --sd-success
+		 * --sd-redirect
+		 * --sd-error
+		 * --sd-code-key
+		 * --sd-code-string
+		 * --sd-code-date
+		 * --sd-code-boolean
+		 * --sd-code-number
+		 * --sd-code-bigint
+		 * --sd-code-null
+		 * --sd-code-nan
+		 * --sd-code-undefined
+		 * --sd-code-function
+		 * --sd-code-symbol
+		 * --sd-code-error
+		 * --sd-sb-width
+		 * --sd-sb-height
+		 * --sd-sb-track-color
+		 * --sd-sb-track-color-focus
+		 * --sd-sb-thumb-color
+		 * --sd-sb-thumb-color-focus
+		 * ```
+		 *
+		 * @type {"default" | "vscode"}
+		 */
+		theme?: 'default' | 'vscode';
+		/**
+		 * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output. Default is `false`.
+		 * When toggled, the state is saved in session storage for all SuperDebug components on the page.
+		 */
+		collapsible?: boolean;
+		/**
+		 * Initial state for the collapsed component. Use together with the `collapsible` prop.
+		 * On subsequent page loads, the session storage will determine the state of all SuperDebug components on the page.
+		 */
+		collapsed?: boolean;
+		children?: import('svelte').Snippet;
+	}
+
+	let {
+		data,
+		display = true,
+		status = true,
+		label = '',
+		stringTruncate = 120,
+		ref = $bindable(undefined),
+		promise = false,
+		raw = false,
+		functions = false,
+		theme = 'default',
+		collapsible = false,
+		collapsed = $bindable(false),
+		children
+	}: Props = $props();
+
+	let copied = $state<ReturnType<typeof setTimeout> | undefined>();
+	let styleInit = $state(false);
 
 	///// Collapse behavior ///////////////////////////////////////////
-
-	/**
-	 * Will show a collapse bar at the bottom of the component, that can be used to hide and show the output. Default is `false`.
-	 * When toggled, the state is saved in session storage for all SuperDebug components on the page.
-	 */
-	export let collapsible = false;
-
-	/**
-	 * Initial state for the collapsed component. Use together with the `collapsible` prop.
-	 * On subsequent page loads, the session storage will determine the state of all SuperDebug components on the page.
-	 */
-	export let collapsed = false;
 
 	if (browser && collapsible) setCollapse();
 
@@ -125,7 +143,7 @@
 	function setCollapse(status: boolean | undefined = undefined) {
 		let data;
 		// eslint-disable-next-line svelte/valid-compile
-		const route = $page.route.id ?? '';
+		const route = page.route.id ?? '';
 
 		try {
 			if (sessionStorage.SuperDebug) {
@@ -149,11 +167,6 @@
 
 		collapsed = data.collapsed[route];
 	}
-
-	/**
-	 * @type {ReturnType<typeof setTimeout> | undefined}
-	 */
-	let copied: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * @param {MouseEvent & {
@@ -361,7 +374,7 @@
 		);
 	}
 
-	$: themeStyle =
+	const themeStyle = $derived(
 		theme === 'vscode'
 			? `
       --sd-vscode-bg-color: #1f1f1f;
@@ -378,10 +391,10 @@
       --sd-vscode-sb-thumb-color: #35373a;
       --sd-vscode-sb-thumb-color-focus: #4b4d50;
     `
-			: undefined;
+			: undefined
+	);
 
-	/** @type {import('svelte/store').Readable<EncodeableData>} */
-	$: debugData = assertStore(data, raw) ? data : readable(data);
+	let debugData = $derived(assertStore(data, raw) ? data : readable(data));
 </script>
 
 {#if !styleInit}
@@ -619,7 +632,7 @@
 		>
 			<div class="super-debug--label">{label}</div>
 			<div class="super-debug--right-status">
-				<button type="button" class="super-debug--copy" on:click={copyContent}>
+				<button type="button" class="super-debug--copy" onclick={copyContent}>
 					{#if !copied}
 						<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"
 							><g
@@ -657,12 +670,12 @@
 				</button>
 				{#if status}
 					<div
-						class:super-debug--info={$page.status < 200}
-						class:super-debug--success={$page.status >= 200 && $page.status < 300}
-						class:super-debug--redirect={$page.status >= 300 && $page.status < 400}
-						class:super-debug--error={$page.status >= 400}
+						class:super-debug--info={page.status < 200}
+						class:super-debug--success={page.status >= 200 && page.status < 300}
+						class:super-debug--redirect={page.status >= 300 && page.status < 400}
+						class:super-debug--error={page.status >= 400}
 					>
-						{$page.status}
+						{page.status}
 					</div>
 				{/if}
 			</div>
@@ -672,20 +685,21 @@
 			class:super-debug--with-label={label}
 			class:super-debug--hidden={collapsed}
 			bind:this={ref}><code class="super-debug--code"
-				><slot
-					>{#if assertPromise($debugData, raw, promise)}{#await $debugData}<div
-								class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
-								assertStore(result, raw) ? get(result) : result
-							)}{:catch error}<span class="super-debug--promise-rejected">Rejected:</span
-							> {@html syntaxHighlight(error)}{/await}{:else}{@html syntaxHighlight(
-							$debugData
-						)}{/if}</slot
-				></code
+				>{#if children}{@render children()}{:else if assertPromise($debugData, raw, promise)}{#await $debugData}<div
+							class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
+							assertStore(result, raw) ? get(result) : result
+						)}{:catch error}<span class="super-debug--promise-rejected">Rejected:</span
+						> {@html syntaxHighlight(error)}{/await}{:else}{@html syntaxHighlight(
+						$debugData
+					)}{/if}</code
 			></pre>
 		{#if collapsible}
 			<button
 				type="button"
-				on:click|preventDefault={() => setCollapse(!collapsed)}
+				onclick={(e) => {
+					e.preventDefault();
+					setCollapse(!collapsed);
+				}}
 				class="super-debug--collapse"
 				aria-label="Collapse"
 			>

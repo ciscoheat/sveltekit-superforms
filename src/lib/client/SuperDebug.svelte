@@ -4,13 +4,15 @@
 	import SuperDebugLegacy from './SuperDebugLegacy.svelte';
 	import SuperDebugRuned from './SuperDebugRuned.svelte';
 
-	export let props: ComponentProps<SuperDebugLegacy> | ComponentProps<typeof SuperDebugRuned>;
+	type $$Props = ComponentProps<typeof SuperDebugRuned>;
+
+	export let data: $$Props['data'];
 </script>
 
 {#if VERSION.startsWith('3') || VERSION.startsWith('4')}
-	<SuperDebugLegacy {...props} />
+	<SuperDebugLegacy {data} {...$$restProps} />
 {:else}
-	<SuperDebugRuned {...props} />
+	<SuperDebugRuned {data} {...$$restProps} />
 {/if}
 
 <!--

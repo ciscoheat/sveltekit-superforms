@@ -613,8 +613,6 @@
 			);
 		}
 	</style>
-	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
-	{@const init = styleInit = true}
 {/if}
 
 <!-- eslint-disable svelte/no-at-html-tags -->

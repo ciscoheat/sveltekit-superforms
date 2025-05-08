@@ -2,7 +2,7 @@
 	import type { Readable } from 'svelte/store';
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
-	import { readable, get } from 'svelte/store';
+	import { fromStore } from 'svelte/store';
 	import { clipboardCopy } from './clipboardCopy.js';
 
 	type EncodeableData = unknown | Promise<unknown>;
@@ -394,7 +394,7 @@
 			: undefined
 	);
 
-	let debugData = $derived(assertStore(data, raw) ? data : readable(data));
+	const debugData = $derived(assertStore(data, raw) ? fromStore(data) : data);
 </script>
 
 {#if !styleInit}
@@ -685,12 +685,12 @@
 			class:super-debug--with-label={label}
 			class:super-debug--hidden={collapsed}
 			bind:this={ref}><code class="super-debug--code"
-				>{#if children}{@render children()}{:else if assertPromise($debugData, raw, promise)}{#await $debugData}<div
+				>{#if children}{@render children()}{:else if assertPromise(debugData, raw, promise)}{#await debugData}<div
 							class="super-debug--promise-loading">Loading data...</div>{:then result}{@html syntaxHighlight(
-							assertStore(result, raw) ? get(result) : result
+							assertStore(result, raw) ? fromStore(result) : result
 						)}{:catch error}<span class="super-debug--promise-rejected">Rejected:</span
 						> {@html syntaxHighlight(error)}{/await}{:else}{@html syntaxHighlight(
-						$debugData
+						debugData
 					)}{/if}</code
 			></pre>
 		{#if collapsible}

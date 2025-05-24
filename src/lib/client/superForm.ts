@@ -95,7 +95,7 @@ export type FormOptions<
 	errorSelector: string;
 	selectErrorText: boolean;
 	stickyNavbar: string;
-	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
+	taintedMessage: string | boolean | null | ((nav: BeforeNavigate) => MaybePromise<boolean>);
 	/**
 	 * Enable single page application (SPA) mode.
 	 * **The string and failStatus options are deprecated** and will be removed in the next major release.
@@ -1227,7 +1227,7 @@ export function superForm<
 			// - resolved with false => shouldRedirect = false
 			// - resolved with true => shouldRedirect = true
 			shouldRedirect = isTaintedFunction
-				? await taintedMessage()
+				? await taintedMessage(nav)
 				: window.confirm(message || Tainted.defaultMessage);
 		} catch {
 			shouldRedirect = false;

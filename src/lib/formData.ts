@@ -199,7 +199,17 @@ function _parseFormData<T extends Record<string, unknown>>(
 			throw new SchemaError(unionError, key);
 		}
 
-		const [type] = info.types;
+		let [type] = info.types;
+
+		if (!info.types.length && info.schema.enum) {
+			// Special case for Typescript enums
+			// If the entry is an integer, parse it as such, otherwise string
+			if (info.schema.enum.includes(entry)) type = 'string';
+			else {
+				type = Number.isInteger(parseInt(entry, 10)) ? 'integer' : 'string';
+			}
+		}
+
 		return parseFormDataEntry(key, entry, type ?? 'any', info);
 	}
 

@@ -15,6 +15,7 @@ import type {
 } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodTypeAny, input, output } from 'zod';
+import type { $ZodType, input as zod4Input, output as zod4Output } from 'zod/v4/core';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
@@ -133,6 +134,12 @@ interface ZodResolver extends Resolver {
 	output: this['schema'] extends ZodTypeAny ? output<this['schema']> : never;
 }
 
+interface Zod4Resolver extends Resolver {
+	base: $ZodType;
+	input: this['schema'] extends $ZodType ? zod4Input<this['schema']> : never;
+	output: this['schema'] extends $ZodType ? zod4Output<this['schema']> : never;
+}
+
 interface VineResolver extends Resolver {
 	base: SchemaTypes;
 	input: this['schema'] extends SchemaTypes
@@ -207,6 +214,7 @@ export type Registry = {
 	valibot: ValibotResolver;
 	yup: YupResolver;
 	zod: ZodResolver;
+	zod4: Zod4Resolver;
 	vine: VineResolver;
 	schemasafe: SchemasafeResolver<JSONSchema>;
 	superstruct: SuperstructResolver;

@@ -33,6 +33,7 @@ export type ValidationLibrary =
 	| 'valibot'
 	| 'yup'
 	| 'zod'
+	| 'zod4'
 	| 'vine'
 	| 'schemasafe'
 	| 'superstruct'

@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { z as z4 } from 'zod/v4';
+
 import { zodToJSONSchema } from '$lib/adapters/zod.js';
 
 export enum Foo {
@@ -24,6 +26,27 @@ export const bigZodSchema = z.object({
 	nestedTags: z.object({
 		id: z.number().int().positive().optional(),
 		name: z.string().min(1)
+	})
+});
+
+export const bigZod4Schema = z4.object({
+	name: z4.union([z4.string().default('B'), z4.number()]).default('A'),
+	email: z4.email(),
+	tags: z4.string().min(2).array().min(2).default(['A']),
+	foo: z4.enum(Foo).default(Foo.A),
+	set: z4.set(z4.string()),
+	reg1: z4.string().regex(/\D/).regex(/p/),
+	reg: z4.string().regex(/X/).min(3).max(30),
+	num: z4.number().int().multipleOf(5).min(10).max(100),
+	date: z4.date().min(new Date('2022-01-01')),
+	arr: z4
+		.union([z4.string().min(10), z4.date()])
+		.array()
+		.min(3)
+		.max(10),
+	nestedTags: z4.object({
+		id: z4.number().int().positive().optional(),
+		name: z4.string().min(1)
 	})
 });
 

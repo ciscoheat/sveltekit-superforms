@@ -97,17 +97,21 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			}
 
 			// Objects must have default values to avoid setting undefined properties on nested data
-			if (info.union.length && info.types[0] == 'object') {
-				if (output === undefined) output = {};
-				output =
-					info.union.length > 1
-						? merge.withOptions(
-								{ allowUndefinedOverrides: true },
-								...info.union.map(
-									(s) => _defaultValues(s, isOptional, path) as Record<string, unknown>
+			if (info.union.length) {
+				if (info.types[0] == 'object') {
+					if (output === undefined) output = {};
+					output =
+						info.union.length > 1
+							? merge.withOptions(
+									{ allowUndefinedOverrides: true },
+									...info.union.map(
+										(s) => _defaultValues(s, isOptional, path) as Record<string, unknown>
+									)
 								)
-							)
-						: (_defaultValues(info.union[0], isOptional, path) as Record<string, unknown>);
+							: (_defaultValues(info.union[0], isOptional, path) as Record<string, unknown>);
+				} else {
+					return _defaultValues(info.union[0], isOptional, path);
+				}
 			}
 		}
 	}
@@ -147,6 +151,11 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 	// Enums, return the first value so it can be a required field
 	if (schema.enum) {
 		return schema.enum[0];
+	}
+
+	// Constants
+	if ('const' in schema) {
+		return schema.const;
 	}
 
 	// Basic type

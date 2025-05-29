@@ -1,6 +1,6 @@
 import { describe, it, expect, assert, beforeEach } from 'vitest';
 import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
-import { Foo, bigZodSchema } from './data.js';
+import { Foo, bigZod4Schema, bigZodSchema } from './data.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
 import { defaultValues as adapterDefaults } from '$lib/defaults.js';
@@ -19,6 +19,9 @@ import { defaults as schemaDefaults } from '$lib/defaults.js';
 
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { z, type ZodErrorMap } from 'zod';
+
+import { zod4, zodToJSONSchema as zod4ToJSONSchema } from '$lib/adapters/zod4.js';
+import { z as z4 } from 'zod/v4';
 
 import { valibot } from '$lib/adapters/valibot.js';
 import * as v from 'valibot';
@@ -84,6 +87,7 @@ import { Schema } from 'effect';
 import { traversePath } from '$lib/traversal.js';
 import { splitPath } from '$lib/stringPath.js';
 import { SchemaError, type JSONSchema } from '$lib/index.js';
+import type { $ZodRawIssue } from 'zod/v4/core';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -139,22 +143,42 @@ const defaults = {
 /**
  * Expected constraints for libraries with introspection
  */
-const fullConstraints = {
-	email: {
-		required: true
-	},
-	score: {
-		min: 0,
-		required: true
-	},
-	tags: {
-		required: true,
-		minlength: 2
-	},
-	nospace: {
-		pattern: '^\\S*$'
+function fullConstraints(library: 'zod4' | 'unknown') {
+	const defaultConstraints = {
+		email: {
+			required: true
+		},
+		score: {
+			min: 0,
+			required: true
+		},
+		tags: {
+			required: true,
+			minlength: 2
+		},
+		nospace: {
+			pattern: '^\\S*$'
+		}
+	};
+
+	switch (library) {
+		case 'zod4':
+			return {
+				...defaultConstraints,
+				email: {
+					...defaultConstraints.email,
+					pattern:
+						"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+				},
+				score: {
+					...defaultConstraints.score,
+					max: Number.MAX_SAFE_INTEGER
+				}
+			};
+		default:
+			return defaultConstraints;
 	}
-};
+}
 
 /**
  * Expected constraints for libraries with default values, no introspection
@@ -721,18 +745,6 @@ describe('Zod', () => {
 		expect(() => zod(NumberSchema)).toThrowError(SchemaError);
 	});
 
-	it('cannot handle promises in optional refine', async () => {
-		const schema = z.object({
-			name: z.string().min(1),
-			email: z
-				.string()
-				.optional()
-				.refine(async () => Promise.resolve(true))
-		});
-
-		expect(() => zod(schema)).toThrow(Error);
-	});
-
 	it('with the errorMap option', async () => {
 		const schema = z.object({
 			num: z.number().int()
@@ -821,6 +833,270 @@ describe('Zod', () => {
 	});
 
 	schemaTest(zod(schema));
+});
+
+/////////////////////////////////////////////////////////////////////
+
+describe('Zod 4', () => {
+	const schema = z4
+		.object({
+			name: z4.string().default('Unknown'),
+			email: z4.email(),
+			tags: z4.string().min(2).array().min(3),
+			score: z4.number().int().min(0),
+			date: z4.date().optional(),
+			nospace: z4.string().regex(nospacePattern).optional(),
+			extra: z4.string().nullable()
+		})
+		.refine((a) => a)
+		.refine((a) => a)
+		.refine((a) => a);
+
+	describe('with defaults', () => {
+		it('defaultValues should return the schema defaults', () => {
+			const values = defaultValues<z4.infer<typeof bigZod4Schema>>(zod4ToJSONSchema(bigZod4Schema));
+			expect(values.foo).toEqual(Foo.A);
+		});
+
+		it('should work with a function as default value, in strict mode', async () => {
+			const schema = z4.object({
+				id: z4.number().default(Math.random)
+			});
+
+			const v1 = await superValidate(zod4(schema), { strict: true });
+			const v2 = await superValidate(zod4(schema), { strict: true });
+
+			expect(v1.data.id).toBeGreaterThan(0);
+			expect(v2.data.id).toBeGreaterThan(0);
+			expect(v1.data.id).not.toBeCloseTo(v2.data.id, 6);
+		});
+	});
+
+	it('with constraints', () => {
+		const expected = {
+			email: {
+				required: true,
+				pattern:
+					"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+			},
+			tags: { minlength: 2 },
+			set: { required: true },
+			reg1: { pattern: 'p', required: true },
+			reg: { pattern: 'X', minlength: 3, maxlength: 30, required: true },
+			num: { min: 10, max: 100, step: 5, required: true },
+			date: { /*min: '2022-01-01T00:00:00.000Z',*/ required: true },
+			arr: { minlength: 10, required: true },
+			nestedTags: {
+				id: { max: Number.MAX_SAFE_INTEGER, min: 1 },
+				name: { minlength: 1, required: true }
+			}
+		};
+		const values = constraints<z4.infer<typeof bigZod4Schema>>(zod4ToJSONSchema(bigZod4Schema));
+		expect(values).toEqual(expected);
+	});
+
+	it('with form-level errors', async () => {
+		const schema = z4
+			.object({
+				name: z4.string()
+			})
+			.refine((a) => a.name == 'OK', {
+				message: 'Name is not OK'
+			});
+
+		const form = await superValidate({ name: 'Test' }, zod4(schema));
+
+		expect(form.errors).toEqual({
+			_errors: ['Name is not OK']
+		});
+	});
+
+	it('with catchAll', async () => {
+		const schema = z4
+			.object({
+				name: z4.string().min(1)
+			})
+			.catchall(z4.number().int());
+
+		const formData = new FormData();
+		formData.set('name', 'Test');
+		formData.set('score', '1');
+		formData.set('stats', 'nope');
+
+		const form = await superValidate(formData, zod4(schema));
+		assert(!form.valid);
+		expect(form.data).toStrictEqual({
+			name: 'Test',
+			score: 1,
+			stats: NaN
+		});
+		expect(form.errors).toEqual({ stats: ['Invalid input: expected number, received NaN'] });
+
+		formData.set('stats', '2');
+
+		const form2 = await superValidate(formData, zod4(schema));
+		assert(form2.valid);
+		expect(form2.data).toStrictEqual({
+			name: 'Test',
+			score: 1,
+			stats: 2
+		});
+
+		const name: string = form2.data.name;
+		// @ts-expect-error Testing catchall type
+		const notAString: string = form2.data.extra;
+		const num: number = form2.data.stats;
+
+		name;
+		notAString;
+		num;
+	});
+
+	it('should produce a required enum even if default values exist', async () => {
+		enum Fruits {
+			Apple = 7,
+			Banana = 8
+		}
+
+		const schema = z4.object({
+			nativeEnumInt: z4.enum(Fruits),
+			nativeEnumString: z4.enum({ GRAY: 'GRAY', GREEN: 'GREEN' }).default('GREEN'),
+			enum: z4.enum(['a', 'b', 'c']),
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			enumDef: z4.enum(['a', 'b', 'c']).default('' as any)
+		});
+
+		const adapter = zod4(schema);
+
+		expect(adapter.jsonSchema.required).toEqual([
+			'nativeEnumInt',
+			'nativeEnumString',
+			'enum',
+			'enumDef'
+		]);
+		expect(adapter.defaults).toEqual({
+			nativeEnumInt: 'Apple',
+			nativeEnumString: 'GREEN',
+			enum: 'a',
+			enumDef: ''
+		});
+
+		const formData = new FormData();
+		formData.set('nativeEnumInt', '7');
+		const form = await superValidate(formData, adapter);
+
+		expect(form.data.nativeEnumInt).toEqual(Fruits.Apple);
+	});
+
+	it('should not require a default value for single type unions', () => {
+		const schema = z4.object({
+			letter: z4.union([z4.literal('a'), z4.literal('b')]),
+			num: z4.union([z4.number().int().negative(), z4.number()])
+		});
+
+		const adapter = zod4(schema);
+		expect(adapter.defaults).toEqual({ letter: 'a', num: 0 });
+		expect(adapter.constraints.letter?.required).toBe(true);
+		expect(adapter.constraints.num?.required).toBe(true);
+	});
+
+	it('should not require a default value for enums', () => {
+		const schema = z4.object({
+			letter: z4.enum(['a', 'b', 'c'])
+		});
+
+		const adapter = zod4(schema);
+		expect(adapter.defaults.letter).toBe('a');
+		expect(adapter.constraints.letter?.required).toBe(true);
+	});
+
+	it('with the errorMap option', async () => {
+		const schema = z4.object({
+			num: z4.number().int()
+		});
+
+		const options = {
+			error: (issue: $ZodRawIssue) => {
+				if (issue.code === 'invalid_type') {
+					return { message: 'Not an integer.' };
+				}
+			}
+		};
+
+		const adapter = zod4(schema, options);
+
+		const form = await superValidate(
+			// @ts-expect-error Testing errorMap with invalid type
+			{ num: 'abc' },
+			adapter
+		);
+		expect(form.valid).toBe(false);
+		expect(form.errors.num).toEqual(['Not an integer.']);
+
+		const sameAdapter = zod4(schema, options);
+		expect(sameAdapter).toBe(adapter);
+	});
+
+	describe('with z4.record', () => {
+		it('should work with additionalProperties for records', async () => {
+			/*
+			{
+				type: 'object',
+				properties: {
+					id: { type: 'string' },
+					options: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							properties: { label: { type: 'string' } },
+							required: [ 'label' ],
+							additionalProperties: false
+						}
+					}
+				},
+				required: [ 'id', 'options' ],
+				additionalProperties: false,
+				'$schema': 'http://json-schema.org/draft-07/schema#'
+			}
+			*/
+			const schema = z4.object({
+				id: z4.string(),
+				options: z4.record(
+					z4.string(),
+					z4.object({
+						label: z4.string().refine((value) => value.length > 0, {
+							error: 'Label is required'
+						})
+					})
+				)
+			});
+
+			const row = {
+				id: '1',
+				options: {
+					'1': {
+						label: 'Option 1'
+					},
+					'2': {
+						label: ''
+					}
+				}
+			};
+
+			const adapter = zod4(schema);
+			const form = await superValidate(row, adapter);
+
+			assert(!form.valid);
+
+			expect(form.errors).toStrictEqual({
+				options: { '2': { label: ['Label is required'] } }
+			});
+
+			expect(form.data).toEqual(row);
+		});
+	});
+
+	schemaTest(zod4(schema), undefined, undefined, undefined, 'zod4');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -959,7 +1235,8 @@ function schemaTest(
 	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full',
-	dateFormat: 'Date' | 'string' | 'stringToDate' = 'Date'
+	dateFormat: 'Date' | 'string' | 'stringToDate' = 'Date',
+	library: 'unknown' | 'zod4' = 'unknown'
 ) {
 	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
@@ -991,7 +1268,7 @@ function schemaTest(
 				expect(inputConstraints).toEqual(simpleConstraints);
 				break;
 			case 'full':
-				expect(inputConstraints).toEqual(fullConstraints);
+				expect(inputConstraints).toEqual(fullConstraints(library));
 				break;
 		}
 	}

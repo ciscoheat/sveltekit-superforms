@@ -5,6 +5,17 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- [Zod 4](https://zod.dev/) adapter added! Adapter name is `zod4`. As Zod is now using its own JSON Schema representation, and there are some breaking changes like how enums are handled, check migrations carefully and please report any bugs [on github](https://github.com/ciscoheat/sveltekit-superforms/issues).
+- [taintedMessage](https://superforms.rocks/concepts/tainted) now passes `BeforeNavigate` in its function signature.
+
+### Changed
+
+- Bumped Zod peerDep requirement to 3.25.0 due to the Zod 4 release.
+
 ## [2.25.0] - 2025-04-29
 
 ### Added

@@ -20,7 +20,7 @@ import { defaults as schemaDefaults } from '$lib/defaults.js';
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { z, type ZodErrorMap } from 'zod';
 
-import { zod4, zodToJSONSchema as zod4ToJSONSchema } from '$lib/adapters/zod4.js';
+import { zod as zod4, zodToJSONSchema as zod4ToJSONSchema } from '$lib/adapters/zod4.js';
 import { z as z4 } from 'zod/v4';
 
 import { valibot } from '$lib/adapters/valibot.js';

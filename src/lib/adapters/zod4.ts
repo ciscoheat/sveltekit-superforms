@@ -13,8 +13,6 @@ import { memoize } from '$lib/memoize.js';
 
 type Options = NonNullable<Parameters<typeof toJSONSchema>[1]>;
 
-type ZodObject = $ZodObject;
-
 const defaultJSONSchemaOptions = {
 	unrepresentable: 'any',
 	override: (ctx) => {
@@ -27,11 +25,11 @@ const defaultJSONSchemaOptions = {
 } satisfies Options;
 
 /* @__NO_SIDE_EFFECTS__ */
-export const zodToJSONSchema = <S extends ZodObject>(schema: S, options?: Options) => {
+export const zodToJSONSchema = <S extends $ZodObject>(schema: S, options?: Options) => {
 	return toJSONSchema(schema, { ...defaultJSONSchemaOptions, ...options }) as JSONSchema7;
 };
 
-async function validate<T extends ZodObject>(
+async function validate<T extends $ZodObject>(
 	schema: T,
 	data: unknown,
 	error: $ZodErrorMap | undefined
@@ -50,7 +48,7 @@ async function validate<T extends ZodObject>(
 	};
 }
 
-function _zod4<T extends ZodObject>(
+function _zod4<T extends $ZodObject>(
 	schema: T,
 	options?: AdapterOptions<Infer<T, 'zod4'>> & { error?: $ZodErrorMap; config?: Options }
 ): ValidationAdapter<Infer<T, 'zod4'>, InferIn<T, 'zod4'>> {
@@ -64,7 +62,7 @@ function _zod4<T extends ZodObject>(
 	});
 }
 
-function _zod4Client<T extends ZodObject>(
+function _zod4Client<T extends $ZodObject>(
 	schema: T,
 	options?: { error?: $ZodErrorMap }
 ): ClientValidationAdapter<Infer<T, 'zod4'>, InferIn<T, 'zod4'>> {
@@ -74,5 +72,5 @@ function _zod4Client<T extends ZodObject>(
 	};
 }
 
-export const zod4 = /* @__PURE__ */ memoize(_zod4);
-export const zod4Client = /* @__PURE__ */ memoize(_zod4Client);
+export const zod = /* @__PURE__ */ memoize(_zod4);
+export const zodClient = /* @__PURE__ */ memoize(_zod4Client);

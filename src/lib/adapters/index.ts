@@ -15,6 +15,7 @@ export {
 	type ZodObjectTypes,
 	type ZodObjectType
 } from './zod.js';
+export { zod as zod4, zodClient as zod4Client } from './zod4.js';
 export { vine, vineClient } from './vine.js';
 export { schemasafe, schemasafeClient } from './schemasafe.js';
 export { superstruct, superstructClient } from './superstruct.js';

@@ -47,11 +47,12 @@
 		"alpha:bump": "npm version prerelease",
 		"alpha:pub": "npm publish --tag alpha",
 		"dev": "vite dev",
-		"build": "vite build && npm run package",
+		"build": "vite build && npm run prepack",
 		"preview": "vite preview",
-		"package": "svelte-kit sync && svelte-package && publint",
+		"prepare": "svelte-kit sync || echo ''",
+		"prepack": "svelte-kit sync && svelte-package && publint",
 		"prepublishOnly": "npm run test && npm run lint && npm run check && npm run package && npm run check:adapters",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.check.json",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"check:adapters": "node types-exist.js",
 		"test": "vitest run",
@@ -170,13 +171,13 @@
 		"@vinejs/vine": "^3.0.1",
 		"arktype": "^2.1.20",
 		"class-validator": "^0.14.2",
-		"effect": "^3.15.4",
+		"effect": "^3.16.2",
 		"joi": "^17.13.3",
 		"json-schema-to-ts": "^3.1.1",
 		"superstruct": "^2.0.2",
 		"valibot": "1.0.0-rc.3",
 		"yup": "^1.6.1",
-		"zod": "^3.25.28",
+		"zod": "^3.25.42",
 		"zod-to-json-schema": "^3.24.5"
 	},
 	"dependencies": {
@@ -185,12 +186,12 @@
 		"ts-deepmerge": "^7.0.3"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^3.3.1",
+		"@sveltejs/adapter-auto": "^6.0.1",
 		"@sveltejs/kit": "^2.21.1",
 		"@sveltejs/package": "^2.3.11",
-		"@sveltejs/vite-plugin-svelte": "^4.0.4",
+		"@sveltejs/vite-plugin-svelte": "^5.0.3",
 		"@types/json-schema": "^7.0.15",
-		"@types/node": "^22.15.21",
+		"@types/node": "^22.15.29",
 		"@types/throttle-debounce": "^5.0.2",
 		"@types/uuid": "^9.0.8",
 		"@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -205,10 +206,10 @@
 		"only-allow": "^1.2.1",
 		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.4.0",
-		"publint": "^0.2.12",
-		"sass": "^1.89.0",
-		"svelte": "^5.33.2",
-		"svelte-check": "^3.8.6",
+		"publint": "^0.3.12",
+		"sass": "^1.89.1",
+		"svelte": "^5.33.10",
+		"svelte-check": "^4.2.1",
 		"svelte-french-toast": "^1.2.0",
 		"sveltekit-flash-message": "^2.4.6",
 		"sveltekit-rate-limiter": "^0.6.1",
@@ -216,7 +217,7 @@
 		"tslib": "^2.8.1",
 		"typescript": "^5.8.3",
 		"uuid": "^9.0.1",
-		"vite": "^5.4.19",
+		"vite": "^6.3.5",
 		"vitest": "^1.6.1",
 		"zod-i18n-map": "^2.27.0"
 	},
@@ -227,10 +228,9 @@
 		"onlyBuiltDependencies": [
 			"esbuild",
 			"svelte-preprocess",
+			"@parcel/watcher",
 			"@sveltejs/kit"
 		],
-		"ignoredBuiltDependencies": [
-			"@parcel/watcher"
-		]
+		"ignoredBuiltDependencies": []
 	}
 }

@@ -11,7 +11,21 @@
 
 	type DebugData = EncodeableData | EncodeableDataStore;
 
-	interface Props {
+	let {
+		data,
+		display = true,
+		status = true,
+		label = '',
+		stringTruncate = 120,
+		ref = $bindable(undefined),
+		promise = false,
+		raw = false,
+		functions = false,
+		theme = 'default',
+		collapsible = false,
+		collapsed = $bindable(false),
+		children
+	}: {
 		/**
 		 * Data to be displayed as pretty JSON.
 		 *
@@ -112,23 +126,7 @@
 		 */
 		collapsed?: boolean;
 		children?: import('svelte').Snippet;
-	}
-
-	let {
-		data,
-		display = true,
-		status = true,
-		label = '',
-		stringTruncate = 120,
-		ref = $bindable(undefined),
-		promise = false,
-		raw = false,
-		functions = false,
-		theme = 'default',
-		collapsible = false,
-		collapsed = $bindable(false),
-		children
-	}: Props = $props();
+	} = $props();
 
 	let copied = $state<ReturnType<typeof setTimeout> | undefined>();
 	let styleInit = $state(false);
@@ -720,7 +718,7 @@
 <!--
   @component
 
-  SuperDebugRuned is a debugging component that gives you colorized and nicely formatted output for any data structure, usually $form.
+  SuperDebug is a debugging component that gives you colorized and nicely formatted output for any data structure, usually $form.
   
   Other use cases includes debugging plain objects, promises, stores and more.
 
@@ -730,7 +728,7 @@
 
   ```svelte
   <script>
-    import SuperDebug from 'sveltekit-superforms';
+    import { SuperDebug } from 'sveltekit-superforms';
     import { superForm } from 'sveltekit-superforms';
 
     const { data } = $props();
@@ -738,6 +736,6 @@
     const { errors, form, enhance } = superForm(data.form);
   </script>
   
-  <SuperDebugRuned data={$form} label="My form data" />
+  <SuperDebug data={$form} label="My form data" />
   ```
 -->

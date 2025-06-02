@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
 	import type { Readable } from 'svelte/store';
 	import { browser } from '$app/environment';

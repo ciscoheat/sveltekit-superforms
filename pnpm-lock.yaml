@@ -50,7 +50,7 @@ importers:
         version: 9.0.8
       '@valibot/i18n':
         specifier: 1.0.0-beta.2
-        version: 1.0.0-beta.2(valibot@1.0.0-rc.3(typescript@5.8.3))
+        version: 1.0.0-beta.2(valibot@1.1.0(typescript@5.8.3))
       decimal.js:
         specifier: ^10.5.0
         version: 10.5.0
@@ -161,8 +161,8 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
       valibot:
-        specifier: 1.0.0-rc.3
-        version: 1.0.0-rc.3(typescript@5.8.3)
+        specifier: ^1.0.0
+        version: 1.1.0(typescript@5.8.3)
       yup:
         specifier: ^1.6.1
         version: 1.6.1
@@ -1857,8 +1857,8 @@ packages:
   valibot@0.31.1:
     resolution: {integrity: sha512-2YYIhPrnVSz/gfT2/iXVTrSj92HwchCt9Cga/6hX4B26iCz9zkIsGTS0HjDYTZfTi1Un0X6aRvhBi1cfqs/i0Q==}
 
-  valibot@1.0.0-rc.3:
-    resolution: {integrity: sha512-LT0REa7Iqx4QGcaHLiTiTkcmJqJ9QdpOy89HALFFBJgejTS64GQFRIbDF7e4f6pauQbo/myfKGmWXCLhMeM6+g==}
+  valibot@1.1.0:
+    resolution: {integrity: sha512-Nk8lX30Qhu+9txPYTwM0cFlWLdPFsFr6LblzqIySfbZph9+BFsAHsNvHOymEviUepeIW6KFHzpX8TKhbptBXXw==}
     peerDependencies:
       typescript: '>=5'
     peerDependenciesMeta:
@@ -2630,9 +2630,9 @@ snapshots:
       '@typescript-eslint/types': 8.33.0
       eslint-visitor-keys: 4.2.0
 
-  '@valibot/i18n@1.0.0-beta.2(valibot@1.0.0-rc.3(typescript@5.8.3))':
+  '@valibot/i18n@1.0.0-beta.2(valibot@1.1.0(typescript@5.8.3))':
     dependencies:
-      valibot: 1.0.0-rc.3(typescript@5.8.3)
+      valibot: 1.1.0(typescript@5.8.3)
 
   '@vinejs/compiler@3.0.0':
     optional: true
@@ -3597,7 +3597,7 @@ snapshots:
   valibot@0.31.1:
     optional: true
 
-  valibot@1.0.0-rc.3(typescript@5.8.3):
+  valibot@1.1.0(typescript@5.8.3):
     optionalDependencies:
       typescript: 5.8.3
 

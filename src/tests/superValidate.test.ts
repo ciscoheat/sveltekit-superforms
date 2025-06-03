@@ -881,7 +881,7 @@ describe('Zod 4', () => {
 			},
 			tags: { minlength: 2 },
 			set: { required: true },
-			reg1: { pattern: 'p', required: true },
+			reg1: { pattern: '\\D', required: true },
 			reg: { pattern: 'X', minlength: 3, maxlength: 30, required: true },
 			num: { min: 10, max: 100, step: 5, required: true },
 			date: { /*min: '2022-01-01T00:00:00.000Z',*/ required: true },

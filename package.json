@@ -196,7 +196,7 @@
 		"@types/node": "^22.15.29",
 		"@types/throttle-debounce": "^5.0.2",
 		"@types/uuid": "^9.0.8",
-		"@valibot/i18n": "1.0.0-beta.2",
+		"@valibot/i18n": "1.0.0",
 		"decimal.js": "^10.5.0",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
@@ -220,7 +220,7 @@
 		"typescript-eslint": "^8.33.0",
 		"uuid": "^9.0.1",
 		"vite": "^6.3.5",
-		"vitest": "^1.6.1",
+		"vitest": "^3.2.0",
 		"zod-i18n-map": "^2.27.0"
 	},
 	"svelte": "./dist/index.js",

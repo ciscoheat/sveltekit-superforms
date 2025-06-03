@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [Zod 4](https://zod.dev/) adapter added! Adapter names are `zod4` and `zod4Client`, works with both the full version and Zod Mini. As Zod is now using its own JSON Schema representation, and there are some breaking changes like how enums are handled, check migrations carefully and please [report any bugs](https://github.com/ciscoheat/sveltekit-superforms/issues).
 - [taintedMessage](https://superforms.rocks/concepts/tainted) now passes `BeforeNavigate` to its callback function.
 - [SuperDebug](https://superforms.rocks/super-debug) now has a Runes version, see the docs for how to import it.
+- Added config options to `valibotClient`, same as in the `valibot` adapter.
 
 ### Changed
 

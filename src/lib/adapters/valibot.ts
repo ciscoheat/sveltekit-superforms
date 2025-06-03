@@ -80,11 +80,15 @@ function _valibot<T extends SupportedSchemas>(
 }
 
 function _valibotClient<T extends SupportedSchemas>(
-	schema: T
+	schema: T,
+	options: Omit<ToJSONSchemaOptions, 'schema'> &
+		AdapterOptions<Infer<T, 'valibot'>> & {
+			config?: Config<GenericIssue<unknown>>;
+		} = {}
 ): ClientValidationAdapter<Infer<T, 'valibot'>, InferIn<T, 'valibot'>> {
 	return {
 		superFormValidationLibrary: 'valibot',
-		validate: async (data) => _validate<T>(schema, data)
+		validate: async (data) => _validate<T>(schema, data, options?.config)
 	};
 }
 

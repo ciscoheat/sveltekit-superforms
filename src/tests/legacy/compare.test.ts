@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert, describe, expect, expectTypeOf, test } from 'vitest';
 import { z } from 'zod';
 import { pathExists } from '$lib/traversal.js';

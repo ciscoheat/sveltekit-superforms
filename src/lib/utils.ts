@@ -28,7 +28,6 @@ export function clone<T>(data: T): T {
 
 export type MaybePromise<T> = T | Promise<T>;
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export type Prettify<T> = T extends object ? { [K in keyof T]: T[K] } : T & {};
 
 // Thanks to https://stackoverflow.com/a/77451367/70894

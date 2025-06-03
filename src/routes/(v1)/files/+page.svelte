@@ -7,7 +7,6 @@
 	export let data: PageData;
 
 	const { form, errors, enhance, delayed, message } = superForm(data.form, {
-		// eslint-disable-next-line svelte/valid-compile
 		dataType: $page.url.searchParams.has('json') ? 'json' : 'form',
 		taintedMessage: null
 	});

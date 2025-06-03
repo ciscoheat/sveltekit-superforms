@@ -124,7 +124,6 @@
 	 */
 	function setCollapse(status = undefined) {
 		let data;
-		// eslint-disable-next-line svelte/valid-compile
 		const route = $page.route.id ?? '';
 
 		try {

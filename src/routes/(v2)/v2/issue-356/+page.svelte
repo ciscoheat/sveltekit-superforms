@@ -28,6 +28,7 @@
 		}
 	);
 
+	// eslint-disable-next-line svelte/no-inspect
 	$inspect('form', $form);
 </script>
 

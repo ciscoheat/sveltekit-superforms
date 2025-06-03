@@ -8,7 +8,6 @@
 
 	export let data: PageData;
 
-	// eslint-disable-next-line svelte/valid-compile
 	const validationMethod = $page.url.searchParams.has('oninput')
 		? 'oninput'
 		: $page.url.searchParams.has('onblur')

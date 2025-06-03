@@ -9,9 +9,6 @@
 	const { form, errors, message, enhance } = superForm(data.form, {
 		taintedMessage: true
 	});
-
-	// eslint-disable-next-line svelte/valid-compile
-	$page;
 </script>
 
 <SuperDebug data={$form} />

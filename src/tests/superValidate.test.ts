@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { describe, it, expect, assert, beforeEach } from 'vitest';
 import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
 import { Foo, bigZod4Schema, bigZodSchema } from './data.js';

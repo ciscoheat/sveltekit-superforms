@@ -19,7 +19,7 @@
 	const updateLuckyNumber: FormEventHandler<HTMLInputElement> = (e) => {
 		try {
 			$form.luckyNumber = new Decimal(e.currentTarget.value);
-		} catch (error) {
+		} catch {
 			// What to do?
 		}
 	};

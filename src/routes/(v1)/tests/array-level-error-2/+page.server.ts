@@ -14,6 +14,7 @@ type FormType = {
 };
 */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const raw = {
 	name: z.string().min(1),
 	email: z.string().email(),

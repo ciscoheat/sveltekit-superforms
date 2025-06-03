@@ -189,7 +189,7 @@ export const scrollToFirstError = async <T extends Record<string, unknown>, M>(
 			if (options.selectErrorText && focusEl.tagName == 'INPUT') {
 				(focusEl as HTMLInputElement).select();
 			}
-		} catch (err) {
+		} catch {
 			// Some hidden inputs like from flatpickr cannot be focused.
 		}
 	}

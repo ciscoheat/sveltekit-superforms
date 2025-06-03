@@ -39,7 +39,7 @@
 		taintedMessage: null
 	});
 
-	$: ({ form } = superForm);
+	let { form } = superForm;
 </script>
 
 <SuperDebug data={$form} />

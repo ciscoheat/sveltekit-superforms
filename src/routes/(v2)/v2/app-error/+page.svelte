@@ -7,7 +7,7 @@
 
 	let error: string;
 
-	export const spForm = superForm(data.form, {
+	const spForm = superForm(data.form, {
 		onError: (e) => {
 			console.log(e.result);
 			// @ts-expect-error Does not follow the App.Error shape
@@ -24,9 +24,6 @@
 			: $form.exception == 'plain'
 				? '/v2/app-error/plain'
 				: undefined;
-
-	// eslint-disable-next-line svelte/valid-compile
-	$page;
 </script>
 
 <SuperDebug data={$form} />

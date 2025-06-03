@@ -8,7 +8,6 @@
 
 	export const snapshot: Snapshot = {
 		capture: () => {
-			// eslint-disable-next-line svelte/valid-compile
 			console.log('Capture', $page);
 			return capture();
 		},

@@ -16,7 +16,6 @@
 			})
 	});
 
-	// eslint-disable-next-line svelte/valid-compile
 	const { form } = superForm<z.infer<typeof postSchema>>($page.data.form, {
 		taintedMessage: 'Are you sure you want to leave?',
 		validators: zod(postSchema),

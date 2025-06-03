@@ -113,6 +113,7 @@ describe('Mapping defaults to invalid data', () => {
 
 describe('The ValidationErrors type', () => {
 	it('should work as expected', () => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const schema = z.object({
 			name: z.string().min(1),
 			birthDate: z
@@ -127,6 +128,7 @@ describe('The ValidationErrors type', () => {
 				}, 'Invalid Date')
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const data: z.infer<typeof schema> = { name: '', birthDate: { year: 0, month: 0, day: 0 } };
 		const errors: ValidationErrors<typeof data> = {};
 

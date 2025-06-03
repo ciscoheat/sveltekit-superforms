@@ -1367,7 +1367,6 @@ export function superForm<
 		Tainted.state.subscribe((tainted) => (__data.tainted = clone(tainted))),
 		// eslint-disable-next-line dci-lint/private-role-access
 		Form.subscribe((form) => (__data.form = clone(form))),
-		// eslint-disable-next-line dci-lint/private-role-access
 		Errors.subscribe((errors) => (__data.errors = clone(errors))),
 
 		FormId.subscribe((id) => (__data.formId = id)),
@@ -1671,6 +1670,7 @@ export function superForm<
 		const enhanced = kitEnhance(FormElement, async (submitParams) => {
 			let jsonData: Record<string, unknown> | undefined = undefined;
 			let validationAdapter = options.validators;
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			undefined;
 
 			const submit = {

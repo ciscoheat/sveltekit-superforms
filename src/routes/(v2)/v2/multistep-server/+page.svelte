@@ -26,7 +26,7 @@
 
 <form method="POST">
 	<!-- Separate step counter (not part of schema) -->
-	<input type="hidden" name="step" bind:value={step} />
+	<input type="hidden" name="step" value={step} />
 	<!-- Need this, since use:enhance is not added to the form and schemas are switching between steps: -->
 	<input type="hidden" name="__superform_id" bind:value={$formId} />
 	{#if step == 1}

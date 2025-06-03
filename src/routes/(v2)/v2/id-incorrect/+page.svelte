@@ -28,9 +28,6 @@
 		resetForm: true,
 		validators: zodClient(schema)
 	});
-
-	// eslint-disable-next-line svelte/valid-compile
-	$page;
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />

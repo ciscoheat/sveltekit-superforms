@@ -8,9 +8,6 @@
 	const { form, errors, message, enhance } = superForm(data.form, {
 		customValidity: true
 	});
-
-	// eslint-disable-next-line svelte/valid-compile
-	$page;
 </script>
 
 <SuperDebug data={$form} />

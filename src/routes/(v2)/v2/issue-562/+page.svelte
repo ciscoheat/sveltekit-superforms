@@ -17,6 +17,7 @@
 	// works without this, fails with it when refreshing page, not when from another page
 	export const snapshot = { capture, restore };
 
+	// eslint-disable-next-line svelte/no-inspect
 	$inspect({ $form, $proxy });
 </script>
 

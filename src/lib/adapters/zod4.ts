@@ -1,4 +1,10 @@
-import { type $ZodObject, type $ZodErrorMap, safeParseAsync, toJSONSchema } from 'zod/v4/core';
+import {
+	type $ZodObject,
+	type $ZodErrorMap,
+	safeParseAsync,
+	toJSONSchema,
+	$ZodDiscriminatedUnion
+} from 'zod/v4/core';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	type AdapterOptions,
@@ -13,6 +19,8 @@ import { memoize } from '$lib/memoize.js';
 
 type Options = NonNullable<Parameters<typeof toJSONSchema>[1]>;
 
+export type ZodValidationSchema = $ZodObject | $ZodDiscriminatedUnion<$ZodObject[]>;
+
 const defaultJSONSchemaOptions = {
 	unrepresentable: 'any',
 	override: (ctx) => {
@@ -25,11 +33,11 @@ const defaultJSONSchemaOptions = {
 } satisfies Options;
 
 /* @__NO_SIDE_EFFECTS__ */
-export const zodToJSONSchema = <S extends $ZodObject>(schema: S, options?: Options) => {
+export const zodToJSONSchema = <S extends ZodValidationSchema>(schema: S, options?: Options) => {
 	return toJSONSchema(schema, { ...defaultJSONSchemaOptions, ...options }) as JSONSchema7;
 };
 
-async function validate<T extends $ZodObject>(
+async function validate<T extends ZodValidationSchema>(
 	schema: T,
 	data: unknown,
 	error: $ZodErrorMap | undefined
@@ -48,7 +56,7 @@ async function validate<T extends $ZodObject>(
 	};
 }
 
-function _zod4<T extends $ZodObject>(
+function _zod4<T extends ZodValidationSchema>(
 	schema: T,
 	options?: AdapterOptions<Infer<T, 'zod4'>> & { error?: $ZodErrorMap; config?: Options }
 ): ValidationAdapter<Infer<T, 'zod4'>, InferIn<T, 'zod4'>> {
@@ -62,7 +70,7 @@ function _zod4<T extends $ZodObject>(
 	});
 }
 
-function _zod4Client<T extends $ZodObject>(
+function _zod4Client<T extends ZodValidationSchema>(
 	schema: T,
 	options?: { error?: $ZodErrorMap }
 ): ClientValidationAdapter<Infer<T, 'zod4'>, InferIn<T, 'zod4'>> {

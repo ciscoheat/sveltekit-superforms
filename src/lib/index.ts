@@ -1,6 +1,6 @@
 import SuperDebug from './client/SuperDebug.svelte';
 export default SuperDebug;
-export { default as SuperDebug } from './client/SuperDebugRuned.svelte';
+//export { default as SuperDebug } from './client/SuperDebugRuned.svelte';
 
 export { SuperFormError, SchemaError } from './errors.js';
 

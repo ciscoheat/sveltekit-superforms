@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebugRuned.svelte';
+	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { zod } from '$lib/adapters/zod4.js';
 	import { schema } from './schema.js';
 

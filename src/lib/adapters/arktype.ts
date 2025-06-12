@@ -1,13 +1,16 @@
 import type { type } from 'arktype';
 import {
 	type ValidationAdapter,
-	type RequiredDefaultsOptions,
 	createAdapter,
 	type ClientValidationAdapter,
 	type ValidationResult,
-	createJsonSchema
+	type AdapterOptions,
+	type Infer
 } from './adapters.js';
 import { memoize } from '$lib/memoize.js';
+import type { JSONSchema7 } from 'json-schema';
+
+type Options = Parameters<type.Any['toJsonSchema']>[0];
 
 async function modules() {
 	const { type } = await import(/* webpackIgnore: true */ 'arktype');
@@ -15,6 +18,23 @@ async function modules() {
 }
 
 const fetchModule = /* @__PURE__ */ memoize(modules);
+
+const defaultJSONSchemaOptions = {
+	fallback: {
+		default: (ctx) => ctx.base,
+		date: (ctx) => ({
+			...ctx.base,
+			type: 'string',
+			format: 'date-time',
+			description: ctx.after ? `after ${ctx.after}` : 'anytime'
+		})
+	}
+} satisfies Options;
+
+/* @__NO_SIDE_EFFECTS__ */
+export const arktypeToJSONSchema = <S extends type.Any>(schema: S, options?: Options) => {
+	return schema.toJsonSchema({ ...defaultJSONSchemaOptions, ...options }) as JSONSchema7;
+};
 
 async function _validate<T extends type.Any>(
 	schema: T,
@@ -40,12 +60,12 @@ async function _validate<T extends type.Any>(
 
 function _arktype<T extends type.Any>(
 	schema: T,
-	options: RequiredDefaultsOptions<T['infer']>
+	options?: AdapterOptions<Infer<T, 'arktype'>> & { config?: Options }
 ): ValidationAdapter<T['infer'], T['inferIn']> {
 	return createAdapter({
 		superFormValidationLibrary: 'arktype',
-		defaults: options.defaults,
-		jsonSchema: createJsonSchema(options),
+		defaults: options?.defaults,
+		jsonSchema: options?.jsonSchema ?? arktypeToJSONSchema(schema, options?.config),
 		validate: async (data) => _validate<T>(schema, data)
 	});
 }

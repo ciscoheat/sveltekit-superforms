@@ -3,10 +3,8 @@ import { message, superValidate } from '$lib/server/index.js';
 import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 
-const defaults = { name: '', email: '' };
-
 export const load = async () => {
-	const form = await superValidate(arktype(schema, { defaults }));
+	const form = await superValidate(arktype(schema));
 	return { form };
 };
 
@@ -15,7 +13,7 @@ export const actions = {
 		const formData = await request.formData();
 		console.log(formData);
 
-		const form = await superValidate(formData, arktype(schema, { defaults }));
+		const form = await superValidate(formData, arktype(schema));
 		console.log(form);
 
 		if (!form.valid) return fail(400, { form });

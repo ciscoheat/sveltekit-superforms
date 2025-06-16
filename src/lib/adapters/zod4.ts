@@ -1,9 +1,9 @@
 import {
 	type $ZodObject,
 	type $ZodErrorMap,
+	type $ZodDiscriminatedUnion,
 	safeParseAsync,
-	toJSONSchema,
-	$ZodDiscriminatedUnion
+	toJSONSchema
 } from 'zod/v4/core';
 import type { JSONSchema7 } from 'json-schema';
 import {

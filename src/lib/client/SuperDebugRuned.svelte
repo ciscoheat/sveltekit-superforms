@@ -724,12 +724,14 @@
   Other use cases includes debugging plain objects, promises, stores and more.
 
   More info: https://superforms.rocks/super-debug
+
+	This is the rune (Svelte 5) version of SuperDebug, which will be default in the next major release.
   
   **Short example:**
 
   ```svelte
   <script>
-    import { SuperDebug } from 'sveltekit-superforms';
+    import SuperDebug from 'sveltekit-superforms/SuperDebug.svelte';
     import { superForm } from 'sveltekit-superforms';
 
     const { data } = $props();

@@ -1,9 +1,9 @@
 import type { Infer, ValidationAdapter } from '$lib/adapters/adapters.js';
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '$lib/adapters/zod4.js';
 import { superValidate } from '$lib/superValidate.js';
 import { stringify } from 'devalue';
 import { assert, describe, expect, test } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 async function validate<T extends Record<string, unknown>>(
 	data: T,
@@ -21,6 +21,42 @@ async function validate<T extends Record<string, unknown>>(
 		throw err;
 	}
 }
+
+describe('New discriminatedUnion features', () => {
+	test('Unions and pipes', async () => {
+		const MyResult = z.discriminatedUnion('status', [
+			// simple literal
+			z.object({ status: z.literal('aaa'), data: z.string() }),
+			// union discriminator
+			z.object({ status: z.union([z.literal('bbb'), z.literal('ccc')]) }),
+			// pipe discriminator
+			z.object({ status: z.literal('fail').transform((val) => val.toUpperCase()) })
+		]);
+
+		const form = await validate({ status: 'bbb' }, zod(MyResult));
+		expect(form.valid).toBe(true);
+	});
+
+	test('Composed unions', async () => {
+		const BaseError = z.object({ status: z.literal('failed'), message: z.string() });
+
+		const MyResult = z.discriminatedUnion('status', [
+			z.object({ status: z.literal('success'), data: z.string() }),
+			z.discriminatedUnion('code', [
+				BaseError.extend({ code: z.literal(400) }),
+				BaseError.extend({ code: z.literal(401) }),
+				BaseError.extend({ code: z.literal(500) })
+			])
+		]);
+
+		const form = await validate({ status: 'failed', message: 'FAIL', code: 401 }, zod(MyResult));
+		expect(form.valid).toBe(true);
+
+		assert(form.data.status === 'failed');
+		assert(form.data.message === 'FAIL');
+		assert(form.data.code === 401);
+	});
+});
 
 describe('Default discriminated union values 1', () => {
 	const schema = z.discriminatedUnion('type', [

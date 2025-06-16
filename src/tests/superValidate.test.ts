@@ -483,6 +483,47 @@ describe('Valibot', () => {
 	});
 
 	/*
+	it('should handle lazy', async () => {
+		interface ChecklistItem {
+			childItems: ChecklistItem[];
+		}
+
+		//for recursive it need type GenericSchema with interface of recursive object
+		const checklistItemSchema: v.GenericSchema<ChecklistItem> = v.object({
+			childItems: v.array(v.lazy(() => checklistItemSchema)) //recursive definition
+		});
+
+		const checklistSectionSchema = v.object({
+			items: v.array(checklistItemSchema)
+		});
+
+		const form = await superValidate(
+			{
+				items: [
+					{
+						childItems: []
+					}
+				]
+			},
+			valibot(checklistSectionSchema, {
+				definitions: {
+					childItems: checklistItemSchema
+				}
+			})
+		);
+
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({
+			items: [
+				{
+					childItems: []
+				}
+			]
+		});
+	});
+	*/
+
+	/*
 	it('should work with FormPathLeaves and brand', async () => {
 		const schema = v.object({ id: v.brand(v.string(), 'Id') });
 		type T = Infer<typeof schema>;
@@ -584,7 +625,7 @@ describe('ajv', () => {
 
 /////////////////////////////////////////////////////////////////////
 
-describe('Zod', () => {
+describe('Zod 3', () => {
 	const schema = z
 		.object({
 			name: z.string().default('Unknown'),

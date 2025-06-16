@@ -19,7 +19,24 @@ import { memoize } from '$lib/memoize.js';
 
 type Options = NonNullable<Parameters<typeof toJSONSchema>[1]>;
 
-export type ZodValidationSchema = $ZodObject | $ZodDiscriminatedUnion<$ZodObject[]>;
+export type ZodValidationSchema =
+	| $ZodObject
+	| $ZodDiscriminatedUnion<
+			(
+				| $ZodObject
+				| $ZodDiscriminatedUnion<
+						(
+							| $ZodObject
+							| $ZodDiscriminatedUnion<
+									(
+										| $ZodObject
+										| $ZodDiscriminatedUnion<($ZodObject | $ZodDiscriminatedUnion<$ZodObject[]>)[]>
+									)[]
+							  >
+						)[]
+				  >
+			)[]
+	  >;
 
 const defaultJSONSchemaOptions = {
 	unrepresentable: 'any',

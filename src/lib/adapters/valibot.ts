@@ -28,6 +28,7 @@ type SupportedSchemas = GenericSchema | GenericSchemaAsync;
 const defaultOptions = {
 	strictObjectTypes: true,
 	dateStrategy: 'integer' as const,
+	bigintStrategy: 'integer' as const,
 	ignoreUnknownValidation: true,
 	customSchemaConversion: {
 		custom: () => ({}),

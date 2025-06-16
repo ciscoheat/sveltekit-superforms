@@ -117,10 +117,17 @@ function schemaTypes(
 	} else if (schema.format && conversionFormatTypes.includes(schema.format)) {
 		types.unshift(schema.format as SchemaType);
 
-		// Remove the integer type, as the schema format will be used
+		// For dates and int64 (bigint), remove the integer type, as the schema format will be used
 		// instead in the following cases
 		if (schema.format == 'unix-time' || schema.format == 'int64') {
 			const i = types.findIndex((t) => t == 'integer');
+			types.splice(i, 1);
+		}
+
+		// For bigint, remove the string type, as the schema format will be used
+		// instead in the following cases
+		if (schema.format == 'bigint') {
+			const i = types.findIndex((t) => t == 'string');
 			types.splice(i, 1);
 		}
 	}

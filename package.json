@@ -169,7 +169,7 @@
 	},
 	"optionalDependencies": {
 		"@exodus/schemasafe": "^1.3.0",
-		"@gcornut/valibot-json-schema": "^0.31.0",
+		"@gcornut/valibot-json-schema": "^0.42.0",
 		"@sinclair/typebox": "^0.34.35",
 		"@typeschema/class-validator": "^0.3.0",
 		"@vinejs/vine": "^3.0.1",

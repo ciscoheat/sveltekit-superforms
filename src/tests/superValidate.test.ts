@@ -470,6 +470,18 @@ describe('Valibot', () => {
 		).not.toThrow();
 	});
 
+	it('should handle bigint', async () => {
+		const schema = v.object({
+			id: v.bigint()
+		});
+		const data = new FormData();
+		data.set('id', '123456789123456789');
+
+		const form = await superValidate(data, valibot(schema));
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({ id: BigInt('123456789123456789') });
+	});
+
 	/*
 	it('should work with FormPathLeaves and brand', async () => {
 		const schema = v.object({ id: v.brand(v.string(), 'Id') });
@@ -976,7 +988,7 @@ describe('Zod 4', () => {
 			'enumDef'
 		]);
 		expect(adapter.defaults).toEqual({
-			nativeEnumInt: 'Apple',
+			nativeEnumInt: 7,
 			nativeEnumString: 'GREEN',
 			enum: 'a',
 			enumDef: ''
@@ -1095,6 +1107,18 @@ describe('Zod 4', () => {
 
 			expect(form.data).toEqual(row);
 		});
+	});
+
+	it('should work with bigint', async () => {
+		const schema = z4.object({
+			id: z4.bigint()
+		});
+		const data = new FormData();
+		data.set('id', '123456789123456789');
+
+		const form = await superValidate(data, zod4(schema));
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({ id: BigInt('123456789123456789') });
 	});
 
 	schemaTest(zod4(schema), undefined, undefined, undefined, 'zod4');

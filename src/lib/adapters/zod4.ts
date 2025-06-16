@@ -28,6 +28,9 @@ const defaultJSONSchemaOptions = {
 		if (def.type === 'date') {
 			ctx.jsonSchema.type = 'string';
 			ctx.jsonSchema.format = 'date-time';
+		} else if (def.type === 'bigint') {
+			ctx.jsonSchema.type = 'string';
+			ctx.jsonSchema.format = 'bigint';
 		}
 	}
 } satisfies Options;

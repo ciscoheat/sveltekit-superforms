@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - SuperDebug rune version is back, can now be imported as `import SuperDebug from 'sveltekit-superforms/SuperDebug.svelte';`
+- Fixed `bigint` handling for Zod 4 and Valibot.
 
 ## [2.26.1] - 2025-06-05
 

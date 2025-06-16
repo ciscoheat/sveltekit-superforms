@@ -144,7 +144,7 @@ const defaults = {
 /**
  * Expected constraints for libraries with introspection
  */
-function fullConstraints(library: 'zod4' | 'unknown') {
+function fullConstraints(library: 'zod4' | 'arktype' | 'unknown') {
 	const defaultConstraints = {
 		email: {
 			required: true
@@ -174,6 +174,14 @@ function fullConstraints(library: 'zod4' | 'unknown') {
 				score: {
 					...defaultConstraints.score,
 					max: Number.MAX_SAFE_INTEGER
+				}
+			};
+		case 'arktype':
+			return {
+				...defaultConstraints,
+				email: {
+					...defaultConstraints.email,
+					pattern: '^[\\w%+.-]+@[\\d.A-Za-z-]+\\.[A-Za-z]{2,}$'
 				}
 			};
 		default:
@@ -368,18 +376,39 @@ describe('Schemasafe', () => {
 /////////////////////////////////////////////////////////////////////
 
 describe('Arktype', () => {
+	it('should handle defaults, even when upgraded to full adapter', async () => {
+		const schema = type({
+			name: 'string > 2'
+		});
+		const adapter = arktype(schema, { defaults: { name: 'Test' } });
+		const form = await superValidate({}, adapter);
+		expect(form.data).toEqual({ name: 'Test' });
+	});
+
+	it('should handle bigint', async () => {
+		const schema = type({
+			id: 'bigint'
+		});
+		const adapter = arktype(schema);
+		const formData = new FormData();
+		formData.set('id', '123456789123456789');
+
+		const form = await superValidate(formData, adapter);
+		expect(form.data).toEqual({ id: 123456789123456789n });
+	});
+
 	const schema = type({
-		name: 'string',
+		name: 'string = "Unknown"',
 		email: 'string.email',
 		tags: '(string>=2)[]>=3',
 		score: 'number.integer>=0',
-		'date?': 'Date',
+		'date?': 'Date | undefined',
 		'nospace?': nospacePattern,
 		extra: 'string|null'
 	});
 
-	const adapter = arktype(schema, { defaults });
-	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
+	const adapter = arktype(schema);
+	schemaTest(adapter, ['email', 'nospace', 'tags'], undefined, undefined, 'arktype');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -1302,7 +1331,7 @@ function schemaTest(
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full',
 	dateFormat: 'Date' | 'string' | 'stringToDate' = 'Date',
-	library: 'unknown' | 'zod4' = 'unknown'
+	library: 'unknown' | 'zod4' | 'arktype' = 'unknown'
 ) {
 	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
@@ -1312,8 +1341,6 @@ function schemaTest(
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
-		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
-
 		if (errors.includes('nospace'))
 			expect(errorMessages.nospace, missingError('nospace')).toBeTruthy();
 		if (errors.includes('email')) expect(errorMessages.email, missingError('email')).toBeTruthy();

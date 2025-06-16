@@ -21,7 +21,16 @@ const fetchModule = /* @__PURE__ */ memoize(modules);
 
 const defaultJSONSchemaOptions = {
 	fallback: {
-		default: (ctx) => ctx.base,
+		default: (ctx) => {
+			if ('domain' in ctx && ctx.domain === 'bigint') {
+				return {
+					...ctx.base,
+					type: 'string',
+					format: 'bigint'
+				};
+			}
+			return ctx.base;
+		},
 		date: (ctx) => ({
 			...ctx.base,
 			type: 'string',

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The [Arktype](https://arktype.io/) adapter is finally a "full" adapter, meaning it's retrospectable and doesn't require default values anymore!
+
 ### Fixed
 
 - SuperDebug rune version is back, can now be imported as `import SuperDebug from 'sveltekit-superforms/SuperDebug.svelte';`

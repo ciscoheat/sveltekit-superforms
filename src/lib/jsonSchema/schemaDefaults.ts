@@ -244,16 +244,23 @@ type SchemaTypeObject = {
 	[Key in Exclude<string, '_types' | '_items'>]: SchemaTypeObject;
 } & SchemaFieldType;
 
-function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) {
+function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]): SchemaTypeObject {
 	if (!schema) {
 		throw new SchemaError('Schema was undefined', path);
 	}
 
 	const info = schemaInfo(schema, isOptional, path);
 
-	const output = {
+	let output = {
 		__types: info.types
 	} as SchemaTypeObject;
+
+	if (info.union) {
+		output = merge(
+			output,
+			...info.union.map((u) => _defaultTypes(u, info.isOptional, path))
+		) as SchemaTypeObject;
+	}
 
 	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
 	//else console.dir({ path, info }, { depth: 10 }); //debug

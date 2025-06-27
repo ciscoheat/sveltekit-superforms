@@ -56,6 +56,69 @@ describe('New discriminatedUnion features', () => {
 		assert(form.data.message === 'FAIL');
 		assert(form.data.code === 401);
 	});
+
+	test('A complicated union', async () => {
+		const ZodSchema2 = z.discriminatedUnion('type', [
+			z.object({
+				type: z.literal('empty')
+			}),
+			z.object({
+				type: z.literal('additional'),
+				additional: z.discriminatedUnion('type', [
+					z.object({
+						type: z.literal('poBox'),
+						name: z
+							.string()
+							.min(1, 'min len')
+							.max(10, 'max len')
+							.default(null as unknown as string)
+					}),
+					z.object({
+						type: z.literal('none')
+					})
+				])
+			})
+		]);
+
+		const FormSchema = zod(ZodSchema2);
+		type FormSchema = (typeof FormSchema)['defaults'];
+
+		{
+			const data = {
+				type: 'additional',
+				additional: {
+					// @ts-expect-error Testing with invalid data
+					type: 123,
+					name: ''
+				}
+			} satisfies FormSchema;
+
+			// @ts-expect-error Testing with invalid data
+			const form = await validate(data, FormSchema);
+			expect(form.valid).toBe(false);
+			expect(form.data).toEqual({
+				type: 'additional',
+				additional: {
+					type: 'none',
+					name: ''
+				}
+			});
+		}
+
+		{
+			const data = {
+				type: 'additional',
+				additional: {
+					type: 'poBox',
+					name: ''
+				}
+			} satisfies FormSchema;
+
+			const form = await validate(data, FormSchema);
+			expect(form.valid).toBe(false);
+			expect(form.data).toEqual(data);
+		}
+	});
 });
 
 describe('Default discriminated union values 1', () => {

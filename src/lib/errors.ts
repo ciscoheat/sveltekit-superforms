@@ -1,5 +1,5 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
-import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
+import { pathExists, setPaths, traversePath, traversePaths, type PathData } from './traversal.js';
 import { mergePath } from './stringPath.js';
 import type { ValidationErrors } from './superValidate.js';
 import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
@@ -168,6 +168,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 
 	//#region Types
 
+	// TODO: Memoize Types with _schema?
 	const Types = defaultTypes(_schema);
 
 	function Types_correctValue(dataValue: unknown, defValue: unknown, type: SchemaFieldType) {
@@ -249,11 +250,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 	//#region Defaults
 
 	function Defaults_traverseAndReplace(
-		defaultPath: {
-			path: (string | number | symbol)[];
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			value: any;
-		},
+		defaultPath: Partial<PathData>,
 		traversingErrors = false
 	): void {
 		const currentPath = defaultPath.path;

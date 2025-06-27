@@ -443,8 +443,10 @@ describe('Arktype', () => {
 				expect(form.valid).toBe(false);
 				expect(form.errors.id).toBeTruthy();
 			});
+		});
+	});
 
-  describe('with optional properties', () => {
+	describe('with optional properties', () => {
 		const schema = type({
 			name: 'string',
 			'email?': 'string.email',

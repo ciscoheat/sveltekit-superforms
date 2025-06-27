@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed client validation issue with rapid multiple blur events.
 - Arktype adapter improved.
 - Fixed union handling with default values.
+- When using `{ taint: 'untaint-form' }` option, form wasn't untainted unless it was modified.
 
 ## [2.27.0] - 2025-06-16
 

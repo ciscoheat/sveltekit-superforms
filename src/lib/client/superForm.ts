@@ -1301,36 +1301,36 @@ export function superForm<
 		//console.log('newTainted:', JSON.stringify(newTainted));
 
 		if (paths.length) {
-			if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
-				Tainted.state.set(undefined);
-			} else {
-				Tainted.state.update((currentlyTainted) => {
-					if (!currentlyTainted) currentlyTainted = {};
+			Tainted.state.update((currentlyTainted) => {
+				if (!currentlyTainted) currentlyTainted = {};
 
-					setPaths(currentlyTainted, paths, (path, data) => {
-						// If value goes back to the clean value, untaint the path
-						if (!newTainted.includes(path.join())) return undefined;
+				setPaths(currentlyTainted, paths, (path, data) => {
+					// If value goes back to the clean value, untaint the path
+					if (!newTainted.includes(path.join())) return undefined;
 
-						const currentValue = traversePath(newData, path);
-						const cleanPath = traversePath(Tainted.clean, path);
-						const identical = currentValue && cleanPath && currentValue.value === cleanPath.value;
+					const currentValue = traversePath(newData, path);
+					const cleanPath = traversePath(Tainted.clean, path);
+					const identical = currentValue && cleanPath && currentValue.value === cleanPath.value;
 
-						const output = identical
-							? undefined
-							: taintOptions === true
-								? true
-								: taintOptions === 'untaint'
-									? undefined
-									: data.value;
+					const output = identical
+						? undefined
+						: taintOptions === true
+							? true
+							: taintOptions === 'untaint'
+								? undefined
+								: data.value;
 
-						return output;
-					});
-
-					return currentlyTainted;
+					return output;
 				});
-			}
+
+				return currentlyTainted;
+			});
 
 			NextChange_setHtmlEvent({ paths });
+		}
+
+		if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
+			Tainted.state.set(undefined);
 		}
 	}
 

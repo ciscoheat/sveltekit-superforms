@@ -1,12 +1,12 @@
-import { SuperFormError, SchemaError } from './errors.js';
-import type { SuperValidateOptions } from './superValidate.js';
 import { parse } from 'devalue';
 import type { JSONSchema7Definition } from 'json-schema';
-import { schemaInfo, type SchemaInfo, type SchemaType } from './jsonSchema/schemaInfo.js';
-import { defaultValues } from './jsonSchema/schemaDefaults.js';
+import { SchemaError, SuperFormError } from './errors.js';
 import type { JSONSchema } from './index.js';
-import { setPaths } from './traversal.js';
+import { defaultValues } from './jsonSchema/schemaDefaults.js';
+import { schemaInfo, type SchemaInfo, type SchemaType } from './jsonSchema/schemaInfo.js';
 import { splitPath } from './stringPath.js';
+import type { SuperValidateOptions } from './superValidate.js';
+import { setPaths } from './traversal.js';
 import { assertSchema } from './utils.js';
 
 /**
@@ -29,6 +29,42 @@ type ParsedData = {
 
 const unionError =
 	'FormData parsing failed: Unions are only supported when the dataType option for superForm is set to "json".';
+
+/**
+ * Check if multiple types represent compatible variations of the same base type
+ */
+function isCompatibleTypeUnion(types: string[]): boolean {
+	const primaryTypes = new Set(
+		types.map((type) => {
+			if (['number', 'integer'].includes(type)) return 'number';
+			if (type === 'unix-time') return 'number';
+			return type;
+		})
+	);
+
+	return primaryTypes.size <= 1;
+}
+
+/**
+ * Check if union schema represents compatible variations of the same base type
+ */
+function isCompatibleUnionSchema(union: SchemaInfo['union']): boolean {
+	if (!union) return true;
+
+	const unionTypes = new Set(
+		union.flatMap((u) =>
+			u.type
+				? Array.isArray(u.type)
+					? u.type
+					: [u.type]
+				: u.const !== undefined
+					? [typeof u.const]
+					: []
+		)
+	);
+
+	return unionTypes.size <= 1 || (unionTypes.size === 2 && unionTypes.has('null'));
+}
 
 export async function parseRequest<T extends Record<string, unknown>>(
 	data: unknown,
@@ -195,7 +231,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return !allowFiles ? undefined : entry.size ? entry : info.isNullable ? null : undefined;
 		}
 
-		if (info.types.length > 1) {
+		if (info.types.length > 1 && !isCompatibleTypeUnion(info.types)) {
 			throw new SchemaError(unionError, key);
 		}
 
@@ -236,7 +272,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 		const entries = formData.getAll(key);
 
-		if (info.union && info.union.length > 1) {
+		if (info.union && info.union.length > 1 && !isCompatibleUnionSchema(info.union)) {
 			throw new SchemaError(unionError, key);
 		}
 

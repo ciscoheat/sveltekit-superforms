@@ -396,7 +396,55 @@ describe('Arktype', () => {
 		expect(form.data).toEqual({ id: 123456789123456789n });
 	});
 
-	describe('with optional properties', () => {
+	describe('with uuid', () => {
+		describe('with general uuid format', () => {
+			const schema = type({
+				id: 'string.uuid'
+			});
+
+			it('should handle the type', async () => {
+				const expectedUuid = '123e4567-e89b-12d3-a456-426614174000';
+				const adapter = arktype(schema);
+				const formData = new FormData();
+				formData.set('id', expectedUuid);
+
+				const form = await superValidate(formData, adapter);
+				expect(form.data).toEqual({ id: expectedUuid });
+			});
+
+			it('should preserve validation errors', async () => {
+				const adapter = arktype(schema);
+
+				const form = await superValidate({ id: 'invalid-uuid' }, adapter);
+				expect(form.valid).toBe(false);
+				expect(form.errors.id).toBeTruthy();
+			});
+		});
+
+		describe('with specific uuid format', () => {
+			const schema = type({
+				id: 'string.uuid.v7'
+			});
+
+			it('should handle the type', async () => {
+				const expectedUuid = '017f22e2-79b0-7cc5-98c4-dc0c0c07398f';
+				const adapter = arktype(schema);
+				const formData = new FormData();
+				formData.set('id', expectedUuid);
+
+				const form = await superValidate(formData, adapter);
+				expect(form.data).toEqual({ id: expectedUuid });
+			});
+
+			it('should preserve validation errors', async () => {
+				const adapter = arktype(schema);
+
+				const form = await superValidate({ id: '017f22e2-79b0-8cc5-98c4-dc0c0c07398f' }, adapter);
+				expect(form.valid).toBe(false);
+				expect(form.errors.id).toBeTruthy();
+			});
+
+  describe('with optional properties', () => {
 		const schema = type({
 			name: 'string',
 			'email?': 'string.email',

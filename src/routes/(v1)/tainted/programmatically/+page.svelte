@@ -99,6 +99,11 @@
 			);
 		}}>Three scoops, untaint all</button
 	>
+	<button
+		on:click={() => {
+			form.update(($form) => $form, { taint: 'untaint-form' });
+		}}>No modifications, just untaint</button
+	>
 </div>
 
 <style>

@@ -1,20 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import { describe, it, expect, assert, beforeEach } from 'vitest';
 import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
-import { Foo, bigZod4Schema, bigZodSchema } from './data.js';
+import { defaultValues as adapterDefaults, defaults as schemaDefaults } from '$lib/defaults.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { defaultValues as adapterDefaults } from '$lib/defaults.js';
 import {
-	withFiles,
 	message,
 	setError,
 	superValidate,
+	withFiles,
 	type SuperValidated
 } from '$lib/superValidate.js';
-import { merge } from 'ts-deepmerge';
 import { fail as kitFail } from '@sveltejs/kit';
-import { defaults as schemaDefaults } from '$lib/defaults.js';
+import { merge } from 'ts-deepmerge';
+import { assert, beforeEach, describe, expect, it } from 'vitest';
+import { Foo, bigZod4Schema, bigZodSchema } from './data.js';
 
 ///// Adapters //////////////////////////////////////////////////////
 
@@ -30,15 +29,15 @@ import * as v from 'valibot';
 import { classvalidator } from '$lib/adapters/classvalidator.js';
 import {
 	ArrayMinSize,
+	IsArray,
+	IsDate,
+	IsEmail,
+	IsInt,
 	IsOptional,
 	IsString,
-	IsEmail,
-	IsArray,
-	MinLength,
-	IsInt,
+	Matches,
 	Min,
-	IsDate,
-	Matches
+	MinLength
 } from 'class-validator';
 
 //import { ajv } from '$lib/adapters/ajv.js';
@@ -55,11 +54,11 @@ import Joi from 'joi';
 
 import { yup } from '$lib/adapters/yup.js';
 import {
-	object as yupObject,
-	string as yupString,
-	number as yupNumber,
 	array as yupArray,
-	date as yupDate
+	date as yupDate,
+	number as yupNumber,
+	object as yupObject,
+	string as yupString
 } from 'yup';
 
 import { vine } from '$lib/adapters/vine.js';
@@ -67,17 +66,17 @@ import Vine from '@vinejs/vine';
 
 import { superstruct } from '$lib/adapters/superstruct.js';
 import {
-	object as ssObject,
-	string as ssString,
-	number as ssNumber,
 	array as ssArray,
 	date as ssDate,
-	optional as ssOptional,
 	define as ssDefine,
-	size as ssSize,
 	min as ssMin,
+	nullable as ssNullable,
+	number as ssNumber,
+	object as ssObject,
+	optional as ssOptional,
 	pattern as ssPattern,
-	nullable as ssNullable
+	size as ssSize,
+	string as ssString
 } from 'superstruct';
 
 import { schemasafe } from '$lib/adapters/schemasafe.js';
@@ -85,9 +84,9 @@ import { schemasafe } from '$lib/adapters/schemasafe.js';
 import { effect } from '$lib/adapters/effect.js';
 import { Schema } from 'effect';
 
-import { traversePath } from '$lib/traversal.js';
-import { splitPath } from '$lib/stringPath.js';
 import { SchemaError, type JSONSchema } from '$lib/index.js';
+import { splitPath } from '$lib/stringPath.js';
+import { traversePath } from '$lib/traversal.js';
 import type { $ZodRawIssue } from 'zod/v4/core';
 
 ///// Test data /////////////////////////////////////////////////////
@@ -444,6 +443,63 @@ describe('Arktype', () => {
 				expect(form.valid).toBe(false);
 				expect(form.errors.id).toBeTruthy();
 			});
+
+  describe('with optional properties', () => {
+		const schema = type({
+			name: 'string',
+			'email?': 'string.email',
+			'age?': 'number'
+		});
+
+		it('should handle omitted properties', async () => {
+			const expectedData = { name: 'Jane', age: 30 };
+			const adapter = arktype(schema);
+
+			const form = await superValidate(expectedData, adapter);
+			expect(form.valid).toBe(true);
+			expect(form.data).toEqual(expectedData);
+		});
+
+		it('should raise invalid errors for undefined values', async () => {
+			const adapter = arktype(schema);
+
+			const externalData: Record<string, unknown> = { name: 'Jane', email: undefined, age: 30 };
+			const form = await superValidate(externalData, adapter);
+			expect(form.valid).toBe(false);
+			expect(form.errors.email).toBeTruthy();
+		});
+
+		it('should handle nested properties', async () => {
+			const nestedSchema = type({
+				user: {
+					name: 'string',
+					'profile?': {
+						'bio?': 'string',
+						'avatar?': 'string'
+					}
+				}
+			});
+			const expectedData = {
+				user: {
+					name: 'John',
+					profile: {
+						bio: 'Developer'
+					}
+				}
+			};
+			const adapter = arktype(nestedSchema);
+
+			const form = await superValidate(expectedData, adapter);
+			expect(form.valid).toBe(true);
+			expect(form.data).toEqual(expectedData);
+		});
+
+		it('should preserve validation errors', async () => {
+			const adapter = arktype(schema);
+
+			const form = await superValidate({ name: 'John', email: 'invalid-email' }, adapter);
+			expect(form.valid).toBe(false);
+			expect(form.errors.email).toBeTruthy();
 		});
 	});
 

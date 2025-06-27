@@ -1631,6 +1631,11 @@ export function superForm<
 			// Need to wait for immediate updates due to some timing issue
 			if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
 
+			// If lastInputChange is undefined, someone set it to undefined before the preceding timeout, in which case we can ignore this blur event.
+			if (lastInputChange === undefined) {
+				return;
+			}
+
 			Form_clientValidation({
 				paths: lastInputChange,
 				immediate: info.multiple,

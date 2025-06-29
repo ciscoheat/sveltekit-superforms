@@ -249,10 +249,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 
 	//#region Defaults
 
-	function Defaults_traverseAndReplace(
-		defaultPath: Partial<PathData>,
-		traversingErrors = false
-	): void {
+	function Defaults_traverseAndReplace(defaultPath: Partial<PathData>, traversingErrors = false) {
 		const currentPath = defaultPath.path;
 		if (!currentPath || !currentPath[0]) return;
 		if (typeof currentPath[0] === 'string' && preprocessed?.includes(currentPath[0])) return;
@@ -292,7 +289,11 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 
 			const fieldType = pathTypes.value ?? defaultType;
 			if (fieldType) {
-				Data_setValue(currentPath, Types_correctValue(dataValue, defValue, fieldType));
+				const corrected = Types_correctValue(dataValue, defValue, fieldType);
+				// If same value, skip the potential nested path as it's already correct.
+				if (corrected === dataValue) return 'skip';
+
+				Data_setValue(currentPath, corrected);
 			}
 		}
 	}

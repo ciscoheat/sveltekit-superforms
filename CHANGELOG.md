@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Nested data traversal for correcting invalid types didn't stop at a valid value, replacing paths with default data further down the tree.
+
 ## [2.27.1] - 2025-06-27
 
 ### Fixed

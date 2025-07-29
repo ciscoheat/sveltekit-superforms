@@ -3,7 +3,7 @@
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 	import { zod } from '$lib/adapters/zod.js';
-	import { ZodIssueCode } from 'zod';
+	import { ZodIssueCode } from 'zod/v3';
 	import { schema } from './schema.js';
 
 	export let data;

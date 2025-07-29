@@ -2,7 +2,7 @@ import { superValidate, message } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const schema = z
 	.object({

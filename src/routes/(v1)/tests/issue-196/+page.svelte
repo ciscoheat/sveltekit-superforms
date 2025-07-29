@@ -2,7 +2,7 @@
 	import { superForm, defaults } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/zod.js';
 
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 
 	const childSchema = z.object({
 		option: z.enum(['', 'one', 'two', 'three'])

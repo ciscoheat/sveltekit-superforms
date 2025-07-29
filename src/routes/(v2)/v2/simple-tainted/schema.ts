@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Define at the top-level so it stays in memory and the adapter can be cached
 export const schema = z.object({

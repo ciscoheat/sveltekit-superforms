@@ -4,7 +4,7 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import type { schema } from './schemas.js';
 	import { page } from '$app/stores';
-	import type { z } from 'zod';
+	import type { z } from 'zod/v3';
 
 	export let data: PageData;
 

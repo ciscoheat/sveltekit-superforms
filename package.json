@@ -127,7 +127,7 @@
 		"svelte": "3.x || 4.x || >=5.0.0-next.51",
 		"valibot": "^1.0.0",
 		"yup": "^1.4.0",
-		"zod": "^3.25.0"
+    "zod": "^3.25.0 || ^4.0.0"
 	},
 	"peerDependenciesMeta": {
 		"@exodus/schemasafe": {

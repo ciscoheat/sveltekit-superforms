@@ -5,7 +5,7 @@
 <script lang="ts" generics="Schema extends ZodSchema">
 	import { defaults, superForm } from '$lib/index.js';
 	import { zod } from '$lib/adapters/zod.js';
-	import { z, ZodSchema } from 'zod';
+	import { z, ZodSchema } from 'zod/v3';
 
 	type SchemaObject = z.infer<Schema>;
 	export let schema: Schema;

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const inviteUserToGroupSchema = z.object({
 	username: z.string().min(2)

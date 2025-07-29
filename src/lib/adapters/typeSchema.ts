@@ -14,7 +14,7 @@ import type {
 	InferOutput as Output
 } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
-import type { ZodTypeAny, input, output } from 'zod';
+import type { ZodTypeAny, input, output } from 'zod/v3';
 import type { $ZodType, input as zod4Input, output as zod4Output } from 'zod/v4/core';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';

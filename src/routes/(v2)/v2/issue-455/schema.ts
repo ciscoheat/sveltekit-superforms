@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 // @ts-expect-error Need to use .mjs, explanation: https://stackoverflow.com/a/77108389/70894
 import { zodI18nMap } from 'zod-i18n-map/dist/index.mjs';
 import translation from 'zod-i18n-map/locales/es/zod.json?raw';

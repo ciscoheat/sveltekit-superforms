@@ -1,7 +1,7 @@
 import { zod } from '$lib/adapters/zod.js';
 import { superValidate } from '$lib/superValidate.js';
 import { expect, test, describe } from 'vitest';
-import { z, type AnyZodObject } from 'zod';
+import { z, type AnyZodObject } from 'zod/v3';
 
 type ModeTest = {
 	name: string;

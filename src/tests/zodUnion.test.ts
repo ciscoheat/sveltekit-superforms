@@ -3,7 +3,7 @@ import { zod } from '$lib/adapters/zod.js';
 import { superValidate } from '$lib/superValidate.js';
 import { stringify } from 'devalue';
 import { assert, describe, expect, test } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 async function validate<T extends Record<string, unknown>>(
 	data: T,

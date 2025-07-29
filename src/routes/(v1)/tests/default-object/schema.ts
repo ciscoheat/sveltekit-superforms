@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const questionSchema = z.object({
 	text: z.string().min(2, 'Ask a longer question.'),

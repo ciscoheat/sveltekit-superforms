@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const overallValidation = (data: { name: string; email: string }): boolean => {
 	const result = !!data.name || !!data.email;

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const exampleSchema = z.object({
 	radioGroup: z.boolean().default(false),

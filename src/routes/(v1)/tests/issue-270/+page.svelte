@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 
 	export let data;
 

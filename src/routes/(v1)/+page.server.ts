@@ -1,6 +1,6 @@
 import { superValidate } from '$lib/superValidate.js';
 import { zod } from '$lib/adapters/zod.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { error, fail } from '@sveltejs/kit';
 import { redirect } from 'sveltekit-flash-message/server';
 import { RateLimiter } from 'sveltekit-rate-limiter/server';

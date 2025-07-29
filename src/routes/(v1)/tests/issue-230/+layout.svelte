@@ -4,7 +4,7 @@
 	import { zod } from '$lib/adapters/zod.js';
 
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 
 	const schema = z.object({
 		name: z.string().min(1),

@@ -4,7 +4,7 @@ import { zod } from '$lib/adapters/zod.js';
 
 import type { Actions, PageServerLoad } from './$types.js';
 import { schema, type Message } from './utils.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 ///// Load function /////
 

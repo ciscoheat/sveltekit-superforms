@@ -1,4 +1,4 @@
-import { type ZodErrorMap, type ZodType, type ZodTypeDef } from 'zod';
+import { type ZodErrorMap, type ZodType, type ZodTypeDef } from 'zod/v3';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	type AdapterOptions,

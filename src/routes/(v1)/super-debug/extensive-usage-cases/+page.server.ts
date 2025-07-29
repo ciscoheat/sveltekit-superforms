@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
 

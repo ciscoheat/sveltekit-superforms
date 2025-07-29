@@ -3,7 +3,7 @@ import { zod } from '$lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const schema = z.object({
 	id: z.number().int().positive().default(NaN)

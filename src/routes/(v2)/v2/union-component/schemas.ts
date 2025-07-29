@@ -1,5 +1,5 @@
 import type { Infer } from '$lib/index.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const eventSchema = z.object({
 	name: z.string(),

@@ -1299,6 +1299,51 @@ describe('Zod 4', () => {
 		expect(form.data).toEqual({ id: BigInt('123456789123456789') });
 	});
 
+	it('should work with date and an array of objects', async () => {
+		const data = {
+			date: new Date('2023-10-01T00:00:00Z'),
+			items: [
+				{ id: 1, product: 'Product A' },
+				{ id: 2, product: 'Product B' },
+				{ id: 'bad' } as unknown as { id: number; product: string }
+			]
+		};
+
+		// -------------------------------
+		const schema4 = z4.object({
+			date: z4.date(),
+			items: z4.array(
+				z4.object({
+					id: z4.number(),
+					product: z4.string()
+				})
+			)
+		});
+
+		const form4 = await superValidate(data, zod4(schema4), {
+			errors: false
+		});
+
+		const z3 = z;
+
+		// -------------------------------
+		const schema3 = z3.object({
+			date: z3.date(),
+			items: z3.array(
+				z3.object({
+					id: z3.number(),
+					product: z3.string()
+				})
+			)
+		});
+		const form3 = await superValidate(data, zod(schema3), {
+			errors: false
+		});
+
+		expect(form4.data.date).toEqual(data.date);
+		expect(form3.data).toEqual(form4.data);
+	});
+
 	schemaTest(zod4(schema), undefined, undefined, undefined, 'zod4');
 });
 

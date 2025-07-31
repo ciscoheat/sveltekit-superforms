@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { v4 } from 'uuid';
 import { zod } from '$lib/adapters/zod.js';
 import { superValidate } from '$lib/superValidate.js';

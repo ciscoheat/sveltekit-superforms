@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/zod.js';

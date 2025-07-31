@@ -18,7 +18,7 @@ import { Foo, bigZod4Schema, bigZodSchema } from './data.js';
 ///// Adapters //////////////////////////////////////////////////////
 
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
-import { z, type ZodErrorMap } from 'zod';
+import { z, type ZodErrorMap } from 'zod/v3';
 
 import { zod as zod4, zodToJSONSchema as zod4ToJSONSchema } from '$lib/adapters/zod4.js';
 import { z as z4 } from 'zod/v4';

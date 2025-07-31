@@ -4,7 +4,7 @@ import { schemaInfo } from '$lib/jsonSchema/schemaInfo.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape, shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';

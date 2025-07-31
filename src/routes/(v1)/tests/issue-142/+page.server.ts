@@ -4,7 +4,7 @@ import type { SuperValidated } from '$lib/index.js';
 
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const load = async () => {
 	const form = await superValidate(zod(schema));

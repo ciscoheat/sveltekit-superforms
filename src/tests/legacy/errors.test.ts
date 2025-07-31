@@ -2,7 +2,7 @@ import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
 import { setError, superValidate } from '$lib/superValidate.js';
 import { expect, test, describe, assert } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 describe('Errors', async () => {
 	const schema = z.object({

@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	//import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 	import type { Schema } from './schema.js';
 	import { superformClient } from '$lib/adapters/superform.js';
 

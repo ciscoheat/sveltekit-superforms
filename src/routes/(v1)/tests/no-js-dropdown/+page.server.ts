@@ -2,7 +2,7 @@ import { message, superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import type { Actions, PageServerLoad } from './$types.js';
 

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // See https://zod.dev/?id=primitives for schema syntax
 export const userSchema = z.object({

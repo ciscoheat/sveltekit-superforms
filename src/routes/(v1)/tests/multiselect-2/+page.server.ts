@@ -4,7 +4,7 @@ import { zod } from '$lib/adapters/zod.js';
 
 import { schema } from './schema.js';
 import { error } from '@sveltejs/kit';
-import type { z } from 'zod';
+import type { z } from 'zod/v3';
 
 const groups = [
 	{

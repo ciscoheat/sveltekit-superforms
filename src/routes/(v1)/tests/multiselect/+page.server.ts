@@ -5,7 +5,7 @@ import { zod } from '$lib/adapters/zod.js';
 import type { Actions, PageServerLoad } from './$types.js';
 
 import { formSchema } from './schemas.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate<z.infer<typeof formSchema>, { message: string }>(

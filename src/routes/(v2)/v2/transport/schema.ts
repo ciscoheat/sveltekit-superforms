@@ -1,5 +1,5 @@
 import { Decimal } from 'decimal.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { RecordId } from '../../../RecordId.js';
 
 export const schema = z.object({

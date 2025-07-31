@@ -1,5 +1,5 @@
 import { assert, describe, expect, expectTypeOf, test } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { pathExists } from '$lib/traversal.js';
 import { get, writable } from 'svelte/store';
 import { superValidate } from '$lib/superValidate.js';

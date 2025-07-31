@@ -5,7 +5,7 @@ import { schema } from './schema.js';
 import type { Actions, PageServerLoad } from './$types.js';
 import { zod } from '$lib/adapters/zod.js';
 import { userSchema, users } from './users.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const db = users();
 const union = z.union([schema, userSchema]);

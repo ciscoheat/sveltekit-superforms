@@ -3,7 +3,7 @@
 	import { zod } from '$lib/adapters/zod.js';
 
 	import { page } from '$app/stores';
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 
 	const loginSchema = z.object({
 		email: z.string().email(),

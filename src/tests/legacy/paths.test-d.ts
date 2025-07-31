@@ -11,7 +11,7 @@ import type {
 } from '$lib/stringPath.js';
 import { writable } from 'svelte/store';
 import { test } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 type Obj = {
 	name: string;

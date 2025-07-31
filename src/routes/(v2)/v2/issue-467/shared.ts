@@ -1,4 +1,4 @@
-import { object, string, z } from 'zod';
+import { object, string, z } from 'zod/v3';
 
 export const Schema1 = object({
 	value1: string().min(1)

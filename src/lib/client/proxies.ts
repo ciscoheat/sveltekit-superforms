@@ -207,7 +207,11 @@ export function filesFieldProxy<
 export function filesProxy<
 	T extends Record<string, unknown>,
 	Path extends FormPathArrays<T, File[]>
->(form: Writable<T> | SuperForm<T>, path: Path, options?: ProxyOptions & { empty?: 'null' | 'undefined' }) {
+>(
+	form: Writable<T> | SuperForm<T>,
+	path: Path,
+	options?: ProxyOptions & { empty?: 'null' | 'undefined' }
+) {
 	const formFiles = fieldProxy(form, path as any, options) as FieldProxy<
 		File[] | Nullable<T, Path> | Optional<T, Path>
 	>;

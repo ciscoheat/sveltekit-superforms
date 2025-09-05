@@ -207,14 +207,22 @@ export function filesFieldProxy<
 export function filesProxy<
 	T extends Record<string, unknown>,
 	Path extends FormPathArrays<T, File[]>
->(form: Writable<T> | SuperForm<T>, path: Path, options?: ProxyOptions) {
+>(form: Writable<T> | SuperForm<T>, path: Path, options?: ProxyOptions & { empty?: 'null' | 'undefined' }) {
 	const formFiles = fieldProxy(form, path as any, options) as FieldProxy<
 		File[] | Nullable<T, Path> | Optional<T, Path>
 	>;
 	const filesProxy = writable<FileList>(browser ? new DataTransfer().files : ({} as FileList));
+	let initialized = false;
+	let initialValue: File[] | null | undefined;
 
 	formFiles.subscribe((files) => {
 		if (!browser) return;
+
+		if (!initialized) {
+			initialValue = options?.empty ? (options.empty === 'undefined' ? undefined : null) : files;
+			initialized = true;
+		}
+
 		const dt = new DataTransfer();
 
 		if (Array.isArray(files)) {
@@ -244,13 +252,17 @@ export function filesProxy<
 				filesProxy.set(dt.files);
 				formFiles.set(files);
 			} else {
-				const output: File[] = [];
-				for (let i = 0; i < files.length; i++) {
-					const file = files.item(i);
-					if (file) output.push(file);
+				if (files.length > 0) {
+					const output: File[] = [];
+					for (let i = 0; i < files.length; i++) {
+						const file = files.item(i);
+						if (file) output.push(file);
+					}
+					filesProxy.set(files);
+					formFiles.set(output);
+				} else {
+					formFiles.set(initialValue as File[]);
 				}
-				filesProxy.set(files);
-				formFiles.set(output);
 			}
 		},
 		update(updater: Updater<File[] | Nullable<T, Path> | Optional<T, Path>>) {

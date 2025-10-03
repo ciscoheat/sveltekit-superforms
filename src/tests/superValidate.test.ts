@@ -1095,7 +1095,10 @@ describe('Zod 4', () => {
 				message: 'Name is not OK'
 			});
 
-		const form = await superValidate({ name: 'Test' }, zod4(schema));
+		// Check if issue #626 is fixed
+		type Validated = SuperValidated<Infer<typeof schema>>;
+
+		const form: Validated = await superValidate({ name: 'Test' }, zod4(schema));
 
 		expect(form.errors).toEqual({
 			_errors: ['Name is not OK']

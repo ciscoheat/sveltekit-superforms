@@ -24,7 +24,7 @@
 {$page.params.category}
 
 <form method="POST" use:enhance>
-	{#each [...$page.params.category] as letter}
+	{#each [...($page.params.category ?? '')] as letter}
 		<input name={letter} type="text" bind:value={$form[letter]} />
 	{/each}
 

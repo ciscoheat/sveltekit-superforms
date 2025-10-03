@@ -1321,7 +1321,7 @@ describe('Zod 4', () => {
 		});
 
 		const z4adapter = zod4(schema4);
-		console.dir(z4adapter.jsonSchema, { depth: null });
+		//console.dir(z4adapter.jsonSchema, { depth: null });
 
 		const form4 = await superValidate(data, z4adapter, {
 			errors: false
@@ -1341,7 +1341,7 @@ describe('Zod 4', () => {
 		});
 
 		const z3adapter = zod(schema3);
-		console.dir(z3adapter.jsonSchema, { depth: null });
+		//console.dir(z3adapter.jsonSchema, { depth: null });
 
 		const form3 = await superValidate(data, z3adapter, {
 			errors: false

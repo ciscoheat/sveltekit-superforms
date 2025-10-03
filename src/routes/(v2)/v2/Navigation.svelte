@@ -79,7 +79,8 @@
 		'vine',
 		'timeproxy',
 		'tainted-null-random',
-		'issue-588'
+		'issue-588',
+		'customrequest-validate'
 	].sort();
 </script>
 

@@ -43,8 +43,8 @@ const defaultJSONSchemaOptions = {
 	override: (ctx) => {
 		const def = ctx.zodSchema._zod.def;
 		if (def.type === 'date') {
-			ctx.jsonSchema.type = 'string';
-			ctx.jsonSchema.format = 'date-time';
+			ctx.jsonSchema.type = 'integer';
+			ctx.jsonSchema.format = 'unix-time';
 		} else if (def.type === 'bigint') {
 			ctx.jsonSchema.type = 'string';
 			ctx.jsonSchema.format = 'bigint';

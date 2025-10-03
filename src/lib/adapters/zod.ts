@@ -9,7 +9,7 @@ import {
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
-import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
+import { zodToJsonSchema as zodToJson, type Options } from '@finom/zod-to-json-schema';
 import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {

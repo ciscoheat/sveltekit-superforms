@@ -1236,6 +1236,7 @@ export function superForm<
 		if (shouldRedirect && nav.to) {
 			try {
 				Tainted.forceRedirection = true;
+				//@ts-expect-error Possible SvelteKit breaking change, it worked before.
 				await goto(nav.to.url, { ...nav.to.params });
 				return;
 			} finally {

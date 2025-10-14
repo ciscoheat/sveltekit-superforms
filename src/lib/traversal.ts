@@ -10,6 +10,11 @@ export type PathData = {
 };
 
 function setPath<T extends object>(parent: T, key: keyof T, value: any) {
+	// Prevent prototype injection
+	if (key === '__proto__' || key === 'prototype') {
+		throw new Error("Cannot set an object's `__proto__` or `prototype` property");
+	}
+
 	parent[key] = value;
 	return 'skip' as const;
 }
@@ -190,6 +195,12 @@ export function setPaths(
 			}
 			return parent[key];
 		});
-		if (leaf) leaf.parent[leaf.key] = isFunction ? value(path, leaf) : value;
+		if (leaf) {
+			// Prevent prototype injection
+			if (leaf.key === '__proto__' || leaf.key === 'prototype') {
+				throw new Error("Cannot set an object's `__proto__` or `prototype` property");
+			}
+			leaf.parent[leaf.key] = isFunction ? value(path, leaf) : value;
+		}
 	}
 }

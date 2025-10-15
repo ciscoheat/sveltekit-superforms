@@ -52,6 +52,12 @@ export function traversePath<T extends object>(
 	modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
 	if (!realPath.length) return undefined;
+
+	// Prevent prototype injection
+	if (realPath.includes('__proto__') || realPath.includes('prototype')) {
+		throw new Error("Cannot set an object's `__proto__` or `prototype` property");
+	}
+
 	const path = [realPath[0]];
 
 	let parent = obj;

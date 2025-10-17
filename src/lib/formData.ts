@@ -130,7 +130,7 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 		convert.append(key, value);
 	}
 
-	const output = parseFormData(convert, schemaData, options);
+	const output = parseFormData(convert, schemaData, options, true);
 
 	// Set posted to false since it's a URL
 	output.posted = false;
@@ -140,7 +140,8 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 export function parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
 	schemaData: JSONSchema,
-	options?: SuperValidateOptions<T>
+	options?: SuperValidateOptions<T>,
+	fromURL = false
 ): ParsedData {
 	function tryParseSuperJson() {
 		if (formData.has('__superform_json')) {
@@ -183,7 +184,7 @@ export function parseFormData<T extends Record<string, unknown>>(
 		? { id, data, posted: true }
 		: {
 				id,
-				data: _parseFormData(formData, schemaData, options),
+				data: _parseFormData(formData, schemaData, options, fromURL),
 				posted: true
 			};
 }
@@ -191,7 +192,8 @@ export function parseFormData<T extends Record<string, unknown>>(
 function _parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
 	schema: JSONSchema,
-	options?: SuperValidateOptions<T>
+	options?: SuperValidateOptions<T>,
+	fromURL = false
 ) {
 	const output: Record<string, unknown> = {};
 
@@ -221,10 +223,12 @@ function _parseFormData<T extends Record<string, unknown>>(
 		);
 	}
 
-	function parseSingleEntry(key: string, entry: FormDataEntryValue, info: SchemaInfo) {
+	function parseSingleEntry(key: string, entry: FormDataEntryValue | undefined, info: SchemaInfo) {
 		if (options?.preprocessed && options.preprocessed.includes(key as keyof T)) {
 			return entry;
 		}
+
+		console.log(`Parsing entry for key "${key}":`, entry); //debug
 
 		if (entry && typeof entry !== 'string') {
 			const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;
@@ -237,7 +241,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 		let [type] = info.types;
 
-		if (!info.types.length && info.schema.enum) {
+		if (entry && !info.types.length && info.schema.enum) {
 			// Special case for Typescript enums
 			// If the entry is an integer, parse it as such, otherwise string
 			if (info.schema.enum.includes(entry)) type = 'string';
@@ -246,7 +250,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			}
 		}
 
-		return parseFormDataEntry(key, entry, type ?? 'any', info);
+		return parseFormDataEntry(key, entry, type ?? 'any', info, fromURL);
 	}
 
 	const defaultPropertyType =
@@ -308,17 +312,18 @@ function _parseFormData<T extends Record<string, unknown>>(
 
 function parseFormDataEntry(
 	key: string,
-	value: string,
+	value: string | undefined,
 	type: Exclude<SchemaType, 'null'>,
-	info: SchemaInfo
+	info: SchemaInfo,
+	fromURL = false
 ): unknown {
-	//console.log(`Parsing FormData ${key} (${type}): "${value}"`, info); //debug
+	console.log(`Parsing FormData ${key} (${type}): ${value ? `"${value}"` : 'undefined'}`, info); //debug
 
 	if (!value) {
-		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
+		console.log(`No FormData for "${key}" (${type}).`, info); //debug
 
-		// Special case for booleans with default value true
-		if (type == 'boolean' && info.isOptional && info.schema.default === true) {
+		// Special case for booleans with default value true, *when posted* (not from URL)
+		if (!fromURL && type == 'boolean' && info.isOptional && info.schema.default === true) {
 			return false;
 		}
 

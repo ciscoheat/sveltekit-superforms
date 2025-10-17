@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Possibly fixed the SuperDebug broken import on Svelte 5 in enforced runes mode (#599)[https://github.com/ciscoheat/sveltekit-superforms/issues/599]
+- Possibly fixed the SuperDebug broken import on Svelte 5 in enforced runes mode [#599](https://github.com/ciscoheat/sveltekit-superforms/issues/599)
+- Zod 4 error messages should now take the current locale into account as default. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618), [#639](https://github.com/ciscoheat/sveltekit-superforms/issues/639)
 
 ## [2.27.4] - 2025-10-14
 

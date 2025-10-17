@@ -3,7 +3,8 @@ import {
 	type $ZodErrorMap,
 	type $ZodDiscriminatedUnion,
 	safeParseAsync,
-	toJSONSchema
+	toJSONSchema,
+	config
 } from 'zod/v4/core';
 import type { JSONSchema7 } from 'json-schema';
 import {
@@ -62,6 +63,8 @@ async function validate<T extends ZodValidationSchema>(
 	data: unknown,
 	error: $ZodErrorMap | undefined
 ): Promise<ValidationResult<Infer<T, 'zod4'>>> {
+	// Use Zod's global config error map if none provided to preserve custom messages.
+	if (error === undefined) error = config().localeError;
 	const result = await safeParseAsync(schema, data, { error });
 	if (result.success) {
 		return {

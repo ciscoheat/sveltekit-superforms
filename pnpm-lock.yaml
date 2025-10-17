@@ -136,9 +136,6 @@ importers:
       '@gcornut/valibot-json-schema':
         specifier: ^0.42.0
         version: 0.42.0(esbuild@0.25.10)(typescript@5.9.3)
-      '@sinclair/typebox':
-        specifier: ^0.34.41
-        version: 0.34.41
       '@typeschema/class-validator':
         specifier: ^0.3.0
         version: 0.3.0(@types/json-schema@7.0.15)(class-validator@0.14.2)
@@ -163,6 +160,9 @@ importers:
       superstruct:
         specifier: ^2.0.2
         version: 2.0.2
+      typebox:
+        specifier: ^1.0.36
+        version: 1.0.36
       valibot:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.9.3)
@@ -668,9 +668,6 @@ packages:
 
   '@sideway/pinpoint@2.0.0':
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
-
-  '@sinclair/typebox@0.34.41':
-    resolution: {integrity: sha512-6gS8pZzSXdyRHTIqoqSVknxolr1kzfy4/CeDnrzsVz8TTIWUbOBr6gnzOmTYJ3eXQNh4IYHIGi5aIL7sOZ2G/g==}
 
   '@standard-schema/spec@1.0.0':
     resolution: {integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==}
@@ -1653,6 +1650,9 @@ packages:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
 
+  typebox@1.0.36:
+    resolution: {integrity: sha512-2HwWb84g7YPvKwt8UMNxryW67Y2vviB40nixOOXtWPQz/i0Ol/K//s0OqOXRD/EtqseWfOTFZQyCdyhxFLQX8Q==}
+
   typescript-eslint@8.45.0:
     resolution: {integrity: sha512-qzDmZw/Z5beNLUrXfd0HIW6MzIaAV5WNDxmMs9/3ojGOpYavofgNAAD/nC6tGV2PczIi0iw8vot2eAe/sBn7zg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -2172,9 +2172,6 @@ snapshots:
     optional: true
 
   '@sideway/pinpoint@2.0.0':
-    optional: true
-
-  '@sinclair/typebox@0.34.41':
     optional: true
 
   '@standard-schema/spec@1.0.0': {}
@@ -3204,6 +3201,9 @@ snapshots:
       prelude-ls: 1.2.1
 
   type-fest@2.19.0:
+    optional: true
+
+  typebox@1.0.36:
     optional: true
 
   typescript-eslint@8.45.0(eslint@9.36.0)(typescript@5.9.3):

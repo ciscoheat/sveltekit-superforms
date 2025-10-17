@@ -1,4 +1,4 @@
-import type { TSchema, Static as Static$1 } from '@sinclair/typebox';
+import type { TSchema, Static as Static$1 } from 'typebox';
 import type { type } from 'arktype';
 import type { AnySchema } from 'joi';
 import type {

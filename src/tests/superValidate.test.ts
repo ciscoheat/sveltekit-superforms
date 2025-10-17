@@ -46,8 +46,8 @@ import {
 import { arktype } from '$lib/adapters/arktype.js';
 import { type } from 'arktype';
 
-import { typebox } from '$lib/adapters/typebox.js';
-import { Type } from '@sinclair/typebox';
+import { typebox, Date as TypeBoxDate } from '$lib/adapters/typebox.js';
+import { Type } from 'typebox';
 
 import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
@@ -241,7 +241,7 @@ describe('TypeBox', () => {
 		email: Type.String({ format: 'email' }),
 		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
 		score: Type.Integer({ minimum: 0 }),
-		date: Type.Optional(Type.Date()),
+		date: Type.Optional(TypeBoxDate()),
 		nospace: Type.Optional(Type.String({ pattern: '^\\S*$' })),
 		extra: Type.Union([Type.String(), Type.Null()])
 	});

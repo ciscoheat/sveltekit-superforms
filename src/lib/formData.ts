@@ -228,7 +228,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			return entry;
 		}
 
-		console.log(`Parsing entry for key "${key}":`, entry); //debug
+		//console.log(`Parsing entry for key "${key}":`, entry); //debug
 
 		if (entry && typeof entry !== 'string') {
 			const allowFiles = legacyMode ? options?.allowFiles === true : options?.allowFiles !== false;
@@ -317,10 +317,10 @@ function parseFormDataEntry(
 	info: SchemaInfo,
 	fromURL = false
 ): unknown {
-	console.log(`Parsing FormData ${key} (${type}): ${value ? `"${value}"` : 'undefined'}`, info); //debug
+	//console.log(`Parsing FormData ${key} (${type}): ${value ? `"${value}"` : 'undefined'}`, info); //debug
 
 	if (!value) {
-		console.log(`No FormData for "${key}" (${type}).`, info); //debug
+		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 
 		// Special case for booleans with default value true, *when posted* (not from URL)
 		if (!fromURL && type == 'boolean' && info.isOptional && info.schema.default === true) {

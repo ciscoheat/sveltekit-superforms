@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { Type } from 'typebox';
 
 export const schema = Type.Object({
 	name: Type.String({ minLength: 2 }),

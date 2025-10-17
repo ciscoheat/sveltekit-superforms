@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- TypeBox adapter has been bumped to 1.0! Check the [migration guide](https://github.com/sinclairzx81/typebox/blob/main/changelog/1.0.0-migration.md) to upgrade. Note that if you need to stay on 0.x for a while, you cannot upgrade to this version of Superforms.
+
 ### Fixed
 
 - Possibly fixed the SuperDebug broken import on Svelte 5 in enforced runes mode [#599](https://github.com/ciscoheat/sveltekit-superforms/issues/599)

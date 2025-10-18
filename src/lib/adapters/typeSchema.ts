@@ -115,9 +115,9 @@ interface JoiResolver extends Resolver {
 }
 
 interface TypeBoxResolver extends Resolver {
-	base: TSchema;
-	input: this['schema'] extends TSchema ? Static$1<this['schema']> : never;
-	output: this['schema'] extends TSchema ? Static$1<this['schema']> : never;
+	base: TSchema & { '~kind': string };
+	input: this['schema'] extends TSchema & { '~kind': string } ? Static$1<this['schema']> : never;
+	output: this['schema'] extends TSchema & { '~kind': string } ? Static$1<this['schema']> : never;
 }
 
 interface ValibotResolver extends Resolver {

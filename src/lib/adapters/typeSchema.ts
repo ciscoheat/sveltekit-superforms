@@ -15,7 +15,7 @@ import type {
 } from 'valibot';
 import type { Schema as Schema$2, InferType } from 'yup';
 import type { ZodTypeAny, input, output } from 'zod/v3';
-import type { $ZodType, input as zod4Input, output as zod4Output } from 'zod/v4/core';
+import type { $ZodType as $Zod4Type, input as zod4Input, output as zod4Output } from 'zod/v4/core';
 import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
 import type { Struct, Infer as Infer$2 } from 'superstruct';
@@ -93,14 +93,20 @@ type CustomSchema<T = any> = (data: unknown) => Promise<T> | T;
 interface CustomResolver extends Resolver {
 	base: CustomSchema;
 	input: this['schema'] extends CustomSchema
-		? keyof this['schema'] extends never
-			? Awaited<ReturnType<this['schema']>>
-			: never
+		? // Exclude schemas that are Zod types (they have _def property)
+			this['schema'] extends { _def: unknown }
+			? never
+			: keyof this['schema'] extends never
+				? Awaited<ReturnType<this['schema']>>
+				: never
 		: never;
 	output: this['schema'] extends CustomSchema
-		? keyof this['schema'] extends never
-			? Awaited<ReturnType<this['schema']>>
-			: never
+		? // Exclude schemas that are Zod types (they have _def property)
+			this['schema'] extends { _def: unknown }
+			? never
+			: keyof this['schema'] extends never
+				? Awaited<ReturnType<this['schema']>>
+				: never
 		: never;
 }
 
@@ -135,11 +141,10 @@ interface ZodResolver extends Resolver {
 }
 
 interface Zod4Resolver extends Resolver {
-	base: $ZodType;
-	input: this['schema'] extends $ZodType ? zod4Input<this['schema']> : never;
-	output: this['schema'] extends $ZodType ? zod4Output<this['schema']> : never;
+	base: $Zod4Type;
+	input: this['schema'] extends $Zod4Type ? zod4Input<this['schema']> : never;
+	output: this['schema'] extends $Zod4Type ? zod4Output<this['schema']> : never;
 }
-
 interface VineResolver extends Resolver {
 	base: SchemaTypes;
 	input: this['schema'] extends SchemaTypes
@@ -229,14 +234,20 @@ export type Registry = {
 };
 
 type Infer<TSchema extends Schema, Keys extends keyof Registry = keyof Registry> = UnknownIfNever<
-	{
-		[K in Keys]: IfDefined<InferOutput<Registry[K], TSchema>>;
-	}[Keys]
+	// If schema has _zod property, it's Zod v4 - use only zod4 resolver
+	TSchema extends { _zod: unknown }
+		? IfDefined<InferOutput<Registry['zod4'], TSchema>>
+		: {
+				[K in Keys]: IfDefined<InferOutput<Registry[K], TSchema>>;
+			}[Keys]
 >;
 type InferIn<TSchema extends Schema, Keys extends keyof Registry = keyof Registry> = UnknownIfNever<
-	{
-		[K in Keys]: IfDefined<InferInput<Registry[K], TSchema>>;
-	}[Keys]
+	// If schema has _zod property, it's Zod v4 - use only zod4 resolver
+	TSchema extends { _zod: unknown }
+		? IfDefined<InferInput<Registry['zod4'], TSchema>>
+		: {
+				[K in Keys]: IfDefined<InferInput<Registry[K], TSchema>>;
+			}[Keys]
 >;
 
 /*

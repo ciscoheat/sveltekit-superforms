@@ -2,7 +2,7 @@
 
 **AI Agent Documentation for sveltekit-superforms**
 
-This document provides essential information for AI agents (like GitHub Copilot, Claude, ChatGPT, etc.) working with the sveltekit-superforms codebase. Last updated: October 17, 2025.
+This document provides essential information for AI agents (like GitHub Copilot, Claude, ChatGPT, etc.) working with the sveltekit-superforms codebase. Last updated: October 18, 2025.
 
 ---
 
@@ -29,7 +29,7 @@ The library uses a **validation adapter pattern** to support multiple validation
 
 **Supported Libraries:**
 
-- Zod (v3 via `zod.ts`, v4 via `zod4.ts`) ⚠️ Zod v4 has known open issues
+- Zod (v3 via `zod.ts`, v4 via `zod4.ts`)
 - Valibot, Yup, Joi, ArkType, Effect, TypeBox, Superstruct, VineJS
 - class-validator, schemasafe, simple-schema
 - JSON Schema (direct)
@@ -145,7 +145,7 @@ src/
 ├── lib/
 │   ├── adapters/           # Validation library adapters
 │   │   ├── zod.ts          # Zod v3 adapter
-│   │   ├── zod4.ts         # Zod v4 adapter ⚠️
+│   │   ├── zod4.ts         # Zod v4 adapter
 │   │   ├── valibot.ts, yup.ts, joi.ts, etc.
 │   │   └── adapters.ts     # Core adapter types
 │   ├── client/             # Client-side code (browser)
@@ -190,21 +190,6 @@ src/
 
 ## Known Issues & Important Notes
 
-### ⚠️ Zod v4 Open Issues (as of Oct 2025)
-
-There are **5 open GitHub issues** specifically related to Zod v4 adapter:
-
-1. **#629** - Date field validation fails with `dateProxy` ("expected date, received string")
-   - Impact: datetime-local inputs don't work with zod4 + dateProxy
-2. **#639** - Error messages are always "Invalid Input" in dev mode
-   - Impact: Generic errors instead of localized messages (works in production)
-3. **#594** - Schema shape creation fails for some zod/v4 schemas
-   - Impact: "No shape could be created for schema" error with certain schema types
-4. **#618** - Invalid URL returns non-descriptive "Invalid input"
-   - Impact: URL validation error messages are generic with zod4
-5. **#633** - Boolean defaults incorrectly when validating URL
-   - Impact: Boolean schema with `default(true)` becomes `false` for URL validation
-
 **Adapter-specific notes:**
 
 - Zod v4 adapter has special JSON Schema handling for `date` (→ integer/unix-time) and `bigint` (→ string) in `src/lib/adapters/zod4.ts`
@@ -216,11 +201,9 @@ There are **5 open GitHub issues** specifically related to Zod v4 adapter:
 
 2. **Circular Dependency Warning** (#350): Using `@sveltejs/adapter-node` produces circular dependency warnings during build (doesn't break functionality).
 
-3. **SuperDebug Import**: Import from `'sveltekit-superforms'` (Svelte 5) or `'sveltekit-superforms/client/SuperDebug.svelte'` (Svelte 4).
+3. **Multiple Forms**: When using multiple forms on same page with different schemas, no ID required. With same schema, set unique `id` in options.
 
-4. **Multiple Forms**: When using multiple forms on same page with different schemas, no ID required. With same schema, set unique `id` in options.
-
-5. **Nested Data**: Requires `dataType: 'json'` option and `use:enhance`. Without JS, only flat structures work (HTML FormData limitation).
+4. **Nested Data**: Requires `dataType: 'json'` option and `use:enhance`. Without JS, only flat structures work (HTML FormData limitation).
 
 ---
 
@@ -475,28 +458,15 @@ pnpm run check:adapters  # Verify adapter types exist
 
 See `CHANGELOG.md` for full history.
 
-**Recent Zod v4 related changes:**
-
-- Zod 4 adapter added with `zod4` and `zod4Client` exports
-- Fixed date JSON Schema format for Zod 4 (was incorrect)
-- Fixed bigint handling for Zod 4 and Valibot
-- Zod 4 adapter now handles top-level discriminated unions
-- Note: "Check migrations carefully and please report any bugs" (from changelog)
-
-**Dependencies:**
-
-- Peer dependency: `zod ^3.25.0 || ^4.0.0` (supports both)
-- Optional dev dependency: `zod ^4.1.11`
-
 ---
 
 ## Final Notes
 
-This is a mature, widely-used library (v2.27.4) with comprehensive documentation. The codebase is well-structured but complex, especially `superForm.ts`. When making changes:
+This is a mature, widely-used library with comprehensive documentation. The codebase is well-structured but complex, especially `superForm.ts`. When making changes:
 
 - **Always run tests** (`pnpm test`)
 - **Check for TypeScript errors** (`pnpm run check`)
-- **Consider backward compatibility** (many users depend on this)
+- **Consider backward compatibility** many users depend on this, but adapters should in general only support the latest version of its validation library.
 - **Document breaking changes** clearly
 - **Test across validation libraries** if modifying adapter system
 

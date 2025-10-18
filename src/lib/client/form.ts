@@ -1,7 +1,8 @@
-import { isElementInViewport, scrollToAndCenter } from './elements.js';
-import type { FormOptions } from './superForm.js';
+import { afterNavigate } from '$app/navigation';
 import { onDestroy, tick } from 'svelte';
 import type { Writable } from 'svelte/store';
+import { isElementInViewport, scrollToAndCenter } from './elements.js';
+import type { FormOptions } from './superForm.js';
 
 enum FetchStatus {
 	Idle = 0,
@@ -119,6 +120,11 @@ export function Form<T extends Record<string, unknown>, M>(
 			ErrorTextEvents_removeErrorTextListeners();
 			completed({ cancelled: true });
 		});
+
+		afterNavigate(() => {
+			ErrorTextEvents_removeErrorTextListeners();
+			completed({ cancelled: false });
+		})
 
 		return {
 			submitting() {

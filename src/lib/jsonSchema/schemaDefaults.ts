@@ -217,6 +217,10 @@ export function defaultValue(type: SchemaType, enumType: unknown[] | undefined):
 		case 'int64':
 		case 'bigint':
 			return BigInt(0);
+		case 'stringbool':
+			// For stringbool, return empty string - let Zod validation handle it
+			// The schema should define a default if one is needed
+			return '';
 		case 'set':
 			return new Set();
 		case 'map':
@@ -226,7 +230,6 @@ export function defaultValue(type: SchemaType, enumType: unknown[] | undefined):
 		case 'undefined':
 		case 'any':
 			return undefined;
-
 		default:
 			throw new SchemaError(
 				'Schema type or format not supported, requires explicit default value: ' + type

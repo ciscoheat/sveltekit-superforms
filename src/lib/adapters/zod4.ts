@@ -49,6 +49,50 @@ const defaultJSONSchemaOptions = {
 		} else if (def.type === 'bigint') {
 			ctx.jsonSchema.type = 'string';
 			ctx.jsonSchema.format = 'bigint';
+		} else if (def.type === 'pipe') {
+			// Handle z.stringbool() - it's a pipe from string->transform->boolean
+			// Colin Hacks explained: stringbool is just string -> transform -> boolean
+			// When io:'input', we see the string schema; when io:'output', we see boolean
+			const pipeDef = def as typeof def & { in: any; out: any };
+			const inSchema = pipeDef.in;
+			const outSchema = pipeDef.out;
+
+			// Check if it's: string -> (transform or pipe) -> boolean
+			if (inSchema?._zod?.def.type === 'string') {
+				// Traverse through the output side (right) to find if it ends in boolean
+				let currentSchema = outSchema;
+				let isStringBool = false;
+
+				// Traverse through transforms and pipes to find boolean
+				while (currentSchema?._zod?.def) {
+					const currentDef = currentSchema._zod.def;
+					if (currentDef.type === 'boolean') {
+						isStringBool = true;
+						break;
+					} else if (currentDef.type === 'transform') {
+						// Transform doesn't have a nested schema, but we can't traverse further
+						// Check if the transform is inside another pipe
+						break;
+					} else if (currentDef.type === 'pipe') {
+						// Continue traversing the pipe
+						const nestedPipeDef = currentDef as typeof currentDef & { out: any };
+						currentSchema = nestedPipeDef.out;
+					} else {
+						break;
+					}
+				}
+
+				// Also check if outSchema directly is boolean
+				if (!isStringBool && outSchema?._zod?.def.type === 'boolean') {
+					isStringBool = true;
+				}
+
+				if (isStringBool) {
+					// Mark as stringbool so FormData parser knows to handle it as string
+					ctx.jsonSchema.type = 'string';
+					ctx.jsonSchema.format = 'stringbool';
+				}
+			}
 		} else if (def.type === 'set') {
 			// Handle z.set() - convert to array with uniqueItems
 			ctx.jsonSchema.type = 'array';

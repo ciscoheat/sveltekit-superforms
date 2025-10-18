@@ -14,7 +14,8 @@ export type SchemaType =
 	| 'set'
 	| 'map'
 	| 'null'
-	| 'undefined';
+	| 'undefined'
+	| 'stringbool';
 
 export type SchemaInfo = {
 	types: Exclude<SchemaType, 'null'>[];
@@ -28,7 +29,16 @@ export type SchemaInfo = {
 	required?: string[];
 };
 
-const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set', 'map', 'int64'];
+const conversionFormatTypes = [
+	'unix-time',
+	'bigint',
+	'any',
+	'symbol',
+	'set',
+	'map',
+	'int64',
+	'stringbool'
+];
 
 /**
  * Normalizes the different kind of schema variations (anyOf, union, const null, etc)
@@ -130,6 +140,13 @@ function schemaTypes(
 		if (schema.format == 'bigint') {
 			const i = types.findIndex((t) => t == 'string');
 			types.splice(i, 1);
+		}
+
+		// For stringbool, remove the string type, as the schema format will be used
+		// stringbool should be treated as a special string that validates to boolean
+		if (schema.format == 'stringbool') {
+			const i = types.findIndex((t) => t == 'string');
+			if (i !== -1) types.splice(i, 1);
 		}
 	}
 

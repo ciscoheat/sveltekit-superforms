@@ -363,6 +363,10 @@ function parseFormDataEntry(
 			return parseFloat(value ?? '');
 		case 'boolean':
 			return Boolean(value == 'false' ? '' : value).valueOf();
+		case 'stringbool':
+			// Zod's z.stringbool() - keep as string, let Zod validate it
+			// This prevents Superforms from coercing to boolean before Zod can validate
+			return value;
 		case 'unix-time': {
 			// Must return undefined for invalid dates due to https://github.com/Rich-Harris/devalue/issues/51
 			const date = new Date(value ?? '');

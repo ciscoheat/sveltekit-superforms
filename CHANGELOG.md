@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed loading timers when the `timeoutMS` setting is triggered and a redirect response is returned. [#622](https://github.com/ciscoheat/sveltekit-superforms/issues/622)
 - `filesStore` initialValue now matches `fileStore`. [#637](https://github.com/ciscoheat/sveltekit-superforms/issues/637)
 - Fixed JSON Schema for non-representable types in Zod 4 adapter, it now handles `Set` and `Map` properly. [#617](https://github.com/ciscoheat/sveltekit-superforms/issues/617)
 - Possibly fixed the SuperDebug broken import on Svelte 5 in enforced runes mode [#599](https://github.com/ciscoheat/sveltekit-superforms/issues/599)

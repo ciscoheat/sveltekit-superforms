@@ -124,7 +124,7 @@ export function Form<T extends Record<string, unknown>, M>(
 		afterNavigate(() => {
 			ErrorTextEvents_removeErrorTextListeners();
 			completed({ cancelled: false });
-		})
+		});
 
 		return {
 			submitting() {

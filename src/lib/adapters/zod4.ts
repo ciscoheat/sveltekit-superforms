@@ -49,6 +49,40 @@ const defaultJSONSchemaOptions = {
 		} else if (def.type === 'bigint') {
 			ctx.jsonSchema.type = 'string';
 			ctx.jsonSchema.format = 'bigint';
+		} else if (def.type === 'set') {
+			// Handle z.set() - convert to array with uniqueItems
+			ctx.jsonSchema.type = 'array';
+			ctx.jsonSchema.uniqueItems = true;
+			// If there's a default value, convert Set to Array
+			if ('default' in ctx.jsonSchema && ctx.jsonSchema.default instanceof Set) {
+				ctx.jsonSchema.default = Array.from(ctx.jsonSchema.default);
+			}
+		} else if (def.type === 'map') {
+			// Handle z.map() - convert to array of [key, value] tuples
+			ctx.jsonSchema.type = 'array';
+			ctx.jsonSchema.format = 'map';
+			// If there's a default value, convert Map to Array
+			if ('default' in ctx.jsonSchema && ctx.jsonSchema.default instanceof Map) {
+				ctx.jsonSchema.default = Array.from(ctx.jsonSchema.default);
+			}
+		} else if (def.type === 'default') {
+			// Handle z.default() wrapping unrepresentable types
+			// The default value was already serialized by Zod, which converts Set/Map to {}
+			// We need to get the original value and convert it properly
+			const innerDef = def.innerType._zod.def;
+			if (innerDef.type === 'set' && def.defaultValue instanceof Set) {
+				// Set the proper schema type for sets
+				ctx.jsonSchema.type = 'array';
+				ctx.jsonSchema.uniqueItems = true;
+				// Convert the default value from Set to Array
+				ctx.jsonSchema.default = Array.from(def.defaultValue);
+			} else if (innerDef.type === 'map' && def.defaultValue instanceof Map) {
+				// Set the proper schema type for maps
+				ctx.jsonSchema.type = 'array';
+				ctx.jsonSchema.format = 'map';
+				// Convert the default value from Map to Array of tuples
+				ctx.jsonSchema.default = Array.from(def.defaultValue);
+			}
 		}
 	}
 } satisfies Options;

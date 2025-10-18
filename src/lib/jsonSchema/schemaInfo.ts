@@ -12,6 +12,7 @@ export type SchemaType =
 	| 'any'
 	| 'symbol'
 	| 'set'
+	| 'map'
 	| 'null'
 	| 'undefined';
 
@@ -27,7 +28,7 @@ export type SchemaInfo = {
 	required?: string[];
 };
 
-const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set', 'int64'];
+const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set', 'map', 'int64'];
 
 /**
  * Normalizes the different kind of schema variations (anyOf, union, const null, etc)
@@ -112,8 +113,8 @@ function schemaTypes(
 	}
 
 	if (types.includes('array') && schema.uniqueItems) {
-		const i = types.findIndex((t) => t != 'array');
-		types[i] = 'set';
+		const i = types.findIndex((t) => t === 'array');
+		if (i !== -1) types[i] = 'set';
 	} else if (schema.format && conversionFormatTypes.includes(schema.format)) {
 		types.unshift(schema.format as SchemaType);
 

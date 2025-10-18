@@ -176,6 +176,8 @@ function formatDefaultValue(type: SchemaType, value: unknown) {
 	switch (type) {
 		case 'set':
 			return Array.isArray(value) ? new Set(value) : value;
+		case 'map':
+			return Array.isArray(value) ? new Map(value) : value;
 		case 'Date':
 		case 'date':
 		case 'unix-time':
@@ -217,6 +219,8 @@ export function defaultValue(type: SchemaType, enumType: unknown[] | undefined):
 			return BigInt(0);
 		case 'set':
 			return new Set();
+		case 'map':
+			return new Map();
 		case 'symbol':
 			return Symbol();
 		case 'undefined':

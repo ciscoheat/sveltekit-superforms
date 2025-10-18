@@ -290,11 +290,11 @@ describe('Default values', () => {
 			productId: 0,
 			productName: '',
 			price: 234,
-			tags: [],
-			dimensions: { length: 0, width: 0, height: 0 }
+			tags: new Set(),
+			dimensions: { length: 0, width: 0, height: 0 },
+			warehouseLocation: undefined
 		});
 	});
-
 	it('should map the default value of a union (anyOf) if only one default value exists.', () => {
 		expect(defaultValues(defaultTestSchema)).toEqual({
 			gender: 'other',

@@ -65,7 +65,10 @@ describe('FormData parsing', () => {
 
 		expect(parsed.posted).toEqual(true);
 		expect(parsed.data.date.toISOString().substring(0, 10)).toBe('2023-12-02');
-		expect({ ...parsed.data, date: undefined }).toEqual({ ...data, date: undefined });
+
+		// The set field should be a Set (which removes duplicates)
+		const expectedData = { ...data, date: undefined, set: new Set(['a', 'b', 'c']) };
+		expect({ ...parsed.data, date: undefined }).toEqual(expectedData);
 	});
 
 	it('should throw an error if literals are different from the other types', () => {

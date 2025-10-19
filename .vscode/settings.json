@@ -1,1 +1,5 @@
-{}
+{
+	"eslint.useFlatConfig": true,
+	"eslint.enable": true,
+	"eslint.validate": ["javascript", "typescript", "svelte"]
+}

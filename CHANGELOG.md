@@ -5,25 +5,24 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.28.0] - 2025-10-19
+
+### Changed
+
+- TypeBox adapter has been bumped to 1.0! Check the [migration guide](https://github.com/sinclairzx81/typebox/blob/main/changelog/1.0.0-migration.md) to upgrade. Note that if you must stay on 0.x for a while, you cannot upgrade to this version of Superforms.
 
 ### Added
 
 - Added support for Zod 4 [stringbools](https://zod.dev/api?id=stringbool). [#610](https://github.com/ciscoheat/sveltekit-superforms/issues/610)
 
-### Changed
-
-- TypeBox adapter has been bumped to 1.0! Check the [migration guide](https://github.com/sinclairzx81/typebox/blob/main/changelog/1.0.0-migration.md) to upgrade. Note that if you need to stay on 0.x for a while, you cannot upgrade to this version of Superforms.
-
 ### Fixed
 
 - Fixed loading timers when the `timeoutMS` setting is triggered and a redirect response is returned. [#622](https://github.com/ciscoheat/sveltekit-superforms/issues/622)
 - `filesStore` initialValue now matches `fileStore`. [#637](https://github.com/ciscoheat/sveltekit-superforms/issues/637)
-- Fixed JSON Schema for non-representable types in Zod 4 adapter, it now handles `Set` and `Map` properly. [#617](https://github.com/ciscoheat/sveltekit-superforms/issues/617)
+- Fixed JSON Schema for some non-representable types in Zod 4 adapter, it now handles `set` and `map` properly. [#617](https://github.com/ciscoheat/sveltekit-superforms/issues/617)
 - Possibly fixed the SuperDebug broken import on Svelte 5 in enforced runes mode [#599](https://github.com/ciscoheat/sveltekit-superforms/issues/599)
 - Zod 4 error messages should now take the current locale into account as default. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618), [#639](https://github.com/ciscoheat/sveltekit-superforms/issues/639)
 - Zod 3 fix for URL parsing - A default boolean value of `true` returned `false` when parsing a URL with `superValidate`. [#633](https://github.com/ciscoheat/sveltekit-superforms/issues/633)
-- Fixed type inference with `Infer` for Zod 4
 
 ## [2.27.4] - 2025-10-14
 

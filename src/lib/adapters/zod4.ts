@@ -53,6 +53,7 @@ const defaultJSONSchemaOptions = {
 			// Handle z.stringbool() - it's a pipe from string->transform->boolean
 			// Colin Hacks explained: stringbool is just string -> transform -> boolean
 			// When io:'input', we see the string schema; when io:'output', we see boolean
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const pipeDef = def as typeof def & { in: any; out: any };
 			const inSchema = pipeDef.in;
 			const outSchema = pipeDef.out;
@@ -75,6 +76,7 @@ const defaultJSONSchemaOptions = {
 						break;
 					} else if (currentDef.type === 'pipe') {
 						// Continue traversing the pipe
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						const nestedPipeDef = currentDef as typeof currentDef & { out: any };
 						currentSchema = nestedPipeDef.out;
 					} else {
@@ -119,13 +121,15 @@ const defaultJSONSchemaOptions = {
 				ctx.jsonSchema.type = 'array';
 				ctx.jsonSchema.uniqueItems = true;
 				// Convert the default value from Set to Array
-				ctx.jsonSchema.default = Array.from(def.defaultValue);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				ctx.jsonSchema.default = Array.from(def.defaultValue as any);
 			} else if (innerDef.type === 'map' && def.defaultValue instanceof Map) {
 				// Set the proper schema type for maps
 				ctx.jsonSchema.type = 'array';
 				ctx.jsonSchema.format = 'map';
 				// Convert the default value from Map to Array of tuples
-				ctx.jsonSchema.default = Array.from(def.defaultValue);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				ctx.jsonSchema.default = Array.from(def.defaultValue as any);
 			}
 		}
 	}

@@ -20,7 +20,7 @@
 			console.log('onResult', event);
 		}
 	});
-	const { enhance, submitting, delayed, timeout, reset } = form;
+	const { enhance, submitting, delayed, timeout } = form;
 
 	const time = () => new Date().toISOString();
 

@@ -97,4 +97,5 @@ function _typeboxClient<T extends TSchema>(
 export const typebox = /* @__PURE__ */ memoize(_typebox);
 export const typeboxClient = /* @__PURE__ */ memoize(_typeboxClient);
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 const compiled = new WeakMap<TSchema, Validator<{}, TSchema>>();

@@ -16,7 +16,7 @@
 		delayMs: 500,
 		timeoutMs: 10000
 	});
-	const { enhance, submitting, delayed, timeout, reset } = form;
+	const { enhance, submitting, delayed, timeout } = form;
 
 	const time = () => new Date().toISOString();
 

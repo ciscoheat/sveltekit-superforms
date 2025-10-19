@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for Zod 4 [stringbools](https://zod.dev/api?id=stringbool). [#610](https://github.com/ciscoheat/sveltekit-superforms/issues/610)
+- `booleanProxy` now supports the `empty` option.
 
 ### Fixed
 

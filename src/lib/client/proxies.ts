@@ -64,7 +64,7 @@ const defaultOptions = {
 export function booleanProxy<T extends Record<string, unknown>, Path extends FormPaths<T>>(
 	form: Writable<T> | SuperForm<T>,
 	path: Path,
-	options?: Prettify<Pick<DefaultOptions, 'trueStringValue' | 'taint'>>
+	options?: Prettify<Pick<DefaultOptions, 'trueStringValue' | 'empty' | 'taint'>>
 ) {
 	return _stringProxy(form, path, 'boolean', {
 		...defaultOptions,

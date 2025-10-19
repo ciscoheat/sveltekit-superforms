@@ -1,7 +1,6 @@
 import {
-	type $ZodObject,
 	type $ZodErrorMap,
-	type $ZodDiscriminatedUnion,
+	type $ZodType,
 	safeParseAsync,
 	toJSONSchema,
 	config
@@ -20,24 +19,9 @@ import { memoize } from '$lib/memoize.js';
 
 type Options = NonNullable<Parameters<typeof toJSONSchema>[1]>;
 
-export type ZodValidationSchema =
-	| $ZodObject
-	| $ZodDiscriminatedUnion<
-			(
-				| $ZodObject
-				| $ZodDiscriminatedUnion<
-						(
-							| $ZodObject
-							| $ZodDiscriminatedUnion<
-									(
-										| $ZodObject
-										| $ZodDiscriminatedUnion<($ZodObject | $ZodDiscriminatedUnion<$ZodObject[]>)[]>
-									)[]
-							  >
-						)[]
-				  >
-			)[]
-	  >;
+// More flexible type that accepts ZodObject, ZodPipe (transform), ZodEffects (refine), and discriminated unions
+// This allows for top-level .transform() and .refine() calls, fixing issue #646
+export type ZodValidationSchema = $ZodType<Record<string, unknown>>;
 
 const defaultJSONSchemaOptions = {
 	unrepresentable: 'any',

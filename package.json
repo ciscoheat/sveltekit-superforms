@@ -1,237 +1,237 @@
 {
-    "name": "sveltekit-superforms",
-    "version": "2.28.0",
-    "author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
-    "description": "Making SvelteKit forms a pleasure to use!",
-    "keywords": [
-        "sveltekit",
-        "svelte",
-        "form",
-        "validation",
-        "forms",
-        "schema",
-        "arktype",
-        "class-validator",
-        "effect",
-        "joi",
-        "json-schema",
-        "superstruct",
-        "schemasafe",
-        "typebox",
-        "valibot",
-        "vinejs",
-        "yup",
-        "zod"
-    ],
-    "license": "MIT",
-    "homepage": "https://superforms.rocks",
-    "bugs": "https://github.com/ciscoheat/sveltekit-superforms/issues",
-    "repository": {
-        "url": "https://github.com/ciscoheat/sveltekit-superforms"
-    },
-    "funding": [
-        {
-            "type": "github",
-            "url": "https://github.com/sponsors/ciscoheat"
-        },
-        {
-            "type": "ko-fi",
-            "url": "https://ko-fi.com/ciscoheat"
-        },
-        {
-            "type": "paypal",
-            "url": "https://www.paypal.com/donate/?hosted_button_id=NY7F5ALHHSVQS"
-        }
-    ],
-    "scripts": {
-        "alpha:bump": "npm version prerelease",
-        "alpha:pub": "npm publish --tag alpha",
-        "dev": "vite dev",
-        "build": "vite build && npm run prepack",
-        "preview": "vite preview",
-        "prepare": "svelte-kit sync || echo ''",
-        "prepack": "svelte-kit sync && svelte-package && publint",
-        "prepublishOnly": "npm run test && npm run lint && npm run check && npm run prepack && npm run check:adapters",
-        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-        "check:adapters": "node types-exist.js",
-        "test": "vitest run",
-        "lint": "prettier --check . && eslint .",
-        "format": "prettier --write ."
-    },
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "svelte": "./dist/index.js",
-            "default": "./dist/index.js"
-        },
-        "./client": {
-            "types": "./dist/client/index.d.ts",
-            "svelte": "./dist/client/index.js",
-            "default": "./dist/client/index.js"
-        },
-        "./client/SuperDebug.svelte": {
-            "types": "./dist/client/SuperDebug.svelte.d.ts",
-            "svelte": "./dist/client/SuperDebug.svelte"
-        },
-        "./SuperDebug.svelte": {
-            "types": "./dist/client/SuperDebugRuned.svelte.d.ts",
-            "svelte": "./dist/client/SuperDebugRuned.svelte"
-        },
-        "./server": {
-            "types": "./dist/server/index.d.ts",
-            "svelte": "./dist/server/index.js",
-            "default": "./dist/server/index.js"
-        },
-        "./adapters": {
-            "types": "./dist/adapters/index.d.ts",
-            "svelte": "./dist/adapters/index.js",
-            "default": "./dist/adapters/index.js"
-        }
-    },
-    "typesVersions": {
-        ">4.0": {
-            "index.d.ts": [
-                "./dist/index.d.ts"
-            ],
-            "server": [
-                "./dist/server/index.d.ts"
-            ],
-            "client": [
-                "./dist/client/index.d.ts"
-            ],
-            "client/SuperDebug.svelte": [
-                "./dist/client/SuperDebug.svelte.d.ts"
-            ],
-            "adapters": [
-                "./dist/adapters/index.d.ts"
-            ]
-        }
-    },
-    "files": [
-        "dist",
-        "!dist/**/*.test.*",
-        "!dist/**/*.spec.*"
-    ],
-    "peerDependencies": {
-        "@exodus/schemasafe": "^1.3.0",
-        "@sveltejs/kit": "1.x || 2.x",
-        "@typeschema/class-validator": "^0.3.0",
-        "@vinejs/vine": "^1.8.0 || ^2.0.0 || ^3.0.0",
-        "arktype": ">=2.0.0-rc.23",
-        "class-validator": "^0.14.1",
-        "effect": "^3.13.7",
-        "joi": "^17.13.1",
-        "superstruct": "^2.0.2",
-        "svelte": "3.x || 4.x || >=5.0.0-next.51",
-        "typebox": "^1.0.36",
-        "valibot": "^1.0.0",
-        "yup": "^1.4.0",
-        "zod": "^3.25.0 || ^4.0.0"
-    },
-    "peerDependenciesMeta": {
-        "@exodus/schemasafe": {
-            "optional": true
-        },
-        "typebox": {
-            "optional": true
-        },
-        "@typeschema/class-validator": {
-            "optional": true
-        },
-        "class-validator": {
-            "optional": true
-        },
-        "arktype": {
-            "optional": true
-        },
-        "joi": {
-            "optional": true
-        },
-        "superstruct": {
-            "optional": true
-        },
-        "valibot": {
-            "optional": true
-        },
-        "yup": {
-            "optional": true
-        },
-        "zod": {
-            "optional": true
-        },
-        "@vinejs/vine": {
-            "optional": true
-        },
-        "effect": {
-            "optional": true
-        }
-    },
-    "dependencies": {
-        "devalue": "^5.3.2",
-        "memoize-weak": "^1.0.2",
-        "ts-deepmerge": "^7.0.3"
-    },
-    "devDependencies": {
-        "@eslint/compat": "^1.4.0",
-        "@eslint/eslintrc": "^3.3.1",
-        "@eslint/js": "^9.36.0",
-        "@exodus/schemasafe": "^1.3.0",
-        "@sveltejs/adapter-auto": "^6.1.1",
-        "@sveltejs/kit": "^2.43.7",
-        "@sveltejs/package": "^2.5.4",
-        "@sveltejs/vite-plugin-svelte": "^6.2.1",
-        "@types/json-schema": "^7.0.15",
-        "@types/node": "^24.6.2",
-        "@types/throttle-debounce": "^5.0.2",
-        "@types/uuid": "^10.0.0",
-        "@typeschema/class-validator": "^0.3.0",
-        "@valibot/i18n": "1.0.0",
-        "@vinejs/vine": "^4.0.0",
-        "arktype": "^2.1.23",
-        "class-validator": "^0.14.2",
-        "decimal.js": "^10.6.0",
-        "effect": "^3.18.4",
-        "eslint": "^9.36.0",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-dci-lint": "^0.9.1",
-        "eslint-plugin-svelte": "^3.12.4",
-        "globals": "^16.4.0",
-        "i18next": "^25.5.3",
-        "joi": "^18.0.1",
-        "only-allow": "^1.2.1",
-        "prettier": "^3.6.2",
-        "prettier-plugin-svelte": "^3.4.0",
-        "publint": "^0.3.13",
-        "sass": "^1.93.2",
-        "superstruct": "^2.0.2",
-        "svelte": "^5.39.8",
-        "svelte-check": "^4.3.2",
-        "svelte-french-toast": "^1.2.0",
-        "sveltekit-flash-message": "^2.4.6",
-        "sveltekit-rate-limiter": "^0.7.0",
-        "throttle-debounce": "^5.0.2",
-        "tslib": "^2.8.1",
-        "typebox": "^1.0.41",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.45.0",
-        "uuid": "^11.1.0",
-        "valibot": "^1.1.0",
-        "vite": "^7.1.9",
-        "vitest": "^3.2.4",
-        "yup": "^1.7.1",
-        "zod": "^4.1.12"
-    },
-    "svelte": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "type": "module",
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "esbuild",
-            "svelte-preprocess",
-            "@parcel/watcher",
-            "@sveltejs/kit"
-        ],
-        "ignoredBuiltDependencies": []
-    }
+	"name": "sveltekit-superforms",
+	"version": "2.28.0",
+	"author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
+	"description": "Making SvelteKit forms a pleasure to use!",
+	"keywords": [
+		"sveltekit",
+		"svelte",
+		"form",
+		"validation",
+		"forms",
+		"schema",
+		"arktype",
+		"class-validator",
+		"effect",
+		"joi",
+		"json-schema",
+		"superstruct",
+		"schemasafe",
+		"typebox",
+		"valibot",
+		"vinejs",
+		"yup",
+		"zod"
+	],
+	"license": "MIT",
+	"homepage": "https://superforms.rocks",
+	"bugs": "https://github.com/ciscoheat/sveltekit-superforms/issues",
+	"repository": {
+		"url": "https://github.com/ciscoheat/sveltekit-superforms"
+	},
+	"funding": [
+		{
+			"type": "github",
+			"url": "https://github.com/sponsors/ciscoheat"
+		},
+		{
+			"type": "ko-fi",
+			"url": "https://ko-fi.com/ciscoheat"
+		},
+		{
+			"type": "paypal",
+			"url": "https://www.paypal.com/donate/?hosted_button_id=NY7F5ALHHSVQS"
+		}
+	],
+	"scripts": {
+		"alpha:bump": "npm version prerelease",
+		"alpha:pub": "npm publish --tag alpha",
+		"dev": "vite dev",
+		"build": "vite build && npm run prepack",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"prepack": "svelte-kit sync && svelte-package && publint",
+		"prepublishOnly": "npm run test && npm run lint && npm run check && npm run prepack && npm run check:adapters",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"check:adapters": "node types-exist.js",
+		"test": "vitest run",
+		"lint": "prettier --check . && eslint .",
+		"format": "prettier --write ."
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./client": {
+			"types": "./dist/client/index.d.ts",
+			"svelte": "./dist/client/index.js",
+			"default": "./dist/client/index.js"
+		},
+		"./client/SuperDebug.svelte": {
+			"types": "./dist/client/SuperDebug.svelte.d.ts",
+			"svelte": "./dist/client/SuperDebug.svelte"
+		},
+		"./SuperDebug.svelte": {
+			"types": "./dist/client/SuperDebugRuned.svelte.d.ts",
+			"svelte": "./dist/client/SuperDebugRuned.svelte"
+		},
+		"./server": {
+			"types": "./dist/server/index.d.ts",
+			"svelte": "./dist/server/index.js",
+			"default": "./dist/server/index.js"
+		},
+		"./adapters": {
+			"types": "./dist/adapters/index.d.ts",
+			"svelte": "./dist/adapters/index.js",
+			"default": "./dist/adapters/index.js"
+		}
+	},
+	"typesVersions": {
+		">4.0": {
+			"index.d.ts": [
+				"./dist/index.d.ts"
+			],
+			"server": [
+				"./dist/server/index.d.ts"
+			],
+			"client": [
+				"./dist/client/index.d.ts"
+			],
+			"client/SuperDebug.svelte": [
+				"./dist/client/SuperDebug.svelte.d.ts"
+			],
+			"adapters": [
+				"./dist/adapters/index.d.ts"
+			]
+		}
+	},
+	"files": [
+		"dist",
+		"!dist/**/*.test.*",
+		"!dist/**/*.spec.*"
+	],
+	"peerDependencies": {
+		"@exodus/schemasafe": "^1.3.0",
+		"@sveltejs/kit": "1.x || 2.x",
+		"@typeschema/class-validator": "^0.3.0",
+		"@vinejs/vine": "^1.8.0 || ^2.0.0 || ^3.0.0",
+		"arktype": ">=2.0.0-rc.23",
+		"class-validator": "^0.14.1",
+		"effect": "^3.13.7",
+		"joi": "^17.13.1",
+		"superstruct": "^2.0.2",
+		"svelte": "3.x || 4.x || >=5.0.0-next.51",
+		"typebox": "^1.0.36",
+		"valibot": "^1.0.0",
+		"yup": "^1.4.0",
+		"zod": "^3.25.0 || ^4.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@exodus/schemasafe": {
+			"optional": true
+		},
+		"typebox": {
+			"optional": true
+		},
+		"@typeschema/class-validator": {
+			"optional": true
+		},
+		"class-validator": {
+			"optional": true
+		},
+		"arktype": {
+			"optional": true
+		},
+		"joi": {
+			"optional": true
+		},
+		"superstruct": {
+			"optional": true
+		},
+		"valibot": {
+			"optional": true
+		},
+		"yup": {
+			"optional": true
+		},
+		"zod": {
+			"optional": true
+		},
+		"@vinejs/vine": {
+			"optional": true
+		},
+		"effect": {
+			"optional": true
+		}
+	},
+	"dependencies": {
+		"devalue": "^5.3.2",
+		"memoize-weak": "^1.0.2",
+		"ts-deepmerge": "^7.0.3"
+	},
+	"devDependencies": {
+		"@eslint/compat": "^1.4.0",
+		"@eslint/eslintrc": "^3.3.1",
+		"@eslint/js": "^9.36.0",
+		"@exodus/schemasafe": "^1.3.0",
+		"@sveltejs/adapter-auto": "^6.1.1",
+		"@sveltejs/kit": "^2.43.7",
+		"@sveltejs/package": "^2.5.4",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/json-schema": "^7.0.15",
+		"@types/node": "^24.6.2",
+		"@types/throttle-debounce": "^5.0.2",
+		"@types/uuid": "^10.0.0",
+		"@typeschema/class-validator": "^0.3.0",
+		"@valibot/i18n": "1.0.0",
+		"@vinejs/vine": "^4.0.0",
+		"arktype": "^2.1.23",
+		"class-validator": "^0.14.2",
+		"decimal.js": "^10.6.0",
+		"effect": "^3.18.4",
+		"eslint": "^9.36.0",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-dci-lint": "^0.9.1",
+		"eslint-plugin-svelte": "^3.12.4",
+		"globals": "^16.4.0",
+		"i18next": "^25.5.3",
+		"joi": "^18.0.1",
+		"only-allow": "^1.2.1",
+		"prettier": "^3.6.2",
+		"prettier-plugin-svelte": "^3.4.0",
+		"publint": "^0.3.13",
+		"sass": "^1.93.2",
+		"superstruct": "^2.0.2",
+		"svelte": "^5.39.8",
+		"svelte-check": "^4.3.2",
+		"svelte-french-toast": "^1.2.0",
+		"sveltekit-flash-message": "^2.4.6",
+		"sveltekit-rate-limiter": "^0.7.0",
+		"throttle-debounce": "^5.0.2",
+		"tslib": "^2.8.1",
+		"typebox": "^1.0.41",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.45.0",
+		"uuid": "^11.1.0",
+		"valibot": "^1.1.0",
+		"vite": "^7.1.9",
+		"vitest": "^3.2.4",
+		"yup": "^1.7.1",
+		"zod": "^4.1.12"
+	},
+	"svelte": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"type": "module",
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild",
+			"svelte-preprocess",
+			"@parcel/watcher",
+			"@sveltejs/kit"
+		],
+		"ignoredBuiltDependencies": []
+	}
 }

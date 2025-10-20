@@ -130,7 +130,11 @@ async function validate<T extends ZodValidationSchema>(
 	error: $ZodErrorMap | undefined
 ): Promise<ValidationResult<Infer<T, 'zod4'>>> {
 	// Use Zod's global config error map if none provided to preserve custom messages.
-	if (error === undefined) error = config().localeError;
+	// Prioritize customError over localeError when both are set.
+	if (error === undefined) {
+		const zConfig = config();
+		error = zConfig.customError ?? zConfig.localeError;
+	}
 	const result = await safeParseAsync(schema, data, { error });
 	if (result.success) {
 		return {

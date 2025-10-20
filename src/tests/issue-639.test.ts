@@ -79,4 +79,25 @@ describe('Issue #639 - Zod v4 generic error messages in dev mode', () => {
 			expect(error.toLowerCase()).not.toBe('invalid input');
 		}
 	});
+
+	test('Global custom error respected', async () => {
+		z.config({
+			customError: () => 'Global error'
+		});
+		// Schema with explicit custom error messages
+		const customSchema = z.object({
+			username: z.string().min(3)
+		});
+
+		const formData = new FormData();
+		formData.set('username', 'ab'); // Too short
+
+		const form = await superValidate(formData, zod(customSchema));
+		expect(form.valid).toBe(false);
+
+		const usernameErrors = form.errors.username ?? [];
+
+		// Verify custom messages are present
+		expect(usernameErrors).toContain('Global error');
+	});
 });

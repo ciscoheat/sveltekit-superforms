@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Zod 4 adapter: Allow top-level `.transform()` and `.refine()` in schemas. [#646](https://github.com/ciscoheat/sveltekit-superforms/issues/646).
+- Zod 4 adapter: Now respects global `customError` configuration when no explicit error map is provided. The adapter prioritizes `customError` over `localeError`. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618).
 
 ## [2.28.0] - 2025-10-19
 

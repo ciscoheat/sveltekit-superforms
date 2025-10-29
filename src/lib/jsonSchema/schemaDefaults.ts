@@ -127,10 +127,47 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		for (const [key, objSchema] of Object.entries(info.properties)) {
 			assertSchema(objSchema, [...path, key]);
 
-			const def =
-				objectDefaults && objectDefaults[key] !== undefined
-					? objectDefaults[key]
-					: _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
+			// Determine the default value for this property. If an object-level default
+			// was provided, attempt to convert it to the correct typed form using the
+			// property's schema information (e.g. convert ISO strings back to Date).
+			let def;
+			if (objectDefaults && objectDefaults[key] !== undefined) {
+				try {
+					const propInfo = schemaInfo(objSchema, !info.required?.includes(key), [...path, key]);
+					if (propInfo) {
+						// Use the first resolved type to format simple values (dates, sets, maps, bigint, symbol)
+						const propType = propInfo.types[0];
+						// If property is an object and the provided default is an object,
+						// we need to recursively process it to convert nested values (e.g. Date strings to Dates)
+						if (
+							propType === 'object' &&
+							typeof objectDefaults[key] === 'object' &&
+							objectDefaults[key] !== null &&
+							!Array.isArray(objectDefaults[key])
+						) {
+							// Create a temporary schema with the parent's default to recursively process it
+							const schemaWithDefault: JSONSchema = {
+								...objSchema,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								default: objectDefaults[key] as any
+							};
+							def = _defaultValues(schemaWithDefault, !info.required?.includes(key), [
+								...path,
+								key
+							]);
+						} else {
+							def = formatDefaultValue(propType, objectDefaults[key]);
+						}
+					} else {
+						def = objectDefaults[key];
+					}
+				} catch {
+					// If anything goes wrong determining/formatting, fall back to provided value
+					def = objectDefaults[key];
+				}
+			} else {
+				def = _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
+			}
 
 			//if (def !== undefined) output[key] = def;
 			if (output === undefined) output = {};

@@ -5,12 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.28.1] - 2025-10-19
 
 ### Fixed
 
 - Zod 4 adapter: Allow top-level `.transform()` and `.refine()` in schemas. [#646](https://github.com/ciscoheat/sveltekit-superforms/issues/646).
-- Zod 4 adapter: Now respects global `customError` configuration when no explicit error map is provided. The adapter prioritizes `customError` over `localeError`. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618).
+- Zod 4 adapter now respects global `customError` configuration when no explicit error map is provided. The adapter prioritizes `customError` over `localeError`. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618).
 - Zod 4 adapter: Fixed Default Date values in nested objects. [#650](https://github.com/ciscoheat/sveltekit-superforms/issues/650).
 
 ## [2.28.0] - 2025-10-19

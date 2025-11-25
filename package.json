@@ -169,7 +169,7 @@
 	},
 	"optionalDependencies": {
 		"@exodus/schemasafe": "^1.3.0",
-		"@finom/zod-to-json-schema": "^3.24.11",
+		"zod-v3-to-json-schema": "^4.0.0",
 		"@gcornut/valibot-json-schema": "^0.42.0",
 		"@typeschema/class-validator": "^0.3.0",
 		"@vinejs/vine": "^3.0.1",

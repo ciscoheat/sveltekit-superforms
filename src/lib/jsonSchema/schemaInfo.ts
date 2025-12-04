@@ -41,7 +41,7 @@ const conversionFormatTypes = [
 ];
 
 /**
- * Normalizes the different kind of schema variations (anyOf, union, const null, etc)
+ * Normalizes the different kind of schema variations (anyOf, oneOf, union, const null, etc)
  * to figure out the field type, optional, nullable, etc.
  */
 export function schemaInfo(
@@ -121,6 +121,9 @@ function schemaTypes(
 	if (schema.anyOf) {
 		types = schema.anyOf.flatMap((s) => schemaTypes(s, path));
 	}
+	if (schema.oneOf) {
+		types = schema.oneOf.flatMap((s) => schemaTypes(s, path));
+	}
 
 	if (types.includes('array') && schema.uniqueItems) {
 		const i = types.findIndex((t) => t === 'array');
@@ -158,6 +161,12 @@ function schemaTypes(
 }
 
 function unionInfo(schema: JSONSchema7) {
-	if (!schema.anyOf || !schema.anyOf.length) return undefined;
-	return schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	if (!schema.oneOf && !schema.anyOf) return undefined;
+	if (schema.oneOf && schema.oneOf.length) {
+		return schema.oneOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	}
+	if (schema.anyOf && schema.anyOf.length) {
+		return schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	}
+	return undefined;
 }

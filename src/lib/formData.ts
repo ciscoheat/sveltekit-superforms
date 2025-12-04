@@ -204,8 +204,8 @@ function _parseFormData<T extends Record<string, unknown>>(
 	} else {
 		let unionKeys: string[] = [];
 
-		// Special fix for union schemas, then the keys must be gathered from the objects in the union
-		if (schema.anyOf) {
+		// Special fix for (discriminated) union schemas, then the keys must be gathered from the objects in the union
+		if (schema.anyOf || schema.oneOf) {
 			const info = schemaInfo(schema, false, []);
 			if (info.union?.some((s) => s.type !== 'object')) {
 				throw new SchemaError('All form types must be an object if schema is a union.');

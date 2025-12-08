@@ -18,29 +18,16 @@ import {
 } from 'valibot';
 import { memoize } from '$lib/memoize.js';
 import {
-	type ToJSONSchemaOptions,
-	toJSONSchema as valibotToJSON
-} from '@gcornut/valibot-json-schema';
+	toJsonSchema as valibotToJSON,
+	type ConversionConfig as ToJSONSchemaOptions
+} from '@valibot/to-json-schema';
 import type { JSONSchema } from '../jsonSchema/index.js';
 
 type SupportedSchemas = GenericSchema | GenericSchemaAsync;
 
-const defaultOptions = {
-	strictObjectTypes: true,
-	dateStrategy: 'integer' as const,
-	bigintStrategy: 'integer' as const,
-	ignoreUnknownValidation: true,
-	customSchemaConversion: {
-		custom: () => ({}),
-		instance: () => ({}),
-		file: () => ({}),
-		blob: () => ({})
-	}
-} satisfies ToJSONSchemaOptions;
-
 /* @__NO_SIDE_EFFECTS__ */
-export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
-	return valibotToJSON({ ...defaultOptions, ...options }) as JSONSchema;
+export const valibotToJSONSchema = (options: ToJSONSchemaOptions & { schema: Parameters<typeof valibotToJSON>[0] }) => {
+	return valibotToJSON(options.schema, options) as JSONSchema;
 };
 
 async function _validate<T extends SupportedSchemas>(

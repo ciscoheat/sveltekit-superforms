@@ -721,3 +721,69 @@ describe('Default value types', () => {
 		});
 	});
 });
+
+describe('Discriminated unions with oneOf', () => {
+	it('should handle oneOf in schemaInfo', () => {
+		const unionSchema: JSONSchema7 = {
+			oneOf: [
+				{
+					type: 'object',
+					properties: {
+						type: { enum: ['person'] },
+						name: { type: 'string' }
+					},
+					required: ['type', 'name']
+				},
+				{
+					type: 'object',
+					properties: {
+						type: { enum: ['company'] },
+						companyName: { type: 'string' }
+					},
+					required: ['type', 'companyName']
+				}
+			]
+		};
+
+		const infos = schemaInfo(unionSchema, false, []);
+		assert(infos);
+		expect(infos.types).toEqual(['object']);
+		assert(infos.union);
+		expect(infos.union).toHaveLength(2);
+	});
+
+	it('should correctly collect union types from oneOf schemas', () => {
+		const schema = z.discriminatedUnion('type', [
+			z.object({ type: z.literal('a'), valueA: z.string() }),
+			z.object({ type: z.literal('b'), valueB: z.number() })
+		]);
+
+		const adapter = zod(schema);
+		const info = schemaInfo(adapter.jsonSchema, false, []);
+
+		assert(info);
+		expect(info.types).toContain('object');
+	});
+
+	it('should support both anyOf and oneOf union variations', () => {
+		// Test anyOf
+		const anyOfSchema: JSONSchema7 = {
+			anyOf: [{ type: 'string' }, { type: 'number' }]
+		};
+
+		const anyOfInfo = schemaInfo(anyOfSchema, false, []);
+		assert(anyOfInfo);
+		assert(anyOfInfo.union);
+		expect(anyOfInfo.union).toHaveLength(2);
+
+		// Test oneOf
+		const oneOfSchema: JSONSchema7 = {
+			oneOf: [{ type: 'string' }, { type: 'number' }]
+		};
+
+		const oneOfInfo = schemaInfo(oneOfSchema, false, []);
+		assert(oneOfInfo);
+		assert(oneOfInfo.union);
+		expect(oneOfInfo.union).toHaveLength(2);
+	});
+});

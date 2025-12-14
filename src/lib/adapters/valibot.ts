@@ -17,30 +17,33 @@ import {
 	type SetPathItem
 } from 'valibot';
 import { memoize } from '$lib/memoize.js';
-import {
-	type ToJSONSchemaOptions,
-	toJSONSchema as valibotToJSON
-} from '@gcornut/valibot-json-schema';
+import { type ConversionConfig, toJsonSchema } from '@valibot/to-json-schema';
 import type { JSONSchema } from '../jsonSchema/index.js';
 
 type SupportedSchemas = GenericSchema | GenericSchemaAsync;
 
-const defaultOptions = {
-	strictObjectTypes: true,
-	dateStrategy: 'integer' as const,
-	bigintStrategy: 'integer' as const,
-	ignoreUnknownValidation: true,
-	customSchemaConversion: {
-		custom: () => ({}),
-		instance: () => ({}),
-		file: () => ({}),
-		blob: () => ({})
+const defaultOptions: ConversionConfig = {
+	ignoreActions: ['transform', 'mime_type', 'max_size', 'min_size', 'starts_with'],
+	overrideSchema: (context) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const type = (context.valibotSchema as any).type;
+		if (type === 'date') {
+			return { type: 'integer', format: 'unix-time' };
+		}
+		if (type === 'bigint') {
+			return { type: 'string', format: 'bigint' };
+		}
+		if (type === 'file' || type === 'blob' || type === 'instance' || type === 'custom') {
+			return {};
+		}
 	}
-} satisfies ToJSONSchemaOptions;
+};
 
 /* @__NO_SIDE_EFFECTS__ */
-export const valibotToJSONSchema = (options: ToJSONSchemaOptions) => {
-	return valibotToJSON({ ...defaultOptions, ...options }) as JSONSchema;
+export const valibotToJSONSchema = (options: ConversionConfig & { schema: SupportedSchemas }) => {
+	const { schema, ...rest } = options;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return toJsonSchema(schema as any, { ...defaultOptions, ...rest }) as JSONSchema;
 };
 
 async function _validate<T extends SupportedSchemas>(
@@ -66,7 +69,7 @@ async function _validate<T extends SupportedSchemas>(
 
 function _valibot<T extends SupportedSchemas>(
 	schema: T,
-	options: Omit<ToJSONSchemaOptions, 'schema'> &
+	options: Omit<ConversionConfig, 'schema'> &
 		AdapterOptions<Infer<T, 'valibot'>> & {
 			config?: Config<GenericIssue<unknown>>;
 		} = {}
@@ -82,7 +85,7 @@ function _valibot<T extends SupportedSchemas>(
 
 function _valibotClient<T extends SupportedSchemas>(
 	schema: T,
-	options: Omit<ToJSONSchemaOptions, 'schema'> &
+	options: Omit<ConversionConfig, 'schema'> &
 		AdapterOptions<Infer<T, 'valibot'>> & {
 			config?: Config<GenericIssue<unknown>>;
 		} = {}

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced deprecated `@finom/zod-to-json-schema` with `zod-v3-to-json-schema`. [#660](https://github.com/ciscoheat/sveltekit-superforms/pull/660)
 - Migrated Valibot adapter to use the official `@valibot/to-json-schema` package. [#668](https://github.com/ciscoheat/sveltekit-superforms/pull/668)
 
 ## [2.28.1] - 2025-10-19

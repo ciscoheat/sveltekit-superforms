@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import { mergeFormUnion } from '$lib/utils.js';
@@ -6,10 +7,13 @@
 
 	let { data } = $props();
 
-	const { form, errors, message, enhance } = superForm(data.form, {
-		taintedMessage: null,
-		resetForm: true
-	});
+	const { form, errors, message, enhance } = superForm(
+		untrack(() => data.form),
+		{
+			taintedMessage: null,
+			resetForm: true
+		}
+	);
 
 	// Need to merge union so all fields are available in the form
 	const formData = $derived(mergeFormUnion(form));

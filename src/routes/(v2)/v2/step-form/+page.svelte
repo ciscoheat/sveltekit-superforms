@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { zod, zodClient } from '$lib/adapters/zod.js';
@@ -17,14 +18,17 @@
 
 	const steps = [zodClient(step1), zod(step2), zod(step3)];
 
-	const { form, errors, tainted, message, enhance, options, validateForm } = superForm(data.form, {
-		taintedMessage: false,
-		validators: steps[0],
-		resetForm: true,
-		onUpdated({ form }) {
-			if (form.valid) step = 1;
+	const { form, errors, tainted, message, enhance, options, validateForm } = superForm(
+		untrack(() => data.form),
+		{
+			taintedMessage: false,
+			validators: steps[0],
+			resetForm: true,
+			onUpdated({ form }) {
+				if (form.valid) step = 1;
+			}
 		}
-	});
+	);
 
 	// @ts-expect-error Type check
 	options.validators = zod(invalidSchema);

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { dateProxy, superForm } from '$lib/index.js';
 	import { zodClient } from '$lib/adapters/zod4.js';
 	import { v4FormSchema } from './form-schema.js';
@@ -6,9 +7,12 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const v4Form = superForm(data.v4Form, {
-		validators: zodClient(v4FormSchema)
-	});
+	const v4Form = superForm(
+		untrack(() => data.v4Form),
+		{
+			validators: zodClient(v4FormSchema)
+		}
+	);
 
 	const { errors: v4Errors, enhance: v4Enhance } = v4Form;
 	const v4DateValue = dateProxy(v4Form, 'dateTime', {

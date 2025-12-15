@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Schema } from './schemas.js';
 	import { valibotClient } from '$lib/adapters/valibot.js';
 	import { dateProxy, superForm } from '$lib/client/index.js';
 
 	let { data } = $props();
 
-	const { form, capture, restore } = superForm(data.form, {
-		validators: valibotClient(Schema)
-	});
+	const { form, capture, restore } = superForm(
+		untrack(() => data.form),
+		{
+			validators: valibotClient(Schema)
+		}
+	);
 
 	const proxy = dateProxy(form, 'date', {
 		format: 'datetime-local',

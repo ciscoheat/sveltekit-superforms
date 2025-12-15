@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import { schemasafe } from '$lib/adapters/schemasafe.js';
@@ -9,12 +10,15 @@
 
 	const validators = schemasafe(schema);
 
-	const { form, errors, constraints, message, enhance } = superForm(data.form, {
-		dataType: 'json',
-		resetForm: false,
-		validators,
-		validationMethod: 'oninput'
-	});
+	const { form, errors, constraints, message, enhance } = superForm(
+		untrack(() => data.form),
+		{
+			dataType: 'json',
+			resetForm: false,
+			validators,
+			validationMethod: 'oninput'
+		}
+	);
 </script>
 
 <SuperDebug data={{ $form, $errors, $constraints }} />

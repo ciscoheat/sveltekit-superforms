@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
@@ -14,11 +15,14 @@
 		return () => clearInterval(interval);
 	});
 
-	const { form, errors, message, enhance } = superForm(data.form, {
-		applyAction: 'never',
-		resetForm: true,
-		taintedMessage: false
-	});
+	const { form, errors, message, enhance } = superForm(
+		untrack(() => data.form),
+		{
+			applyAction: 'never',
+			resetForm: true,
+			taintedMessage: false
+		}
+	);
 </script>
 
 <SuperDebug data={$form} />

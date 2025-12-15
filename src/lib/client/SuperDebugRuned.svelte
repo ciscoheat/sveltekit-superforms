@@ -135,6 +135,7 @@
 
 	///// Collapse behavior ///////////////////////////////////////////
 
+	// svelte-ignore state_referenced_locally
 	if (browser && collapsible) setCollapse();
 
 	/**

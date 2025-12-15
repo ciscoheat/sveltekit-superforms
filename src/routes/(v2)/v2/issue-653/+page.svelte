@@ -1,15 +1,19 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 
 	let { data } = $props();
 
-	const { form, errors, message, enhance } = superForm(data.form, {
-		taintedMessage: null,
-		resetForm: true,
-		dataType: 'json'
-	});
+	const { form, errors, message, enhance } = superForm(
+		untrack(() => data.form),
+		{
+			taintedMessage: null,
+			resetForm: true,
+			dataType: 'json'
+		}
+	);
 </script>
 
 <SuperDebug data={$form} />

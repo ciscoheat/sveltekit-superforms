@@ -1,17 +1,21 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
 	let { data } = $props();
 
-	const { form, errors, enhance } = superForm(data.form, {
-		taintedMessage: null,
-		onChange(e) {
-			const id = e.get('id');
-			if (id) goto('?id=' + id);
+	const { form, errors, enhance } = superForm(
+		untrack(() => data.form),
+		{
+			taintedMessage: null,
+			onChange(e) {
+				const id = e.get('id');
+				if (id) goto('?id=' + id);
+			}
 		}
-	});
+	);
 </script>
 
 <SuperDebug data={$form} />

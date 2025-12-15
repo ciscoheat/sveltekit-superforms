@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 
 	let { data } = $props();
 
-	const form = superForm(data.form);
+	const form = superForm(untrack(() => data.form));
 	const { form: formData, errors, message, enhance, tainted, isTainted } = form;
 
 	const reset = (name: string) => {

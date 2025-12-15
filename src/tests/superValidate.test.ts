@@ -1012,6 +1012,33 @@ describe('Zod 3', () => {
 		});
 	});
 
+	// Issue #664 - z.literal should not coerce empty string to literal value
+	it('should not coerce empty FormData string to literal value', async () => {
+		const schema = z.object({ foo: z.literal('bar') });
+
+		// Test with plain object - should fail validation
+		const pojo = { foo: '' } as unknown as z.infer<typeof schema>;
+		const pojoValidated = await superValidate(pojo, zod(schema));
+		expect(pojoValidated.valid).toBe(false);
+		expect(pojoValidated.data.foo).toBe('');
+		expect(pojoValidated.errors.foo).toBeDefined();
+
+		// Test with FormData - should also fail validation (not coerce to 'bar')
+		const formData = new FormData();
+		formData.append('foo', '');
+		const formDataValidated = await superValidate(formData, zod(schema));
+		expect(formDataValidated.valid).toBe(false);
+		expect(formDataValidated.data.foo).toBe('');
+		expect(formDataValidated.errors.foo).toBeDefined();
+
+		// Test with correct value - should pass
+		const formData2 = new FormData();
+		formData2.append('foo', 'bar');
+		const formDataValidated2 = await superValidate(formData2, zod(schema));
+		expect(formDataValidated2.valid).toBe(true);
+		expect(formDataValidated2.data.foo).toBe('bar');
+	});
+
 	schemaTest(zod(schema));
 });
 
@@ -1277,6 +1304,33 @@ describe('Zod 4', () => {
 
 			expect(form.data).toEqual(row);
 		});
+	});
+
+	// Issue #664 - z.literal should not coerce empty string to literal value
+	it('should not coerce empty FormData string to literal value', async () => {
+		const schema = z4.object({ foo: z4.literal('bar') });
+
+		// Test with plain object - should fail validation
+		const pojo = { foo: '' } as unknown as z4.infer<typeof schema>;
+		const pojoValidated = await superValidate(pojo, zod4(schema));
+		expect(pojoValidated.valid).toBe(false);
+		expect(pojoValidated.data.foo).toBe('');
+		expect(pojoValidated.errors.foo).toBeDefined();
+
+		// Test with FormData - should also fail validation (not coerce to 'bar')
+		const formData = new FormData();
+		formData.append('foo', '');
+		const formDataValidated = await superValidate(formData, zod4(schema));
+		expect(formDataValidated.valid).toBe(false);
+		expect(formDataValidated.data.foo).toBe('');
+		expect(formDataValidated.errors.foo).toBeDefined();
+
+		// Test with correct value - should pass
+		const formData2 = new FormData();
+		formData2.append('foo', 'bar');
+		const formDataValidated2 = await superValidate(formData2, zod4(schema));
+		expect(formDataValidated2.valid).toBe(true);
+		expect(formDataValidated2.data.foo).toBe('bar');
 	});
 
 	it('should work with bigint', async () => {

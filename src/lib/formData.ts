@@ -372,6 +372,12 @@ function parseFormDataEntry(
 			return value;
 		}
 
+		// Issue #664: const values (z.literal) should not be used as defaults for empty strings
+		// The const is a validation constraint, not a default value
+		if ('const' in info.schema) {
+			return value;
+		}
+
 		if (defaultValue !== undefined) return defaultValue;
 
 		if (info.isNullable) return null;

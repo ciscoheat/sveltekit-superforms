@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed TypeScript type inference for discriminated unions in `ValidationErrors`. The `SuperStructArray` type now correctly handles optional properties when merged with unions, allowing proper type narrowing in templates without requiring type assertions. This fixes issues where accessing nested error properties in conditional branches would incorrectly report type errors. [#653](https://github.com/ciscoheat/sveltekit-superforms/issues/653)
+- Fixed TypeScript type inference for discriminated unions in `ValidationErrors`. [#653](https://github.com/ciscoheat/sveltekit-superforms/issues/653)
+- Fixed FormData parsing for discriminated unions, so they work properly without requiring `dataType: 'json'`. [#655](https://github.com/ciscoheat/sveltekit-superforms/issues/655)
 
 ### Changed
 

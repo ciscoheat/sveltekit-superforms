@@ -11,14 +11,24 @@ export const load: PageServerLoad = async () => {
 
 export const actions: Actions = {
 	default: async ({ request }) => {
-		const form = await superValidate(request, zod4(schema));
+		const data = await request.formData();
+		console.log('RAW FORM DATA:');
+		console.log(data);
+
+		const adapter = zod4(schema);
+		console.log('ADAPTER JSON SCHEMA:');
+		console.dir(adapter.jsonSchema, { depth: null });
+
+		const form = await superValidate(data, adapter);
+		console.log('PROCESSED FORM:');
+		console.dir(form, { depth: null });
 
 		if (!form.valid) return fail(400, { form });
 
 		if (form.data.type === 'empty') {
 			console.log('Empty name submitted');
 		} else {
-			console.log('Extra name: ' + form.data.extra.name);
+			console.log('Extra name: ' + form.data.name);
 		}
 
 		return message(form, 'Form posted successfully!');

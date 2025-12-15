@@ -198,6 +198,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 	const output: Record<string, unknown> = {};
 
 	let schemaKeys: Set<string>;
+	let discriminatedUnionSchema: JSONSchema | undefined;
 
 	if (options?.strict) {
 		schemaKeys = new Set([...formData.keys()].filter((key) => !key.startsWith('__superform_')));
@@ -212,6 +213,38 @@ function _parseFormData<T extends Record<string, unknown>>(
 			}
 
 			unionKeys = info.union?.flatMap((s) => Object.keys(s.properties ?? {})) ?? [];
+
+			// For discriminated unions, find the matching variant based on field values in FormData
+			if (info.union && info.union.length > 1) {
+				// Try to match which union variant we're dealing with by checking their properties
+				// against the FormData entries
+
+				for (const variant of info.union) {
+					const variantProps = variant.properties ?? {};
+					const variantPropKeys = Object.keys(variantProps);
+
+					// Check if this variant matches the form data
+					// A variant matches if it has at least the discriminant field, or if its properties match
+					let isMatch = true;
+
+					for (const propKey of variantPropKeys) {
+						const prop = variantProps[propKey] as JSONSchema7Definition | undefined;
+						// If the property has a const value, check if it matches the form data
+						if (typeof prop !== 'boolean' && prop?.const !== undefined) {
+							const formValue = formData.get(propKey);
+							if (formValue !== String(prop.const)) {
+								isMatch = false;
+								break;
+							}
+						}
+					}
+
+					if (isMatch) {
+						discriminatedUnionSchema = variant;
+						break;
+					}
+				}
+			}
 		}
 
 		schemaKeys = new Set(
@@ -259,9 +292,12 @@ function _parseFormData<T extends Record<string, unknown>>(
 			: ({ type: 'string' } as const);
 
 	for (const key of schemaKeys) {
-		const property: JSONSchema7Definition = schema.properties
-			? schema.properties[key]
-			: defaultPropertyType;
+		// For discriminated unions, try to get the property from the matching variant first
+		const property: JSONSchema7Definition = discriminatedUnionSchema?.properties
+			? discriminatedUnionSchema.properties[key]
+			: schema.properties
+				? schema.properties[key]
+				: defaultPropertyType;
 
 		assertSchema(property, key);
 

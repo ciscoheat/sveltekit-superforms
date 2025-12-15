@@ -1042,9 +1042,26 @@ export function superForm<
 		resetData.data = { ...resetData.data, ...opts.data };
 		if (opts.id !== undefined) resetData.id = opts.id;
 
+		// Calculate which fields should remain tainted
+		// Only untaint fields that were actually reset (reverted to initial values)
+		const currentTainted = clone(__data.tainted);
+		const newTainted: Record<string, unknown> = {};
+
+		if (currentTainted && opts.data) {
+			// When partial data is provided, only untaint fields NOT included in opts.data
+			// since opts.data contains the fields that should KEEP their current values
+			for (const key in currentTainted) {
+				if (key in opts.data) {
+					// Field is in opts.data, so it's being kept - preserve its tainted state
+					newTainted[key] = (currentTainted as Record<string, unknown>)[key];
+				}
+				// Fields not in opts.data are being reset to initial values - don't preserve tainted state
+			}
+		}
+
 		rebind({
 			form: resetData,
-			untaint: true,
+			untaint: Object.keys(newTainted).length > 0 ? (newTainted as TaintedFields<T>) : true,
 			message: opts.message,
 			keepFiles: false,
 			posted: opts.posted,

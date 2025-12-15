@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed TypeScript type inference for discriminated unions in `ValidationErrors`. [#653](https://github.com/ciscoheat/sveltekit-superforms/issues/653)
 - Fixed FormData parsing for discriminated unions, so they work properly without requiring `dataType: 'json'`. [#655](https://github.com/ciscoheat/sveltekit-superforms/issues/655)
+- `reset()` function didn't preserve tainted state for fields that are not being reset when using partial data. [#656](https://github.com/ciscoheat/sveltekit-superforms/issues/656)
 
 ### Changed
 

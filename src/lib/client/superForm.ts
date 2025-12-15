@@ -866,6 +866,18 @@ export function superForm<
 
 			const joinedPath = currentPath.join('.');
 
+			const lastPath = error.path[error.path.length - 1];
+			const isObjectError = lastPath == '_errors';
+
+			const isEventError =
+				error.value &&
+				paths.some((path) => {
+					// If array/object, any part of the path can match. If not, exact match is required
+					return isObjectError
+						? currentPath && path && currentPath.length > 0 && currentPath[0] == path[0]
+						: joinedPath == path.join('.');
+				});
+
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
 				setPaths(output, [error.path], error.value);
@@ -882,18 +894,6 @@ export function superForm<
 			}
 
 			if (force) return addError();
-
-			const lastPath = error.path[error.path.length - 1];
-			const isObjectError = lastPath == '_errors';
-
-			const isEventError =
-				error.value &&
-				paths.some((path) => {
-					// If array/object, any part of the path can match. If not, exact match is required
-					return isObjectError
-						? currentPath && path && currentPath.length > 0 && currentPath[0] == path[0]
-						: joinedPath == path.join('.');
-				});
 
 			if (isEventError && options.validationMethod == 'oninput') return addError();
 

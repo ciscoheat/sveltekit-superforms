@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed FormData parsing for discriminated unions, so they work properly without requiring `dataType: 'json'`. [#655](https://github.com/ciscoheat/sveltekit-superforms/issues/655)
 - `reset()` function didn't preserve tainted state for fields that are not being reset when using partial data. [#656](https://github.com/ciscoheat/sveltekit-superforms/issues/656)
 - Fixed FormData parsing incorrectly coercing empty strings to literal values (e.g., `z.literal("bar")`). Empty strings now properly fail validation instead of being replaced with the literal value. [#664](https://github.com/ciscoheat/sveltekit-superforms/issues/664)
+- Fixed `ReferenceError` when using `customValidity` with `validateForm({ update: true })`. [#669](https://github.com/ciscoheat/sveltekit-superforms/issues/669)
 
 ### Changed
 

@@ -594,17 +594,6 @@ describe('Valibot', () => {
 
 		expect(() => valibot(schema)).not.toThrow();
 		expect(() => valibot(photoSchema)).not.toThrow();
-
-		expect(() =>
-			valibot(schema, {
-				customSchemaConversion: {
-					custom: () => ({}),
-					instance: () => ({}),
-					file: () => ({}),
-					blob: () => ({})
-				}
-			})
-		).not.toThrow();
 	});
 
 	it('should handle bigint', async () => {

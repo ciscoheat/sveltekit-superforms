@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed TypeScript type inference for discriminated unions in `ValidationErrors`. The `SuperStructArray` type now correctly handles optional properties when merged with unions, allowing proper type narrowing in templates without requiring type assertions. This fixes issues where accessing nested error properties in conditional branches would incorrectly report type errors. [#653](https://github.com/ciscoheat/sveltekit-superforms/issues/653)
+
 ### Changed
 
 - Replaced deprecated `@finom/zod-to-json-schema` with `zod-v3-to-json-schema`. [#660](https://github.com/ciscoheat/sveltekit-superforms/pull/660)

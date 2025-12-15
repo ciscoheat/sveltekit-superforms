@@ -45,7 +45,7 @@ export function assertSchema(
 export type AllKeys<T> = T extends T ? keyof T : never;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type PickType<T, K extends AllKeys<T>> = T extends { [k in K]: any } ? T[K] : never;
+export type PickType<T, K extends AllKeys<T>> = T extends { [k in K]?: any } ? T[K] : never;
 
 /**
  * Merges a union to a single type which includes the properties of each type in the union.

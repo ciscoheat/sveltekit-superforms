@@ -433,6 +433,8 @@ pnpm run check:adapters  # Verify adapter types exist
 
 8. **Before making breaking changes:** Check for deprecation notices (e.g., `posted` field marked for removal in v3).
 
+9. **When confirmed that the issue is fixed:** Run `pnpm test && pnpm check`, if ok update or add an `[Unreleased]` section in `CHANGELOG.md`, document the changes there.
+
 ---
 
 ## Quick Reference

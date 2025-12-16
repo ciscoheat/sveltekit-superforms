@@ -153,8 +153,10 @@ interface VineResolver extends Resolver {
 	output: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
 }
 
-interface SchemasafeResolver<Schema extends JSONSchema, Data = FromSchema<Schema>>
-	extends Resolver {
+interface SchemasafeResolver<
+	Schema extends JSONSchema,
+	Data = FromSchema<Schema>
+> extends Resolver {
 	base: JSONSchema;
 	input: this['schema'] extends Schema ? Data : never;
 	output: this['schema'] extends Schema ? Data : never;

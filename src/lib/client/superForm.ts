@@ -1250,17 +1250,19 @@ export function superForm<
 			shouldRedirect = false;
 		}
 
-		if (shouldRedirect && nav.to) {
-			try {
-				Tainted.forceRedirection = true;
-				//@ts-expect-error Possible SvelteKit breaking change, it worked before.
-				await goto(nav.to.url, { ...nav.to.params });
-				return;
-			} finally {
-				// Reset forceRedirection for multiple-tainted purpose
-				Tainted.forceRedirection = false;
+		if (shouldRedirect) {
+			if (isTaintedFunction && nav.to) {
+				try {
+					Tainted.forceRedirection = true;
+					//@ts-expect-error Possible SvelteKit breaking change, it worked before.
+					await goto(nav.to.url, { ...nav.to.params });
+					return;
+				} finally {
+					// Reset forceRedirection for multiple-tainted purpose
+					Tainted.forceRedirection = false;
+				}
 			}
-		} else if (!shouldRedirect && !isTaintedFunction) {
+		} else if (!isTaintedFunction) {
 			nav.cancel();
 		}
 	}

@@ -23,7 +23,9 @@ import type { JSONSchema } from '../jsonSchema/index.js';
 type SupportedSchemas = GenericSchema | GenericSchemaAsync;
 
 const defaultOptions: ConversionConfig = {
-	ignoreActions: ['transform', 'mime_type', 'max_size', 'min_size', 'starts_with'],
+	ignoreActions: ['transform', 'mime_type', 'max_size', 'min_size', 'starts_with', 'trim'],
+	typeMode: 'input',
+	errorMode: 'ignore',
 	overrideSchema: (context) => {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const type = (context.valibotSchema as any).type;

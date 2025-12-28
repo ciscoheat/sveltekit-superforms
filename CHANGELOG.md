@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Valibot adapter now handles transformation actions (`trim`, `transform`, etc.) properly by using `typeMode: 'input'` and `errorMode: 'ignore'` as defaults. This prevents errors when schemas contain transformations. Users can override these settings by passing `typeMode` and `errorMode` options to the adapter. [#668](https://github.com/ciscoheat/sveltekit-superforms/pull/668)
+
 ## [2.29.1] - 2025-12-16
 
 ### Fixed

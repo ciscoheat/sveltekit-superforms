@@ -59,6 +59,14 @@ function _zod<T extends ZodValidation>(
 	schema: T,
 	options?: AdapterOptions<Infer<T, 'zod'>> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
 ): ValidationAdapter<Infer<T, 'zod'>, InferIn<T, 'zod'>> {
+	// Detect Zod v4 schema passed to v3 adapter
+	if ('_zod' in schema && typeof (schema as Record<string, unknown>)._zod === 'object') {
+		console.warn(
+			'[superforms] Zod v4 schema detected but using Zod v3 adapter. ' +
+				'Import { zod4 } from "sveltekit-superforms/adapters" instead of { zod } for Zod v4 support.'
+		);
+	}
+
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => {

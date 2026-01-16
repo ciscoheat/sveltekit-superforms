@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Improved error message for "No shape could be created for schema" to suggest using `zod4` adapter when applicable. [#594](https://github.com/ciscoheat/sveltekit-superforms/issues/594)
+- Added runtime detection warning when Zod v4 schema is passed to Zod v3 adapter, helping users identify adapter version mismatch. [#594](https://github.com/ciscoheat/sveltekit-superforms/issues/594)
 - Valibot adapter now handles transformation actions (`trim`, `transform`, etc.) properly by using `typeMode: 'input'` and `errorMode: 'ignore'` as defaults. This prevents errors when schemas contain transformations. Users can override these settings by passing `typeMode` and `errorMode` options to the adapter. [#668](https://github.com/ciscoheat/sveltekit-superforms/pull/668)
 
 ## [2.29.1] - 2025-12-16

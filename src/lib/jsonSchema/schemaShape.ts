@@ -16,7 +16,13 @@ export type SchemaShape = {
 export function schemaShape(schema: JSONSchema, path: string[] = []): SchemaShape {
 	const output = _schemaShape(schema, path);
 
-	if (!output) throw new SchemaError('No shape could be created for schema.', path);
+	if (!output) {
+		throw new SchemaError(
+			'No shape could be created for schema. ' +
+				'If using Zod v4, import { zod4 } from "sveltekit-superforms/adapters" instead of { zod }.',
+			path
+		);
+	}
 	return output;
 }
 

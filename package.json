@@ -186,7 +186,7 @@
 		"zod-v3-to-json-schema": "^4.0.0"
 	},
 	"dependencies": {
-		"devalue": "^5.6.1",
+		"devalue": "^5.6.2",
 		"memoize-weak": "^1.0.2",
 		"ts-deepmerge": "^7.0.3"
 	},

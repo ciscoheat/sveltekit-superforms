@@ -1991,6 +1991,10 @@ export function superForm<
 					};
 				}
 
+				// Prevent afterNavigate from resetting timers while form event
+				// handlers are running (e.g. goto() called from onUpdate). #677
+				htmlForm.setProcessingEvents(true);
+
 				for (const event of formEvents.onResult) {
 					try {
 						await event(data);
@@ -2067,6 +2071,9 @@ export function superForm<
 						}
 					}
 				}
+
+				// Re-enable afterNavigate timer resets now that event handlers are done.
+				htmlForm.setProcessingEvents(false);
 
 				if (cancelled && options.flashMessage) {
 					cancelFlash(options);

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type { RequestHandler } from './$types.js';
 import { superValidate } from '$lib/superValidate.js';
 import { zod } from '$lib/adapters/zod.js';

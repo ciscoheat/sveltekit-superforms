@@ -40,7 +40,7 @@
 			class="input"
 			type="text"
 			bind:value={$form.title}
-			aria-invalid={errors ? 'true' : undefined}
+			aria-invalid={$errors ? 'true' : undefined}
 		/>
 	</label>
 	{#if $errors.title}<div class="invalid">{$errors.title}</div>{/if}

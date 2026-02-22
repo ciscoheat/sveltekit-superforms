@@ -1,24 +1,27 @@
-import { describe, it, expect, assert, beforeEach } from 'vitest';
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
-import { Foo, bigZodSchema } from './data.js';
+import { defaultValues as adapterDefaults, defaults as schemaDefaults } from '$lib/defaults.js';
 import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
 import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { defaultValues as adapterDefaults } from '$lib/defaults.js';
 import {
-	withFiles,
 	message,
 	setError,
 	superValidate,
+	withFiles,
 	type SuperValidated
 } from '$lib/superValidate.js';
-import { merge } from 'ts-deepmerge';
 import { fail as kitFail } from '@sveltejs/kit';
-import { defaults as schemaDefaults } from '$lib/defaults.js';
+import { merge } from 'ts-deepmerge';
+import { assert, beforeEach, describe, expect, it } from 'vitest';
+import { Foo, bigZod4Schema, bigZodSchema } from './data.js';
 
 ///// Adapters //////////////////////////////////////////////////////
 
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
-import { z, type ZodErrorMap } from 'zod';
+import { z, type ZodErrorMap } from 'zod/v3';
+
+import { zod as zod4, zodToJSONSchema as zod4ToJSONSchema } from '$lib/adapters/zod4.js';
+import { z as z4 } from 'zod/v4';
 
 import { valibot } from '$lib/adapters/valibot.js';
 import * as v from 'valibot';
@@ -26,15 +29,15 @@ import * as v from 'valibot';
 import { classvalidator } from '$lib/adapters/classvalidator.js';
 import {
 	ArrayMinSize,
+	IsArray,
+	IsDate,
+	IsEmail,
+	IsInt,
 	IsOptional,
 	IsString,
-	IsEmail,
-	IsArray,
-	MinLength,
-	IsInt,
+	Matches,
 	Min,
-	IsDate,
-	Matches
+	MinLength
 } from 'class-validator';
 
 //import { ajv } from '$lib/adapters/ajv.js';
@@ -43,19 +46,19 @@ import {
 import { arktype } from '$lib/adapters/arktype.js';
 import { type } from 'arktype';
 
-import { typebox } from '$lib/adapters/typebox.js';
-import { Type } from '@sinclair/typebox';
+import { typebox, Date as TypeBoxDate } from '$lib/adapters/typebox.js';
+import { Type } from 'typebox';
 
 import { joi } from '$lib/adapters/joi.js';
 import Joi from 'joi';
 
 import { yup } from '$lib/adapters/yup.js';
 import {
-	object as yupObject,
-	string as yupString,
-	number as yupNumber,
 	array as yupArray,
-	date as yupDate
+	date as yupDate,
+	number as yupNumber,
+	object as yupObject,
+	string as yupString
 } from 'yup';
 
 import { vine } from '$lib/adapters/vine.js';
@@ -63,17 +66,17 @@ import Vine from '@vinejs/vine';
 
 import { superstruct } from '$lib/adapters/superstruct.js';
 import {
-	object as ssObject,
-	string as ssString,
-	number as ssNumber,
 	array as ssArray,
 	date as ssDate,
-	optional as ssOptional,
 	define as ssDefine,
-	size as ssSize,
 	min as ssMin,
+	nullable as ssNullable,
+	number as ssNumber,
+	object as ssObject,
+	optional as ssOptional,
 	pattern as ssPattern,
-	nullable as ssNullable
+	size as ssSize,
+	string as ssString
 } from 'superstruct';
 
 import { schemasafe } from '$lib/adapters/schemasafe.js';
@@ -81,9 +84,10 @@ import { schemasafe } from '$lib/adapters/schemasafe.js';
 import { effect } from '$lib/adapters/effect.js';
 import { Schema } from 'effect';
 
-import { traversePath } from '$lib/traversal.js';
-import { splitPath } from '$lib/stringPath.js';
 import { SchemaError, type JSONSchema } from '$lib/index.js';
+import { splitPath } from '$lib/stringPath.js';
+import { traversePath } from '$lib/traversal.js';
+import type { $ZodRawIssue } from 'zod/v4/core';
 
 ///// Test data /////////////////////////////////////////////////////
 
@@ -139,22 +143,50 @@ const defaults = {
 /**
  * Expected constraints for libraries with introspection
  */
-const fullConstraints = {
-	email: {
-		required: true
-	},
-	score: {
-		min: 0,
-		required: true
-	},
-	tags: {
-		required: true,
-		minlength: 2
-	},
-	nospace: {
-		pattern: '^\\S*$'
+function fullConstraints(library: 'zod4' | 'arktype' | 'unknown') {
+	const defaultConstraints = {
+		email: {
+			required: true
+		},
+		score: {
+			min: 0,
+			required: true
+		},
+		tags: {
+			required: true,
+			minlength: 2
+		},
+		nospace: {
+			pattern: '^\\S*$'
+		}
+	};
+
+	switch (library) {
+		case 'zod4':
+			return {
+				...defaultConstraints,
+				email: {
+					...defaultConstraints.email,
+					pattern:
+						"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+				},
+				score: {
+					...defaultConstraints.score,
+					max: Number.MAX_SAFE_INTEGER
+				}
+			};
+		case 'arktype':
+			return {
+				...defaultConstraints,
+				email: {
+					...defaultConstraints.email,
+					pattern: '^[\\w%+.-]+@[\\d.A-Za-z-]+\\.[A-Za-z]{2,}$'
+				}
+			};
+		default:
+			return defaultConstraints;
 	}
-};
+}
 
 /**
  * Expected constraints for libraries with default values, no introspection
@@ -209,7 +241,7 @@ describe('TypeBox', () => {
 		email: Type.String({ format: 'email' }),
 		tags: Type.Array(Type.String({ minLength: 2 }), { minItems: 3 }),
 		score: Type.Integer({ minimum: 0 }),
-		date: Type.Optional(Type.Date()),
+		date: Type.Optional(TypeBoxDate()),
 		nospace: Type.Optional(Type.String({ pattern: '^\\S*$' })),
 		extra: Type.Union([Type.String(), Type.Null()])
 	});
@@ -343,18 +375,148 @@ describe('Schemasafe', () => {
 /////////////////////////////////////////////////////////////////////
 
 describe('Arktype', () => {
+	it('should handle defaults, even when upgraded to full adapter', async () => {
+		const schema = type({
+			name: 'string > 2'
+		});
+		const adapter = arktype(schema, { defaults: { name: 'Test' } });
+		const form = await superValidate({}, adapter);
+		expect(form.data).toEqual({ name: 'Test' });
+	});
+
+	it('should handle bigint', async () => {
+		const schema = type({
+			id: 'bigint'
+		});
+		const adapter = arktype(schema);
+		const formData = new FormData();
+		formData.set('id', '123456789123456789');
+
+		const form = await superValidate(formData, adapter);
+		expect(form.data).toEqual({ id: 123456789123456789n });
+	});
+
+	describe('with uuid', () => {
+		describe('with general uuid format', () => {
+			const schema = type({
+				id: 'string.uuid'
+			});
+
+			it('should handle the type', async () => {
+				const expectedUuid = '123e4567-e89b-12d3-a456-426614174000';
+				const adapter = arktype(schema);
+				const formData = new FormData();
+				formData.set('id', expectedUuid);
+
+				const form = await superValidate(formData, adapter);
+				expect(form.data).toEqual({ id: expectedUuid });
+			});
+
+			it('should preserve validation errors', async () => {
+				const adapter = arktype(schema);
+
+				const form = await superValidate({ id: 'invalid-uuid' }, adapter);
+				expect(form.valid).toBe(false);
+				expect(form.errors.id).toBeTruthy();
+			});
+		});
+
+		describe('with specific uuid format', () => {
+			const schema = type({
+				id: 'string.uuid.v7'
+			});
+
+			it('should handle the type', async () => {
+				const expectedUuid = '017f22e2-79b0-7cc5-98c4-dc0c0c07398f';
+				const adapter = arktype(schema);
+				const formData = new FormData();
+				formData.set('id', expectedUuid);
+
+				const form = await superValidate(formData, adapter);
+				expect(form.data).toEqual({ id: expectedUuid });
+			});
+
+			it('should preserve validation errors', async () => {
+				const adapter = arktype(schema);
+
+				const form = await superValidate({ id: '017f22e2-79b0-8cc5-98c4-dc0c0c07398f' }, adapter);
+				expect(form.valid).toBe(false);
+				expect(form.errors.id).toBeTruthy();
+			});
+		});
+	});
+
+	describe('with optional properties', () => {
+		const schema = type({
+			name: 'string',
+			'email?': 'string.email',
+			'age?': 'number'
+		});
+
+		it('should handle omitted properties', async () => {
+			const expectedData = { name: 'Jane', age: 30 };
+			const adapter = arktype(schema);
+
+			const form = await superValidate(expectedData, adapter);
+			expect(form.valid).toBe(true);
+			expect(form.data).toEqual(expectedData);
+		});
+
+		it('should raise invalid errors for undefined values', async () => {
+			const adapter = arktype(schema);
+
+			const externalData: Record<string, unknown> = { name: 'Jane', email: undefined, age: 30 };
+			const form = await superValidate(externalData, adapter);
+			expect(form.valid).toBe(false);
+			expect(form.errors.email).toBeTruthy();
+		});
+
+		it('should handle nested properties', async () => {
+			const nestedSchema = type({
+				user: {
+					name: 'string',
+					'profile?': {
+						'bio?': 'string',
+						'avatar?': 'string'
+					}
+				}
+			});
+			const expectedData = {
+				user: {
+					name: 'John',
+					profile: {
+						bio: 'Developer'
+					}
+				}
+			};
+			const adapter = arktype(nestedSchema);
+
+			const form = await superValidate(expectedData, adapter);
+			expect(form.valid).toBe(true);
+			expect(form.data).toEqual(expectedData);
+		});
+
+		it('should preserve validation errors', async () => {
+			const adapter = arktype(schema);
+
+			const form = await superValidate({ name: 'John', email: 'invalid-email' }, adapter);
+			expect(form.valid).toBe(false);
+			expect(form.errors.email).toBeTruthy();
+		});
+	});
+
 	const schema = type({
-		name: 'string',
+		name: 'string = "Unknown"',
 		email: 'string.email',
 		tags: '(string>=2)[]>=3',
 		score: 'number.integer>=0',
-		'date?': 'Date',
+		'date?': 'Date | undefined',
 		'nospace?': nospacePattern,
 		extra: 'string|null'
 	});
 
-	const adapter = arktype(schema, { defaults });
-	schemaTest(adapter, ['email', 'date', 'nospace', 'tags'], 'simple');
+	const adapter = arktype(schema);
+	schemaTest(adapter, ['email', 'nospace', 'tags'], undefined, undefined, 'arktype');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -432,18 +594,60 @@ describe('Valibot', () => {
 
 		expect(() => valibot(schema)).not.toThrow();
 		expect(() => valibot(photoSchema)).not.toThrow();
+	});
 
-		expect(() =>
-			valibot(schema, {
-				customSchemaConversion: {
-					custom: () => ({}),
-					instance: () => ({}),
-					file: () => ({}),
-					blob: () => ({})
+	it('should handle bigint', async () => {
+		const schema = v.object({
+			id: v.bigint()
+		});
+		const data = new FormData();
+		data.set('id', '123456789123456789');
+
+		const form = await superValidate(data, valibot(schema));
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({ id: BigInt('123456789123456789') });
+	});
+
+	/*
+	it('should handle lazy', async () => {
+		interface ChecklistItem {
+			childItems: ChecklistItem[];
+		}
+
+		//for recursive it need type GenericSchema with interface of recursive object
+		const checklistItemSchema: v.GenericSchema<ChecklistItem> = v.object({
+			childItems: v.array(v.lazy(() => checklistItemSchema)) //recursive definition
+		});
+
+		const checklistSectionSchema = v.object({
+			items: v.array(checklistItemSchema)
+		});
+
+		const form = await superValidate(
+			{
+				items: [
+					{
+						childItems: []
+					}
+				]
+			},
+			valibot(checklistSectionSchema, {
+				definitions: {
+					childItems: checklistItemSchema
 				}
 			})
-		).not.toThrow();
+		);
+
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({
+			items: [
+				{
+					childItems: []
+				}
+			]
+		});
 	});
+	*/
 
 	/*
 	it('should work with FormPathLeaves and brand', async () => {
@@ -547,7 +751,7 @@ describe('ajv', () => {
 
 /////////////////////////////////////////////////////////////////////
 
-describe('Zod', () => {
+describe('Zod 3', () => {
 	const schema = z
 		.object({
 			name: z.string().default('Unknown'),
@@ -721,18 +925,6 @@ describe('Zod', () => {
 		expect(() => zod(NumberSchema)).toThrowError(SchemaError);
 	});
 
-	it('cannot handle promises in optional refine', async () => {
-		const schema = z.object({
-			name: z.string().min(1),
-			email: z
-				.string()
-				.optional()
-				.refine(async () => Promise.resolve(true))
-		});
-
-		expect(() => zod(schema)).toThrow(Error);
-	});
-
 	it('with the errorMap option', async () => {
 		const schema = z.object({
 			num: z.number().int()
@@ -820,7 +1012,392 @@ describe('Zod', () => {
 		});
 	});
 
+	// Issue #664 - z.literal should not coerce empty string to literal value
+	it('should not coerce empty FormData string to literal value', async () => {
+		const schema = z.object({ foo: z.literal('bar') });
+
+		// Test with plain object - should fail validation
+		const pojo = { foo: '' } as unknown as z.infer<typeof schema>;
+		const pojoValidated = await superValidate(pojo, zod(schema));
+		expect(pojoValidated.valid).toBe(false);
+		expect(pojoValidated.data.foo).toBe('');
+		expect(pojoValidated.errors.foo).toBeDefined();
+
+		// Test with FormData - should also fail validation (not coerce to 'bar')
+		const formData = new FormData();
+		formData.append('foo', '');
+		const formDataValidated = await superValidate(formData, zod(schema));
+		expect(formDataValidated.valid).toBe(false);
+		expect(formDataValidated.data.foo).toBe('');
+		expect(formDataValidated.errors.foo).toBeDefined();
+
+		// Test with correct value - should pass
+		const formData2 = new FormData();
+		formData2.append('foo', 'bar');
+		const formDataValidated2 = await superValidate(formData2, zod(schema));
+		expect(formDataValidated2.valid).toBe(true);
+		expect(formDataValidated2.data.foo).toBe('bar');
+	});
+
 	schemaTest(zod(schema));
+});
+
+/////////////////////////////////////////////////////////////////////
+
+describe('Zod 4', () => {
+	const schema = z4
+		.object({
+			name: z4.string().default('Unknown'),
+			email: z4.email(),
+			tags: z4.string().min(2).array().min(3),
+			score: z4.number().int().min(0),
+			date: z4.date().optional(),
+			nospace: z4.string().regex(nospacePattern).optional(),
+			extra: z4.string().nullable()
+		})
+		.refine((a) => a)
+		.refine((a) => a)
+		.refine((a) => a);
+
+	describe('with defaults', () => {
+		it('defaultValues should return the schema defaults', () => {
+			const values = defaultValues<z4.infer<typeof bigZod4Schema>>(zod4ToJSONSchema(bigZod4Schema));
+			expect(values.foo).toEqual(Foo.A);
+		});
+
+		it('should work with a function as default value, in strict mode', async () => {
+			const schema = z4.object({
+				id: z4.number().default(Math.random)
+			});
+
+			const v1 = await superValidate(zod4(schema), { strict: true });
+			const v2 = await superValidate(zod4(schema), { strict: true });
+
+			expect(v1.data.id).toBeGreaterThan(0);
+			expect(v2.data.id).toBeGreaterThan(0);
+			expect(v1.data.id).not.toBeCloseTo(v2.data.id, 6);
+		});
+	});
+
+	it('with constraints', () => {
+		const expected = {
+			email: {
+				required: true,
+				pattern:
+					"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+			},
+			tags: { minlength: 2 },
+			set: { required: true },
+			reg1: { pattern: '\\D', required: true },
+			reg: { pattern: 'X', minlength: 3, maxlength: 30, required: true },
+			num: { min: 10, max: 100, step: 5, required: true },
+			date: { /*min: '2022-01-01T00:00:00.000Z',*/ required: true },
+			arr: { minlength: 10, required: true },
+			nestedTags: {
+				id: { max: Number.MAX_SAFE_INTEGER, min: 1 },
+				name: { minlength: 1, required: true }
+			}
+		};
+		const values = constraints<z4.infer<typeof bigZod4Schema>>(zod4ToJSONSchema(bigZod4Schema));
+		expect(values).toEqual(expected);
+	});
+
+	it('with form-level errors', async () => {
+		const schema = z4
+			.object({
+				name: z4.string()
+			})
+			.refine((a) => a.name == 'OK', {
+				message: 'Name is not OK'
+			});
+
+		// Check if issue #626 is fixed
+		type Validated = SuperValidated<Infer<typeof schema>>;
+
+		const form: Validated = await superValidate({ name: 'Test' }, zod4(schema));
+
+		expect(form.errors).toEqual({
+			_errors: ['Name is not OK']
+		});
+	});
+
+	it('with catchAll', async () => {
+		const schema = z4
+			.object({
+				name: z4.string().min(1)
+			})
+			.catchall(z4.number().int());
+
+		const formData = new FormData();
+		formData.set('name', 'Test');
+		formData.set('score', '1');
+		formData.set('stats', 'nope');
+
+		const form = await superValidate(formData, zod4(schema));
+		assert(!form.valid);
+		expect(form.data).toStrictEqual({
+			name: 'Test',
+			score: 1,
+			stats: NaN
+		});
+		expect(form.errors).toEqual({ stats: ['Invalid input: expected number, received NaN'] });
+
+		formData.set('stats', '2');
+
+		const form2 = await superValidate(formData, zod4(schema));
+		assert(form2.valid);
+		expect(form2.data).toStrictEqual({
+			name: 'Test',
+			score: 1,
+			stats: 2
+		});
+
+		const name: string = form2.data.name;
+		// @ts-expect-error Testing catchall type
+		const notAString: string = form2.data.extra;
+		const num: number = form2.data.stats;
+
+		name;
+		notAString;
+		num;
+	});
+
+	it('should produce a required enum even if default values exist', async () => {
+		enum Fruits {
+			Apple = 7,
+			Banana = 8
+		}
+
+		const schema = z4.object({
+			nativeEnumInt: z4.enum(Fruits),
+			nativeEnumString: z4.enum({ GRAY: 'GRAY', GREEN: 'GREEN' }).default('GREEN'),
+			enum: z4.enum(['a', 'b', 'c']),
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			enumDef: z4.enum(['a', 'b', 'c']).default('' as any)
+		});
+
+		const adapter = zod4(schema);
+
+		expect(adapter.jsonSchema.required).toEqual([
+			'nativeEnumInt',
+			'nativeEnumString',
+			'enum',
+			'enumDef'
+		]);
+		expect(adapter.defaults).toEqual({
+			nativeEnumInt: 7,
+			nativeEnumString: 'GREEN',
+			enum: 'a',
+			enumDef: ''
+		});
+
+		const formData = new FormData();
+		formData.set('nativeEnumInt', '7');
+		const form = await superValidate(formData, adapter);
+
+		expect(form.data.nativeEnumInt).toEqual(Fruits.Apple);
+	});
+
+	it('should not require a default value for single type unions', () => {
+		const schema = z4.object({
+			letter: z4.union([z4.literal('a'), z4.literal('b')]),
+			num: z4.union([z4.number().int().negative(), z4.number()])
+		});
+
+		const adapter = zod4(schema);
+		expect(adapter.defaults).toEqual({ letter: 'a', num: 0 });
+		expect(adapter.constraints.letter?.required).toBe(true);
+		expect(adapter.constraints.num?.required).toBe(true);
+	});
+
+	it('should not require a default value for enums', () => {
+		const schema = z4.object({
+			letter: z4.enum(['a', 'b', 'c'])
+		});
+
+		const adapter = zod4(schema);
+		expect(adapter.defaults.letter).toBe('a');
+		expect(adapter.constraints.letter?.required).toBe(true);
+	});
+
+	it('with the errorMap option', async () => {
+		const schema = z4.object({
+			num: z4.number().int()
+		});
+
+		const options = {
+			error: (issue: $ZodRawIssue) => {
+				if (issue.code === 'invalid_type') {
+					return { message: 'Not an integer.' };
+				}
+			}
+		};
+
+		const adapter = zod4(schema, options);
+
+		const form = await superValidate(
+			// @ts-expect-error Testing errorMap with invalid type
+			{ num: 'abc' },
+			adapter
+		);
+		expect(form.valid).toBe(false);
+		expect(form.errors.num).toEqual(['Not an integer.']);
+
+		const sameAdapter = zod4(schema, options);
+		expect(sameAdapter).toBe(adapter);
+	});
+
+	describe('with z4.record', () => {
+		it('should work with additionalProperties for records', async () => {
+			/*
+			{
+				type: 'object',
+				properties: {
+					id: { type: 'string' },
+					options: {
+						type: 'object',
+						additionalProperties: {
+							type: 'object',
+							properties: { label: { type: 'string' } },
+							required: [ 'label' ],
+							additionalProperties: false
+						}
+					}
+				},
+				required: [ 'id', 'options' ],
+				additionalProperties: false,
+				'$schema': 'http://json-schema.org/draft-07/schema#'
+			}
+			*/
+			const schema = z4.object({
+				id: z4.string(),
+				options: z4.record(
+					z4.string(),
+					z4.object({
+						label: z4.string().refine((value) => value.length > 0, {
+							error: 'Label is required'
+						})
+					})
+				)
+			});
+
+			const row = {
+				id: '1',
+				options: {
+					'1': {
+						label: 'Option 1'
+					},
+					'2': {
+						label: ''
+					}
+				}
+			};
+
+			const adapter = zod4(schema);
+			const form = await superValidate(row, adapter);
+
+			assert(!form.valid);
+
+			expect(form.errors).toStrictEqual({
+				options: { '2': { label: ['Label is required'] } }
+			});
+
+			expect(form.data).toEqual(row);
+		});
+	});
+
+	// Issue #664 - z.literal should not coerce empty string to literal value
+	it('should not coerce empty FormData string to literal value', async () => {
+		const schema = z4.object({ foo: z4.literal('bar') });
+
+		// Test with plain object - should fail validation
+		const pojo = { foo: '' } as unknown as z4.infer<typeof schema>;
+		const pojoValidated = await superValidate(pojo, zod4(schema));
+		expect(pojoValidated.valid).toBe(false);
+		expect(pojoValidated.data.foo).toBe('');
+		expect(pojoValidated.errors.foo).toBeDefined();
+
+		// Test with FormData - should also fail validation (not coerce to 'bar')
+		const formData = new FormData();
+		formData.append('foo', '');
+		const formDataValidated = await superValidate(formData, zod4(schema));
+		expect(formDataValidated.valid).toBe(false);
+		expect(formDataValidated.data.foo).toBe('');
+		expect(formDataValidated.errors.foo).toBeDefined();
+
+		// Test with correct value - should pass
+		const formData2 = new FormData();
+		formData2.append('foo', 'bar');
+		const formDataValidated2 = await superValidate(formData2, zod4(schema));
+		expect(formDataValidated2.valid).toBe(true);
+		expect(formDataValidated2.data.foo).toBe('bar');
+	});
+
+	it('should work with bigint', async () => {
+		const schema = z4.object({
+			id: z4.bigint()
+		});
+		const data = new FormData();
+		data.set('id', '123456789123456789');
+
+		const form = await superValidate(data, zod4(schema));
+		expect(form.valid).toBe(true);
+		expect(form.data).toEqual({ id: BigInt('123456789123456789') });
+	});
+
+	it('should work with date and an array of objects', async () => {
+		const data = {
+			date: new Date('2023-10-01T00:00:00Z'),
+			items: [
+				{ id: 1, product: 'Product A' },
+				{ id: 2, product: 'Product B' },
+				{ id: 'bad' } as unknown as { id: number; product: string }
+			]
+		};
+
+		// -------------------------------
+		const schema4 = z4.object({
+			date: z4.date(),
+			items: z4.array(
+				z4.object({
+					id: z4.number(),
+					product: z4.string()
+				})
+			)
+		});
+
+		const z4adapter = zod4(schema4);
+		//console.dir(z4adapter.jsonSchema, { depth: null });
+
+		const form4 = await superValidate(data, z4adapter, {
+			errors: false
+		});
+
+		const z3 = z;
+
+		// -------------------------------
+		const schema3 = z3.object({
+			date: z3.date(),
+			items: z3.array(
+				z3.object({
+					id: z3.number(),
+					product: z3.string()
+				})
+			)
+		});
+
+		const z3adapter = zod(schema3);
+		//console.dir(z3adapter.jsonSchema, { depth: null });
+
+		const form3 = await superValidate(data, z3adapter, {
+			errors: false
+		});
+
+		expect(form4.data.date).toEqual(data.date);
+		expect(form3.data).toEqual(form4.data);
+	});
+
+	schemaTest(zod4(schema), undefined, undefined, undefined, 'zod4');
 });
 
 /////////////////////////////////////////////////////////////////////
@@ -959,7 +1536,8 @@ function schemaTest(
 	adapter: ValidationAdapter<Record<string, unknown>, Record<string, unknown>>,
 	errors: ErrorFields = ['email', 'nospace', 'tags', 'tags[1]'],
 	adapterType: 'full' | 'simple' = 'full',
-	dateFormat: 'Date' | 'string' | 'stringToDate' = 'Date'
+	dateFormat: 'Date' | 'string' | 'stringToDate' = 'Date',
+	library: 'unknown' | 'zod4' | 'arktype' = 'unknown'
 ) {
 	const validD = { ...validData, date: dateFormat !== 'Date' ? '2024-01-01' : validData.date };
 
@@ -969,8 +1547,6 @@ function schemaTest(
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function expectErrors(errors: ErrorFields, errorMessages: Record<string, any>) {
-		// console.log('🚀 ~ expectErrors ~ errorMessages:', errorMessages);
-
 		if (errors.includes('nospace'))
 			expect(errorMessages.nospace, missingError('nospace')).toBeTruthy();
 		if (errors.includes('email')) expect(errorMessages.email, missingError('email')).toBeTruthy();
@@ -991,7 +1567,7 @@ function schemaTest(
 				expect(inputConstraints).toEqual(simpleConstraints);
 				break;
 			case 'full':
-				expect(inputConstraints).toEqual(fullConstraints);
+				expect(inputConstraints).toEqual(fullConstraints(library));
 				break;
 		}
 	}

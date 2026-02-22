@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 	import type { userSchema } from './users.js';
 	import { arrayProxy } from '$lib/client/proxies.js';
 	export let form;

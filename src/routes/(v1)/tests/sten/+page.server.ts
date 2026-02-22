@@ -2,7 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const postSchema = z.object({
 	questions: z

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import z from 'zod';
+	import z from 'zod/v3';
 	import Form from './Form.svelte';
 	import TextField from './TextField.svelte';
 	import SuperDebug from '$lib/index.js';

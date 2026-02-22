@@ -77,7 +77,11 @@
 		'bigint',
 		'issue-455',
 		'vine',
-		'timeproxy'
+		'timeproxy',
+		'tainted-null-random',
+		'issue-588',
+		'customrequest-validate',
+		'issue-655'
 	].sort();
 </script>
 

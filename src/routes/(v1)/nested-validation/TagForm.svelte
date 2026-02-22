@@ -8,7 +8,7 @@
 	import { onMount } from 'svelte';
 	import type { SuperValidated } from '$lib/index.js';
 
-	import type { z } from 'zod';
+	import type { z } from 'zod/v3';
 	import { zodClient } from '$lib/adapters/zod.js';
 	import { superformClient } from '$lib/adapters/superform.js';
 
@@ -18,7 +18,6 @@
 	export let output: (string[] | undefined)[] = [];
 	export let validated: SuperValidated<z.infer<typeof schema>> | undefined = undefined;
 
-	// eslint-disable-next-line svelte/valid-compile
 	$: testMode = $page.url.searchParams.has('test');
 	$: custom = $page.url.searchParams.has('custom');
 

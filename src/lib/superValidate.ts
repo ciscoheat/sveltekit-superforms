@@ -19,7 +19,6 @@ export type SuperFormValidated<
 	T extends Record<string, unknown>,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	Message = App.Superforms.Message extends never ? any : App.Superforms.Message,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	In extends Record<string, unknown> = T
 > = SuperValidated<T, Message, In> & {
 	constraints: InputConstraints<T>;
@@ -314,7 +313,6 @@ export function withFiles<T extends object>(obj: T) {
 
 export const removeFiles = withFiles;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function fail<T extends Record<string, unknown> | undefined>(status: number, data?: T) {
 	function checkForm(
 		data: unknown

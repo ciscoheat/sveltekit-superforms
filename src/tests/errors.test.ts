@@ -2,7 +2,7 @@ import { zod } from '$lib/adapters/zod.js';
 import { flattenErrors, mergeDefaults, replaceInvalidDefaults } from '$lib/errors.js';
 import type { ValidationErrors } from '$lib/superValidate.js';
 import { describe, it, expect } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 describe('Flattening errors', () => {
 	it('should work with array-level errors', () => {
@@ -113,6 +113,7 @@ describe('Mapping defaults to invalid data', () => {
 
 describe('The ValidationErrors type', () => {
 	it('should work as expected', () => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const schema = z.object({
 			name: z.string().min(1),
 			birthDate: z
@@ -127,6 +128,7 @@ describe('The ValidationErrors type', () => {
 				}, 'Invalid Date')
 		});
 
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const data: z.infer<typeof schema> = { name: '', birthDate: { year: 0, month: 0, day: 0 } };
 		const errors: ValidationErrors<typeof data> = {};
 

@@ -1,24 +1,26 @@
-import type { Static as Static$1, TSchema } from '@sinclair/typebox';
+import type { TSchema, Static as Static$1 } from 'typebox';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { type } from 'arktype';
+import type { AnySchema } from 'joi';
 import type {
 	Infer as ClassValidatorInfer,
 	InferIn as ClassValidatorInferIn,
 	Schema as ClassValidatorSchema
 } from '@typeschema/class-validator';
-import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
-import type { type } from 'arktype';
-import type { Schema as Schema$1 } from 'effect';
-import type { AnySchema } from 'joi';
-import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
-import type { Infer as Infer$2, Struct } from 'superstruct';
+
 import type {
 	GenericSchema,
 	GenericSchemaAsync,
 	InferInput as Input,
 	InferOutput as Output
 } from 'valibot';
-import type { InferType, Schema as Schema$2 } from 'yup';
-import type { ZodTypeAny, input, output } from 'zod';
+import type { Schema as Schema$2, InferType } from 'yup';
+import type { ZodTypeAny, input, output } from 'zod/v3';
+import type { $ZodType as $Zod4Type, input as zod4Input, output as zod4Output } from 'zod/v4/core';
+import type { SchemaTypes, Infer as VineInfer } from '@vinejs/vine/types';
+import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
+import type { Struct, Infer as Infer$2 } from 'superstruct';
+import type { Schema as Schema$1 } from 'effect';
 
 /*
 import type { SchemaObject } from 'ajv';
@@ -92,14 +94,20 @@ type CustomSchema<T = any> = (data: unknown) => Promise<T> | T;
 interface CustomResolver extends Resolver {
 	base: CustomSchema;
 	input: this['schema'] extends CustomSchema
-		? keyof this['schema'] extends never
-			? Awaited<ReturnType<this['schema']>>
-			: never
+		? // Exclude schemas that are Zod types (they have _def property)
+			this['schema'] extends { _def: unknown }
+			? never
+			: keyof this['schema'] extends never
+				? Awaited<ReturnType<this['schema']>>
+				: never
 		: never;
 	output: this['schema'] extends CustomSchema
-		? keyof this['schema'] extends never
-			? Awaited<ReturnType<this['schema']>>
-			: never
+		? // Exclude schemas that are Zod types (they have _def property)
+			this['schema'] extends { _def: unknown }
+			? never
+			: keyof this['schema'] extends never
+				? Awaited<ReturnType<this['schema']>>
+				: never
 		: never;
 }
 
@@ -108,9 +116,9 @@ interface JoiResolver extends Resolver {
 }
 
 interface TypeBoxResolver extends Resolver {
-	base: TSchema;
-	input: this['schema'] extends TSchema ? Static$1<this['schema']> : never;
-	output: this['schema'] extends TSchema ? Static$1<this['schema']> : never;
+	base: TSchema & { '~kind': string };
+	input: this['schema'] extends TSchema & { '~kind': string } ? Static$1<this['schema']> : never;
+	output: this['schema'] extends TSchema & { '~kind': string } ? Static$1<this['schema']> : never;
 }
 
 interface ValibotResolver extends Resolver {
@@ -133,6 +141,11 @@ interface ZodResolver extends Resolver {
 	output: this['schema'] extends ZodTypeAny ? output<this['schema']> : never;
 }
 
+interface Zod4Resolver extends Resolver {
+	base: $Zod4Type;
+	input: this['schema'] extends $Zod4Type ? zod4Input<this['schema']> : never;
+	output: this['schema'] extends $Zod4Type ? zod4Output<this['schema']> : never;
+}
 interface VineResolver extends Resolver {
 	base: SchemaTypes;
 	input: this['schema'] extends SchemaTypes
@@ -150,8 +163,10 @@ interface StandardResolver extends Resolver {
 	output: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferOutput<this['schema']> : never;
 }
 
-interface SchemasafeResolver<Schema extends JSONSchema, Data = FromSchema<Schema>>
-	extends Resolver {
+interface SchemasafeResolver<
+	Schema extends JSONSchema,
+	Data = FromSchema<Schema>
+> extends Resolver {
 	base: JSONSchema;
 	input: this['schema'] extends Schema ? Data : never;
 	output: this['schema'] extends Schema ? Data : never;
@@ -216,11 +231,11 @@ export type Registry = {
 	valibot: ValibotResolver;
 	yup: YupResolver;
 	zod: ZodResolver;
+	zod4: Zod4Resolver;
 	vine: VineResolver;
 	schemasafe: SchemasafeResolver<JSONSchema>;
 	superstruct: SuperstructResolver;
 	effect: EffectResolver;
-	standard: StandardResolver;
 	/*
 		ajv: AjvResolver;
     deepkit: DeepkitResolver;
@@ -231,14 +246,20 @@ export type Registry = {
 };
 
 type Infer<TSchema extends Schema, Keys extends keyof Registry = keyof Registry> = UnknownIfNever<
-	{
-		[K in Keys]: IfDefined<InferOutput<Registry[K], TSchema>>;
-	}[Keys]
+	// If schema has _zod property, it's Zod v4 - use only zod4 resolver
+	TSchema extends { _zod: unknown }
+		? IfDefined<InferOutput<Registry['zod4'], TSchema>>
+		: {
+				[K in Keys]: IfDefined<InferOutput<Registry[K], TSchema>>;
+			}[Keys]
 >;
 type InferIn<TSchema extends Schema, Keys extends keyof Registry = keyof Registry> = UnknownIfNever<
-	{
-		[K in Keys]: IfDefined<InferInput<Registry[K], TSchema>>;
-	}[Keys]
+	// If schema has _zod property, it's Zod v4 - use only zod4 resolver
+	TSchema extends { _zod: unknown }
+		? IfDefined<InferInput<Registry['zod4'], TSchema>>
+		: {
+				[K in Keys]: IfDefined<InferInput<Registry[K], TSchema>>;
+			}[Keys]
 >;
 
 /*

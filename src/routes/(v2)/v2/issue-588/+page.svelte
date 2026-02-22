@@ -1,22 +1,39 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { untrack } from 'svelte';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
+	import { invalidateAll } from '$app/navigation';
 
-	export let data;
+	let { data } = $props();
 
-	const { form, errors, message, enhance } = superForm(data.form);
+	$effect(() => {
+		const interval = setInterval(() => {
+			console.log('!~!!! here');
+			invalidateAll();
+		}, 2000);
+		return () => clearInterval(interval);
+	});
+
+	const { form, errors, message, enhance } = superForm(
+		untrack(() => data.form),
+		{
+			applyAction: 'never',
+			resetForm: true,
+			taintedMessage: false
+		}
+	);
 </script>
 
 <SuperDebug data={$form} />
 
-<h3>when using zod-i18n-map, field errors are [undefined]</h3>
+<h3>Superforms testing ground</h3>
 
-<p>Submit to see localized errors.</p>
+<p id="counter">{data.count}</p>
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

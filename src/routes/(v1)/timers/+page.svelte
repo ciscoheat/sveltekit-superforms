@@ -5,8 +5,24 @@
 	export let data: PageData;
 
 	const { form, errors, message, enhance, submitting, delayed, timeout } = superForm(data.form, {
-		delayMs: 4000,
-		timeoutMs: 7000
+		delayMs: 1000,
+		timeoutMs: 2000
+	});
+
+	let states: string[] = [];
+	let start = 0;
+
+	submitting.subscribe(($submitting) => {
+		if ($submitting) {
+			start = Date.now();
+			states = ['#0#SUBMITTING'];
+		}
+	});
+	delayed.subscribe(($delayed) => {
+		if ($delayed) states = [...states, `#${Date.now() - start}#DELAYED`];
+	});
+	timeout.subscribe(($timeout) => {
+		if ($timeout) states = [...states, `#${Date.now() - start}#TIMEOUT`];
 	});
 </script>
 
@@ -19,15 +35,7 @@
 	</label>
 	<div>
 		<button>Submit</button>
-		<div>
-			{#if $timeout}
-				STATE-TIMEOUT
-			{:else if $delayed}
-				STATE-DELAYED
-			{:else if $submitting}
-				STATE-SUBMITTING
-			{/if}
-		</div>
+		<div id="states">{states}</div>
 	</div>
 </form>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import type { ValidationAdapter, Infer } from '$lib/adapters/adapters.js';
 	import type { registerSchema } from './schema.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
@@ -25,22 +26,25 @@
 		fields: Snippet<[SuperForm<T>]>;
 	} = $props();
 
-	export const _form = superForm(data, {
-		dataType,
-		validators: schema ? schema : undefined,
-		invalidateAll,
-		onError({ result }) {
-			$message = {
-				text: result?.error?.message,
-				status: 500
-			};
-		},
-		onUpdated({ form }) {
-			if (form.valid) {
-				// Successful post! Do some more client-side stuff.
+	export const _form = superForm(
+		untrack(() => data),
+		{
+			dataType: untrack(() => dataType),
+			validators: untrack(() => (schema ? schema : undefined)),
+			invalidateAll: untrack(() => invalidateAll),
+			onError({ result }) {
+				$message = {
+					text: result?.error?.message,
+					status: 500
+				};
+			},
+			onUpdated({ form }) {
+				if (form.valid) {
+					// Successful post! Do some more client-side stuff.
+				}
 			}
 		}
-	});
+	);
 
 	const { form, message, enhance } = _form;
 </script>

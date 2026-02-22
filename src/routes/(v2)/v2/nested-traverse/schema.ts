@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const deficitForm = z.object({
 	grade: z.number().min(0).max(100).nullable().default(null),

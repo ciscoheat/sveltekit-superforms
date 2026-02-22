@@ -1,4 +1,4 @@
-import { type ZodErrorMap, type ZodType, type ZodTypeDef } from 'zod';
+import { type ZodErrorMap, type ZodType, type ZodTypeDef } from 'zod/v3';
 import type { JSONSchema7 } from 'json-schema';
 import {
 	type AdapterOptions,
@@ -9,7 +9,7 @@ import {
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
-import { zodToJsonSchema as zodToJson, type Options } from 'zod-to-json-schema';
+import { zodToJsonSchema as zodToJson, type Options } from 'zod-v3-to-json-schema';
 import { memoize } from '$lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {
@@ -59,6 +59,14 @@ function _zod<T extends ZodValidation>(
 	schema: T,
 	options?: AdapterOptions<Infer<T, 'zod'>> & { errorMap?: ZodErrorMap; config?: Partial<Options> }
 ): ValidationAdapter<Infer<T, 'zod'>, InferIn<T, 'zod'>> {
+	// Detect Zod v4 schema passed to v3 adapter
+	if ('_zod' in schema && typeof (schema as Record<string, unknown>)._zod === 'object') {
+		console.warn(
+			'[superforms] Zod v4 schema detected but using Zod v3 adapter. ' +
+				'Import { zod4 } from "sveltekit-superforms/adapters" instead of { zod } for Zod v4 support.'
+		);
+	}
+
 	return createAdapter({
 		superFormValidationLibrary: 'zod',
 		validate: async (data) => {

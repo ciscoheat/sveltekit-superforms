@@ -10,6 +10,11 @@ export type PathData = {
 };
 
 function setPath<T extends object>(parent: T, key: keyof T, value: any) {
+	// Prevent prototype injection
+	if (key === '__proto__' || key === 'prototype') {
+		throw new Error("Cannot set an object's `__proto__` or `prototype` property");
+	}
+
 	parent[key] = value;
 	return 'skip' as const;
 }
@@ -47,6 +52,12 @@ export function traversePath<T extends object>(
 	modifier?: (data: PathData) => undefined | unknown | void
 ): PathData | undefined {
 	if (!realPath.length) return undefined;
+
+	// Prevent prototype injection
+	if (realPath.includes('__proto__') || realPath.includes('prototype')) {
+		throw new Error("Cannot set an object's `__proto__` or `prototype` property");
+	}
+
 	const path = [realPath[0]];
 
 	let parent = obj;
@@ -140,8 +151,10 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 
 	function checkPath(data: PathData, compareTo: object) {
 		const otherData = compareTo ? traversePath(compareTo, data.path) : undefined;
+		//console.log('Compare', data.path, data.value, 'to', otherData?.path, otherData?.value);
 
 		function addDiff() {
+			//console.log('Diff', data.path);
 			diffPaths.set(data.path.join(' '), data.path);
 			return 'skip';
 		}
@@ -162,7 +175,10 @@ export function comparePaths(newObj: unknown, oldObj: unknown) {
 	traversePaths(newObj as object, (data) => checkPath(data, oldObj as object));
 	traversePaths(oldObj as object, (data) => checkPath(data, newObj as object));
 
-	return Array.from(diffPaths.values());
+	// Need to sort the list so the shortest paths comes first
+	const output = Array.from(diffPaths.values());
+	output.sort((a, b) => a.length - b.length);
+	return output;
 }
 
 export function setPaths(
@@ -185,6 +201,12 @@ export function setPaths(
 			}
 			return parent[key];
 		});
-		if (leaf) leaf.parent[leaf.key] = isFunction ? value(path, leaf) : value;
+		if (leaf) {
+			// Prevent prototype injection
+			if (leaf.key === '__proto__' || leaf.key === 'prototype') {
+				throw new Error("Cannot set an object's `__proto__` or `prototype` property");
+			}
+			leaf.parent[leaf.key] = isFunction ? value(path, leaf) : value;
+		}
 	}
 }

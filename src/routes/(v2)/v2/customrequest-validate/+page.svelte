@@ -2,6 +2,7 @@
 	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types.js';
 	import { schema } from './schema.js';
 
@@ -12,7 +13,7 @@
 		validators: zod(schema),
 		onSubmit({ customRequest }) {
 			return customRequest(async (input) => {
-				const formEntriesUrlEncoded = new URLSearchParams();
+				const formEntriesUrlEncoded = new SvelteURLSearchParams();
 				for (const [key, value] of input.formData.entries()) {
 					if (typeof value === 'string') {
 						formEntriesUrlEncoded.append(key, value);

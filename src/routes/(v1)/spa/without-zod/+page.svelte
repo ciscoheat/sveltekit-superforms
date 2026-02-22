@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	//import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 	import type { Schema } from './schema.js';
 	import { superformClient } from '$lib/adapters/superform.js';
 
@@ -23,7 +23,6 @@
 		SPA: { failStatus: 401 },
 		dataType: 'json',
 		onUpdate({ form, cancel }) {
-			// eslint-disable-next-line svelte/valid-compile
 			if ($page.url.searchParams.has('cancel')) cancel();
 			else if (form.valid) {
 				form.message = 'Successful!';

@@ -4,7 +4,7 @@ import { schemaInfo } from '$lib/jsonSchema/schemaInfo.js';
 import type { FromSchema } from 'json-schema-to-ts';
 import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
 import { schemaShape, shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
 import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
 import { constraints } from '$lib/jsonSchema/constraints.js';
@@ -290,11 +290,11 @@ describe('Default values', () => {
 			productId: 0,
 			productName: '',
 			price: 234,
-			tags: [],
-			dimensions: { length: 0, width: 0, height: 0 }
+			tags: new Set(),
+			dimensions: { length: 0, width: 0, height: 0 },
+			warehouseLocation: undefined
 		});
 	});
-
 	it('should map the default value of a union (anyOf) if only one default value exists.', () => {
 		expect(defaultValues(defaultTestSchema)).toEqual({
 			gender: 'other',
@@ -327,6 +327,19 @@ describe('Default values', () => {
 
 		const adapter = zod(userSchema);
 		expect(defaultValues(adapter.jsonSchema).gender).toBe('male');
+	});
+
+	it('should work with allOf', () => {
+		const userSchema = z.object({
+			username: z
+				.string()
+				.min(3)
+				.max(24)
+				.regex(/^[a-zA-Z](?!.*[_.-]{2})[a-zA-Z0-9_.-]*$/)
+				.regex(/^(?!guest).*/i)
+		});
+		const adapter = zod(userSchema);
+		expect(defaultValues(adapter.jsonSchema).username).toBe('');
 	});
 });
 
@@ -706,5 +719,71 @@ describe('Default value types', () => {
 				__types: ['unix-time', 'undefined']
 			}
 		});
+	});
+});
+
+describe('Discriminated unions with oneOf', () => {
+	it('should handle oneOf in schemaInfo', () => {
+		const unionSchema: JSONSchema7 = {
+			oneOf: [
+				{
+					type: 'object',
+					properties: {
+						type: { enum: ['person'] },
+						name: { type: 'string' }
+					},
+					required: ['type', 'name']
+				},
+				{
+					type: 'object',
+					properties: {
+						type: { enum: ['company'] },
+						companyName: { type: 'string' }
+					},
+					required: ['type', 'companyName']
+				}
+			]
+		};
+
+		const infos = schemaInfo(unionSchema, false, []);
+		assert(infos);
+		expect(infos.types).toEqual(['object']);
+		assert(infos.union);
+		expect(infos.union).toHaveLength(2);
+	});
+
+	it('should correctly collect union types from oneOf schemas', () => {
+		const schema = z.discriminatedUnion('type', [
+			z.object({ type: z.literal('a'), valueA: z.string() }),
+			z.object({ type: z.literal('b'), valueB: z.number() })
+		]);
+
+		const adapter = zod(schema);
+		const info = schemaInfo(adapter.jsonSchema, false, []);
+
+		assert(info);
+		expect(info.types).toContain('object');
+	});
+
+	it('should support both anyOf and oneOf union variations', () => {
+		// Test anyOf
+		const anyOfSchema: JSONSchema7 = {
+			anyOf: [{ type: 'string' }, { type: 'number' }]
+		};
+
+		const anyOfInfo = schemaInfo(anyOfSchema, false, []);
+		assert(anyOfInfo);
+		assert(anyOfInfo.union);
+		expect(anyOfInfo.union).toHaveLength(2);
+
+		// Test oneOf
+		const oneOfSchema: JSONSchema7 = {
+			oneOf: [{ type: 'string' }, { type: 'number' }]
+		};
+
+		const oneOfInfo = schemaInfo(oneOfSchema, false, []);
+		assert(oneOfInfo);
+		assert(oneOfInfo.union);
+		expect(oneOfInfo.union).toHaveLength(2);
 	});
 });

@@ -2,7 +2,7 @@
 	import { superForm, defaults, arrayProxy } from '$lib/client/index.js';
 	import { zod as adapter } from '$lib/adapters/zod.js';
 
-	import * as zod from 'zod';
+	import * as zod from 'zod/v3';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
 	const schema = zod.object({

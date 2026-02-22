@@ -12,8 +12,10 @@ export type SchemaType =
 	| 'any'
 	| 'symbol'
 	| 'set'
+	| 'map'
 	| 'null'
-	| 'undefined';
+	| 'undefined'
+	| 'stringbool';
 
 export type SchemaInfo = {
 	types: Exclude<SchemaType, 'null'>[];
@@ -27,10 +29,19 @@ export type SchemaInfo = {
 	required?: string[];
 };
 
-const conversionFormatTypes = ['unix-time', 'bigint', 'any', 'symbol', 'set', 'int64'];
+const conversionFormatTypes = [
+	'unix-time',
+	'bigint',
+	'any',
+	'symbol',
+	'set',
+	'map',
+	'int64',
+	'stringbool'
+];
 
 /**
- * Normalizes the different kind of schema variations (anyOf, union, const null, etc)
+ * Normalizes the different kind of schema variations (anyOf, oneOf, union, const null, etc)
  * to figure out the field type, optional, nullable, etc.
  */
 export function schemaInfo(
@@ -39,16 +50,6 @@ export function schemaInfo(
 	path: (string | number | symbol)[]
 ): SchemaInfo {
 	assertSchema(schema, path);
-
-	if (schema.allOf && schema.allOf.length) {
-		return {
-			...merge.withOptions(
-				{ allowUndefinedOverrides: false },
-				...schema.allOf.map((s) => schemaInfo(s, false, []))
-			),
-			schema
-		};
-	}
 
 	const types = schemaTypes(schema, path);
 
@@ -79,7 +80,7 @@ export function schemaInfo(
 
 	const union = unionInfo(schema)?.filter((u) => u.type !== 'null' && u.const !== null);
 
-	return {
+	const result: SchemaInfo = {
 		types: types.filter((s) => s !== 'null') as SchemaInfo['types'],
 		isOptional,
 		isNullable: types.includes('null'),
@@ -89,6 +90,19 @@ export function schemaInfo(
 		properties,
 		additionalProperties,
 		required: schema.required
+	};
+
+	if (!schema.allOf || !schema.allOf.length) {
+		return result;
+	}
+
+	return {
+		...merge.withOptions(
+			{ allowUndefinedOverrides: false },
+			result,
+			...schema.allOf.map((s) => schemaInfo(s, false, []))
+		),
+		schema
 	};
 }
 
@@ -107,18 +121,35 @@ function schemaTypes(
 	if (schema.anyOf) {
 		types = schema.anyOf.flatMap((s) => schemaTypes(s, path));
 	}
+	if (schema.oneOf) {
+		types = schema.oneOf.flatMap((s) => schemaTypes(s, path));
+	}
 
 	if (types.includes('array') && schema.uniqueItems) {
-		const i = types.findIndex((t) => t != 'array');
-		types[i] = 'set';
+		const i = types.findIndex((t) => t === 'array');
+		if (i !== -1) types[i] = 'set';
 	} else if (schema.format && conversionFormatTypes.includes(schema.format)) {
 		types.unshift(schema.format as SchemaType);
 
-		// Remove the integer type, as the schema format will be used
+		// For dates and int64 (bigint), remove the integer type, as the schema format will be used
 		// instead in the following cases
 		if (schema.format == 'unix-time' || schema.format == 'int64') {
 			const i = types.findIndex((t) => t == 'integer');
 			types.splice(i, 1);
+		}
+
+		// For bigint, remove the string type, as the schema format will be used
+		// instead in the following cases
+		if (schema.format == 'bigint') {
+			const i = types.findIndex((t) => t == 'string');
+			types.splice(i, 1);
+		}
+
+		// For stringbool, remove the string type, as the schema format will be used
+		// stringbool should be treated as a special string that validates to boolean
+		if (schema.format == 'stringbool') {
+			const i = types.findIndex((t) => t == 'string');
+			if (i !== -1) types.splice(i, 1);
 		}
 	}
 
@@ -130,6 +161,12 @@ function schemaTypes(
 }
 
 function unionInfo(schema: JSONSchema7) {
-	if (!schema.anyOf || !schema.anyOf.length) return undefined;
-	return schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	if (!schema.oneOf && !schema.anyOf) return undefined;
+	if (schema.oneOf && schema.oneOf.length) {
+		return schema.oneOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	}
+	if (schema.anyOf && schema.anyOf.length) {
+		return schema.anyOf.filter((s) => typeof s !== 'boolean') as JSONSchema7[];
+	}
+	return undefined;
 }

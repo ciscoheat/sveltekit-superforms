@@ -5,7 +5,7 @@ import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';
 
 import { userSchema, users } from '../users.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 type Message = { message: string };
 

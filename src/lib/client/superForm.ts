@@ -82,15 +82,20 @@ export type FormOptions<
 	In extends Record<string, unknown> = T
 > = Partial<{
 	id: string;
-	applyAction: boolean;
-	invalidateAll: boolean | 'force';
+	/**
+	 * If `false`, the form won't react to page state updates, except for page invalidations.
+	 * If `'never'`, not even page invalidations will affect the form.
+	 * @default true
+	 */
+	applyAction: boolean | 'never';
+	invalidateAll: boolean | 'force' | 'pessimistic';
 	resetForm: boolean | (() => boolean);
 	scrollToError: 'auto' | 'smooth' | 'off' | boolean | ScrollIntoViewOptions;
 	autoFocusOnError: boolean | 'detect';
 	errorSelector: string;
 	selectErrorText: boolean;
 	stickyNavbar: string;
-	taintedMessage: string | boolean | null | (() => MaybePromise<boolean>);
+	taintedMessage: string | boolean | null | ((nav: BeforeNavigate) => MaybePromise<boolean>);
 	/**
 	 * Enable single page application (SPA) mode.
 	 * **The string and failStatus options are deprecated** and will be removed in the next major release.
@@ -163,6 +168,9 @@ export type FormOptions<
 	timeoutMs: number;
 	multipleSubmits: 'prevent' | 'allow' | 'abort';
 	syncFlashMessage?: boolean;
+	/**
+	 * @deprecated SvelteKit has moved to $app/state instead of $app/stores, making it hard to support both. Use the flash library directly (setFlash or redirect) instead of integrating it with Superforms.
+	 */
 	flashMessage: {
 		module: {
 			getFlash(page: Readable<Page>): Writable<App.PageData['flash']>;
@@ -858,6 +866,18 @@ export function superForm<
 
 			const joinedPath = currentPath.join('.');
 
+			const lastPath = error.path[error.path.length - 1];
+			const isObjectError = lastPath == '_errors';
+
+			const isEventError =
+				error.value &&
+				paths.some((path) => {
+					// If array/object, any part of the path can match. If not, exact match is required
+					return isObjectError
+						? currentPath && path && currentPath.length > 0 && currentPath[0] == path[0]
+						: joinedPath == path.join('.');
+				});
+
 			function addError() {
 				//console.log('Adding error', `[${error.path.join('.')}]`, error.value); //debug
 				setPaths(output, [error.path], error.value);
@@ -874,18 +894,6 @@ export function superForm<
 			}
 
 			if (force) return addError();
-
-			const lastPath = error.path[error.path.length - 1];
-			const isObjectError = lastPath == '_errors';
-
-			const isEventError =
-				error.value &&
-				paths.some((path) => {
-					// If array/object, any part of the path can match. If not, exact match is required
-					return isObjectError
-						? currentPath && path && currentPath.length > 0 && currentPath[0] == path[0]
-						: joinedPath == path.join('.');
-				});
 
 			if (isEventError && options.validationMethod == 'oninput') return addError();
 
@@ -994,16 +1002,20 @@ export function superForm<
 		};
 	}
 
-	async function Form_updateFromValidation(form: SuperValidated<T, M, In>, successResult: boolean) {
-		if (form.valid && successResult && Form_shouldReset(form.valid, successResult)) {
-			Form_reset({ message: form.message, posted: true });
+	async function Form_updateFromValidation(
+		form2: SuperValidated<T, M, In>,
+		successResult: boolean
+	) {
+		if (form2.valid && successResult && Form_shouldReset(form2.valid, successResult)) {
+			Form_reset({ message: form2.message, posted: true });
 		} else {
 			rebind({
-				form,
+				form: form2,
 				untaint: successResult,
 				keepFiles: true,
 				// Check if the form data should be used for updating, or if the invalidateAll load function should be used:
-				skipFormData: options.invalidateAll == 'force'
+				pessimisticUpdate:
+					options.invalidateAll == 'force' || options.invalidateAll == 'pessimistic'
 			});
 		}
 
@@ -1014,7 +1026,7 @@ export function superForm<
 
 		// But do not await on onUpdated itself, since we're already finished with the request
 		for (const event of formEvents.onUpdated) {
-			event({ form });
+			event({ form: form2 });
 		}
 	}
 
@@ -1030,9 +1042,26 @@ export function superForm<
 		resetData.data = { ...resetData.data, ...opts.data };
 		if (opts.id !== undefined) resetData.id = opts.id;
 
+		// Calculate which fields should remain tainted
+		// Only untaint fields that were actually reset (reverted to initial values)
+		const currentTainted = clone(__data.tainted);
+		const newTainted: Record<string, unknown> = {};
+
+		if (currentTainted && opts.data) {
+			// When partial data is provided, only untaint fields NOT included in opts.data
+			// since opts.data contains the fields that should KEEP their current values
+			for (const key in currentTainted) {
+				if (key in opts.data) {
+					// Field is in opts.data, so it's being kept - preserve its tainted state
+					newTainted[key] = (currentTainted as Record<string, unknown>)[key];
+				}
+				// Fields not in opts.data are being reset to initial values - don't preserve tainted state
+			}
+		}
+
 		rebind({
 			form: resetData,
-			untaint: true,
+			untaint: Object.keys(newTainted).length > 0 ? (newTainted as TaintedFields<T>) : true,
 			message: opts.message,
 			keepFiles: false,
 			posted: opts.posted,
@@ -1215,7 +1244,7 @@ export function superForm<
 			// - resolved with false => shouldRedirect = false
 			// - resolved with true => shouldRedirect = true
 			shouldRedirect = isTaintedFunction
-				? await taintedMessage()
+				? await taintedMessage(nav)
 				: window.confirm(message || Tainted.defaultMessage);
 		} catch {
 			shouldRedirect = false;
@@ -1224,6 +1253,7 @@ export function superForm<
 		if (shouldRedirect && nav.to) {
 			try {
 				Tainted.forceRedirection = true;
+				//@ts-expect-error Possible SvelteKit breaking change, it worked before.
 				await goto(nav.to.url, { ...nav.to.params });
 				return;
 			} finally {
@@ -1284,35 +1314,41 @@ export function superForm<
 		if (taintOptions == 'ignore') return;
 
 		const paths = comparePaths(newData, Data.form);
+		//console.log('paths:', JSON.stringify(paths));
 		const newTainted = comparePaths(newData, Tainted.clean).map((path) => path.join());
+		//console.log('newTainted:', JSON.stringify(newTainted));
 
 		if (paths.length) {
-			if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
-				Tainted.state.set(undefined);
-			} else {
-				Tainted.state.update((currentlyTainted) => {
-					if (!currentlyTainted) currentlyTainted = {};
+			Tainted.state.update((currentlyTainted) => {
+				if (!currentlyTainted) currentlyTainted = {};
 
-					setPaths(currentlyTainted, paths, (path, data) => {
-						// If value goes back to the clean value, untaint the path
-						if (!newTainted.includes(path.join())) return undefined;
+				setPaths(currentlyTainted, paths, (path, data) => {
+					// If value goes back to the clean value, untaint the path
+					if (!newTainted.includes(path.join())) return undefined;
 
-						const currentValue = traversePath(newData, path);
-						const cleanPath = traversePath(Tainted.clean, path);
-						return currentValue && cleanPath && currentValue.value === cleanPath.value
-							? undefined
-							: taintOptions === true
-								? true
-								: taintOptions === 'untaint'
-									? undefined
-									: data.value;
-					});
+					const currentValue = traversePath(newData, path);
+					const cleanPath = traversePath(Tainted.clean, path);
+					const identical = currentValue && cleanPath && currentValue.value === cleanPath.value;
 
-					return currentlyTainted;
+					const output = identical
+						? undefined
+						: taintOptions === true
+							? true
+							: taintOptions === 'untaint'
+								? undefined
+								: data.value;
+
+					return output;
 				});
-			}
+
+				return currentlyTainted;
+			});
 
 			NextChange_setHtmlEvent({ paths });
+		}
+
+		if (taintOptions == 'untaint-all' || taintOptions == 'untaint-form') {
+			Tainted.state.set(undefined);
 		}
 	}
 
@@ -1349,7 +1385,6 @@ export function superForm<
 		Tainted.state.subscribe((tainted) => (__data.tainted = clone(tainted))),
 		// eslint-disable-next-line dci-lint/private-role-access
 		Form.subscribe((form) => (__data.form = clone(form))),
-		// eslint-disable-next-line dci-lint/private-role-access
 		Errors.subscribe((errors) => (__data.errors = clone(errors))),
 
 		FormId.subscribe((id) => (__data.formId = id)),
@@ -1420,7 +1455,7 @@ export function superForm<
 		message?: M;
 		keepFiles?: boolean;
 		posted?: boolean;
-		skipFormData?: boolean;
+		pessimisticUpdate?: boolean;
 		resetted?: boolean;
 	}) {
 		//console.log('🚀 ~ file: superForm.ts:721 ~ rebind ~ form:', form.data); //debug
@@ -1435,7 +1470,7 @@ export function superForm<
 		// Prevents object errors from being revalidated after rebind.
 		// Check if form was invalidated (usually with options.invalidateAll) to prevent data from being
 		// overwritten by the load function data
-		if (opts.skipFormData !== true) {
+		if (!opts.pessimisticUpdate) {
 			Form_set(form.data, {
 				taint: 'ignore',
 				keepFiles: opts.keepFiles
@@ -1509,7 +1544,11 @@ export function superForm<
 						initialForms.set(newForm, newForm);
 						await Form_updateFromValidation(newForm as SuperValidated<T, M, In>, successResult);
 					}
-				} else if (pageUpdate.data && typeof pageUpdate.data === 'object') {
+				} else if (
+					options.applyAction !== 'never' &&
+					pageUpdate.data &&
+					typeof pageUpdate.data === 'object'
+				) {
 					// It's a page reload, redirect or error/failure,
 					// so don't trigger any events, just update the data.
 					for (const newForm of Context_findValidationForms(pageUpdate.data)) {
@@ -1519,7 +1558,7 @@ export function superForm<
 							continue;
 						}
 
-						if (options.invalidateAll === 'force') {
+						if (options.invalidateAll === 'force' || options.invalidateAll === 'pessimistic') {
 							initialForm.data = newForm.data as T;
 						}
 
@@ -1610,6 +1649,11 @@ export function superForm<
 			// Need to wait for immediate updates due to some timing issue
 			if (info.immediate && !info.file) await new Promise((r) => setTimeout(r, 0));
 
+			// If lastInputChange is undefined, someone set it to undefined before the preceding timeout, in which case we can ignore this blur event.
+			if (lastInputChange === undefined) {
+				return;
+			}
+
 			Form_clientValidation({
 				paths: lastInputChange,
 				immediate: info.multiple,
@@ -1649,6 +1693,7 @@ export function superForm<
 		const enhanced = kitEnhance(FormElement, async (submitParams) => {
 			let jsonData: Record<string, unknown> | undefined = undefined;
 			let validationAdapter = options.validators;
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			undefined;
 
 			const submit = {
@@ -1946,6 +1991,10 @@ export function superForm<
 					};
 				}
 
+				// Prevent afterNavigate from resetting timers while form event
+				// handlers are running (e.g. goto() called from onUpdate). #677
+				htmlForm.setProcessingEvents(true);
+
 				for (const event of formEvents.onResult) {
 					try {
 						await event(data);
@@ -2022,6 +2071,9 @@ export function superForm<
 						}
 					}
 				}
+
+				// Re-enable afterNavigate timer resets now that event handlers are done.
+				htmlForm.setProcessingEvents(false);
 
 				if (cancelled && options.flashMessage) {
 					cancelFlash(options);

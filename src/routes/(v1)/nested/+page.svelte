@@ -31,7 +31,6 @@
 	const { form, errors, enhance, message } = yourSuperForm(data.form, {
 		dataType: 'json',
 		onUpdate(event) {
-			// eslint-disable-next-line svelte/valid-compile
 			if ($page.url.searchParams.has('cancel')) event.cancel();
 		},
 		validators: zod(schema)

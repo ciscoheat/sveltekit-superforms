@@ -1,6 +1,6 @@
 import SuperDebug from './client/SuperDebug.svelte';
-
 export default SuperDebug;
+
 export { SuperFormError, SchemaError } from './errors.js';
 
 export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';
@@ -60,4 +60,5 @@ export {
 
 export { splitPath } from './stringPath.js';
 
-export type { ErrorStatus } from './utils.js';
+export type { ErrorStatus, MergeUnion, MergeFormUnion } from './utils.js';
+export { mergeFormUnion } from './utils.js';

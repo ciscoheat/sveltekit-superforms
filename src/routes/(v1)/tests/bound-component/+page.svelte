@@ -20,8 +20,11 @@
 				const action = event.result.data as NonNullable<ActionData>;
 				const n: number = action.test;
 				const f: SuperValidated<Record<string, unknown>> = action.form;
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				n;
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				f;
+				// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 				event.result.data?.form.data.email;
 			}
 			console.log('onResult', event);
@@ -31,17 +34,15 @@
 			const n: number = action.test;
 			// @ts-expect-error SuperValidated should not exist
 			const f: SuperValidated<Record<string, unknown>> = action.form;
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			n;
+			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 			f;
 		},
 		onSubmit: (args) => {
 			console.log('onSubmit', args);
 		}
 	});
-
-	$: {
-		//console.log('current form', $form, 'errors', $errors);
-	}
 
 	$: errorOutput = `ERRORS ${JSON.stringify($errors, null)}`;
 </script>

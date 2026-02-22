@@ -8,7 +8,6 @@
 
 	export let data: PageData;
 
-	// eslint-disable-next-line svelte/valid-compile
 	const validators = $page.url.searchParams.has('refined') ? refined : basicSchema;
 
 	// Client API:

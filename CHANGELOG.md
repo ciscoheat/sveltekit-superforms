@@ -7,9 +7,154 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Improved error message for "No shape could be created for schema" to suggest using `zod4` adapter when applicable. [#594](https://github.com/ciscoheat/sveltekit-superforms/issues/594)
+- Added runtime detection warning when Zod v4 schema is passed to Zod v3 adapter, helping users identify adapter version mismatch. [#594](https://github.com/ciscoheat/sveltekit-superforms/issues/594)
+- Valibot adapter now handles transformation actions (`trim`, `transform`, etc.) properly by using `typeMode: 'input'` and `errorMode: 'ignore'` as defaults. This prevents errors when schemas contain transformations. Users can override these settings by passing `typeMode` and `errorMode` options to the adapter. [#668](https://github.com/ciscoheat/sveltekit-superforms/pull/668)
+
+## [2.29.1] - 2025-12-16
+
+### Fixed
+
+- Fixed TypeScript type inference for discriminated unions in `ValidationErrors`. [#653](https://github.com/ciscoheat/sveltekit-superforms/issues/653)
+- Fixed FormData parsing for discriminated unions, so they work properly without requiring `dataType: 'json'`. [#655](https://github.com/ciscoheat/sveltekit-superforms/issues/655)
+- `reset()` function didn't preserve tainted state for fields that are not being reset when using partial data. [#656](https://github.com/ciscoheat/sveltekit-superforms/issues/656)
+- Fixed FormData parsing incorrectly coercing empty strings to literal values (e.g., `z.literal("bar")`). Empty strings now properly fail validation instead of being replaced with the literal value. [#664](https://github.com/ciscoheat/sveltekit-superforms/issues/664)
+- Fixed `ReferenceError` when using `customValidity` with `validateForm({ update: true })`. [#669](https://github.com/ciscoheat/sveltekit-superforms/issues/669)
+
+### Changed
+
+- Replaced deprecated `@finom/zod-to-json-schema` with `zod-v3-to-json-schema`. [#660](https://github.com/ciscoheat/sveltekit-superforms/pull/660)
+- Migrated Valibot adapter to use the official `@valibot/to-json-schema` package. [#668](https://github.com/ciscoheat/sveltekit-superforms/pull/668)
+
+## [2.28.1] - 2025-10-19
+
+### Fixed
+
+- Zod 4 adapter: Allow top-level `.transform()` and `.refine()` in schemas. [#646](https://github.com/ciscoheat/sveltekit-superforms/issues/646).
+- Zod 4 adapter now respects global `customError` configuration when no explicit error map is provided. The adapter prioritizes `customError` over `localeError`. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618).
+- Zod 4 adapter: Fixed Default Date values in nested objects. [#650](https://github.com/ciscoheat/sveltekit-superforms/issues/650).
+
+## [2.28.0] - 2025-10-19
+
+### Changed
+
+- TypeBox adapter has been bumped to 1.0! Check the [migration guide](https://github.com/sinclairzx81/typebox/blob/main/changelog/1.0.0-migration.md) to upgrade. Note that if you must stay on 0.x for a while, you cannot upgrade to this version of Superforms.
+
+### Added
+
+- Added support for Zod 4 [stringbools](https://zod.dev/api?id=stringbool). [#610](https://github.com/ciscoheat/sveltekit-superforms/issues/610)
+- `booleanProxy` now supports the `empty` option.
+
+### Fixed
+
+- Fixed loading timers when the `timeoutMS` setting is triggered and a redirect response is returned. [#622](https://github.com/ciscoheat/sveltekit-superforms/issues/622)
+- `filesStore` initialValue now matches `fileStore`. [#637](https://github.com/ciscoheat/sveltekit-superforms/issues/637)
+- Fixed JSON Schema for some non-representable types in Zod 4 adapter, it now handles `set` and `map` properly. [#617](https://github.com/ciscoheat/sveltekit-superforms/issues/617)
+- Possibly fixed the SuperDebug broken import on Svelte 5 in enforced runes mode [#599](https://github.com/ciscoheat/sveltekit-superforms/issues/599)
+- Zod 4 error messages should now take the current locale into account as default. [#618](https://github.com/ciscoheat/sveltekit-superforms/issues/618), [#639](https://github.com/ciscoheat/sveltekit-superforms/issues/639)
+- Zod 3 fix for URL parsing - A default boolean value of `true` returned `false` when parsing a URL with `superValidate`. [#633](https://github.com/ciscoheat/sveltekit-superforms/issues/633)
+
+## [2.27.4] - 2025-10-14
+
+### Security
+
+- Fixed prototype pollution when using `dataType: 'json'`.
+
+## [2.27.2] - 2025-10-03
+
+### Security
+
+- Devalue version bumped to avoid [prototype pollution](https://github.com/sveltejs/devalue/security/advisories/GHSA-vj54-72f3-p5jv).
+
+### Fixed
+
+- Zod 4 tests working.
+- Zod 4 adapter didn't use the correct JSON Schema format for dates.
+- Nested data traversal for correcting invalid types didn't stop at a valid value, replacing paths with default data further down the tree.
+
+## [2.27.1] - 2025-06-27
+
+### Fixed
+
+- Fixed client validation issue with rapid multiple blur events.
+- Arktype adapter improved.
+- Union schemas now works with default values, replacing invalid properties even if nested.
+- When using `{ taint: 'untaint-form' }` option, form wasn't untainted unless it was modified.
+
+## [2.27.0] - 2025-06-16
+
+### Added
+
+- The [Arktype](https://arktype.io/) adapter is finally a "full" adapter, meaning it's retrospectable and doesn't require default values anymore!
+
+### Fixed
+
+- SuperDebug rune version is back, can now be imported as `import SuperDebug from 'sveltekit-superforms/SuperDebug.svelte';`
+- Fixed `bigint` handling for Zod 4 and Valibot.
+
+## [2.26.1] - 2025-06-05
+
+### Removed
+
+- The SuperDebug rune version broke Svelte 4 compatibility, so it has been removed until a solution can be figured out, hopefully very soon.
+
+### Fixed
+
+- Zod 4 adapter now handles top-level discriminated unions.
+
+## [2.26.0] - 2025-06-04
+
+### Added
+
+- [Zod 4](https://zod.dev/) adapter added! Adapter names are `zod4` and `zod4Client`, works with both the full version and Zod Mini. As Zod is now using its own JSON Schema representation, and there are some breaking changes like how enums are handled, check migrations carefully and please [report any bugs](https://github.com/ciscoheat/sveltekit-superforms/issues).
+- [taintedMessage](https://superforms.rocks/concepts/tainted) now passes `BeforeNavigate` to its callback function.
+- [SuperDebug](https://superforms.rocks/super-debug) now has a Runes version, see the docs for how to import it.
+- Added config options to `valibotClient`, same as in the `valibot` adapter.
+
+### Changed
+
+- Bumped [Zod](https://zod.dev/) peerDep requirement to 3.25.0 due to the Zod 4 release.
+- Bumped [Valibot](https://valibot.dev/) peerDep requirement to 1.0.0, congratulations on the stable release!
+
+## [2.25.0] - 2025-04-29
+
+### Added
+
+- Added `applyAction: 'never'` option, to prevent load function [invalidation](https://svelte.dev/tutorial/kit/invalidation) from overwriting the form state.
+- Added `invalidateAll: 'pessimistic'` option as an alternative to the `'force'` option (recommended to use instead for clarity).
+
+## [2.24.1] - 2025-04-06
+
+### Fixed
+
+- Fixed error mapping for deeply nested errors where no default value existed.
+
+## [2.24.0] - 2025-03-09
+
 ### Added
 
 - Exported `SuperValidateOptions` type.
+- Exported `MergeUnion`, `MergeFormUnion` and a `mergeFormUnion` utility, for handling discriminated unions in forms.
+
+### Fixed
+
+- Fixed diff algorithm problem with tainted objects.
+- Prevented crash when custom validity doesn't exist for an element.
+- `dateProxy` didn't restore properly with [snapshots](https://superforms.rocks/concepts/snapshots).
+- Fixed JSON Schema for simple adapters with empty arrays.
+
+### Changed
+
+- Bumped TypeBox peerDep requirement to 0.34.28.
+- Bumped Effect peerDep requirement to 3.13.7.
+- Bumped Valibot peerDep requirement to 1.0.0-rc.3.
+- Bumped Zod peerDep requirement to 3.24.2.
+
+### Deprecated
+
+- The `flashMessage` option is now deprecated, since SvelteKit has moved to [$app/state](https://svelte.dev/docs/kit/$app-state) instead of `$app/stores`, making it hard to support both. Use [sveltekit-flash-message](https://github.com/ciscoheat/sveltekit-flash-message) directly (`setFlash` or `redirect`) instead of integrating it with Superforms, it's less complicated as well.
 
 ## [2.23.1] - 2025-01-21
 

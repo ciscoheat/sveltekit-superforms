@@ -3,7 +3,7 @@ import { zod } from '$lib/adapters/zod.js';
 import { superValidate } from '$lib/superValidate.js';
 import { stringify } from 'devalue';
 import { assert, describe, expect, test } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 async function validate<T extends Record<string, unknown>>(
 	data: T,
@@ -119,4 +119,97 @@ describe('Default discriminated union values 2', () => {
 		} satisfies FormSchema;
 		await validate(data, FormSchema);
 	});
+});
+
+test('Default value with *matching* type in nested discriminated union with superRefine', async () => {
+	const ZodSchema2 = z
+		.object({
+			type: z.literal('additional'),
+			additional: z
+				.discriminatedUnion('type', [
+					z.object({
+						type: z.literal('same'),
+						address: z.string().nullable()
+					}),
+					z.object({
+						type: z.literal('different'),
+						address: z.string()
+					})
+				])
+				.default({
+					type: 'same',
+					address: null
+				})
+		})
+		.superRefine((_data, ctx) => {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['addresses', 'additional', 'name'],
+				message: 'error'
+			});
+		});
+
+	const FormSchema = zod(ZodSchema2);
+	type FormSchema = (typeof FormSchema)['defaults'];
+	const data = {
+		type: 'additional',
+		additional: {
+			type: 'different',
+			address: '123 Main St'
+		}
+	} satisfies FormSchema;
+	await validate(data, FormSchema);
+});
+
+test('Keep valid value in nested discriminated union with superRefine', async () => {
+	const ZodSchema2 = z
+		.object({
+			type: z.literal('additional'),
+			value: z.string(),
+			extra: z.discriminatedUnion('type', [
+				z.object({
+					type: z.literal('num'),
+					value: z.number().default(0)
+				}),
+				z.object({
+					type: z.literal('complex'),
+					value: z
+						.discriminatedUnion('type', [
+							z.object({
+								type: z.literal('string'),
+								value: z.string()
+							}),
+							z.object({
+								type: z.literal('number'),
+								value: z.number()
+							})
+						])
+						.default({
+							type: 'string',
+							value: ''
+						})
+				})
+			])
+		})
+		.superRefine((_data, ctx) => {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ['value'],
+				message: 'error'
+			});
+		});
+
+	const FormSchema = zod(ZodSchema2);
+	type FormSchema = (typeof FormSchema)['defaults'];
+	const data = {
+		type: 'additional',
+		value: 'test',
+		extra: {
+			type: 'num',
+			value: 42
+		}
+	} satisfies FormSchema;
+	const result = await validate(data, FormSchema);
+
+	expect(result.data.extra.value).toBe(42);
 });

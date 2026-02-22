@@ -1,5 +1,5 @@
 import type { SchemaShape } from './jsonSchema/schemaShape.js';
-import { pathExists, setPaths, traversePath, traversePaths } from './traversal.js';
+import { pathExists, setPaths, traversePath, traversePaths, type PathData } from './traversal.js';
 import { mergePath } from './stringPath.js';
 import type { ValidationErrors } from './superValidate.js';
 import { defaultTypes, defaultValue, type SchemaFieldType } from './jsonSchema/schemaDefaults.js';
@@ -168,6 +168,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 
 	//#region Types
 
+	// TODO: Memoize Types with _schema?
 	const Types = defaultTypes(_schema);
 
 	function Types_correctValue(dataValue: unknown, defValue: unknown, type: SchemaFieldType) {
@@ -234,10 +235,13 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 		for (const error of Errors) {
 			if (!error.path) continue;
 
-			Defaults_traverseAndReplace({
-				path: error.path,
-				value: pathExists(Defaults, error.path)?.value
-			});
+			Defaults_traverseAndReplace(
+				{
+					path: error.path,
+					value: pathExists(Defaults, error.path)?.value
+				},
+				true
+			);
 		}
 	}
 
@@ -245,11 +249,7 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 
 	//#region Defaults
 
-	function Defaults_traverseAndReplace(defaultPath: {
-		path: (string | number | symbol)[];
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		value: any;
-	}): void {
+	function Defaults_traverseAndReplace(defaultPath: Partial<PathData>, traversingErrors = false) {
 		const currentPath = defaultPath.path;
 		if (!currentPath || !currentPath[0]) return;
 		if (typeof currentPath[0] === 'string' && preprocessed?.includes(currentPath[0])) return;
@@ -279,15 +279,21 @@ export function replaceInvalidDefaults<T extends Record<string, unknown>>(
 			const typePath = currentPath.filter((p) => /\D/.test(String(p)));
 			const pathTypes = traversePath(Types, typePath, (path) => {
 				//console.log(path.path, path.value); //debug
-				return '__items' in path.value ? path.value.__items : path.value;
+				return path.value && '__items' in path.value ? path.value.__items : path.value;
 			});
 			if (!pathTypes) {
+				// Return if checking for errors, as there may be deep errors that doesn't exist in the defaults.
+				if (traversingErrors) return;
 				throw new SchemaError('No types found for defaults', currentPath);
 			}
 
 			const fieldType = pathTypes.value ?? defaultType;
 			if (fieldType) {
-				Data_setValue(currentPath, Types_correctValue(dataValue, defValue, fieldType));
+				const corrected = Types_correctValue(dataValue, defValue, fieldType);
+				// If same value, skip the potential nested path as it's already correct.
+				if (corrected === dataValue) return 'skip';
+
+				Data_setValue(currentPath, corrected);
 			}
 		}
 	}

@@ -10,7 +10,6 @@
 	// Doesn't work well with testing client-side validation for files
 	const { form, errors, message, enhance } = superForm(data.form, {
 		dataType: 'json',
-		// eslint-disable-next-line svelte/valid-compile
 		validators: $page.url.searchParams.has('client') ? zod(schema) : undefined,
 		taintedMessage: false
 	});

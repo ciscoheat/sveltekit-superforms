@@ -64,7 +64,7 @@ export const actions: Actions = {
 				);
 				return fail(response.status, { form });
 			}
-		} catch (err) {
+		} catch {
 			setFlash({ type: 'error', message: 'Error Occurred, Please Try Later' }, event);
 			return fail(500, { form });
 		}

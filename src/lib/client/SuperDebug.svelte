@@ -1,3 +1,5 @@
+<svelte:options runes={false} />
+
 <script>
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
@@ -124,7 +126,6 @@
 	 */
 	function setCollapse(status = undefined) {
 		let data;
-		// eslint-disable-next-line svelte/valid-compile
 		const route = $page.route.id ?? '';
 
 		try {
@@ -441,8 +442,8 @@
 			padding: 1em;
 			padding-bottom: 0;
 			justify-content: space-between;
-			font-family: Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier,
-				monospace;
+			font-family:
+				Inconsolata, Monaco, Consolas, 'Lucida Console', 'Courier New', Courier, monospace;
 		}
 
 		.super-debug--right-status {

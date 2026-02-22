@@ -4,7 +4,7 @@ import { superValidate, type SuperValidated } from '$lib/superValidate.js';
 import { get } from 'svelte/store';
 import { merge } from 'ts-deepmerge';
 import { describe, it, expect, beforeEach, test } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { SuperFormError } from '$lib/errors.js';
 
 const schema = z.object({

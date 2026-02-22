@@ -6,7 +6,7 @@
 	import TextField from './TextField.svelte';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { fieldProxy } from '$lib/client/index.js';
-	import type { z } from 'zod';
+	import type { z } from 'zod/v3';
 
 	export let data: SuperValidated<z.infer<Schema>>;
 

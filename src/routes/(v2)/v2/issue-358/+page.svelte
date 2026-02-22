@@ -5,7 +5,6 @@
 
 	export let data;
 
-	// eslint-disable-next-line svelte/valid-compile
 	const resetForm = $page.url.searchParams.has('reset');
 
 	const { form, errors, message, enhance, reset, tainted } = superForm(data.form, {

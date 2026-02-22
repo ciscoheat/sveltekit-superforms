@@ -97,17 +97,21 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 			}
 
 			// Objects must have default values to avoid setting undefined properties on nested data
-			if (info.union.length && info.types[0] == 'object') {
-				if (output === undefined) output = {};
-				output =
-					info.union.length > 1
-						? merge.withOptions(
-								{ allowUndefinedOverrides: true },
-								...info.union.map(
-									(s) => _defaultValues(s, isOptional, path) as Record<string, unknown>
+			if (info.union.length) {
+				if (info.types[0] == 'object') {
+					if (output === undefined) output = {};
+					output =
+						info.union.length > 1
+							? merge.withOptions(
+									{ allowUndefinedOverrides: true },
+									...info.union.map(
+										(s) => _defaultValues(s, isOptional, path) as Record<string, unknown>
+									)
 								)
-							)
-						: (_defaultValues(info.union[0], isOptional, path) as Record<string, unknown>);
+							: (_defaultValues(info.union[0], isOptional, path) as Record<string, unknown>);
+				} else {
+					return _defaultValues(info.union[0], isOptional, path);
+				}
 			}
 		}
 	}
@@ -123,10 +127,47 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		for (const [key, objSchema] of Object.entries(info.properties)) {
 			assertSchema(objSchema, [...path, key]);
 
-			const def =
-				objectDefaults && objectDefaults[key] !== undefined
-					? objectDefaults[key]
-					: _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
+			// Determine the default value for this property. If an object-level default
+			// was provided, attempt to convert it to the correct typed form using the
+			// property's schema information (e.g. convert ISO strings back to Date).
+			let def;
+			if (objectDefaults && objectDefaults[key] !== undefined) {
+				try {
+					const propInfo = schemaInfo(objSchema, !info.required?.includes(key), [...path, key]);
+					if (propInfo) {
+						// Use the first resolved type to format simple values (dates, sets, maps, bigint, symbol)
+						const propType = propInfo.types[0];
+						// If property is an object and the provided default is an object,
+						// we need to recursively process it to convert nested values (e.g. Date strings to Dates)
+						if (
+							propType === 'object' &&
+							typeof objectDefaults[key] === 'object' &&
+							objectDefaults[key] !== null &&
+							!Array.isArray(objectDefaults[key])
+						) {
+							// Create a temporary schema with the parent's default to recursively process it
+							const schemaWithDefault: JSONSchema = {
+								...objSchema,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+								default: objectDefaults[key] as any
+							};
+							def = _defaultValues(schemaWithDefault, !info.required?.includes(key), [
+								...path,
+								key
+							]);
+						} else {
+							def = formatDefaultValue(propType, objectDefaults[key]);
+						}
+					} else {
+						def = objectDefaults[key];
+					}
+				} catch {
+					// If anything goes wrong determining/formatting, fall back to provided value
+					def = objectDefaults[key];
+				}
+			} else {
+				def = _defaultValues(objSchema, !info.required?.includes(key), [...path, key]);
+			}
 
 			//if (def !== undefined) output[key] = def;
 			if (output === undefined) output = {};
@@ -149,6 +190,11 @@ function _defaultValues(schema: JSONSchema, isOptional: boolean, path: string[])
 		return schema.enum[0];
 	}
 
+	// Constants
+	if ('const' in schema) {
+		return schema.const;
+	}
+
 	// Basic type
 	if (isMultiTypeUnion()) {
 		throw new SchemaError('Default values cannot have more than one type.', path);
@@ -167,6 +213,8 @@ function formatDefaultValue(type: SchemaType, value: unknown) {
 	switch (type) {
 		case 'set':
 			return Array.isArray(value) ? new Set(value) : value;
+		case 'map':
+			return Array.isArray(value) ? new Map(value) : value;
 		case 'Date':
 		case 'date':
 		case 'unix-time':
@@ -206,14 +254,19 @@ export function defaultValue(type: SchemaType, enumType: unknown[] | undefined):
 		case 'int64':
 		case 'bigint':
 			return BigInt(0);
+		case 'stringbool':
+			// For stringbool, return empty string - let Zod validation handle it
+			// The schema should define a default if one is needed
+			return '';
 		case 'set':
 			return new Set();
+		case 'map':
+			return new Map();
 		case 'symbol':
 			return Symbol();
 		case 'undefined':
 		case 'any':
 			return undefined;
-
 		default:
 			throw new SchemaError(
 				'Schema type or format not supported, requires explicit default value: ' + type
@@ -235,16 +288,23 @@ type SchemaTypeObject = {
 	[Key in Exclude<string, '_types' | '_items'>]: SchemaTypeObject;
 } & SchemaFieldType;
 
-function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]) {
+function _defaultTypes(schema: JSONSchema, isOptional: boolean, path: string[]): SchemaTypeObject {
 	if (!schema) {
 		throw new SchemaError('Schema was undefined', path);
 	}
 
 	const info = schemaInfo(schema, isOptional, path);
 
-	const output = {
+	let output = {
 		__types: info.types
 	} as SchemaTypeObject;
+
+	if (info.union) {
+		output = merge(
+			output,
+			...info.union.map((u) => _defaultTypes(u, info.isOptional, path))
+		) as SchemaTypeObject;
+	}
 
 	//if (schema.type == 'object') console.log('--- OBJECT ---'); //debug
 	//else console.dir({ path, info }, { depth: 10 }); //debug

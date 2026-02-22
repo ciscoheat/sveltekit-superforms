@@ -2,7 +2,7 @@ import { superValidate, message, setError } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 import type { Actions, PageServerLoad } from './$types.js';
 
@@ -14,6 +14,7 @@ type FormType = {
 };
 */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const raw = {
 	name: z.string().min(1),
 	email: z.string().email(),

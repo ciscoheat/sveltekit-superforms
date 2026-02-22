@@ -7,7 +7,6 @@
 	let logForm = superForm(data.form, {
 		taintedMessage: false,
 		resetForm: false,
-		// eslint-disable-next-line svelte/valid-compile
 		dataType: $page.url.searchParams.has('json') ? 'json' : 'form'
 	});
 

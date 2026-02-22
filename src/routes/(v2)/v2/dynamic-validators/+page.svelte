@@ -3,7 +3,7 @@
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { zod } from '$lib/adapters/zod.js';
 	import { schema } from './schema.js';
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 
 	export let data;
 

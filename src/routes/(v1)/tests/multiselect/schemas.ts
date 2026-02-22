@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const optionsSchema = z
 	.enum(['option_1', 'option_2', 'option_3', 'option_4'])

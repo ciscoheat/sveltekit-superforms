@@ -15,7 +15,7 @@
 		validators: zod(schema)
 	});
 	const { form, errors, message, enhance, tainted, isTainted } = pageForm;
-	$: taintedForm = isTainted();
+	let taintedForm = isTainted();
 
 	const options = [
 		{ value: 'A', label: 'Aldebaran' },

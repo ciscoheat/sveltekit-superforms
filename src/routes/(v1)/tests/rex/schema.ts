@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 export const basicSchema = z.object({
 	name: z.string().min(4).default('Hello world!'),

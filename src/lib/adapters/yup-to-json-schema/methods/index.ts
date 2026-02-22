@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import type { AnySchema } from 'yup';
 import type { JsonSchemaCallback, Meta } from '../types.js';
 

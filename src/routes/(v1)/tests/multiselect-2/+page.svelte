@@ -3,7 +3,7 @@
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
-	import type { z } from 'zod';
+	import type { z } from 'zod/v3';
 	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;

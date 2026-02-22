@@ -32,9 +32,6 @@
 	);
 
 	const checkUsername = debounce(250, submitCheckUsername);
-
-	// eslint-disable-next-line svelte/valid-compile
-	$page;
 </script>
 
 <SuperDebug data={{ $form, $posted }} />

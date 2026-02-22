@@ -1,7 +1,8 @@
-import { isElementInViewport, scrollToAndCenter } from './elements.js';
-import type { FormOptions } from './superForm.js';
+import { afterNavigate } from '$app/navigation';
 import { onDestroy, tick } from 'svelte';
 import type { Writable } from 'svelte/store';
+import { isElementInViewport, scrollToAndCenter } from './elements.js';
+import type { FormOptions } from './superForm.js';
 
 enum FetchStatus {
 	Idle = 0,
@@ -108,6 +109,10 @@ export function Form<T extends Record<string, unknown>, M>(
 	{
 		ErrorTextEvents_addErrorTextListeners();
 
+		// Flag to prevent afterNavigate from resetting timers
+		// when navigation is triggered from within form event handlers (e.g. goto() in onUpdate).
+		let processingEvents = false;
+
 		const completed = (opts: { cancelled: boolean; clearAll?: boolean }) => {
 			if (!opts.clearAll) Timers_clear();
 			else Timers_clearAll();
@@ -118,6 +123,13 @@ export function Form<T extends Record<string, unknown>, M>(
 		onDestroy(() => {
 			ErrorTextEvents_removeErrorTextListeners();
 			completed({ cancelled: true });
+		});
+
+		afterNavigate(() => {
+			ErrorTextEvents_removeErrorTextListeners();
+			if (!processingEvents) {
+				completed({ cancelled: false });
+			}
 		});
 
 		return {
@@ -131,7 +143,11 @@ export function Form<T extends Record<string, unknown>, M>(
 				setTimeout(() => scrollToFirstError(Form, options), 1);
 			},
 
-			isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed
+			isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed,
+
+			setProcessingEvents(value: boolean) {
+				processingEvents = value;
+			}
 		};
 	}
 }
@@ -189,7 +205,7 @@ export const scrollToFirstError = async <T extends Record<string, unknown>, M>(
 			if (options.selectErrorText && focusEl.tagName == 'INPUT') {
 				(focusEl as HTMLInputElement).select();
 			}
-		} catch (err) {
+		} catch {
 			// Some hidden inputs like from flatpickr cannot be focused.
 		}
 	}

@@ -2,7 +2,7 @@ import { superValidate } from '$lib/server/index.js';
 import { zod } from '$lib/adapters/zod.js';
 
 import { error, fail } from '@sveltejs/kit';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const barSchema = z.object({
 	name: z.string(),

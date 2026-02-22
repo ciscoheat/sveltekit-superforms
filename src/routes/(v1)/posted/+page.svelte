@@ -9,7 +9,6 @@
 	export let data: PageData;
 
 	const { form, errors, enhance, delayed, message, posted } = superForm(data.form, {
-		// eslint-disable-next-line svelte/valid-compile
 		validators: $page.url.searchParams.has('zod')
 			? zod(
 					userSchema.extend({

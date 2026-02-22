@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { z } from 'zod';
+	import { z } from 'zod/v3';
 	import { page } from '$app/stores';
 	import { superForm } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/zod.js';
@@ -16,7 +16,6 @@
 			})
 	});
 
-	// eslint-disable-next-line svelte/valid-compile
 	const { form } = superForm<z.infer<typeof postSchema>>($page.data.form, {
 		taintedMessage: 'Are you sure you want to leave?',
 		validators: zod(postSchema),

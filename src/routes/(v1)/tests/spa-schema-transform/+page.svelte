@@ -7,7 +7,6 @@
 
 	export let data;
 
-	// eslint-disable-next-line svelte/valid-compile
 	let SPA = $page.url.searchParams.has('SPA') || undefined;
 
 	const { form, errors, message, enhance, validate, validateForm } = superForm(data.form, {

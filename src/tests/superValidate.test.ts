@@ -83,6 +83,8 @@ import { schemasafe } from '$lib/adapters/schemasafe.js';
 
 import { effect } from '$lib/adapters/effect.js';
 import { Schema } from 'effect';
+import { standard } from '$lib/adapters/standard.js';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 import { SchemaError, type JSONSchema } from '$lib/index.js';
 import { splitPath } from '$lib/stringPath.js';
@@ -1469,6 +1471,102 @@ describe('Effect', async () => {
 
 	const adapter = effect(schema);
 	schemaTest(adapter);
+});
+
+describe('Standard Schema', () => {
+	it('should validate zod schemas through the standard adapter', async () => {
+		const schema = z.object({
+			name: z.string().min(2),
+			email: z.string().email()
+		});
+
+		const adapter = standard(schema, {
+			defaults: {
+				name: 'Unknown',
+				email: ''
+			}
+		});
+
+		const defaultsForm = await superValidate(adapter);
+		expect(defaultsForm.data).toEqual({
+			name: 'Unknown',
+			email: ''
+		});
+
+		const invalidForm = await superValidate({ name: 'A', email: 'invalid-email' }, adapter);
+		expect(invalidForm.valid).toBe(false);
+		expect(invalidForm.errors.name).toBeDefined();
+		expect(invalidForm.errors.email).toBeDefined();
+
+		const validForm = await superValidate({ name: 'Ok', email: 'test@example.com' }, adapter);
+		expect(validForm.valid).toBe(true);
+		expect(validForm.data).toEqual({
+			name: 'Ok',
+			email: 'test@example.com'
+		});
+	});
+
+	it('should validate valibot schemas through the standard adapter', async () => {
+		const schema = v.object({
+			name: v.pipe(v.string(), v.minLength(2)),
+			email: v.pipe(v.string(), v.email())
+		});
+
+		const adapter = standard(schema, {
+			defaults: {
+				name: 'Unknown',
+				email: ''
+			}
+		});
+
+		const defaultsForm = await superValidate(adapter);
+		expect(defaultsForm.data).toEqual({
+			name: 'Unknown',
+			email: ''
+		});
+
+		const validForm = await superValidate({ name: 'Ok', email: 'test@example.com' }, adapter);
+		expect(validForm.valid).toBe(true);
+		expect(validForm.data).toEqual({
+			name: 'Ok',
+			email: 'test@example.com'
+		});
+	});
+
+	it('should map object-based standard issue paths to superforms errors', async () => {
+		const schema = {
+			'~standard': {
+				version: 1,
+				vendor: 'test',
+				validate: async () => {
+					return {
+						issues: [
+							{
+								message: 'Invalid email',
+								path: [{ key: 'user' }, { key: 'email' }]
+							}
+						]
+					};
+				}
+			}
+		} satisfies StandardSchemaV1;
+
+		const adapter = standard(schema, {
+			defaults: {
+				user: {
+					email: ''
+				}
+			}
+		});
+
+		const form = await superValidate({ user: { email: 'invalid' } }, adapter);
+		expect(form.valid).toBe(false);
+		expect(form.errors).toEqual({
+			user: {
+				email: ['Invalid email']
+			}
+		});
+	});
 });
 
 ///// Common ////////////////////////////////////////////////////////

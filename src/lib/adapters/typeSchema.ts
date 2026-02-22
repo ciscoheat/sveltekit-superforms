@@ -234,6 +234,7 @@ export type Registry = {
 	zod4: Zod4Resolver;
 	vine: VineResolver;
 	schemasafe: SchemasafeResolver<JSONSchema>;
+	standard: StandardResolver;
 	superstruct: SuperstructResolver;
 	effect: EffectResolver;
 	/*

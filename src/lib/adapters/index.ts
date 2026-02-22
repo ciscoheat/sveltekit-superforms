@@ -4,6 +4,7 @@ export { arktype, arktypeClient } from './arktype.js';
 export { classvalidator, classvalidatorClient } from './classvalidator.js';
 export { effect, effectClient } from './effect.js';
 export { joi, joiClient } from './joi.js';
+export { standard, standardClient } from './standard.js';
 export { superformClient } from './superform.js';
 export { typebox, typeboxClient } from './typebox.js';
 export { valibot, valibotClient } from './valibot.js';

@@ -1,4 +1,5 @@
 import type { TSchema, Static as Static$1 } from 'typebox';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { type } from 'arktype';
 import type { AnySchema } from 'joi';
 import type {
@@ -151,6 +152,15 @@ interface VineResolver extends Resolver {
 		? Replace<VineInfer<this['schema']>, Date, string>
 		: never;
 	output: this['schema'] extends SchemaTypes ? VineInfer<this['schema']> : never;
+}
+
+interface StandardResolver extends Resolver {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	base: StandardSchemaV1<any, any>;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	input: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferInput<this['schema']> : never;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	output: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferOutput<this['schema']> : never;
 }
 
 interface SchemasafeResolver<

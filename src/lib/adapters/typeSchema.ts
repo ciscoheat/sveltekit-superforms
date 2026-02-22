@@ -158,9 +158,13 @@ interface StandardResolver extends Resolver {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	base: StandardSchemaV1<any, any>;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	input: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferInput<this['schema']> : never;
+	input: this['schema'] extends StandardSchemaV1<any, any>
+		? StandardSchemaV1.InferInput<this['schema']>
+		: never;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	output: this['schema'] extends StandardSchemaV1<any, any> ? StandardSchemaV1.InferOutput<this['schema']> : never;
+	output: this['schema'] extends StandardSchemaV1<any, any>
+		? StandardSchemaV1.InferOutput<this['schema']>
+		: never;
 }
 
 interface SchemasafeResolver<

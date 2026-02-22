@@ -1,5 +1,5 @@
 import { email, minLength, object, pipe, string } from 'valibot';
-import z from "zod";
+import z from 'zod';
 
 export const valibotSchema = object({
 	name: pipe(string(), minLength(2)),

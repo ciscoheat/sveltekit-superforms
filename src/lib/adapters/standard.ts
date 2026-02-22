@@ -1,4 +1,4 @@
-import { memoize } from "$lib/memoize.js";
+import { memoize } from '$lib/memoize.js';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
 	createAdapter,

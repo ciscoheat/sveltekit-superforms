@@ -1,16 +1,26 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { standardClient } from "$lib/adapters/standard.js";
+	import { standardClient } from '$lib/adapters/standard.js';
 	import SuperDebug, { superForm } from '$lib/index.js';
-	import { valibotSchema, zodSchema } from "./schema.js";
+	import { valibotSchema, zodSchema } from './schema.js';
 
 	const { data } = $props();
 
-	const { form: valibotForm, errors: valibotErrors, message: valibotMessage, enhance: valibotEnhance } = superForm(data.valibotForm, {
+	const {
+		form: valibotForm,
+		errors: valibotErrors,
+		message: valibotMessage,
+		enhance: valibotEnhance
+	} = superForm(data.valibotForm, {
 		validators: standardClient(valibotSchema)
 	});
-	
-	const { form: zodForm, errors: zodErrors, message: zodMessage, enhance: zodEnhance } = superForm(data.zodForm, {
+
+	const {
+		form: zodForm,
+		errors: zodErrors,
+		message: zodMessage,
+		enhance: zodEnhance
+	} = superForm(data.zodForm, {
 		validators: standardClient(zodSchema)
 	});
 </script>
@@ -29,7 +39,11 @@
 <form method="POST" action="?/valibot" use:valibotEnhance>
 	<label>
 		Name<br />
-		<input name="name" aria-invalid={$valibotErrors.name ? 'true' : undefined} bind:value={$valibotForm.name} />
+		<input
+			name="name"
+			aria-invalid={$valibotErrors.name ? 'true' : undefined}
+			bind:value={$valibotForm.name}
+		/>
 		{#if $valibotErrors.name}<span class="invalid">{$valibotErrors.name}</span>{/if}
 	</label>
 
@@ -61,7 +75,11 @@
 <form method="POST" action="?/zod" use:zodEnhance>
 	<label>
 		Name<br />
-		<input name="name" aria-invalid={$zodErrors.name ? 'true' : undefined} bind:value={$zodForm.name} />
+		<input
+			name="name"
+			aria-invalid={$zodErrors.name ? 'true' : undefined}
+			bind:value={$zodForm.name}
+		/>
 		{#if $zodErrors.name}<span class="invalid">{$zodErrors.name}</span>{/if}
 	</label>
 

@@ -109,6 +109,10 @@ export function Form<T extends Record<string, unknown>, M>(
 	{
 		ErrorTextEvents_addErrorTextListeners();
 
+		// Flag to prevent afterNavigate from resetting timers
+		// when navigation is triggered from within form event handlers (e.g. goto() in onUpdate).
+		let processingEvents = false;
+
 		const completed = (opts: { cancelled: boolean; clearAll?: boolean }) => {
 			if (!opts.clearAll) Timers_clear();
 			else Timers_clearAll();
@@ -123,7 +127,9 @@ export function Form<T extends Record<string, unknown>, M>(
 
 		afterNavigate(() => {
 			ErrorTextEvents_removeErrorTextListeners();
-			completed({ cancelled: false });
+			if (!processingEvents) {
+				completed({ cancelled: false });
+			}
 		});
 
 		return {
@@ -137,7 +143,11 @@ export function Form<T extends Record<string, unknown>, M>(
 				setTimeout(() => scrollToFirstError(Form, options), 1);
 			},
 
-			isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed
+			isSubmitting: () => state === FetchStatus.Submitting || state === FetchStatus.Delayed,
+
+			setProcessingEvents(value: boolean) {
+				processingEvents = value;
+			}
 		};
 	}
 }

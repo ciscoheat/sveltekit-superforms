@@ -5,7 +5,15 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.30.0] - 2026-02-22
+
+### Security
+
+- Devalue dependency version updated to prevent [CVE-2026-22774](https://github.com/advisories/GHSA-vw5p-8cq8-m7mv) and two other minor vulnerabilities.
+
+### Added
+
+- Added adapter to support [Standard Schema](https://standardschema.dev/schema), now *any validation library* implementing that interface can be used with Superforms! Big thanks to [sillvva](https://github.com/sillvva) for this contribution! Note however that the `defaults` option is required when using this adapter, as for default values to be inferred automatically, a more specialized adapter for the validation library (handling JSON Schema) needs to be used.
 
 ### Fixed
 

@@ -176,7 +176,7 @@
 		"@vinejs/vine": "^3.0.1",
 		"arktype": "^2.1.29",
 		"class-validator": "^0.14.3",
-		"effect": "^3.19.12",
+		"effect": "^3.21.0",
 		"joi": "^17.13.3",
 		"json-schema-to-ts": "^3.1.1",
 		"superstruct": "^2.0.2",
@@ -187,7 +187,7 @@
 		"zod-v3-to-json-schema": "^4.0.0"
 	},
 	"dependencies": {
-		"devalue": "^5.6.3",
+		"devalue": "^5.6.4",
 		"memoize-weak": "^1.0.2",
 		"ts-deepmerge": "^7.0.3"
 	},

@@ -1,0 +1,102 @@
+import {
+	createAdapter,
+	type ValidationAdapter,
+	type AdapterOptions,
+	type Infer,
+	type InferIn,
+	type ValidationResult,
+	type ClientValidationAdapter
+} from './adapters.js';
+import {
+	safeParseAsync,
+	type GenericSchema,
+	type GenericSchemaAsync,
+	type Config,
+	type GenericIssue,
+	type IssuePathItem,
+	type SetPathItem
+} from 'valibot';
+import { memoize } from '$lib/memoize.js';
+import { type ConversionConfig, toJsonSchema } from '@valibot/to-json-schema';
+import type { JSONSchema } from '../jsonSchema/index.js';
+
+type SupportedSchemas = GenericSchema | GenericSchemaAsync;
+
+const defaultOptions: ConversionConfig = {
+	ignoreActions: ['transform', 'mime_type', 'max_size', 'min_size', 'starts_with', 'trim'],
+	typeMode: 'input',
+	errorMode: 'ignore',
+	overrideSchema: (context) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const type = (context.valibotSchema as any).type;
+		if (type === 'date') {
+			return { type: 'integer', format: 'unix-time' };
+		}
+		if (type === 'bigint') {
+			return { type: 'string', format: 'bigint' };
+		}
+		if (type === 'file' || type === 'blob' || type === 'instance' || type === 'custom') {
+			return {};
+		}
+	}
+};
+
+/* @__NO_SIDE_EFFECTS__ */
+export const valibotToJSONSchema = (options: ConversionConfig & { schema: SupportedSchemas }) => {
+	const { schema, ...rest } = options;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return toJsonSchema(schema as any, { ...defaultOptions, ...rest }) as JSONSchema;
+};
+
+async function _validate<T extends SupportedSchemas>(
+	schema: T,
+	data: unknown,
+	config?: Config<GenericIssue<unknown>>
+): Promise<ValidationResult<Infer<T, 'valibot'>>> {
+	const result = await safeParseAsync(schema, data, config);
+	if (result.success) {
+		return {
+			data: result.output as Infer<T, 'valibot'>,
+			success: true
+		};
+	}
+	return {
+		issues: result.issues.map(({ message, path }) => ({
+			message,
+			path: (path as Exclude<IssuePathItem, SetPathItem>[])?.map(({ key }) => key) as string[]
+		})),
+		success: false
+	};
+}
+
+function _valibot<T extends SupportedSchemas>(
+	schema: T,
+	options: Omit<ConversionConfig, 'schema'> &
+		AdapterOptions<Infer<T, 'valibot'>> & {
+			config?: Config<GenericIssue<unknown>>;
+		} = {}
+): ValidationAdapter<Infer<T, 'valibot'>, InferIn<T, 'valibot'>> {
+	return createAdapter({
+		superFormValidationLibrary: 'valibot',
+		validate: async (data) => _validate<T>(schema, data, options?.config),
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		jsonSchema: options?.jsonSchema ?? valibotToJSONSchema({ schema: schema as any, ...options }),
+		defaults: 'defaults' in options ? options.defaults : undefined
+	});
+}
+
+function _valibotClient<T extends SupportedSchemas>(
+	schema: T,
+	options: Omit<ConversionConfig, 'schema'> &
+		AdapterOptions<Infer<T, 'valibot'>> & {
+			config?: Config<GenericIssue<unknown>>;
+		} = {}
+): ClientValidationAdapter<Infer<T, 'valibot'>, InferIn<T, 'valibot'>> {
+	return {
+		superFormValidationLibrary: 'valibot',
+		validate: async (data) => _validate<T>(schema, data, options?.config)
+	};
+}
+
+export const valibot = /* @__PURE__ */ memoize(_valibot);
+export const valibotClient = /* @__PURE__ */ memoize(_valibotClient);

@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-superforms",
-	"version": "2.30.0",
+	"version": "2.30.1",
 	"author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
 	"description": "Making SvelteKit forms a pleasure to use!",
 	"keywords": [

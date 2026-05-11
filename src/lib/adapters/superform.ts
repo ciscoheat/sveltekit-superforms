@@ -38,7 +38,7 @@ function _superform<T extends Record<string, unknown>, T2 extends Partial<T> = P
 
 			for (const [key, value] of Object.entries(schema)) {
 				if (typeof value === 'function' && !(key in newData)) {
-					// Setting undefined fields so they will be validated based on field existance.
+					// Setting undefined fields so they will be validated based on field existence.
 					newData[key] = undefined;
 				}
 			}

@@ -231,14 +231,5 @@
 	},
 	"svelte": "./dist/index.js",
 	"types": "./dist/index.d.ts",
-	"type": "module",
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"esbuild",
-			"svelte-preprocess",
-			"@parcel/watcher",
-			"@sveltejs/kit"
-		],
-		"ignoredBuiltDependencies": []
-	}
+	"type": "module"
 }

@@ -1,0 +1,5 @@
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true
+  svelte-preprocess: true
+  '@sveltejs/kit': true

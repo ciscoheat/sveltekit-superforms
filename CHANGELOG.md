@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Security
+
+- Version update for devalue to prevent security vulnerabilities. [CVE-2026-42570](https://github.com/advisories/GHSA-77vg-94rm-hx3p)
+
 ## [2.30.1] - 2026-03-26
 
 ### Security

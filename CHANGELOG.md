@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- TypeBox bumped to 1.3.0 to fix an issue with a deprecated type. Many thanks to the TypeBox author [sinclairzx81](https://github.com/sinclairzx81) for the PR!
+- TypeBox bumped to 1.3.3 to fix an issue with a deprecated type. Many thanks to the TypeBox author [sinclairzx81](https://github.com/sinclairzx81) for the PR!
 
 ## [2.30.1] - 2026-03-26
 

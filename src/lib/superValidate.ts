@@ -49,14 +49,7 @@ export type ValidationErrors<Out extends Record<string, unknown>> = {
 } & SuperStructArray<Out, string[], { _errors?: string[] }>;
 
 type SuperValidateData<In extends Record<string, unknown>> =
-	| RequestEvent
-	| Request
-	| FormData
-	| URLSearchParams
-	| URL
-	| Partial<In>
-	| null
-	| undefined;
+	RequestEvent | Request | FormData | URLSearchParams | URL | Partial<In> | null | undefined;
 
 export type SuperValidateOptions<Out extends Record<string, unknown>> = Partial<{
 	errors: boolean;

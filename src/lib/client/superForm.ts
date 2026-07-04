@@ -51,9 +51,9 @@ export type SuperFormEventList<T extends Record<string, unknown>, M> = {
 };
 
 type FilterType<T, Check> = {
-	[K in keyof NonNullable<T> as NonNullable<NonNullable<T>[K]> extends Check
-		? never
-		: K]: NonNullable<T>[K];
+	[
+		K in keyof NonNullable<T> as NonNullable<NonNullable<T>[K]> extends Check ? never : K
+	]: NonNullable<T>[K];
 };
 /**
  * Helper type for making ActionResult data strongly typed in onUpdate.
@@ -68,9 +68,7 @@ export type FormResult<T extends Record<string, unknown> | null | undefined> = F
 export type TaintOption = boolean | 'untaint' | 'untaint-all' | 'untaint-form';
 
 type ValidatorsOption<T extends Record<string, unknown>> =
-	| ValidationAdapter<Partial<T>, Record<string, unknown>>
-	| false
-	| 'clear';
+	ValidationAdapter<Partial<T>, Record<string, unknown>> | false | 'clear';
 
 // Need to distribute T with "T extends T",
 // since SuperForm<A|B> is not the same as SuperForm<A> | SuperForm<B>

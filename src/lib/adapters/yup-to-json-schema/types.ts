@@ -2,15 +2,7 @@ import type { JSONSchema7 } from 'json-schema';
 import type { SchemaDescription } from 'yup';
 
 export type YupType =
-	| 'array'
-	| 'boolean'
-	| 'date'
-	| 'lazy'
-	| 'mixed'
-	| 'number'
-	| 'object'
-	| 'string'
-	| 'tuple';
+	'array' | 'boolean' | 'date' | 'lazy' | 'mixed' | 'number' | 'object' | 'string' | 'tuple';
 
 export type Converters = Record<YupType, Converter>;
 

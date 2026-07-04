@@ -18,15 +18,17 @@ export type SuperStructArray<T extends Record<string, unknown>, Data, ArrayData 
 		: never;
 };
 
-export type SuperStruct<T, Data> = Partial<{
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[Property in AllKeys<T>]: [T] extends [any]
-		? NonNullable<T[Property]> extends Record<string, unknown>
-			? SuperStruct<MergeUnion<NonNullable<T[Property]>>, Data>
-			: NonNullable<T[Property]> extends (infer A)[]
-				? NonNullable<A> extends Record<string, unknown>
-					? SuperStruct<MergeUnion<NonNullable<A>>, Data>
+export type SuperStruct<T, Data> = Partial<
+	{
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		[Property in AllKeys<T>]: [T] extends [any]
+			? NonNullable<T[Property]> extends Record<string, unknown>
+				? SuperStruct<MergeUnion<NonNullable<T[Property]>>, Data>
+				: NonNullable<T[Property]> extends (infer A)[]
+					? NonNullable<A> extends Record<string, unknown>
+						? SuperStruct<MergeUnion<NonNullable<A>>, Data>
+						: Data
 					: Data
-				: Data
-		: never;
-}>;
+			: never;
+	}
+>;

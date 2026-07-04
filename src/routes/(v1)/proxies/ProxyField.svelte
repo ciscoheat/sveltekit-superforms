@@ -10,14 +10,7 @@
 	export let form: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
 	export let type:
-		| 'text'
-		| 'password'
-		| 'email'
-		| 'number'
-		| 'email'
-		| 'date'
-		| 'datetime'
-		| 'checkbox' = 'text';
+		'text' | 'password' | 'email' | 'number' | 'email' | 'date' | 'datetime' | 'checkbox' = 'text';
 
 	export let label: string;
 

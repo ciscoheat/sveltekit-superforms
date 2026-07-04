@@ -18,6 +18,4 @@ export const admissionSchema = z.object({
 export const schema = z.union([eventTemplateSchema, eventSchema, admissionSchema]);
 
 export type UnionSchema =
-	| Infer<typeof eventSchema>
-	| Infer<typeof admissionSchema>
-	| Infer<typeof eventTemplateSchema>;
+	Infer<typeof eventSchema> | Infer<typeof admissionSchema> | Infer<typeof eventTemplateSchema>;

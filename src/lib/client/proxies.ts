@@ -14,8 +14,7 @@ export type ProxyOptions = {
 };
 
 type FormPaths<T extends Record<string, unknown>, Type = any> =
-	| FormPath<T, Type>
-	| FormPathLeaves<T, Type>;
+	FormPath<T, Type> | FormPathLeaves<T, Type>;
 
 type CorrectProxyType<In, Out, T extends Record<string, unknown>, Path extends FormPaths<T>> =
 	NonNullable<FormPathType<T, Path>> extends In ? Writable<Out> : never;

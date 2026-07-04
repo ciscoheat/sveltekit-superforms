@@ -14,7 +14,7 @@ export interface CookieSerializeOptions {
 
 export function actionResult<
 	T extends Record<string, unknown> | App.Error | string,
-	Type extends T extends string ? 'redirect' | 'error' : 'success' | 'failure' | 'error'
+	Type extends (T extends string ? 'redirect' | 'error' : 'success' | 'failure' | 'error')
 >(
 	type: Type,
 	data?: T,

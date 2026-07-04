@@ -14,23 +14,17 @@ import Type from 'typebox';
 /**
  * Custom TypeBox type for Date for testing purposes.
  */
-export class TDate extends Type.Base<globalThis.Date> {
-	public override Check(value: unknown): value is globalThis.Date {
-		return value instanceof globalThis.Date;
-	}
-	public override Errors(value: unknown): object[] {
-		return this.Check(value) ? [] : [{ message: 'must be Date' }];
-	}
-	public override Create(): globalThis.Date {
-		return new globalThis.Date(0);
-	}
-}
+export type TDate = Type.TUnsafe<globalThis.Date>;
 
 /**
  * Custom TypeBox type for Date for testing purposes.
  */
 export function Date(): TDate {
-	return new TDate();
+	return Type.Refine(
+		{ type: 'Date' },
+		(value) => value instanceof globalThis.Date,
+		() => 'must be Date'
+	) as never;
 }
 
 // From https://github.com/sinclairzx81/typebox/tree/ca4d771b87ee1f8e953036c95a21da7150786d3e/example/formats

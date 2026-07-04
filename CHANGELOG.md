@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Version update for devalue to prevent security vulnerabilities. [CVE-2026-42570](https://github.com/advisories/GHSA-77vg-94rm-hx3p)
 
+### Changed
+
+- TypeBox bumped to 1.3.0 to fix an issue with a deprecated type. Many thanks to the TypeBox author [sinclairzx81](https://github.com/sinclairzx81) for the PR!
+
 ## [2.30.1] - 2026-03-26
 
 ### Security

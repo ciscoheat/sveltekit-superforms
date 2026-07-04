@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- Version update for devalue to prevent security vulnerabilities. [CVE-2026-42570](https://github.com/advisories/GHSA-77vg-94rm-hx3p)
+- Security update for devalue [CVE-2026-42570](https://github.com/advisories/GHSA-77vg-94rm-hx3p).
+- Security update for ts-deepmerge [CVE-2026-12644](https://github.com/advisories/GHSA-87mf-gv2c-c62c).
 
 ### Changed
 

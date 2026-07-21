@@ -1,7 +1,7 @@
 <script lang="ts">
 	/* eslint svelte/no-at-html-tags: "off" */
 
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { onMount } from 'svelte';
@@ -165,10 +165,10 @@
 		<SuperDebug data={promiseNeverCameTrue} />
 	</section>
 	<section>
-		<h4>SuperDebug displaying $page data</h4>
-		<p>Svelte's <code>$page</code> data in all its glory.</p>
+		<h4>SuperDebug displaying page data</h4>
+		<p>Svelte's <code>page</code> data in all its glory.</p>
 		<!-- eslint-disable-next-line svelte/valid-compile -->
-		<SuperDebug label="$page data" data={$page} collapsible />
+		<SuperDebug label="page data" data={page} collapsible />
 	</section>
 
 	<section>

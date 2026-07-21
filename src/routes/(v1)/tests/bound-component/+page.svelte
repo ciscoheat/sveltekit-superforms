@@ -3,7 +3,7 @@
 	import type { PageData, ActionData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schemas.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import InputField from './input-field.svelte';
 	import { zod } from '$lib/adapters/zod.js';
 
@@ -53,13 +53,13 @@
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}
 
 {#if $errors}
-	<div class="errors status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="errors status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{errorOutput}
 	</div>
 {/if}

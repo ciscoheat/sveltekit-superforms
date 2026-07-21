@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { toStore } from 'svelte/store';
 	import { superForm } from '$lib/client/index.js';
 	//import SuperDebug from '$lib/client/SuperDebug.svelte';
 
@@ -12,7 +13,8 @@
 		taintedMessage: null
 	});
 
-	$: editing = $page.params.viewOrEdit === 'edit';
+	let editing = page.params.viewOrEdit === 'edit';
+	toStore(() => page.params.viewOrEdit).subscribe((v) => (editing = v === 'edit'));
 
 	const gotoView = async () => {
 		goto(baseUrl + '/view');
@@ -21,11 +23,11 @@
 		history.back();
 	};
 	const resetAndBack = async () => {
-		console.log('BEFORE reset', $form, $page.data.form.data);
+		console.log('BEFORE reset', $form, page.data.form.data);
 		reset();
-		console.log('AFTER reset', $form, $page.data.form.data);
+		console.log('AFTER reset', $form, page.data.form.data);
 		await gotoView();
-		console.log('AFTER goto', $form, $page.data.form.data);
+		console.log('AFTER goto', $form, page.data.form.data);
 	};
 	const resetInvalidateBack = async () => {
 		reset();

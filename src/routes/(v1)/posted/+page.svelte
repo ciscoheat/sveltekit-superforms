@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import { userSchema } from '../users.js';
 	import { zod } from '$lib/adapters/zod.js';
@@ -9,7 +9,7 @@
 	export let data: PageData;
 
 	const { form, errors, enhance, delayed, message, posted } = superForm(data.form, {
-		validators: $page.url.searchParams.has('zod')
+		validators: page.url.searchParams.has('zod')
 			? zod(
 					userSchema.extend({
 						id: userSchema.shape.id.optional()
@@ -39,7 +39,7 @@
 </div>
 
 {#if $message}
-	<h3 class:invalid={$page.status >= 400}>{$message}</h3>
+	<h3 class:invalid={page.status >= 400}>{$message}</h3>
 {/if}
 
 <h2>{!$form.id ? 'Create' : 'Update'} user</h2>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 	import { zod } from '$lib/adapters/zod.js';
@@ -35,7 +35,7 @@ Please update 'Name' field.<br />
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

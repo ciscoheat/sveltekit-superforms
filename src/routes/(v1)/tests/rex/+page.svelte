@@ -2,28 +2,28 @@
 	import type { PageData } from './$types.js';
 	import { superForm } from '$lib/client/index.js';
 	import { basicSchema, refined } from './schema.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
-	const validators = $page.url.searchParams.has('refined') ? refined : basicSchema;
+	const validators = page.url.searchParams.has('refined') ? refined : basicSchema;
 
 	// Client API:
 	const { form, errors, message, enhance, tainted } = superForm(data.form, {
 		dataType: 'json',
 		validators: zod(validators),
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		validationMethod: ($page.url.searchParams.get('method') ?? undefined) as any
+		validationMethod: (page.url.searchParams.get('method') ?? undefined) as any
 	});
 </script>
 
 <SuperDebug data={{ $errors, $tainted }} />
 
-<h4>Validation method: {$page.url.searchParams.get('method') ?? 'auto'}</h4>
+<h4>Validation method: {page.url.searchParams.get('method') ?? 'auto'}</h4>
 <h4>
-	Schema: {$page.url.searchParams.has('refined') ? 'refined' : 'simple'}
+	Schema: {page.url.searchParams.has('refined') ? 'refined' : 'simple'}
 </h4>
 
 <form method="POST" use:enhance>

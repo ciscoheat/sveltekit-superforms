@@ -3,14 +3,14 @@
 	import { schema } from './schema.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	export let data;
 
 	// Doesn't work well with testing client-side validation for files
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
 		resetForm: true,
-		validators: $page.url.searchParams.has('client') ? zod(schema) : undefined
+		validators: page.url.searchParams.has('client') ? zod(schema) : undefined
 	});
 </script>
 

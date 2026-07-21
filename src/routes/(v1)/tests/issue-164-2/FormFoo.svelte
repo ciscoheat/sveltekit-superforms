@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
-	const { form, enhance, message, formId } = superForm($page.data.fooForm, {
+	const { form, enhance, message, formId } = superForm(page.data.fooForm, {
 		taintedMessage: null,
 		resetForm: true,
 		// invalidateAll appears to be the issue

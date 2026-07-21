@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import type { PageData } from './$types.js';
@@ -7,7 +7,7 @@
 	export let data: PageData;
 
 	const { form, errors, enhance, delayed, message } = superForm(data.form, {
-		dataType: $page.url.searchParams.has('json') ? 'json' : 'form',
+		dataType: page.url.searchParams.has('json') ? 'json' : 'form',
 		taintedMessage: null
 	});
 </script>

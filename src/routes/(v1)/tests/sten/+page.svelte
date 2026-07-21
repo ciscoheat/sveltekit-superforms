@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { z } from 'zod/v3';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/zod.js';
 
@@ -16,7 +16,7 @@
 			})
 	});
 
-	const { form } = superForm<z.infer<typeof postSchema>>($page.data.form, {
+	const { form } = superForm<z.infer<typeof postSchema>>(page.data.form, {
 		taintedMessage: 'Are you sure you want to leave?',
 		validators: zod(postSchema),
 		resetForm: true

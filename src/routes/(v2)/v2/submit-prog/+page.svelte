@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 
 	export let data;
@@ -8,7 +8,7 @@
 		taintedMessage: false
 	});
 
-	const isEnhanced = $page.url.searchParams.has('enhance');
+	const isEnhanced = page.url.searchParams.has('enhance');
 	const enhanced = isEnhanced ? enhance : () => {};
 </script>
 

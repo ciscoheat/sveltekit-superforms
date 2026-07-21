@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 
 	export let data;
 
-	const resetForm = $page.url.searchParams.has('reset');
+	const resetForm = page.url.searchParams.has('reset');
 
 	const { form, errors, message, enhance, reset, tainted } = superForm(data.form, {
 		invalidateAll: 'force',

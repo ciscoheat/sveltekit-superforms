@@ -5,14 +5,16 @@ import {
 	derived,
 	get,
 	readonly,
+	toStore,
 	writable,
 	type Readable,
 	type Writable,
 	type Updater
 } from 'svelte/store';
-import { navigating, page } from '$app/stores';
+import { navigating as navigatingState, page as pageState } from '$app/state';
+import type { Navigation } from '@sveltejs/kit';
 import { clone } from '$lib/utils.js';
-import { browser } from '$app/environment';
+import { BROWSER as browser } from 'esm-env';
 import { onDestroy, tick } from 'svelte';
 import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '$lib/traversal.js';
 import {
@@ -425,6 +427,13 @@ export function superForm<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	In extends Record<string, unknown> = T
 >(form: SuperValidated<T, M, In> | T, formOptions?: FormOptions<T, M, In>): SuperForm<T, M> {
+	// $app/stores was removed in SvelteKit 3; recreate the page and navigating
+	// stores from $app/state, keeping the store-based logic below intact.
+	const page: Readable<Page> = toStore(() => ({ ...(pageState ?? {}) }) as Page);
+	const navigating: Readable<Navigation | null> = toStore(() =>
+		navigatingState?.to ? (navigatingState as Navigation) : null
+	);
+
 	// Used in reset
 	let initialForm: SuperValidated<T, M, In>;
 	let options = formOptions ?? ({} as FormOptions<T, M, In>);
@@ -487,7 +496,8 @@ export function superForm<
 
 		// Assign options.id to form, if it exists
 		const _initialFormId = (form.id = options.id ?? form.id);
-		const _currentPage = get(page) ?? (STORYBOOK_MODE ? {} : undefined);
+		// Use the stable page object from $app/state as identity for the current page.
+		const _currentPage = pageState ?? (STORYBOOK_MODE ? {} : undefined);
 
 		// Check multiple id's
 		if (browser && options.warnings?.duplicateId !== false) {
@@ -1520,7 +1530,7 @@ export function superForm<
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(
 			page.subscribe(async (pageUpdate) => {
-				if (STORYBOOK_MODE && pageUpdate === undefined) {
+				if (STORYBOOK_MODE && (pageUpdate === undefined || pageUpdate.status === undefined)) {
 					pageUpdate = { status: 200 } as Page;
 				}
 				const successResult = pageUpdate.status >= 200 && pageUpdate.status < 300;
@@ -1960,7 +1970,11 @@ export function superForm<
 						: {
 								type: 'error',
 								status: Form_resultStatus(parseInt(String(event.result.status)) || 500),
-								error: event.result.error instanceof Error ? event.result.error : event.result
+								// ActionResult errors are typed as App.Error since SvelteKit 3,
+								// but Superforms passes arbitrary error values to its own events.
+								error: (event.result.error instanceof Error
+									? event.result.error
+									: event.result) as unknown as App.Error
 							};
 
 				const cancel = () => (cancelled = true);
@@ -1984,7 +1998,7 @@ export function superForm<
 				function setErrorResult(error: unknown, data: { result: ActionResult }, status: number) {
 					data.result = {
 						type: 'error',
-						error,
+						error: error as App.Error,
 						status: Form_resultStatus(status)
 					};
 				}

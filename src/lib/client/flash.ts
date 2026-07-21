@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { BROWSER as browser } from 'esm-env';
 import type { FormOptions } from './superForm.js';
 
 export function cancelFlash<T extends Record<string, unknown>, M>(options: FormOptions<T, M>) {

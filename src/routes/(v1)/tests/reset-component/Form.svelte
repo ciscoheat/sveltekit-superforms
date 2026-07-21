@@ -4,7 +4,7 @@
 
 	import { z } from 'zod/v3';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	const schema = z.object({
 		id: z.number().min(1).max(255).default(1),
@@ -40,4 +40,4 @@
 <br />
 
 <!-- eslint-disable-next-line svelte/valid-compile -->
-<SuperDebug data={{ $form, $errors, 'page.form': $page.form?.form }} />
+<SuperDebug data={{ $form, $errors, 'page.form': page.form?.form }} />

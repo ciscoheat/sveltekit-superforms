@@ -1,0 +1,18 @@
+diff --git a/dist/client.svelte.js b/dist/client.svelte.js
+index 9a73ba525e8556704ece5256e992b3e04bc332f6..ff38d0c768217287aeb0cc6bc1863b46f96e8eaf 100644
+--- a/dist/client.svelte.js
++++ b/dist/client.svelte.js
+@@ -2,7 +2,12 @@ import { get as svelteGet, writable } from 'svelte/store';
+ import { tick } from 'svelte';
+ import { BROWSER as browser } from 'esm-env';
+ import { serialize } from './cookie-es-main/index.js';
+-import { navigating } from '$app/stores';
++import { navigating as navigatingState } from '$app/state';
++import { toStore } from 'svelte/store';
++// Patched for SvelteKit 3: $app/stores was removed, recreate the navigating store from $app/state.
++const navigating = {
++    subscribe: (fn) => toStore(() => (navigatingState.to ? navigatingState : null)).subscribe(fn)
++};
+ import { FlashMessage } from './flashMessage.js';
+ import { FlashRouter } from './router.js';
+ const cookieName = 'flash';

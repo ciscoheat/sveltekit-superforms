@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData, Snapshot } from './$types.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 
@@ -8,11 +8,11 @@
 
 	export const snapshot: Snapshot = {
 		capture: () => {
-			console.log('Capture', $page);
+			console.log('Capture', page);
 			return capture();
 		},
 		restore: (value) => {
-			console.log('Restore', value, $page);
+			console.log('Restore', value, page);
 			restore(value);
 		}
 	};
@@ -22,7 +22,7 @@
 		{
 			taintedMessage: null,
 			onUpdated() {
-				console.log($page.status);
+				console.log(page.status);
 			}
 		}
 	);
@@ -35,7 +35,7 @@
 <h1>Snapshot test</h1>
 
 {#if $message}
-	<h3 class:invalid={$page.status >= 400}>{$message}</h3>
+	<h3 class:invalid={page.status >= 400}>{$message}</h3>
 {/if}
 
 <form method="POST" use:enhance>

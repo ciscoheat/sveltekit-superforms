@@ -3,16 +3,16 @@
 	import type { PageData } from './$types.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { editPageSchema } from './schemas.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { zod } from '$lib/adapters/zod.js';
 
 	export let data: PageData;
 
-	const validationMethod = $page.url.searchParams.has('oninput')
+	const validationMethod = page.url.searchParams.has('oninput')
 		? 'oninput'
-		: $page.url.searchParams.has('onblur')
+		: page.url.searchParams.has('onblur')
 			? 'onblur'
-			: $page.url.searchParams.has('submit-only')
+			: page.url.searchParams.has('submit-only')
 				? 'onsubmit'
 				: 'auto';
 
@@ -36,7 +36,7 @@
 <SuperDebug data={{ $errors, $tainted }} />
 
 {#if $message}
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

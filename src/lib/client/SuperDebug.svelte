@@ -1,8 +1,8 @@
 <svelte:options runes={false} />
 
 <script>
-	import { browser } from '$app/environment';
-	import { page } from '$app/stores';
+	import { BROWSER as browser } from 'esm-env';
+	import { page } from '$app/state';
 	import { readable, get } from 'svelte/store';
 	import { clipboardCopy } from './clipboardCopy.js';
 
@@ -126,7 +126,7 @@
 	 */
 	function setCollapse(status = undefined) {
 		let data;
-		const route = $page.route.id ?? '';
+		const route = page.route.id ?? '';
 
 		try {
 			if (sessionStorage.SuperDebug) {
@@ -647,12 +647,12 @@
 				</button>
 				{#if status}
 					<div
-						class:super-debug--info={$page.status < 200}
-						class:super-debug--success={$page.status >= 200 && $page.status < 300}
-						class:super-debug--redirect={$page.status >= 300 && $page.status < 400}
-						class:super-debug--error={$page.status >= 400}
+						class:super-debug--info={page.status < 200}
+						class:super-debug--success={page.status >= 200 && page.status < 300}
+						class:super-debug--redirect={page.status >= 300 && page.status < 400}
+						class:super-debug--error={page.status >= 400}
 					>
-						{$page.status}
+						{page.status}
 					</div>
 				{/if}
 			</div>

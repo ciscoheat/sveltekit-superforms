@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { superForm } from '$lib/index.js';
 
@@ -28,7 +28,7 @@
 
 <SuperDebug data={$form} />
 
-<p id="error">ERROR:{error}:{$page.status}</p>
+<p id="error">ERROR:{error}:{page.status}</p>
 
 <form method="POST" use:enhance {action}>
 	Name: <input name="name" bind:value={$form.name} />

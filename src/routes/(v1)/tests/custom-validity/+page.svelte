@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
 	import { schema } from './schema.js';
@@ -7,7 +7,7 @@
 	export let data;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const validationMethod = ($page.url.searchParams.get('method') as any) ?? 'auto';
+	const validationMethod = (page.url.searchParams.get('method') as any) ?? 'auto';
 
 	const { form, errors, message, enhance } = superForm(data.form, {
 		customValidity: true,

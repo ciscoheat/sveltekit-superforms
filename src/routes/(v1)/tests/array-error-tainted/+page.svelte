@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { zod } from '$lib/adapters/zod.js';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { get } from 'svelte/store';
 	import { schema } from './schema.js';
 
 	export let data;
@@ -23,7 +22,7 @@
 		validators: zod(schema)
 	});
 
-	const status = get(page).status;
+	const status = page.status;
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />

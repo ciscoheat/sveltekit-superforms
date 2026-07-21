@@ -1,23 +1,23 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import { createEventDispatcher } from 'svelte';
-	import { get } from 'svelte/store';
+	import { get, toStore } from 'svelte/store';
 
 	const dispatch = createEventDispatcher();
 
-	const frm = superForm($page.data.form);
+	const frm = superForm(page.data.form);
 	const { form, errors, message, enhance, reset } = frm;
 
-	page.subscribe(($page) => {
-		console.log('🚀 ~ file: Form.svelte:18 ~ page.subscribe ~ page:', $page.data.form.data);
+	toStore(() => page.data).subscribe((data) => {
+		console.log('🚀 ~ file: Form.svelte:18 ~ page.subscribe ~ page:', data.form.data);
 	});
 </script>
 
 <!-- SuperDebug label="Form" data={$form} /-->
 
 {#if $message}
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

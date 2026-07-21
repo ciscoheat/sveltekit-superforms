@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm, defaults } from '$lib/client/index.js';
 	import { zod } from '$lib/adapters/zod.js';
 
@@ -23,7 +23,7 @@
 		SPA: true,
 		dataType: 'json',
 		onUpdate({ form, cancel }) {
-			if ($page.url.searchParams.has('cancel')) cancel();
+			if (page.url.searchParams.has('cancel')) cancel();
 			else if (form.valid) {
 				form.message = 'Successful!';
 				form.data.random = String(Math.random()).slice(2);

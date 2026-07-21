@@ -5,3 +5,5 @@ allowBuilds:
   esbuild: true
   svelte-preprocess: true
   '@sveltejs/kit': true
+patchedDependencies:
+  sveltekit-flash-message: patches/sveltekit-flash-message.patch

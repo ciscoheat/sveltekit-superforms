@@ -8,33 +8,30 @@ vi.mock('svelte', async (original) => {
 	};
 });
 
-vi.mock('$app/stores', async () => {
-	const { readable, writable } = await import('svelte/store');
-
-	const getStores = () => ({
-		navigating: readable(null),
-		page: readable({ url: new URL('http://localhost'), params: {} }),
-		session: writable(null),
-		updated: readable(false)
-	});
-
-	const page: typeof import('$app/stores').page = {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		subscribe(fn: any) {
-			return getStores().page.subscribe(fn);
-		}
+vi.mock('$app/state', async () => {
+	const page: Partial<typeof import('$app/state').page> = {
+		url: new URL('http://localhost'),
+		params: {},
+		status: 200,
+		error: null,
+		data: {},
+		form: null,
+		state: {},
+		route: { id: null }
 	};
 
-	const navigating: typeof import('$app/stores').navigating = {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		subscribe(fn: any) {
-			return getStores().navigating.subscribe(fn);
-		}
+	const navigating: typeof import('$app/state').navigating = {
+		from: null,
+		to: null,
+		type: null,
+		willUnload: null,
+		delta: null,
+		complete: null
 	};
 
 	return {
-		getStores,
+		page,
 		navigating,
-		page
+		updated: { current: false, check: async () => false }
 	};
 });

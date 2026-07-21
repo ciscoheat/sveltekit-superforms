@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	export let data;
 
@@ -19,8 +19,8 @@
 
 {#if $posted}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
-		{#if $page.status >= 400}Form failed{:else}Form posted!{/if}
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
+		{#if page.status >= 400}Form failed{:else}Form posted!{/if}
 	</div>
 {/if}
 

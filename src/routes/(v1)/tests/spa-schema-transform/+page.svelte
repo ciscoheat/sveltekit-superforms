@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
@@ -7,7 +7,7 @@
 
 	export let data;
 
-	let SPA = $page.url.searchParams.has('SPA') || undefined;
+	let SPA = page.url.searchParams.has('SPA') || undefined;
 
 	const { form, errors, message, enhance, validate, validateForm } = superForm(data.form, {
 		SPA,
@@ -31,7 +31,7 @@
 <h3>Superforms client-side validation</h3>
 
 {#if $message}
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

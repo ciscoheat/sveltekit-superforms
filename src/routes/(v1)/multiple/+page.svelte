@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import type { PageData } from './$types.js';
@@ -23,12 +23,12 @@
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<h4 class:error={$page.status >= 400} class="first message">
+	<h4 class:error={page.status >= 400} class="first message">
 		{$message.message}
 	</h4>
 {/if}
 {#if $secondmessage}
-	<h4 class:error={$page.status >= 400} class="second message">
+	<h4 class:error={page.status >= 400} class="second message">
 		{$secondmessage.message}
 	</h4>
 {/if}

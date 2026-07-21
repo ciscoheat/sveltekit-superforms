@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { superForm } from '$lib/client/index.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
-	const { form, enhance, message } = superForm($page.data.barForm, {
+	const { form, enhance, message } = superForm(page.data.barForm, {
 		resetForm: true,
 		invalidateAll: false,
 		taintedMessage: null

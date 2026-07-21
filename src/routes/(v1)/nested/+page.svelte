@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import { schema } from './schema.js';
@@ -31,7 +31,7 @@
 	const { form, errors, enhance, message } = yourSuperForm(data.form, {
 		dataType: 'json',
 		onUpdate(event) {
-			if ($page.url.searchParams.has('cancel')) event.cancel();
+			if (page.url.searchParams.has('cancel')) event.cancel();
 		},
 		validators: zod(schema)
 	});

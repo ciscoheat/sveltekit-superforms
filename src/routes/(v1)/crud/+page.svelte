@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 
 	export let data: PageData;
@@ -25,7 +25,7 @@
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<h3 class:invalid={$page.status >= 400}>{$message}</h3>
+	<h3 class:invalid={page.status >= 400}>{$message}</h3>
 {/if}
 
 <h2>{!$form.id ? 'Create' : 'Update'} user</h2>

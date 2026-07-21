@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
@@ -14,14 +14,14 @@
 	export let output: (string[] | undefined)[] = [];
 	export let validated: SuperValidated<Infer<typeof schema>> | undefined = undefined;
 
-	$: testMode = $page.url.searchParams.has('test');
-	$: custom = $page.url.searchParams.has('custom');
+	const testMode = page.url.searchParams.has('test');
+	const custom = page.url.searchParams.has('custom');
 
 	const { form, errors, enhance, message, tainted, validateForm, validate } = superForm(data, {
 		taintedMessage: null,
 		dataType: 'json',
 		onUpdate(event) {
-			if ($page.url.searchParams.has('cancel')) event.cancel();
+			if (page.url.searchParams.has('cancel')) event.cancel();
 		},
 		validators: valibotClient(schema),
 		flashMessage: {

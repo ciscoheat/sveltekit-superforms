@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { defaults, superForm } from '$lib/index.js';
 	import SuperDebug from '$lib/index.js';
 	import { arktype } from '$lib/adapters/arktype.js';
 	import { schema } from './schema.js';
-	import type { ActionResult } from '@sveltejs/kit';
 
 	const defaultData = { name: '', email: '' };
 	const adapter = arktype(schema, { defaults: defaultData });
@@ -13,7 +12,7 @@
 	let options = ['onSubmit', 'onResult', 'onUpdate'] as const;
 	let option: (typeof options)[number] = 'onSubmit';
 
-	let error: Extract<ActionResult, { type: 'error' }>;
+	let error: { type: 'error'; status?: number; error: App.Error | Error | { message: string } };
 
 	const { form, message, enhance, submitting } = superForm(data, {
 		SPA: true,
@@ -51,7 +50,7 @@
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

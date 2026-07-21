@@ -5,8 +5,11 @@ import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
 import dciLint from 'eslint-plugin-dci-lint';
+
+// svelte.config.js was removed with SvelteKit 3 (config now lives in vite.config.ts),
+// so the equivalent settings are declared inline for svelte-eslint-parser.
+const svelteConfig = {};
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 

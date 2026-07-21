@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { toStore } from 'svelte/store';
 	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import SuperDebug, { superForm } from '$lib/index.js';
 
 	let { data } = $props();
@@ -28,7 +29,9 @@
 
 	const time = () => new Date().toISOString();
 
-	page.subscribe((v) => console.log(`${time()}: Page store update`, { page: v }));
+	toStore(() => ({ ...page })).subscribe((v) =>
+		console.log(`${time()}: Page store update`, { page: v })
+	);
 	afterNavigate((p) => console.log('afterNavigate', p));
 </script>
 

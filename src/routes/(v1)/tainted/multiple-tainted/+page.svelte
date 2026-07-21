@@ -3,7 +3,7 @@
 	import { superForm } from '$lib/client/index.js';
 	import SuperDebug from '$lib/client/SuperDebug.svelte';
 	import type { PageData } from './$types.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { afterNavigate } from '$app/navigation';
 
 	export let data: PageData;
@@ -21,7 +21,7 @@
 	}
 
 	async function resetTainted() {
-		if ($page.url.searchParams.has('timeout')) {
+		if (page.url.searchParams.has('timeout')) {
 			setTimeout(untaint);
 			message = 'timeout';
 		} else {

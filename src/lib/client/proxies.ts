@@ -7,7 +7,7 @@ import { splitPath, type FormPath, type FormPathLeaves, type FormPathType } from
 import type { FormPathArrays } from '../stringPath.js';
 import type { SuperForm, TaintOption } from './superForm.js';
 import type { IsAny, Prettify } from '$lib/utils.js';
-import { browser } from '$app/environment';
+import { BROWSER as browser } from 'esm-env';
 
 export type ProxyOptions = {
 	taint?: TaintOption;

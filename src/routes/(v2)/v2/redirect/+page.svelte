@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { superForm } from '$lib/client/index.js';
 
 	export let data;
 
-	const applyAction = $page.url.searchParams.has('apply');
+	const applyAction = page.url.searchParams.has('apply');
 
 	const { message, enhance, submitting } = superForm(data.form, {
 		applyAction,

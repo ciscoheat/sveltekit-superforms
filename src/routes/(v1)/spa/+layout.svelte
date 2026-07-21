@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 </script>
 
 <nav>
@@ -11,7 +11,7 @@
 <h2>Superforms SPA</h2>
 
 <!-- eslint-disable-next-line svelte/valid-compile -->
-<p>Page status: {$page.status}</p>
+<p>Page status: {page.status}</p>
 
 <slot />
 

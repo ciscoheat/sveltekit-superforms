@@ -150,7 +150,7 @@ export function parseFormData<T extends Record<string, unknown>>(
 					options && options.transport
 						? Object.fromEntries(
 								Object.entries(
-									options.transport as Record<string, { decode: (value: any) => any }>
+									options.transport as Record<string, { decode: (value: unknown) => unknown }>
 								).map(([k, v]) => [k, v.decode])
 							)
 						: undefined;

@@ -11,8 +11,8 @@ import { loadConfig } from '@sveltejs/load-config';
 
 async function loadSvelteConfig() {
 	const result = await loadConfig('vite.config.ts');
-  if (result && 'config' in result) return result.config;
-  throw new Error('Failed to find the Svelte config');
+	if (result && 'config' in result) return result.config;
+	throw new Error('Failed to find the Svelte config');
 }
 
 const svelteConfig = await loadSvelteConfig();
@@ -33,6 +33,8 @@ export default ts.config(
 		},
 		rules: {
 			'no-undef': 'off',
+			'no-unassigned-vars': 'off',
+			'no-useless-assignment': 'off',
 			'svelte/require-each-key': 'off',
 			'svelte/no-navigation-without-resolve': 'off',
 			'dci-lint/literal-role-contracts': 'off'

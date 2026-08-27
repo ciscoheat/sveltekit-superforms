@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-superforms",
-	"version": "2.30.2",
+	"version": "3.0.0-next.0",
 	"author": "Andreas Söderlund <ciscoheat@gmail.com> (https://blog.encodeart.dev)",
 	"description": "Making SvelteKit forms a pleasure to use!",
 	"keywords": [
@@ -45,8 +45,8 @@
 		}
 	],
 	"scripts": {
-		"alpha:bump": "npm version prerelease",
-		"alpha:pub": "npm publish --tag alpha",
+		"next:bump": "pnpm version prerelease",
+		"next:pub": "pnpm publish --tag next",
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
 		"preview": "vite preview",

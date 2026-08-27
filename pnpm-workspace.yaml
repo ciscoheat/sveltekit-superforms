@@ -7,3 +7,5 @@ allowBuilds:
   '@sveltejs/kit': true
 minimumReleaseAgeExclude:
   - sveltekit-flash-message
+  - sveltekit-rate-limiter
+  - eslint-plugin-dci-lint

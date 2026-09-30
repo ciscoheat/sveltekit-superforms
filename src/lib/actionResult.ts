@@ -1,5 +1,6 @@
-import { json } from '@sveltejs/kit';
+import { type Transport } from '@sveltejs/kit/hooks';
 import { stringify } from 'devalue';
+import type { IsAny } from './utils.js';
 
 /**
  * Cookie configuration options. The defaults are:
@@ -24,6 +25,7 @@ export function actionResult<
 				status?: number;
 				message?: Type extends 'redirect' ? App.PageData['flash'] : never;
 				cookieOptions?: CookieSerializeOptions;
+				transport?: IsAny<Transport> extends true ? never : Transport;
 		  }
 ) {
 	function cookieData() {
@@ -43,9 +45,13 @@ export function actionResult<
 	}
 
 	const status = options && typeof options !== 'number' ? options.status : options;
+	const transport =
+		options && typeof options === 'object' && options.transport
+			? Object.fromEntries(Object.entries(options.transport).map(([k, v]) => [k, v.encode]))
+			: undefined;
 
 	const result = <T extends { status: number }>(struct: T) => {
-		return json(
+		return Response.json(
 			{ type, ...struct },
 			{
 				status: struct.status,
@@ -72,9 +78,9 @@ export function actionResult<
 	} else if (type == 'failure') {
 		return result({
 			status: status || 400,
-			data: stringify(data)
+			data: stringify(data, transport)
 		});
 	} else {
-		return result({ status: status || 200, data: stringify(data) });
+		return result({ status: status || 200, data: stringify(data, transport) });
 	}
 }

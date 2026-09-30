@@ -1,4 +1,5 @@
-export type { ValidationAdapter, ClientValidationAdapter, Infer, InferIn } from './adapters.js';
+export type { ValidationAdapter, ValidationResult, ClientValidationAdapter, Infer, InferIn } from './adapters.js';
+export { createAdapter } from "./adapters.js"
 
 export { arktype, arktypeClient } from './arktype.js';
 export { classvalidator, classvalidatorClient } from './classvalidator.js';

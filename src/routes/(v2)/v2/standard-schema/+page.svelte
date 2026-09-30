@@ -3,6 +3,7 @@
 	import { standardClient } from '$lib/adapters/standard.js';
 	import SuperDebug, { superForm } from '$lib/index.js';
 	import { valibotSchema, zodSchema } from './schema.js';
+	import { untrack } from 'svelte';
 
 	const { data } = $props();
 
@@ -11,18 +12,24 @@
 		errors: valibotErrors,
 		message: valibotMessage,
 		enhance: valibotEnhance
-	} = superForm(data.valibotForm, {
-		validators: standardClient(valibotSchema)
-	});
+	} = superForm(
+		untrack(() => data.valibotForm),
+		{
+			validators: standardClient(valibotSchema)
+		}
+	);
 
 	const {
 		form: zodForm,
 		errors: zodErrors,
 		message: zodMessage,
 		enhance: zodEnhance
-	} = superForm(data.zodForm, {
-		validators: standardClient(zodSchema)
-	});
+	} = superForm(
+		untrack(() => data.zodForm),
+		{
+			validators: standardClient(zodSchema)
+		}
+	);
 </script>
 
 <SuperDebug data={$valibotForm} />

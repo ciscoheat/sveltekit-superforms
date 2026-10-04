@@ -10,7 +10,7 @@ vi.mock('svelte', async (original) => {
 
 vi.mock('$app/state', async () => {
 	const page: Partial<typeof import('$app/state').page> = {
-		url: new URL('http://localhost'),
+		url: new URL('http://localhost') as typeof import('$app/state').page.url,
 		params: {},
 		status: 200,
 		error: null,

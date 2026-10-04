@@ -1,10 +1,22 @@
 {
-	"extends": "$app/tsconfig",
+	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
+		"allowArbitraryExtensions": true,
+		"allowJs": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
+		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true
 	},
-	"include": ["src", "vite.config.ts", "types-exist.js", "eslint.config.js"]
+	"include": [
+		".svelte-kit/ambient.d.ts",
+		".svelte-kit/env.d.ts",
+		".svelte-kit/non-ambient.d.ts",
+		".svelte-kit/types/**/$types.d.ts",
+		"src",
+		"vite.config.ts",
+		"types-exist.js",
+		"eslint.config.js"
+	]
 }

@@ -4,7 +4,7 @@
 	import SuperDebug from '#lib/index.js';
 	import FileInput from './FileInput.svelte';
 	import type { PageData } from './$types.js';
-	import type { SubmitFunction } from '$app/forms';
+	type SubmitFunction = NonNullable<Parameters<typeof import('$app/forms').enhance>[1]>;
 
 	export let data: PageData;
 	let progress = 0;

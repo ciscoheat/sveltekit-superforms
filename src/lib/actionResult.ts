@@ -1,6 +1,5 @@
-import { type Transport } from '@sveltejs/kit/hooks';
 import { stringify } from 'devalue';
-import type { IsAny } from './utils.js';
+import type { IsAny, Transport } from './utils.js';
 
 /**
  * Cookie configuration options. The defaults are:

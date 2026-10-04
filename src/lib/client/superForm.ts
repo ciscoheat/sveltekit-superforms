@@ -3,7 +3,6 @@ import type { TaintedFields, SuperFormValidated, SuperValidated } from '#lib/sup
 import type { ActionResult, SubmitFunction } from '$app/forms';
 import type { BeforeNavigate, Navigation } from '$app/navigation';
 import type { Page } from '$app/state';
-import type { Transport } from '@sveltejs/kit/hooks';
 import {
 	derived,
 	get,
@@ -15,7 +14,7 @@ import {
 	type Updater
 } from 'svelte/store';
 import { navigating as navigatingState, page as pageState } from '$app/state';
-import { clone } from '#lib/utils.js';
+import { clone, type Transport } from '#lib/utils.js';
 import { BROWSER as browser } from 'esm-env';
 import { onDestroy, tick } from 'svelte';
 import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '#lib/traversal.js';

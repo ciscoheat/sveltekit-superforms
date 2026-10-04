@@ -28,6 +28,15 @@ export function clone<T>(data: T): T {
 
 export type MaybePromise<T> = T | Promise<T>;
 
+// Keep the transport shape independent of Kit's version-specific export path.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Transporter<Value = any, Encoded = any> {
+	encode: (value: Value) => false | Encoded;
+	decode: (data: Encoded) => Value;
+}
+
+export type Transport = Record<string, Transporter>;
+
 export type Prettify<T> = T extends object ? { [K in keyof T]: T[K] } : T & {};
 
 // Thanks to https://stackoverflow.com/a/77451367/70894

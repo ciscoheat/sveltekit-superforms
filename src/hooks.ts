@@ -1,4 +1,4 @@
-import type { Transport } from '@sveltejs/kit/hooks';
+import type { Transport } from './lib/utils.js';
 import { Decimal } from 'decimal.js';
 import { RecordId } from './routes/RecordId.js';
 

@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatibility release that works with SvelteKit `^2.12.0` and `^3.0.0`, and Svelte `^5.56.4`! **No breaking changes** except for these dependencies.
 - Arktype dependency moved out of beta to `^2.0.0`.
 
+### Fixed
+
+- Made transport types compatible with both SvelteKit 2 and 3.
+
 ## [3.0.0-next.1] - 2026-09-30
 
 ### Added

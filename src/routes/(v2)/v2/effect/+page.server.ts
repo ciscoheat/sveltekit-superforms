@@ -1,5 +1,5 @@
-import { effect } from '$lib/adapters/effect.js';
-import { message, superValidate } from '$lib/server/index.js';
+import { effect } from '#lib/adapters/effect.js';
+import { message, superValidate } from '#lib/server/index.js';
 import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 

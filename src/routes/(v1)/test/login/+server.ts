@@ -1,5 +1,5 @@
-import { actionResult, superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { actionResult, superValidate } from '#lib/server/index.js';
+import { zod } from '#lib/adapters/zod.js';
 
 import { z } from 'zod/v3';
 import type { RequestHandler } from './$types.js';

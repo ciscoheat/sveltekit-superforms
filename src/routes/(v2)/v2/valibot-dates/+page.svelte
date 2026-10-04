@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { dateProxy, superForm } from '$lib/index.js';
+	import { page } from '$app/state';
+	import { dateProxy, superForm } from '#lib/index.js';
 
 	export let data;
 
 	let logForm = superForm(data.form, {
 		taintedMessage: false,
 		resetForm: false,
-		dataType: $page.url.searchParams.has('json') ? 'json' : 'form'
+		dataType: page.url.searchParams.has('json') ? 'json' : 'form'
 	});
 
 	const { form, constraints, errors, enhance, posted } = logForm;

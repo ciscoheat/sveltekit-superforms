@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest';
 import { z as z4 } from 'zod';
-import { zod } from '$lib/adapters/zod4.js';
-import { superValidate } from '$lib/superValidate.js';
+import { zod } from '#lib/adapters/zod4.js';
+import { superValidate } from '#lib/superValidate.js';
 
 describe('Issue 623 - Array and date properties modify each other', () => {
 	it('should preserve date values when array validation fails (Zod v4)', async () => {

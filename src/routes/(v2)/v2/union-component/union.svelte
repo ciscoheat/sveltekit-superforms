@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SuperForm } from '$lib/index.js';
+	import type { SuperForm } from '#lib/index.js';
 	import { type UnionSchema } from './schemas.js';
 	import Input from './input.svelte';
 

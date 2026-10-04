@@ -1,7 +1,7 @@
 import { nerveForm } from './schema.js';
 import { z } from 'zod/v3';
-import { message, superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { message, superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import type { Actions } from '@sveltejs/kit';
 
 type DeficitTypeKey = keyof z.infer<typeof nerveForm>;

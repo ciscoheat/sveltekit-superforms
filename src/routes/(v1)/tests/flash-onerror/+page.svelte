@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
-	import { page } from '$app/stores';
-	import { zod } from '$lib/adapters/zod.js';
+	import { page } from '$app/state';
+	import { zod } from '#lib/adapters/zod.js';
 
 	export let data: PageData;
 
@@ -20,7 +20,7 @@
 		}
 	});
 
-	$: action = $page.url.searchParams.has('throw-hooks-error') ? '?throw-hooks-error' : '';
+	const action = page.url.searchParams.has('throw-hooks-error') ? '?throw-hooks-error' : '';
 </script>
 
 <SuperDebug data={{ $form, $errors, $tainted }} />

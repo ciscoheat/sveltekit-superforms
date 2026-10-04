@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { superValidate } from '$lib/superValidate.js';
-import { zod } from '$lib/adapters/zod4.js';
+import { superValidate } from '#lib/superValidate.js';
+import { zod } from '#lib/adapters/zod4.js';
 import { z } from 'zod/v4';
 
 /*

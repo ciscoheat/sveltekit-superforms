@@ -1,5 +1,5 @@
-import { message, superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { message, superValidate } from '#lib/server/index.js';
+import { zod } from '#lib/adapters/zod.js';
 
 import { z } from 'zod/v3';
 import { fail } from '@sveltejs/kit';
@@ -11,7 +11,7 @@ const userSchema = z.object({
 });
 
 export const load = (async () => {
-	const form = await superValidate(zod(userSchema));
+	const form = await superValidate(zod(userSchema), { allowFiles: false });
 	return { form };
 }) satisfies PageServerLoad;
 
@@ -19,7 +19,7 @@ export const actions = {
 	default: async (event) => {
 		const data = await event.request.formData();
 		console.log('Formdata', data);
-		const form = await superValidate(data, zod(userSchema));
+		const form = await superValidate(data, zod(userSchema), { allowFiles: false });
 		console.log('Form', form);
 		if (!form.valid) return fail(400, { form });
 

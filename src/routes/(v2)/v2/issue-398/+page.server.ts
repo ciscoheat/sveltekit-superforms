@@ -1,6 +1,6 @@
-import { fail, message, superValidate } from '$lib/index.js';
+import { fail, message, superValidate } from '#lib/index.js';
 import type { PageServerLoad } from './$types.js';
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '#lib/adapters/zod.js';
 import { schema } from './schema.js';
 import type { Actions } from '@sveltejs/kit';
 

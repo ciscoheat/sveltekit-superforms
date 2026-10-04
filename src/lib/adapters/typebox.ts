@@ -8,7 +8,7 @@ import {
 } from './adapters.js';
 import type { TSchema } from 'typebox';
 import type { Validator } from 'typebox/compile';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import Type from 'typebox';
 
 /**

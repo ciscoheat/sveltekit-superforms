@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { defaults, superForm } from '$lib/index.js';
-	import { zod } from '$lib/adapters/zod4.js';
+	import { defaults, superForm } from '#lib/index.js';
+	import { zod } from '#lib/adapters/zod4.js';
 	import { z } from 'zod';
 
 	const schema = z.object({ name: z.string().min(1) });

@@ -1,4 +1,4 @@
-import { superValidate } from '$lib/server/index.js';
+import { superValidate } from '#lib/server/index.js';
 import { fail, redirect } from '@sveltejs/kit';
 import { generateSchema } from '../schema.js';
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { Decimal } from 'decimal.js';
 	import type { FormEventHandler } from 'svelte/elements';
-	import { zod } from '$lib/adapters/zod.js';
+	import { zod } from '#lib/adapters/zod.js';
 	import { schema } from './schema.js';
 	import { transport } from '../../../../hooks.js';
 

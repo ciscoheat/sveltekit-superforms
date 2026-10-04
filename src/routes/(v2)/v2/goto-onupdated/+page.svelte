@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { zodClient } from '$lib/adapters/zod.js';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { zodClient } from '#lib/adapters/zod.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 
 	export let data;

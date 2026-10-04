@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>">
-	import { formFieldProxy, type SuperForm, type FormPathLeaves } from '$lib/index.js';
+	import { formFieldProxy, type SuperForm, type FormPathLeaves } from '#lib/index.js';
 
 	let _class = '';
 	export { _class as class };

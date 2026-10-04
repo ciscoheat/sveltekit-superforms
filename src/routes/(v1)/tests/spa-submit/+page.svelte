@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { superformClient } from '$lib/adapters/superform.js';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { superformClient } from '#lib/adapters/superform.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 
 	export let data;
 

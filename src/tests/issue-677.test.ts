@@ -18,8 +18,8 @@ vi.mock('svelte', async (original) => {
 	};
 });
 
-import { Form } from '$lib/client/form.js';
-import type { FormOptions } from '$lib/client/superForm.js';
+import { Form } from '#lib/client/form.js';
+import type { FormOptions } from '#lib/client/superForm.js';
 
 function createMockFormElement() {
 	return {

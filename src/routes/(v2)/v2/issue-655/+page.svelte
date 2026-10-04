@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { superForm } from '$lib/index.js';
-	import SuperDebug from '$lib/index.js';
+	import { superForm } from '#lib/index.js';
+	import SuperDebug from '#lib/index.js';
 
 	let { data } = $props();
 

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { SuperValidated } from '$lib/index.js';
+	import type { SuperValidated } from '#lib/index.js';
 	import type { Schema } from './schemas.js';
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import TextInput from './TextInput.svelte';
 	import TextField from './TextField.svelte';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { fieldProxy } from '$lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { fieldProxy } from '#lib/client/index.js';
 	import type { z } from 'zod/v3';
 
 	export let data: SuperValidated<z.infer<Schema>>;

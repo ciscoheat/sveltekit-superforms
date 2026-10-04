@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dateProxy, formFieldProxy, superForm } from '$lib/client/index.js';
+	import { dateProxy, formFieldProxy, superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
 
 	export let data: PageData;

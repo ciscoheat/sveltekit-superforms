@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from './$types.js';
-import { superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate } from '#lib/server/index.js';
+import { zod } from '#lib/adapters/zod.js';
 
 import type { z } from 'zod/v3';
 import { schema, schemaToStr } from './schema.js';

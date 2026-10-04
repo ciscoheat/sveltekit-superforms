@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { z } from 'zod/v4';
-	import { superForm, defaults } from '$lib/index.js';
-	import { zod as zod4 } from '$lib/adapters/zod4.js';
+	import { superForm, defaults } from '#lib/index.js';
+	import { zod as zod4 } from '#lib/adapters/zod4.js';
 
 	// ==================== VALIDATORS ====================
 

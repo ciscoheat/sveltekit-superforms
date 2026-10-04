@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	//import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { page } from '$app/stores';
+	//import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { page } from '$app/state';
 	import { UserType, NumberType } from './UserType.js';
 
 	export let data: PageData;
@@ -14,7 +14,7 @@
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

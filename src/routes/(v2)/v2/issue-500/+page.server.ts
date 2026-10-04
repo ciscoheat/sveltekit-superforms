@@ -2,8 +2,8 @@
 
 import type { Actions, PageServerLoad } from './$types.js';
 
-import { superValidate, message } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate, message } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { fail } from '@sveltejs/kit';
 import {
 	inviteUserToGroupSchema,

@@ -1,5 +1,5 @@
-import { SchemaError } from '$lib/errors.js';
-import { assertSchema } from '$lib/utils.js';
+import { SchemaError } from '#lib/errors.js';
+import { assertSchema } from '#lib/utils.js';
 import { merge } from 'ts-deepmerge';
 import type { JSONSchema } from './index.js';
 import { schemaInfo } from './schemaInfo.js';

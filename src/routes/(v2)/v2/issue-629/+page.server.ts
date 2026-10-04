@@ -1,5 +1,5 @@
-import { fail, superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod4.js';
+import { fail, superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod4.js';
 import { v4FormSchema } from './form-schema.js';
 
 export async function load() {

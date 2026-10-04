@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
 
 	export let data: PageData;

@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types.js';
 
-import { superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { fail } from '@sveltejs/kit';
 import { schema, other } from './schema.js';
 

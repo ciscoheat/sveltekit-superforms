@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { standardClient } from '$lib/adapters/standard.js';
-	import SuperDebug, { superForm } from '$lib/index.js';
+	import { standardClient } from '#lib/adapters/standard.js';
+	import SuperDebug, { superForm } from '#lib/index.js';
 	import { valibotSchema, zodSchema } from './schema.js';
 	import { untrack } from 'svelte';
 

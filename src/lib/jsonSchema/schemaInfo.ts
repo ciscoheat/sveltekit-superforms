@@ -1,4 +1,4 @@
-import { assertSchema } from '$lib/utils.js';
+import { assertSchema } from '#lib/utils.js';
 import type { JSONSchema7, JSONSchema7Definition, JSONSchema7TypeName } from 'json-schema';
 import { merge } from 'ts-deepmerge';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { classvalidatorClient } from '$lib/adapters/classvalidator.js';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { classvalidatorClient } from '#lib/adapters/classvalidator.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 
 	export let data;

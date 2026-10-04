@@ -1,45 +1,49 @@
 /* eslint-disable dci-lint/atomic-role-binding */
-import type { TaintedFields, SuperFormValidated, SuperValidated } from '$lib/superValidate.js';
-import type { ActionResult, BeforeNavigate, Page, SubmitFunction, Transport } from '@sveltejs/kit';
+import type { TaintedFields, SuperFormValidated, SuperValidated } from '#lib/superValidate.js';
+import type { ActionResult, SubmitFunction } from '$app/forms';
+import type { BeforeNavigate, Navigation } from '$app/navigation';
+import type { Page } from '$app/state';
+import type { Transport } from '@sveltejs/kit/hooks';
 import {
 	derived,
 	get,
 	readonly,
+	toStore,
 	writable,
 	type Readable,
 	type Writable,
 	type Updater
 } from 'svelte/store';
-import { navigating, page } from '$app/stores';
-import { clone } from '$lib/utils.js';
-import { browser } from '$app/environment';
+import { navigating as navigatingState, page as pageState } from '$app/state';
+import { clone } from '#lib/utils.js';
+import { BROWSER as browser } from 'esm-env';
 import { onDestroy, tick } from 'svelte';
-import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '$lib/traversal.js';
+import { comparePaths, pathExists, setPaths, traversePath, traversePaths } from '#lib/traversal.js';
 import {
 	splitPath,
 	type FormPathType,
 	mergePath,
 	type FormPath,
 	type FormPathLeaves
-} from '$lib/stringPath.js';
+} from '#lib/stringPath.js';
 import { beforeNavigate, goto, invalidateAll } from '$app/navigation';
-import { SuperFormError, flattenErrors, mapErrors, updateErrors } from '$lib/errors.js';
+import { SuperFormError, flattenErrors, mapErrors, updateErrors } from '#lib/errors.js';
 import { cancelFlash, shouldSyncFlash } from './flash.js';
 import { applyAction, deserialize, enhance as kitEnhance } from '$app/forms';
 import { setCustomValidityForm, updateCustomValidity } from './customValidity.js';
 import { inputInfo } from './elements.js';
 import { Form as HtmlForm, scrollToFirstError } from './form.js';
 import { stringify } from 'devalue';
-import type { ValidationErrors } from '$lib/superValidate.js';
-import type { IsAny, MaybePromise } from '$lib/utils.js';
+import type { ValidationErrors } from '#lib/superValidate.js';
+import type { IsAny, MaybePromise } from '#lib/utils.js';
 import type {
 	ClientValidationAdapter,
 	ValidationAdapter,
 	ValidationResult
-} from '$lib/adapters/adapters.js';
-import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
+} from '#lib/adapters/adapters.js';
+import type { InputConstraints } from '#lib/jsonSchema/constraints.js';
 import { fieldProxy, type ProxyOptions } from './proxies.js';
-import { shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
+import { shapeFromObject } from '#lib/jsonSchema/schemaShape.js';
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,
@@ -425,9 +429,17 @@ export function superForm<
 	M = App.Superforms.Message extends never ? any : App.Superforms.Message,
 	In extends Record<string, unknown> = T
 >(form: SuperValidated<T, M, In> | T, formOptions?: FormOptions<T, M, In>): SuperForm<T, M> {
+	// $app/stores was removed in SvelteKit 3; recreate the page and navigating
+	// stores from $app/state, keeping the store-based logic below intact.
+	const page: Readable<Page> = toStore(() => ({ ...(pageState ?? {}) }) as Page);
+	const navigating: Readable<Navigation | null> = toStore(() =>
+		navigatingState?.to ? (navigatingState as Navigation) : null
+	);
+
 	// Used in reset
 	let initialForm: SuperValidated<T, M, In>;
 	let options = formOptions ?? ({} as FormOptions<T, M, In>);
+	let flashMessage: Writable<App.PageData['flash']> | undefined;
 	// To check if a full validator is used when switching options.validators dynamically
 	let initialValidator: FormOptions<T, M, In>['validators'] | undefined = undefined;
 
@@ -453,6 +465,10 @@ export function superForm<
 			...defaultFormOptions,
 			...options
 		};
+
+		if (options.flashMessage) {
+			flashMessage = options.flashMessage.module.getFlash(pageState as unknown as Readable<Page>);
+		}
 
 		if (
 			(options.SPA === true || typeof options.SPA === 'object') &&
@@ -487,7 +503,8 @@ export function superForm<
 
 		// Assign options.id to form, if it exists
 		const _initialFormId = (form.id = options.id ?? form.id);
-		const _currentPage = get(page) ?? (STORYBOOK_MODE ? {} : undefined);
+		// Use the stable page object from $app/state as identity for the current page.
+		const _currentPage = pageState ?? (STORYBOOK_MODE ? {} : undefined);
 
 		// Check multiple id's
 		if (browser && options.warnings?.duplicateId !== false) {
@@ -1251,8 +1268,7 @@ export function superForm<
 		if (shouldRedirect && nav.to) {
 			try {
 				Tainted.forceRedirection = true;
-				//@ts-expect-error Possible SvelteKit breaking change, it worked before.
-				await goto(nav.to.url, { ...nav.to.params });
+				await goto(nav.to.url);
 				return;
 			} finally {
 				// Reset forceRedirection for multiple-tainted purpose
@@ -1489,10 +1505,9 @@ export function superForm<
 		__data.valid = form.valid;
 
 		if (options.flashMessage && shouldSyncFlash(options)) {
-			const flash = options.flashMessage.module.getFlash(page);
-			if (message && get(flash) === undefined) {
+			if (message && flashMessage && get(flashMessage) === undefined) {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				flash.set(message as any);
+				flashMessage.set(message as any);
 			}
 		}
 	}
@@ -1520,7 +1535,7 @@ export function superForm<
 		// Need to subscribe to catch page invalidation.
 		Unsubscriptions_add(
 			page.subscribe(async (pageUpdate) => {
-				if (STORYBOOK_MODE && pageUpdate === undefined) {
+				if (STORYBOOK_MODE && (pageUpdate === undefined || pageUpdate.status === undefined)) {
 					pageUpdate = { status: 200 } as Page;
 				}
 				const successResult = pageUpdate.status >= 200 && pageUpdate.status < 300;
@@ -1682,13 +1697,14 @@ export function superForm<
 		);
 
 		let currentRequest: AbortController | null;
-		let customRequest:
-			| ((
-					input: Parameters<SubmitFunction>[0]
-			  ) => Promise<Response | XMLHttpRequest | ActionResult>)
-			| undefined = undefined;
 
 		const enhanced = kitEnhance(FormElement, async (submitParams) => {
+			let customRequest:
+				| ((
+						input: Parameters<SubmitFunction>[0]
+				  ) => Promise<Response | XMLHttpRequest | ActionResult>)
+				| undefined;
+
 			let jsonData: Record<string, unknown> | undefined = undefined;
 			let validationAdapter = options.validators;
 			// eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -1721,8 +1737,18 @@ export function superForm<
 				const data = { form: validationResult };
 
 				const result: ActionResult = validationResult.valid
-					? { type: 'success', status, data }
-					: { type: 'failure', status, data };
+					? {
+							type: 'success',
+							status,
+							data,
+							location: submitParams.action.pathname + submitParams.action.search
+						}
+					: {
+							type: 'failure',
+							status,
+							data,
+							location: submitParams.action.pathname + submitParams.action.search
+						};
 
 				setTimeout(() => validationResponse({ result }), 0);
 			}
@@ -1752,6 +1778,12 @@ export function superForm<
 				// For v3, then return { form } as data in applyAction below:
 				//const form: SuperValidated<T, M, In> = Form_capture(false);
 
+				const error =
+					result.error && typeof result.error === 'object'
+						? 'error' in result.error
+							? result.error.error
+							: { ...result.error, message: result.error.message }
+						: result.error;
 				result.status = status;
 
 				// Check if the error message should be replaced
@@ -1770,8 +1802,8 @@ export function superForm<
 
 				if (options.flashMessage && options.flashMessage.onError) {
 					await options.flashMessage.onError({
-						result,
-						flashMessage: options.flashMessage.module.getFlash(page)
+						result: { ...result, error },
+						flashMessage: flashMessage as Writable<App.PageData['flash']>
 					});
 				}
 
@@ -1785,7 +1817,8 @@ export function superForm<
 						await applyAction({
 							type: 'failure',
 							status: Form_resultStatus(result.status),
-							data: result
+							data: result,
+							location: document.location.href
 						});
 					}
 				}
@@ -1858,7 +1891,7 @@ export function superForm<
 						(options.clearOnSubmit == 'errors-and-message' || options.clearOnSubmit == 'message') &&
 						shouldSyncFlash(options)
 					) {
-						options.flashMessage.module.getFlash(page).set(undefined);
+						flashMessage?.set(undefined);
 					}
 
 					// Deprecation fix
@@ -1960,7 +1993,11 @@ export function superForm<
 						: {
 								type: 'error',
 								status: Form_resultStatus(parseInt(String(event.result.status)) || 500),
-								error: event.result.error instanceof Error ? event.result.error : event.result
+								// ActionResult errors are typed as App.Error since SvelteKit 3,
+								// but Superforms passes arbitrary error values to its own events.
+								error: (event.result.error instanceof Error
+									? event.result.error
+									: event.result) as unknown as App.Error
 							};
 
 				const cancel = () => (cancelled = true);
@@ -1984,7 +2021,7 @@ export function superForm<
 				function setErrorResult(error: unknown, data: { result: ActionResult }, status: number) {
 					data.result = {
 						type: 'error',
-						error,
+						error: error as App.Error,
 						status: Form_resultStatus(status)
 					};
 				}

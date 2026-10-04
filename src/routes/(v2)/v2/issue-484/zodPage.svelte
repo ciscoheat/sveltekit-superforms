@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { superForm, defaults } from '$lib/index.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { superForm, defaults } from '#lib/index.js';
+	import { zod } from '#lib/adapters/zod.js';
 	import { loginZodSchema } from './schemas.js';
 
 	const { form, errors, message, constraints, enhance } = superForm(defaults(zod(loginZodSchema)), {

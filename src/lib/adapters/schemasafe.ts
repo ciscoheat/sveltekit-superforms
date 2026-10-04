@@ -1,4 +1,4 @@
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import {
 	createAdapter,
 	type AdapterOptions,
@@ -7,8 +7,8 @@ import {
 } from './adapters.js';
 import type { Json, Schema, Validate, ValidatorOptions } from '@exodus/schemasafe';
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
-import type { JSONSchema as JSONSchema7 } from '$lib/jsonSchema/index.js';
-import { pathExists } from '$lib/traversal.js';
+import type { JSONSchema as JSONSchema7 } from '#lib/jsonSchema/index.js';
+import { pathExists } from '#lib/traversal.js';
 
 async function modules() {
 	const { validator } = await import(/* webpackIgnore: true */ '@exodus/schemasafe');

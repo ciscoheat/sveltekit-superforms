@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { dateProxy, superForm } from '$lib/index.js';
-	import { zodClient } from '$lib/adapters/zod4.js';
+	import { dateProxy, superForm } from '#lib/index.js';
+	import { zodClient } from '#lib/adapters/zod4.js';
 	import { v4FormSchema } from './form-schema.js';
 	import type { PageData } from './$types.js';
 

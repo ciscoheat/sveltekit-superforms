@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { type Infer, superForm } from '$lib/client/index.js';
+	import { type Infer, superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import { superformClient } from '$lib/adapters/superform.js';
+	import { superformClient } from '#lib/adapters/superform.js';
 	import type { schema } from './schema.js';
 
 	export let data: PageData;

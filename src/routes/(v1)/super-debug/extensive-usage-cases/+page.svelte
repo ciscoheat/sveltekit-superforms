@@ -1,9 +1,9 @@
 <script lang="ts">
 	/* eslint svelte/no-at-html-tags: "off" */
 
-	import { page } from '$app/stores';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { page } from '$app/state';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { onMount } from 'svelte';
 	import { derived, readable, writable } from 'svelte/store';
 

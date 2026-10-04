@@ -5,3 +5,10 @@ allowBuilds:
   esbuild: true
   svelte-preprocess: true
   '@sveltejs/kit': true
+minimumReleaseAgeExclude:
+  - sveltekit-flash-message
+  - sveltekit-rate-limiter
+  - eslint-plugin-dci-lint
+  - '@sveltejs/adapter-vercel@7.0.0'
+  - '@sveltejs/kit@3.0.0'
+  - '@sveltejs/package@3.0.0'

@@ -1,7 +1,7 @@
 import { z } from 'zod/v3';
 import { z as z4 } from 'zod/v4';
 
-import { zodToJSONSchema } from '$lib/adapters/zod.js';
+import { zodToJSONSchema } from '#lib/adapters/zod.js';
 
 export enum Foo {
 	A = 2,

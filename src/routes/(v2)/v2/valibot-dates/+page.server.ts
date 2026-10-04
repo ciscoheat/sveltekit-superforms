@@ -1,7 +1,7 @@
 import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
-import { superValidate } from '$lib/index.js';
-import { valibot } from '$lib/adapters/valibot.js';
+import { superValidate } from '#lib/index.js';
+import { valibot } from '#lib/adapters/valibot.js';
 
 export const load = async () => {
 	const form = await superValidate(valibot(schema));

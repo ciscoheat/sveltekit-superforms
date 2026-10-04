@@ -1,15 +1,15 @@
 import { describe, it, expect, assert } from 'vitest';
 import type { JSONSchema7 } from 'json-schema';
-import { schemaInfo } from '$lib/jsonSchema/schemaInfo.js';
+import { schemaInfo } from '#lib/jsonSchema/schemaInfo.js';
 import type { FromSchema } from 'json-schema-to-ts';
-import { defaultValues, defaultTypes } from '$lib/jsonSchema/schemaDefaults.js';
-import { schemaShape, shapeFromObject } from '$lib/jsonSchema/schemaShape.js';
+import { defaultValues, defaultTypes } from '#lib/jsonSchema/schemaDefaults.js';
+import { schemaShape, shapeFromObject } from '#lib/jsonSchema/schemaShape.js';
 import { z } from 'zod/v3';
-import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
-import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
-import { constraints } from '$lib/jsonSchema/constraints.js';
-import { SchemaError } from '$lib/errors.js';
-import type { Infer } from '$lib/index.js';
+import { zod, zodToJSONSchema } from '#lib/adapters/zod.js';
+import { schemaHash } from '#lib/jsonSchema/schemaHash.js';
+import { constraints } from '#lib/jsonSchema/constraints.js';
+import { SchemaError } from '#lib/errors.js';
+import type { Infer } from '#lib/index.js';
 
 const schema = {
 	type: 'object',

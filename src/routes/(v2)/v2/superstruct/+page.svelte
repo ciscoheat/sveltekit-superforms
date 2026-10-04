@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { superstructClient } from '$lib/adapters/superstruct.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { superstructClient } from '#lib/adapters/superstruct.js';
 	import { schema } from './schema.js';
 
 	export let data;

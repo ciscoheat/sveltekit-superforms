@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { superForm, fileProxy } from '$lib/index.js';
-	import { zodClient } from '$lib/adapters/zod.js';
+	import { superForm, fileProxy } from '#lib/index.js';
+	import { zodClient } from '#lib/adapters/zod.js';
 	import { schema } from './schema.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 
 	export let data;
 

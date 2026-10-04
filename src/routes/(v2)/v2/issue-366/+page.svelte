@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { valibot } from '$lib/adapters/valibot.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { valibot } from '#lib/adapters/valibot.js';
 	import { userSchema } from './schema.js';
 	import { pick } from 'valibot';
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { InputConstraint } from '$lib/index.js';
+	import type { InputConstraint } from '#lib/index.js';
 
 	export let value: File | File[] | null;
 	export let name: string;

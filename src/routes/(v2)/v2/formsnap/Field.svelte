@@ -1,11 +1,11 @@
 <script lang="ts" module>
-	import type { FormPath } from '$lib/index.js';
+	import type { FormPath } from '#lib/index.js';
 	type T = Record<string, unknown>;
 	type U = unknown;
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>, U extends FormPath<T>">
-	import type { SuperForm } from '$lib/index.js';
+	import type { SuperForm } from '#lib/index.js';
 	export let form: SuperForm<T>;
 	export let name: U;
 

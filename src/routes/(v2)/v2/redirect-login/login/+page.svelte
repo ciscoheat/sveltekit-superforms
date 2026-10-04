@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as flashModule from 'sveltekit-flash-message/client';
-	import { superForm } from '$lib/index.js';
+	import { superForm } from '#lib/index.js';
 
 	export let data;
 

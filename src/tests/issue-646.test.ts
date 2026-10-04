@@ -2,9 +2,9 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod/v3';
 import { z as z4 } from 'zod/v4';
-import { zod } from '$lib/adapters/zod.js';
-import { zod as zod4 } from '$lib/adapters/zod4.js';
-import { superValidate } from '$lib/superValidate.js';
+import { zod } from '#lib/adapters/zod.js';
+import { zod as zod4 } from '#lib/adapters/zod4.js';
+import { superValidate } from '#lib/superValidate.js';
 
 describe('Issue 646 - Top-level transform and refine support', () => {
 	describe('Zod v3 adapter', () => {

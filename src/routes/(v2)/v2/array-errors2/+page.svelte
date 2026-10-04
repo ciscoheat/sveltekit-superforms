@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { z } from 'zod/v3';
-	import { defaults, superForm } from '$lib/index.js';
-	import { zod } from '$lib//adapters/zod.js';
+	import { defaults, superForm } from '#lib/index.js';
+	import { zod } from '#lib//adapters/zod.js';
 
 	const testArraySchema = z.array(z.string()).min(1);
 

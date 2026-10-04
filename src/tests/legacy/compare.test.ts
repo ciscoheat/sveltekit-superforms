@@ -1,11 +1,11 @@
 import { assert, describe, expect, expectTypeOf, test } from 'vitest';
 import { z } from 'zod/v3';
-import { pathExists } from '$lib/traversal.js';
+import { pathExists } from '#lib/traversal.js';
 import { get, writable } from 'svelte/store';
-import { superValidate } from '$lib/superValidate.js';
-import { comparePaths, setPaths } from '$lib/traversal.js';
-import { zod } from '$lib/adapters/zod.js';
-import { fieldProxy } from '$lib/client/index.js';
+import { superValidate } from '#lib/superValidate.js';
+import { comparePaths, setPaths } from '#lib/traversal.js';
+import { zod } from '#lib/adapters/zod.js';
+import { fieldProxy } from '#lib/client/index.js';
 
 const user = z.object({
 	id: z.number().int().positive(),
@@ -130,7 +130,7 @@ describe('Path comparisons', () => {
 	});
 
 	test('Paths with different array values', () => {
-		/* 
+		/*
       Array comparisons can unfortunately break the illusion that the form
       fields themselves are tainted.
       If you click on a checkbox to add an item, the array comparison will

@@ -1,5 +1,5 @@
-import { zod } from '$lib/adapters/zod.js';
-import { message, superValidate } from '$lib/server/index.js';
+import { zod } from '#lib/adapters/zod.js';
+import { message, superValidate } from '#lib/server/index.js';
 import { transport } from '../../../../hooks.js';
 import { RecordId } from '../../../RecordId.js';
 import { schema } from './schema.js';

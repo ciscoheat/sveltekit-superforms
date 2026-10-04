@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { type Infer, superForm } from '$lib/client/index.js';
-	import type { FormOptions } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { page } from '$app/state';
+	import { type Infer, superForm } from '#lib/client/index.js';
+	import type { FormOptions } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 	import * as flashModule from 'sveltekit-flash-message/client';
 	import { onMount } from 'svelte';
-	import type { SuperValidated } from '$lib/index.js';
+	import type { SuperValidated } from '#lib/index.js';
 
 	import type { z } from 'zod/v3';
-	import { zodClient } from '$lib/adapters/zod.js';
-	import { superformClient } from '$lib/adapters/superform.js';
+	import { zodClient } from '#lib/adapters/zod.js';
+	import { superformClient } from '#lib/adapters/superform.js';
 
 	export let data: SuperValidated<z.infer<typeof schema>>;
 	export let validator: 'zod' | 'superforms';
@@ -18,8 +18,8 @@
 	export let output: (string[] | undefined)[] = [];
 	export let validated: SuperValidated<z.infer<typeof schema>> | undefined = undefined;
 
-	$: testMode = $page.url.searchParams.has('test');
-	$: custom = $page.url.searchParams.has('custom');
+	const testMode = page.url.searchParams.has('test');
+	const custom = page.url.searchParams.has('custom');
 
 	const superFormValidator: FormOptions<Infer<typeof schema>, unknown>['validators'] =
 		superformClient<Infer<typeof schema>>({
@@ -39,7 +39,7 @@
 		taintedMessage: null,
 		dataType: 'json',
 		onUpdate(event) {
-			if ($page.url.searchParams.has('cancel')) event.cancel();
+			if (page.url.searchParams.has('cancel')) event.cancel();
 		},
 		validators: validator == 'zod' ? zodClient(schema) : superFormValidator,
 		flashMessage: {

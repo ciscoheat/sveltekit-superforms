@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { z } from 'zod/v3';
-	import { superForm as _superForm } from '$lib/client/index.js';
-	import { defaults } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/zod.js';
-	import SuperDebug from '$lib/index.js';
+	import { superForm as _superForm } from '#lib/client/index.js';
+	import { defaults } from '#lib/client/index.js';
+	import { zod } from '#lib/adapters/zod.js';
+	import SuperDebug from '#lib/index.js';
 
 	function ruleSet<T extends readonly [string, ...string[]]>(options: T) {
 		let prev: string | undefined = undefined;

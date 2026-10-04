@@ -1,5 +1,5 @@
-import { valibot } from '$lib/adapters/valibot.js';
-import { fail, superValidate } from '$lib/index.js';
+import { valibot } from '#lib/adapters/valibot.js';
+import { fail, superValidate } from '#lib/index.js';
 import { classifySchema } from './schema.js';
 
 export const actions = {

@@ -1,5 +1,5 @@
-import { superValidate, message } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate, message } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { schemaStep2 as lastStep } from './schema.js';
 import { fail } from '@sveltejs/kit';
 

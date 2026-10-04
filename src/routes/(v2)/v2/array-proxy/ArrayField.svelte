@@ -4,8 +4,8 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>, F extends FormPathArrays<T>">
-	import { arrayProxy, type ArrayProxy } from '$lib/index.js';
-	import type { SuperForm, FormPathArrays, FormPathType } from '$lib/index.js';
+	import { arrayProxy, type ArrayProxy } from '#lib/index.js';
+	import type { SuperForm, FormPathArrays, FormPathType } from '#lib/index.js';
 
 	export let form: SuperForm<T>;
 	export let field: F;

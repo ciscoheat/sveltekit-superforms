@@ -1,8 +1,8 @@
-import { superValidate, setError } from '$lib/server/index.js';
+import { superValidate, setError } from '#lib/server/index.js';
 import { schema } from './schema.js';
 
 import type { Actions, PageServerLoad } from './$types.js';
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '#lib/adapters/zod.js';
 
 ///// Load function /////
 

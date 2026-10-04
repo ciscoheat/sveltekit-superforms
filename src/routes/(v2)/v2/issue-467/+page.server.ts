@@ -1,5 +1,5 @@
-import { setError, superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { setError, superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { Schema1, Schema2 } from './shared.js';
 
 export async function load({ url }) {

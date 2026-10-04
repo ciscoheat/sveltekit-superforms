@@ -1,9 +1,9 @@
 <script lang="ts">
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import type { PageData } from './$types.js';
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import { schema } from './schemas.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { zod } from '#lib/adapters/zod.js';
 
 	export let data: PageData;
 

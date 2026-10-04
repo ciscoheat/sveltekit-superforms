@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { superForm, defaults } from '$lib/index.js';
-	import { schemasafe } from '$lib/adapters/schemasafe.js';
+	import { superForm, defaults } from '#lib/index.js';
+	import { schemasafe } from '#lib/adapters/schemasafe.js';
 	import { loginJSONSchema } from './schemas.js';
 
 	const { form, errors, message, constraints, enhance } = superForm(

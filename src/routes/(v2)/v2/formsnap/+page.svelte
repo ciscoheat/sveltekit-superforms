@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import Field from './Field.svelte';
 
 	export let data;

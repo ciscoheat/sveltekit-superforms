@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { superForm } from '#lib/client/index.js';
+	import { zod } from '#lib/adapters/zod.js';
 	import { schema } from './schema.js';
 
 	export let data;

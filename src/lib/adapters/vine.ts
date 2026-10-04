@@ -8,7 +8,7 @@ import {
 	type Infer,
 	type InferIn
 } from './adapters.js';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import type { SchemaTypes } from '@vinejs/vine/types';
 
 async function modules() {

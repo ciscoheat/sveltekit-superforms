@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { z as z3 } from 'zod/v3';
 import { z as z4 } from 'zod/v4';
-import { zod } from '$lib/adapters/zod.js';
-import { zod as zod4 } from '$lib/adapters/zod4.js';
+import { zod } from '#lib/adapters/zod.js';
+import { zod as zod4 } from '#lib/adapters/zod4.js';
 
 describe('Zod version mismatch detection', () => {
 	let warnSpy: ReturnType<typeof vi.spyOn>;

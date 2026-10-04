@@ -3,8 +3,8 @@
 
 	import Form from './Form.svelte';
 	import TextField from './TextField.svelte';
-	import { zod } from '$lib/adapters/zod.js';
-	import type { Infer, SuperForm } from '$lib/index.js';
+	import { zod } from '#lib/adapters/zod.js';
+	import type { Infer, SuperForm } from '#lib/index.js';
 
 	let visible = $state(true);
 	let { data } = $props();

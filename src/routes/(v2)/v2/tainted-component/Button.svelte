@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>">
-	import type { SuperForm } from '$lib/index.js';
+	import type { SuperForm } from '#lib/index.js';
 
 	export let form: SuperForm<T>;
 

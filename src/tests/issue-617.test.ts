@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod/v4';
-import { zod, zodToJSONSchema } from '$lib/adapters/zod4.js';
-import { superValidate } from '$lib/server/index.js';
+import { zod, zodToJSONSchema } from '#lib/adapters/zod4.js';
+import { superValidate } from '#lib/server/index.js';
 
 describe('issue-617: z.set() and z.map() with default values', () => {
 	describe('JSON Schema generation', () => {

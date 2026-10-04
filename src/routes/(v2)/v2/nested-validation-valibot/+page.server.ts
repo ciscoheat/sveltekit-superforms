@@ -1,9 +1,9 @@
 import { schema } from './schema.js';
-import { superValidate } from '$lib/server/index.js';
+import { superValidate } from '#lib/server/index.js';
 
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types.js';
-import { valibot } from '$lib/adapters/valibot.js';
+import { valibot } from '#lib/adapters/valibot.js';
 
 const defaults = {
 	name: '',

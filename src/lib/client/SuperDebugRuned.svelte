@@ -2,7 +2,7 @@
 
 <script lang="ts">
 	import type { Readable } from 'svelte/store';
-	import { browser } from '$app/environment';
+	import { BROWSER as browser } from 'esm-env';
 	import { page } from '$app/state';
 	import { fromStore } from 'svelte/store';
 	import { clipboardCopy } from './clipboardCopy.js';

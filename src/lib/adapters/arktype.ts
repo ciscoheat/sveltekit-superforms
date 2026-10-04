@@ -1,5 +1,5 @@
-import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { memoize } from '$lib/memoize.js';
+import { defaultValues } from '#lib/jsonSchema/schemaDefaults.js';
+import { memoize } from '#lib/memoize.js';
 import type { type } from 'arktype';
 import type { JSONSchema7 } from 'json-schema';
 import {

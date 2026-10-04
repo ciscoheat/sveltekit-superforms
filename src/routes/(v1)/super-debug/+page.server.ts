@@ -1,6 +1,6 @@
 import { z } from 'zod/v3';
-import { superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate } from '#lib/server/index.js';
+import { zod } from '#lib/adapters/zod.js';
 
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types.js';

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { zod, zodClient } from '$lib/adapters/zod.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { zod, zodClient } from '#lib/adapters/zod.js';
 	import { step1, step2, step3 } from './schema.js';
 	import { z } from 'zod/v3';
 

@@ -1,5 +1,5 @@
-import { zod as zod4 } from '$lib/adapters/zod4.js';
-import { superValidate } from '$lib/index.js';
+import { zod as zod4 } from '#lib/adapters/zod4.js';
+import { superValidate } from '#lib/index.js';
 import { z } from 'zod/v4';
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));

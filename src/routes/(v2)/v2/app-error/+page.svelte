@@ -1,13 +1,39 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { superForm } from '$lib/index.js';
+	import { page } from '$app/state';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { superForm } from '#lib/index.js';
 
 	export let data;
 
 	let error: string;
 
 	const spForm = superForm(data.form, {
+		onSubmit({ customRequest }) {
+			if ($form.exception !== 'json' && $form.exception !== 'plain') return;
+
+			return customRequest(async (input) => {
+				const response = await fetch(input.action, {
+					method: 'POST',
+					body: input.formData,
+					credentials: 'include'
+				});
+
+				try {
+					const result = await response.json();
+					return {
+						type: 'error',
+						status: result.status,
+						error: result
+					};
+				} catch (error) {
+					return {
+						type: 'error',
+						status: 500,
+						error: { message: error instanceof Error ? error.message : String(error) }
+					};
+				}
+			});
+		},
 		onError: (e) => {
 			console.log(e.result);
 			// @ts-expect-error Does not follow the App.Error shape
@@ -28,7 +54,7 @@
 
 <SuperDebug data={$form} />
 
-<p id="error">ERROR:{error}:{$page.status}</p>
+<p id="error">ERROR:{error}:{page.status}</p>
 
 <form method="POST" use:enhance {action}>
 	Name: <input name="name" bind:value={$form.name} />

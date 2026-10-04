@@ -1,6 +1,6 @@
-import { setError, superValidate } from '$lib/server/index.js';
-import { zod } from '$lib/adapters/zod.js';
-import type { SuperValidated } from '$lib/index.js';
+import { setError, superValidate } from '#lib/server/index.js';
+import { zod } from '#lib/adapters/zod.js';
+import type { SuperValidated } from '#lib/index.js';
 
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';

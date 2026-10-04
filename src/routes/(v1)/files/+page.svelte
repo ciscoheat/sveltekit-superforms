@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { page } from '$app/state';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import type { PageData } from './$types.js';
 
 	export let data: PageData;
 
 	const { form, errors, enhance, delayed, message } = superForm(data.form, {
-		dataType: $page.url.searchParams.has('json') ? 'json' : 'form',
+		dataType: page.url.searchParams.has('json') ? 'json' : 'form',
 		taintedMessage: null
 	});
 </script>
@@ -35,7 +35,6 @@
 		type="file"
 		accept="image/png, image/gif, image/jpeg"
 		data-invalid={$errors.file}
-		bind:value={$form.file}
 	/>
 	{#if $errors.file}
 		<span class="invalid">{$errors.file}</span>

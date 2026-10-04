@@ -1,5 +1,5 @@
 import { z } from 'zod/v3';
-import type { JSONSchema } from '$lib/index.js';
+import type { JSONSchema } from '#lib/index.js';
 
 export const loginZodSchema = z.object({
 	name: z.string().min(5).default('Superform'),

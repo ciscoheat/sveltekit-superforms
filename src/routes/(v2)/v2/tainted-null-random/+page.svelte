@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { schema as clientSchema } from './schema.js';
-	import SuperDebug from '$lib/index.js';
-	import { zodClient } from '$lib/adapters/zod.js';
-	import { superForm } from '$lib/client/index.js';
+	import SuperDebug from '#lib/index.js';
+	import { zodClient } from '#lib/adapters/zod.js';
+	import { superForm } from '#lib/client/index.js';
 
 	export let data;
 

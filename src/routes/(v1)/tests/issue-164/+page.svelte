@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
 	import Form from './Form.svelte';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 
 	export let data: PageData;
 	console.log('🚀 ~ file: +page.svelte:7 ~ page created:', data.form.data);

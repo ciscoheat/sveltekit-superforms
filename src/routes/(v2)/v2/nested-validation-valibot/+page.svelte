@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Infer, SuperValidated } from '$lib/index.js';
+	import type { Infer, SuperValidated } from '#lib/index.js';
 	import type { PageData } from './$types.js';
 	import TagForm from './TagForm.svelte';
 	import type { schema } from './schema.js';

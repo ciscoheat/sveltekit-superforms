@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { ValidationAdapter, Infer } from '$lib/adapters/adapters.js';
+	import type { ValidationAdapter, Infer } from '#lib/adapters/adapters.js';
 	import type { registerSchema } from './schema.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { superForm, type SuperForm, type SuperValidated } from '$lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { superForm, type SuperForm, type SuperValidated } from '#lib/client/index.js';
 	import type { Snippet } from 'svelte';
 
 	type T = Infer<typeof registerSchema>;

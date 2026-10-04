@@ -1,9 +1,9 @@
-import { superValidate, message } from '$lib/server/index.js';
+import { superValidate, message } from '#lib/server/index.js';
 import { fail } from '@sveltejs/kit';
 import { schema } from './schema.js';
 
 import type { Actions, PageServerLoad } from './$types.js';
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '#lib/adapters/zod.js';
 import { userSchema, users } from './users.js';
 import { z } from 'zod/v3';
 

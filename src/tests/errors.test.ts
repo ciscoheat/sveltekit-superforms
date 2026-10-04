@@ -1,6 +1,6 @@
-import { zod } from '$lib/adapters/zod.js';
-import { flattenErrors, mergeDefaults, replaceInvalidDefaults } from '$lib/errors.js';
-import type { ValidationErrors } from '$lib/superValidate.js';
+import { zod } from '#lib/adapters/zod.js';
+import { flattenErrors, mergeDefaults, replaceInvalidDefaults } from '#lib/errors.js';
+import type { ValidationErrors } from '#lib/superValidate.js';
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod/v3';
 

@@ -1,8 +1,8 @@
-import { SchemaError } from '$lib/errors.js';
+import { SchemaError } from '#lib/errors.js';
 import type { JSONSchema7Definition } from 'json-schema';
 import { schemaInfo } from './schemaInfo.js';
 import type { JSONSchema } from './index.js';
-import { assertSchema } from '$lib/utils.js';
+import { assertSchema } from '#lib/utils.js';
 
 /**
  * A tree structure where the existence of a node means that the field is an array or an object.

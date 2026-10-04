@@ -1,7 +1,7 @@
 import { schema } from '../../schema.js';
 import type { RequestHandler } from './$types.js';
-import { actionResult, setError, superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { actionResult, setError, superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { takenUsernames } from '../../usernames.js';
 
 const usernameSchema = schema.pick({ username: true });

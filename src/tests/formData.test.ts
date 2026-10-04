@@ -1,8 +1,8 @@
-import { arktype } from '$lib/adapters/arktype.js';
-import { valibot } from '$lib/adapters/valibot.js';
-import { zodToJSONSchema } from '$lib/adapters/zod.js';
-import { parseFormData } from '$lib/formData.js';
-import { SchemaError } from '$lib/index.js';
+import { arktype } from '#lib/adapters/arktype.js';
+import { valibot } from '#lib/adapters/valibot.js';
+import { zodToJSONSchema } from '#lib/adapters/zod.js';
+import { parseFormData } from '#lib/formData.js';
+import { SchemaError } from '#lib/index.js';
 import { type } from 'arktype';
 import * as v from 'valibot';
 import { assert, describe, expect, it } from 'vitest';

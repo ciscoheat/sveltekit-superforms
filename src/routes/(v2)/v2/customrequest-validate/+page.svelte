@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { zod } from '$lib/adapters/zod.js';
-	import { superForm } from '$lib/index.js';
-	import SuperDebug from '$lib/index.js';
+	import { zod } from '#lib/adapters/zod.js';
+	import { superForm } from '#lib/index.js';
+	import SuperDebug from '#lib/index.js';
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageData } from './$types.js';
 	import { schema } from './schema.js';

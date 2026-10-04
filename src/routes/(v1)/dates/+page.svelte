@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { superForm, dateProxy } from '$lib/client/index.js';
+	import { superForm, dateProxy } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schemaToStr } from './schema.js';
 	import { type Writable, writable, derived } from 'svelte/store';
 

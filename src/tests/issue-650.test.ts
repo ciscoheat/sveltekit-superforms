@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { superValidate } from '$lib/superValidate.js';
-import { zod } from '$lib/adapters/zod4.js';
+import { superValidate } from '#lib/superValidate.js';
+import { zod } from '#lib/adapters/zod4.js';
 import { z } from 'zod/v4';
 
 describe('Issue 650 - Zod 4 Default Date values in nested objects', () => {

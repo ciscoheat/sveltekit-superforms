@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { formFieldProxy, superForm } from '$lib/client/index.js';
+	import { formFieldProxy, superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 
 	export let data: PageData;
 

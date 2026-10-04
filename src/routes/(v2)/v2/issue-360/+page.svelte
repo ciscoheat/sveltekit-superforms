@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { defaults, superForm } from '$lib/index.js';
-	import { zod } from '$lib/adapters/zod.js';
-	import SuperDebug from '$lib/index.js';
+	import { page } from '$app/state';
+	import { defaults, superForm } from '#lib/index.js';
+	import { zod } from '#lib/adapters/zod.js';
+	import SuperDebug from '#lib/index.js';
 	import { goto } from '$app/navigation';
 
 	import { schema } from './schema.js';
@@ -30,7 +30,7 @@
 
 {#if $message}
 	<!-- eslint-disable-next-line svelte/valid-compile -->
-	<div class="status" class:error={$page.status >= 400} class:success={$page.status == 200}>
+	<div class="status" class:error={page.status >= 400} class:success={page.status == 200}>
 		{$message}
 	</div>
 {/if}

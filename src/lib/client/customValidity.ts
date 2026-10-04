@@ -1,6 +1,6 @@
-import type { ValidationErrors } from '$lib/client/index.js';
-import { splitPath } from '$lib/stringPath.js';
-import { traversePath } from '$lib/traversal.js';
+import type { ValidationErrors } from '#lib/client/index.js';
+import { splitPath } from '#lib/stringPath.js';
+import { traversePath } from '#lib/traversal.js';
 
 const noCustomValidityDataAttribute = 'noCustomValidity';
 

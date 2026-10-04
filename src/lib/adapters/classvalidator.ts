@@ -8,7 +8,7 @@ import {
 	type ClientValidationAdapter,
 	type RequiredDefaultsOptions
 } from './adapters.js';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import type { Schema } from '@typeschema/class-validator';
 
 async function modules() {

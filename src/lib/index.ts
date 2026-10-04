@@ -3,7 +3,7 @@ export default SuperDebug;
 
 export { SuperFormError, SchemaError } from './errors.js';
 
-export type { InputConstraints, InputConstraint } from '$lib/jsonSchema/constraints.js';
+export type { InputConstraints, InputConstraint } from '#lib/jsonSchema/constraints.js';
 export type { JSONSchema } from './jsonSchema/index.js';
 
 // Everything from client/index.ts

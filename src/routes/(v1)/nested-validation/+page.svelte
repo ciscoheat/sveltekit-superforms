@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { SuperValidated } from '$lib/index.js';
+	import type { SuperValidated } from '#lib/index.js';
 
 	import type { z } from 'zod/v3';
 	import type { PageData } from './$types.js';

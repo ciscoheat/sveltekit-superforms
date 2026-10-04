@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { valibot } from '$lib/adapters/valibot.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { defaults, superForm } from '$lib/index.js';
+	import { valibot } from '#lib/adapters/valibot.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { defaults, superForm } from '#lib/index.js';
 	import type { ActionData } from './classify/$types.js';
 	import { classifySchema } from './classify/schema.js';
 

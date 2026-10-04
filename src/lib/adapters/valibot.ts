@@ -16,7 +16,7 @@ import {
 	type IssuePathItem,
 	type SetPathItem
 } from 'valibot';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import { type ConversionConfig, toJsonSchema } from '@valibot/to-json-schema';
 import type { JSONSchema } from '../jsonSchema/index.js';
 

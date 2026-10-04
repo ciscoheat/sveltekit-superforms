@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { Schema } from './schemas.js';
-	import { valibotClient } from '$lib/adapters/valibot.js';
-	import { dateProxy, superForm } from '$lib/client/index.js';
+	import { valibotClient } from '#lib/adapters/valibot.js';
+	import { dateProxy, superForm } from '#lib/client/index.js';
 
 	let { data } = $props();
 

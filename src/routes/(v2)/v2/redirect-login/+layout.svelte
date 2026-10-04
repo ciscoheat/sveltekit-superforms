@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { getFlash } from 'sveltekit-flash-message/client';
 
 	const flash = getFlash(page);

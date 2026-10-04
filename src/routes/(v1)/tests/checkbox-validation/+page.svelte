@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schemas.js';
 	import Checkbox from './Checkbox.svelte';
-	import { zod } from '$lib/adapters/zod.js';
+	import { zod } from '#lib/adapters/zod.js';
 
 	export let data: PageData;
 

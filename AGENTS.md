@@ -215,7 +215,7 @@ When adding support for a new validation library:
 
 1. Create `src/lib/adapters/newlibrary.ts`
 2. Implement the adapter factory returning `ValidationAdapter<Out, In>`
-3. Add memoization with `memoize()` from `$lib/memoize.js`
+3. Add memoization with `memoize()` from `#lib/memoize.js`
 4. Export from `src/lib/adapters/index.ts`
 5. Add TypeScript types to `src/lib/adapters/typeSchema.ts`
 6. Write tests in `src/tests/`
@@ -223,7 +223,7 @@ When adding support for a new validation library:
 **Template:**
 
 ```typescript
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import { createAdapter } from './adapters.js';
 
 function _newlibrary<S extends Schema>(schema: S) {

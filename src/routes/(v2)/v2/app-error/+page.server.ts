@@ -1,5 +1,5 @@
-import { superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { userSchema } from './schema.js';
 import { error, fail } from '@sveltejs/kit';
 
@@ -20,7 +20,7 @@ export const actions = {
 		switch (form.data.exception) {
 			case 'error':
 				// @ts-expect-error Does not follow the App.Error shape
-				error(502, { code: 'expected', title: 'Error title', message: 'Error' });
+				error(502, 'Error', { code: 'expected', title: 'Error title' });
 				break;
 
 			case 'exception':

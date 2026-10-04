@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { superForm } from '$lib/client/superForm.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { superForm } from '#lib/client/superForm.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import * as flashModule from 'sveltekit-flash-message/client';
 
 	export let data;

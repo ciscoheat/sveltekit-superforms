@@ -1,5 +1,5 @@
-import { schemasafe } from '$lib/adapters/schemasafe.js';
-import { message, superValidate } from '$lib/server/index.js';
+import { schemasafe } from '#lib/adapters/schemasafe.js';
+import { message, superValidate } from '#lib/server/index.js';
 import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 

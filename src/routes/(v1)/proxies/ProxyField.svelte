@@ -4,8 +4,8 @@
 
 <script lang="ts" generics="T extends Record<string, unknown>">
 	import type { Writable } from 'svelte/store';
-	import type { FormPathLeaves } from '$lib/index.js';
-	import { dateProxy, formFieldProxy, type SuperForm } from '$lib/client/index.js';
+	import type { FormPathLeaves } from '#lib/index.js';
+	import { dateProxy, formFieldProxy, type SuperForm } from '#lib/client/index.js';
 
 	export let form: SuperForm<T>;
 	export let field: FormPathLeaves<T>;

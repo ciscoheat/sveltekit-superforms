@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { superForm, type SuperForm } from '$lib/client/index.js';
+	import { superForm, type SuperForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import type { schema } from './schemas.js';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import type { z } from 'zod/v3';
 
 	export let data: PageData;
@@ -11,7 +11,7 @@
 	let resets = 0;
 
 	const superform: SuperForm<z.infer<typeof schema>> = superForm(data.form, {
-		resetForm: $page.url.searchParams.has('function')
+		resetForm: page.url.searchParams.has('function')
 			? () => {
 					console.log('Reset...');
 					return true;

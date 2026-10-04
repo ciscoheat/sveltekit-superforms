@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { fileProxy, superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { fileProxy, superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 
 	export let data;
 

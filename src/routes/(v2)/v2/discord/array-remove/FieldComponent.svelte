@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { z } from 'zod/v3';
 	import type { userSchema } from './users.js';
-	import { arrayProxy } from '$lib/client/proxies.js';
+	import { arrayProxy } from '#lib/client/proxies.js';
 	export let form;
 	export let field: 'emails';
 	export let taint = false;

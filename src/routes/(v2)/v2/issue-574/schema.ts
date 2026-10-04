@@ -1,4 +1,4 @@
-import type { JSONSchema } from '$lib/index.js';
+import type { JSONSchema } from '#lib/index.js';
 
 export const schema = {
 	type: 'object',

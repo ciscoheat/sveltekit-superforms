@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>">
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from '$lib/index.js';
+	import { formFieldProxy, type FormPathLeaves, type SuperForm } from '#lib/index.js';
 	import Input from './Input.svelte';
 
 	export let form: SuperForm<T>;

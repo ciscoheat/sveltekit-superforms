@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { get, writable } from 'svelte/store';
-import { superValidate } from '$lib/superValidate.js';
-import { booleanProxy, dateProxy, fieldProxy, intProxy, numberProxy } from '$lib/client/index.js';
+import { superValidate } from '#lib/superValidate.js';
+import { booleanProxy, dateProxy, fieldProxy, intProxy, numberProxy } from '#lib/client/index.js';
 import { z } from 'zod/v3';
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '#lib/adapters/zod.js';
 
 describe('Value proxies', () => {
 	test('booleanProxy', async () => {

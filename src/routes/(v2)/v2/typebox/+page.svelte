@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
-	import { typeboxClient } from '$lib/adapters/typebox.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
+	import { typeboxClient } from '#lib/adapters/typebox.js';
 	import { schema } from './schema.js';
 
 	export let data;

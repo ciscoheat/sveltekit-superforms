@@ -15,7 +15,7 @@ import {
 	type ValidationResult,
 	type ClientValidationAdapter
 } from './adapters.js';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 
 type Options = NonNullable<Parameters<typeof toJSONSchema>[1]>;
 

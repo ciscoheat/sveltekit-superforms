@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { schemasafeClient } from '$lib/adapters/schemasafe.js';
-	import { superForm } from '$lib/client/index.js';
+	import { schemasafeClient } from '#lib/adapters/schemasafe.js';
+	import { superForm } from '#lib/client/index.js';
 	import { schema } from './schema.js';
 
 	export let data;

@@ -4,8 +4,8 @@
 </script>
 
 <script lang="ts" generics="T extends Record<string, unknown>, M">
-	import SuperDebug, { type SuperValidated } from '$lib/index.js';
-	import { superForm } from '$lib/index.js';
+	import SuperDebug, { type SuperValidated } from '#lib/index.js';
+	import { superForm } from '#lib/index.js';
 
 	export let data: SuperValidated<T, M>;
 	export let dataType: 'form' | 'json' = 'form';

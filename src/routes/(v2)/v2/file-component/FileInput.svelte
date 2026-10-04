@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { InputConstraint } from '$lib/index.js';
+	import type { InputConstraint } from '#lib/index.js';
 
 	export let value: File | File[] | null;
 	export let name: string;

@@ -1,5 +1,5 @@
-import { superstruct } from '$lib/adapters/superstruct.js';
-import { message, superValidate } from '$lib/server/index.js';
+import { superstruct } from '#lib/adapters/superstruct.js';
+import { message, superValidate } from '#lib/server/index.js';
 import { schema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 

@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '#lib/adapters/zod.js';
 import * as v from 'valibot';
-import { superValidate, fieldProxy, setError, type Infer } from '$lib/index.js';
+import { superValidate, fieldProxy, setError, type Infer } from '#lib/index.js';
 import type {
 	FormPathType,
 	FormPathArrays,
 	FormPathLeaves,
 	FormPathLeavesWithErrors,
 	FormPath
-} from '$lib/stringPath.js';
+} from '#lib/stringPath.js';
 import { writable } from 'svelte/store';
 import { test } from 'vitest';
 import { z } from 'zod/v3';

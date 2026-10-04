@@ -1,10 +1,10 @@
-import { SuperFormError } from '$lib/errors.js';
-import type { InputConstraints } from '$lib/jsonSchema/constraints.js';
-import { constraints as schemaConstraints } from '$lib/jsonSchema/constraints.js';
-import type { JSONSchema } from '$lib/jsonSchema/index.js';
-import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
-import { schemaHash } from '$lib/jsonSchema/schemaHash.js';
-import { schemaShape, type SchemaShape } from '$lib/jsonSchema/schemaShape.js';
+import { SuperFormError } from '#lib/errors.js';
+import type { InputConstraints } from '#lib/jsonSchema/constraints.js';
+import { constraints as schemaConstraints } from '#lib/jsonSchema/constraints.js';
+import type { JSONSchema } from '#lib/jsonSchema/index.js';
+import { defaultValues } from '#lib/jsonSchema/schemaDefaults.js';
+import { schemaHash } from '#lib/jsonSchema/schemaHash.js';
+import { schemaShape, type SchemaShape } from '#lib/jsonSchema/schemaShape.js';
 import { simpleSchema } from './simple-schema/index.js';
 import type {
 	InferIn as InferInSchema,

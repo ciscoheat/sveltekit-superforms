@@ -1,4 +1,4 @@
-import { json, type Transport } from '@sveltejs/kit';
+import { type Transport } from '@sveltejs/kit/hooks';
 import { stringify } from 'devalue';
 import type { IsAny } from './utils.js';
 
@@ -51,7 +51,7 @@ export function actionResult<
 			: undefined;
 
 	const result = <T extends { status: number }>(struct: T) => {
-		return json(
+		return Response.json(
 			{ type, ...struct },
 			{
 				status: struct.status,

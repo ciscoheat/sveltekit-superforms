@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { dateProxy, intProxy, booleanProxy, superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/index.js';
+	import { dateProxy, intProxy, booleanProxy, superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/index.js';
 	import { tick } from 'svelte';
 	import type { PageData } from './$types.js';
 	import * as flashModule from 'sveltekit-flash-message/client';

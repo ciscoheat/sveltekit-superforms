@@ -2,7 +2,7 @@
 	import z from 'zod/v3';
 	import Form from './Form.svelte';
 	import TextField from './TextField.svelte';
-	import SuperDebug from '$lib/index.js';
+	import SuperDebug from '#lib/index.js';
 
 	const schema = z.object({
 		name: z.string(),

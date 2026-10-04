@@ -8,7 +8,7 @@ import {
 	type ValidationResult
 } from './adapters.js';
 import type { Struct } from 'superstruct';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type StructObject<T extends Record<string, unknown>> = Struct<T, any>;

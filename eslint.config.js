@@ -5,8 +5,17 @@ import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
+// @ts-expect-error eslint-plugin-dci-lint has no types included
 import dciLint from 'eslint-plugin-dci-lint';
+import { loadConfig } from '@sveltejs/load-config';
+
+async function loadSvelteConfig() {
+	const result = await loadConfig('vite.config.ts');
+	if (result && 'config' in result) return result.config;
+	throw new Error('Failed to find the Svelte config');
+}
+
+const svelteConfig = await loadSvelteConfig();
 
 const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
@@ -24,6 +33,8 @@ export default ts.config(
 		},
 		rules: {
 			'no-undef': 'off',
+			'no-unassigned-vars': 'off',
+			'no-useless-assignment': 'off',
 			'svelte/require-each-key': 'off',
 			'svelte/no-navigation-without-resolve': 'off',
 			'dci-lint/literal-role-contracts': 'off'

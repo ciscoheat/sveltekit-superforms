@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { page } from '$app/state';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 
 	export let data;
 
 	let dialog: HTMLDialogElement;
 
 	const { form, errors, tainted, message, enhance } = superForm(data.form, {
-		taintedMessage: $page.url.searchParams.has('text')
+		taintedMessage: page.url.searchParams.has('text')
 			? 'Are you sure??'
 			: () => {
 					dialog.showModal();

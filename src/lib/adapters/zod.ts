@@ -10,7 +10,7 @@ import {
 	type ClientValidationAdapter
 } from './adapters.js';
 import { zodToJsonSchema as zodToJson, type Options } from 'zod-v3-to-json-schema';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 
 const defaultOptions: Partial<Options> = {
 	dateStrategy: 'integer',

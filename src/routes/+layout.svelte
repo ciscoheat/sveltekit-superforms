@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getFlash } from 'sveltekit-flash-message/client';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { beforeNavigate } from '$app/navigation';
 
 	const flash = getFlash(page);

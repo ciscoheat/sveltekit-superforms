@@ -1,10 +1,6 @@
 import { traversePath } from './traversal.js';
-import {
-	type ActionFailure,
-	fail as kitFail,
-	type RequestEvent,
-	type Transport
-} from '@sveltejs/kit';
+import { type ActionFailure, fail as kitFail, type RequestEvent } from '@sveltejs/kit';
+import type { Transport } from '@sveltejs/kit/hooks';
 import { type ValidationAdapter, type ValidationResult } from './adapters/adapters.js';
 import { parseRequest } from './formData.js';
 import type { ErrorStatus, IsAny } from './utils.js';

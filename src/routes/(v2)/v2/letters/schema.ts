@@ -1,4 +1,4 @@
-import { zod } from '$lib/adapters/zod.js';
+import { zod } from '#lib/adapters/zod.js';
 import { z } from 'zod/v3';
 
 export const generateSchema = (category: string) =>

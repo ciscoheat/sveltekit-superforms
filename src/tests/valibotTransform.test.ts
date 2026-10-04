@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from 'vitest';
-import { valibot } from '$lib/adapters/valibot.js';
+import { valibot } from '#lib/adapters/valibot.js';
 import * as v from 'valibot';
-import { superValidate } from '$lib/superValidate.js';
+import { superValidate } from '#lib/superValidate.js';
 import type { JSONSchema7 } from 'json-schema';
 
 describe('Valibot transformations with typeMode', () => {

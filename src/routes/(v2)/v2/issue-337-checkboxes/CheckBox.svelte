@@ -8,7 +8,7 @@
 		type FormFieldProxy,
 		type SuperForm,
 		type FormPathLeaves
-	} from '$lib/index.js';
+	} from '#lib/index.js';
 
 	export let form: SuperForm<T>;
 	export let field: FormPathLeaves<T, boolean>;

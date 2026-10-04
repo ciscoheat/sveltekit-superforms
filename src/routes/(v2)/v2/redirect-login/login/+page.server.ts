@@ -1,6 +1,6 @@
 import { redirect } from 'sveltekit-flash-message/server';
-import { message, superValidate } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { message, superValidate } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { login_schema } from './schema.js';
 
 export async function load() {

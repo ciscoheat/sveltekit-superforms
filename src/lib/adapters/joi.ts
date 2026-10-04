@@ -7,7 +7,7 @@ import {
 	type Infer
 } from './adapters.js';
 import type { ObjectSchema } from 'joi';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 import convert from './joi-to-json-schema/index.js';
 
 async function validate<T extends ObjectSchema>(

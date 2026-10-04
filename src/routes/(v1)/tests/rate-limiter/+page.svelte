@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import type { PageData, Snapshot } from './$types.js';
 	import { getFlash } from 'sveltekit-flash-message/client';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	export let data: PageData;
 

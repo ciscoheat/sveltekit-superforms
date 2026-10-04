@@ -1,5 +1,5 @@
-import { valibot } from '$lib/adapters/valibot.js';
-import { message, superValidate } from '$lib/server/index.js';
+import { valibot } from '#lib/adapters/valibot.js';
+import { message, superValidate } from '#lib/server/index.js';
 import { userSchema } from './schema.js';
 import { fail } from '@sveltejs/kit';
 

@@ -1,12 +1,12 @@
-import { setError, setMessage, superValidate } from '$lib/superValidate.js';
+import { setError, setMessage, superValidate } from '#lib/superValidate.js';
 import { assert, expect, test, describe } from 'vitest';
 import { z } from 'zod/v3';
 import { dataTypeForm } from '../data.js';
-import { zod } from '$lib/adapters/zod.js';
-import { zodToJSONSchema } from '$lib/adapters/zod.js';
-import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
+import { zod } from '#lib/adapters/zod.js';
+import { zodToJSONSchema } from '#lib/adapters/zod.js';
+import { defaultValues } from '#lib/jsonSchema/schemaDefaults.js';
 import { stringify } from 'devalue';
-import { schemaShape } from '$lib/jsonSchema/schemaShape.js';
+import { schemaShape } from '#lib/jsonSchema/schemaShape.js';
 
 const testDate = new Date();
 

@@ -1,5 +1,5 @@
-import { arktype } from '$lib/adapters/arktype.js';
-import { message, superValidate } from '$lib/index.js';
+import { arktype } from '#lib/adapters/arktype.js';
+import { message, superValidate } from '#lib/index.js';
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types.js';
 import { schema } from './schema.js';

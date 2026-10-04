@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
-import type { Infer, InferIn, ValidationAdapter } from '$lib/adapters/index.js';
-import { defaultValues as adapterDefaults, defaults as schemaDefaults } from '$lib/defaults.js';
-import { constraints, type InputConstraints } from '$lib/jsonSchema/constraints.js';
-import { defaultValues } from '$lib/jsonSchema/schemaDefaults.js';
+import type { Infer, InferIn, ValidationAdapter } from '#lib/adapters/index.js';
+import { defaultValues as adapterDefaults, defaults as schemaDefaults } from '#lib/defaults.js';
+import { constraints, type InputConstraints } from '#lib/jsonSchema/constraints.js';
+import { defaultValues } from '#lib/jsonSchema/schemaDefaults.js';
 import {
 	message,
 	setError,
 	superValidate,
 	withFiles,
 	type SuperValidated
-} from '$lib/superValidate.js';
+} from '#lib/superValidate.js';
 import { fail as kitFail } from '@sveltejs/kit';
 import { merge } from 'ts-deepmerge';
 import { assert, beforeEach, describe, expect, it } from 'vitest';
@@ -17,16 +17,16 @@ import { Foo, bigZod4Schema, bigZodSchema } from './data.js';
 
 ///// Adapters //////////////////////////////////////////////////////
 
-import { zod, zodToJSONSchema } from '$lib/adapters/zod.js';
+import { zod, zodToJSONSchema } from '#lib/adapters/zod.js';
 import { z, type ZodErrorMap } from 'zod/v3';
 
-import { zod as zod4, zodToJSONSchema as zod4ToJSONSchema } from '$lib/adapters/zod4.js';
+import { zod as zod4, zodToJSONSchema as zod4ToJSONSchema } from '#lib/adapters/zod4.js';
 import { z as z4 } from 'zod/v4';
 
-import { valibot } from '$lib/adapters/valibot.js';
+import { valibot } from '#lib/adapters/valibot.js';
 import * as v from 'valibot';
 
-import { classvalidator } from '$lib/adapters/classvalidator.js';
+import { classvalidator } from '#lib/adapters/classvalidator.js';
 import {
 	ArrayMinSize,
 	IsArray,
@@ -40,19 +40,19 @@ import {
 	MinLength
 } from 'class-validator';
 
-//import { ajv } from '$lib/adapters/ajv.js';
-//import type { JSONSchema } from '$lib/jsonSchema/index.js';
+//import { ajv } from '#lib/adapters/ajv.js';
+//import type { JSONSchema } from '#lib/jsonSchema/index.js';
 
-import { arktype } from '$lib/adapters/arktype.js';
+import { arktype } from '#lib/adapters/arktype.js';
 import { type } from 'arktype';
 
-import { typebox, Date as TypeBoxDate } from '$lib/adapters/typebox.js';
+import { typebox, Date as TypeBoxDate } from '#lib/adapters/typebox.js';
 import { Type } from 'typebox';
 
-import { joi } from '$lib/adapters/joi.js';
+import { joi } from '#lib/adapters/joi.js';
 import Joi from 'joi';
 
-import { yup } from '$lib/adapters/yup.js';
+import { yup } from '#lib/adapters/yup.js';
 import {
 	array as yupArray,
 	date as yupDate,
@@ -61,10 +61,10 @@ import {
 	string as yupString
 } from 'yup';
 
-import { vine } from '$lib/adapters/vine.js';
+import { vine } from '#lib/adapters/vine.js';
 import Vine from '@vinejs/vine';
 
-import { superstruct } from '$lib/adapters/superstruct.js';
+import { superstruct } from '#lib/adapters/superstruct.js';
 import {
 	array as ssArray,
 	date as ssDate,
@@ -79,16 +79,16 @@ import {
 	string as ssString
 } from 'superstruct';
 
-import { schemasafe } from '$lib/adapters/schemasafe.js';
+import { schemasafe } from '#lib/adapters/schemasafe.js';
 
-import { effect } from '$lib/adapters/effect.js';
+import { effect } from '#lib/adapters/effect.js';
 import { Schema } from 'effect';
-import { standard } from '$lib/adapters/standard.js';
+import { standard } from '#lib/adapters/standard.js';
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 
-import { SchemaError, type JSONSchema } from '$lib/index.js';
-import { splitPath } from '$lib/stringPath.js';
-import { traversePath } from '$lib/traversal.js';
+import { SchemaError, type JSONSchema } from '#lib/index.js';
+import { splitPath } from '#lib/stringPath.js';
+import { traversePath } from '#lib/traversal.js';
 import type { $ZodRawIssue } from 'zod/v4/core';
 
 ///// Test data /////////////////////////////////////////////////////
@@ -170,7 +170,7 @@ function fullConstraints(library: 'zod4' | 'arktype' | 'unknown') {
 				email: {
 					...defaultConstraints.email,
 					pattern:
-						"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+						"^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
 				},
 				score: {
 					...defaultConstraints.score,
@@ -1086,7 +1086,7 @@ describe('Zod 4', () => {
 			email: {
 				required: true,
 				pattern:
-					"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+					"^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
 			},
 			tags: { minlength: 2 },
 			set: { required: true },

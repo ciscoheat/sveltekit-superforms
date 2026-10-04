@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { superForm, defaults } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { page } from '$app/state';
+	import { superForm, defaults } from '#lib/client/index.js';
+	import { zod } from '#lib/adapters/zod.js';
 
-	//import SuperDebug from '$lib/client/SuperDebug.svelte';
+	//import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
 
 	const partialData = {
@@ -23,7 +23,7 @@
 		SPA: true,
 		dataType: 'json',
 		onUpdate({ form, cancel }) {
-			if ($page.url.searchParams.has('cancel')) cancel();
+			if (page.url.searchParams.has('cancel')) cancel();
 			else if (form.valid) {
 				form.message = 'Successful!';
 				form.data.random = String(Math.random()).slice(2);

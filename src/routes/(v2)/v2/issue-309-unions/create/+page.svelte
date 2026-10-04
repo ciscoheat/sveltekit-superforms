@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { defaults, superForm } from '$lib/index.js';
-	import { zod } from '$lib/adapters/index.js';
+	import { defaults, superForm } from '#lib/index.js';
+	import { zod } from '#lib/adapters/index.js';
 	import Form from '../form.svelte';
 	import { createUserSchema } from '../user-schema.js';
 

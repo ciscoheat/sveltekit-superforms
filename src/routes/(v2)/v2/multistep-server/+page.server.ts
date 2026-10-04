@@ -1,5 +1,5 @@
-import { superValidate, message, defaultValues, type Infer } from '$lib/index.js';
-import { zod } from '$lib/adapters/zod.js';
+import { superValidate, message, defaultValues, type Infer } from '#lib/index.js';
+import { zod } from '#lib/adapters/zod.js';
 import { schemaStep1, schemaStep2 } from './schema.js';
 import type { Actions } from './$types.js';
 

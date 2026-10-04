@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { page } from '$app/state';
-	import { superForm } from '$lib/index.js';
-	import { schemasafe } from '$lib/adapters/schemasafe.js';
-	import SuperDebug from '$lib/index.js';
+	import { superForm } from '#lib/index.js';
+	import { schemasafe } from '#lib/adapters/schemasafe.js';
+	import SuperDebug from '#lib/index.js';
 	import { schema } from './schema.js';
 
 	let { data } = $props();

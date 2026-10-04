@@ -1,5 +1,5 @@
-import { standard } from '$lib/adapters/standard.js';
-import { message, superValidate } from '$lib/index.js';
+import { standard } from '#lib/adapters/standard.js';
+import { message, superValidate } from '#lib/index.js';
 import { fail } from '@sveltejs/kit';
 import { valibotSchema, zodSchema } from './schema.js';
 

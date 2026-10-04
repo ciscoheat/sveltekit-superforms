@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { superForm, defaults, setError } from '$lib/index.js';
-	import SuperDebug from '$lib/index.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { page } from '$app/state';
+	import { superForm, defaults, setError } from '#lib/index.js';
+	import SuperDebug from '#lib/index.js';
+	import { zod } from '#lib/adapters/zod.js';
 	import { schema } from './schema.js';
 	import { debounce } from 'throttle-debounce';
 
@@ -96,8 +96,8 @@
 {#if $message}
 	<pre
 		class="status"
-		class:error={$page.status >= 400}
-		class:success={$page.status == 200}>{$message}</pre>
+		class:error={page.status >= 400}
+		class:success={page.status == 200}>{$message}</pre>
 {/if}
 
 <form method="POST" use:enhance data-sveltekit-keepfocus>

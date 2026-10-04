@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { zod } from '$lib/adapters/zod.js';
-	import { superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { zod } from '#lib/adapters/zod.js';
+	import { superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { formSchema, optionsSchema } from './schemas.js';
 
 	export let data;

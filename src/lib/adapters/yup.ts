@@ -8,8 +8,8 @@ import {
 	type ClientValidationAdapter
 } from './adapters.js';
 import type { AnySchema, Schema } from 'yup';
-import { splitPath } from '$lib/stringPath.js';
-import { memoize } from '$lib/memoize.js';
+import { splitPath } from '#lib/stringPath.js';
+import { memoize } from '#lib/memoize.js';
 import { convertSchema } from './yup-to-json-schema/index.js';
 
 const modules = async () => {

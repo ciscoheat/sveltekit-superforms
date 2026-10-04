@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { PageData } from './$types.js';
-	import { superForm } from '$lib/client/index.js';
+	import { superForm } from '#lib/client/index.js';
 	import { basicSchema } from './schema.js';
 	import spinner from './tadpole.svg?raw';
-	import { zod } from '$lib/adapters/zod.js';
+	import { zod } from '#lib/adapters/zod.js';
 
 	export let data: PageData;
 

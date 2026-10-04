@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { zod } from '$lib/adapters/zod.js';
-	import SuperDebug, { superForm } from '$lib/index.js';
+	import { zod } from '#lib/adapters/zod.js';
+	import SuperDebug, { superForm } from '#lib/index.js';
 	import CheckboxGroup from './CheckboxGroup.svelte';
 	import { schema } from './schema.js';
 

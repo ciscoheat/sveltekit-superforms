@@ -1,4 +1,4 @@
-import type { SuperStruct } from '$lib/superStruct.js';
+import type { SuperStruct } from '#lib/superStruct.js';
 import type { JSONSchema } from './index.js';
 import { schemaInfo, type SchemaInfo } from './schemaInfo.js';
 import { merge as deepMerge } from 'ts-deepmerge';

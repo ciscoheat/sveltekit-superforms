@@ -1,4 +1,4 @@
-import type { JSONSchema } from '$lib/index.js';
+import type { JSONSchema } from '#lib/index.js';
 
 // Define outside the load function so the adapter can be cached
 export const schema = {

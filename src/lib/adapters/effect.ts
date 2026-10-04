@@ -11,7 +11,7 @@ import {
 	type ValidationAdapter,
 	type ValidationResult
 } from './adapters.js';
-import { memoize } from '$lib/memoize.js';
+import { memoize } from '#lib/memoize.js';
 
 export const effectToJSONSchema = <A, I>(schema: Schema.Schema<A, I>) => {
 	// effect's json schema type is slightly different so we have to cast it

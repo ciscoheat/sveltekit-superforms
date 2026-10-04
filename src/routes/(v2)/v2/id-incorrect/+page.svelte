@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { zod, zodClient } from '$lib/adapters/zod.js';
-	import { defaults, superForm } from '$lib/client/index.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import { zod, zodClient } from '#lib/adapters/zod.js';
+	import { defaults, superForm } from '#lib/client/index.js';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import { schema } from './schema.js';
-	import { page } from '$app/stores';
-	//import { zod } from '$lib/adapters/zod.js'
+	import { page } from '$app/state';
+	//import { zod } from '#lib/adapters/zod.js'
 	//import { schema } from './schema.js';
 
 	export let data;
@@ -32,7 +32,7 @@
 
 <SuperDebug data={{ $form, $errors, $tainted }} />
 
-{JSON.stringify($page.form)}
+{JSON.stringify(page.form)}
 
 {#if $message}<h4>{$message}</h4>{/if}
 

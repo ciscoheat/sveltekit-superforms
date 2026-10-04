@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { zodClient } from '$lib/adapters/zod.js';
-	import SuperDebug, { defaults, superForm } from '$lib/index.js';
+	import { zodClient } from '#lib/adapters/zod.js';
+	import SuperDebug, { defaults, superForm } from '#lib/index.js';
 	import { schema } from './schema.js';
 
 	const defaultData = {

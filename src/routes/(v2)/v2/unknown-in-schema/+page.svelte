@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { defaults, superForm } from '$lib/client/index.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { defaults, superForm } from '#lib/client/index.js';
+	import { zod } from '#lib/adapters/zod.js';
 	import { userSchema } from './schema.js';
 	import FormCmptAge from './FormCmptAge.svelte';
 

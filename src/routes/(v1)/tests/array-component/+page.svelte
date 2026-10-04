@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { arrayProxy, superForm } from '$lib/client/index.js';
+	import { arrayProxy, superForm } from '#lib/client/index.js';
 	import type { PageData } from './$types.js';
-	import SuperDebug from '$lib/client/SuperDebug.svelte';
+	import SuperDebug from '#lib/client/SuperDebug.svelte';
 	import AutoComplete from './AutoComplete.svelte';
 	import { schema } from './schema.js';
-	import { zod } from '$lib/adapters/zod.js';
+	import { zod } from '#lib/adapters/zod.js';
 
 	export let data: PageData;
 

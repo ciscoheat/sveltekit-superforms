@@ -1,6 +1,6 @@
-import type { Infer, ValidationAdapter } from '$lib/adapters/adapters.js';
-import { zod } from '$lib/adapters/zod.js';
-import { superValidate } from '$lib/superValidate.js';
+import type { Infer, ValidationAdapter } from '#lib/adapters/adapters.js';
+import { zod } from '#lib/adapters/zod.js';
+import { superValidate } from '#lib/superValidate.js';
 import { stringify } from 'devalue';
 import { assert, describe, expect, test } from 'vitest';
 import { z } from 'zod/v3';

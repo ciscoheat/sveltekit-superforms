@@ -1749,7 +1749,7 @@ export function superForm<
 
 				const data = { form: validationResult };
 
-				const result: ActionResult = validationResult.valid
+				const result = (validationResult.valid
 					? {
 							type: 'success',
 							status,
@@ -1761,7 +1761,7 @@ export function superForm<
 							status,
 							data,
 							location: submitParams.action.pathname + submitParams.action.search
-						};
+						}) as unknown as ActionResult;
 
 				setTimeout(() => validationResponse({ result }), 0);
 			}
@@ -1832,7 +1832,7 @@ export function superForm<
 							status: Form_resultStatus(result.status),
 							data: result,
 							location: document.location.href
-						});
+						} as unknown as ActionResult);
 					}
 				}
 			}

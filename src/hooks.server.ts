@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	if (event.request.method === 'POST' && event.request.url.includes('?throw-hooks-error')) {

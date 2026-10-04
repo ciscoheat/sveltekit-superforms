@@ -1,8 +1,5 @@
 /* eslint-disable dci-lint/atomic-role-binding */
 import type { TaintedFields, SuperFormValidated, SuperValidated } from '#lib/superValidate.js';
-import type { ActionResult, SubmitFunction } from '$app/forms';
-import type { BeforeNavigate, Navigation } from '$app/navigation';
-import type { Page } from '$app/state';
 import {
 	derived,
 	get,
@@ -43,6 +40,23 @@ import type {
 import type { InputConstraints } from '#lib/jsonSchema/constraints.js';
 import { fieldProxy, type ProxyOptions } from './proxies.js';
 import { shapeFromObject } from '#lib/jsonSchema/schemaShape.js';
+
+// Type definitions for SvelteKit 2 compatibility
+
+type SubmitFunction = NonNullable<
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	Parameters<typeof kitEnhance<Record<string, any>, Record<string, any>>>[1]
+>;
+type SubmitResultHandler = Extract<
+	Awaited<ReturnType<SubmitFunction>>,
+	(...args: never[]) => unknown
+>;
+type ActionResult = Parameters<SubmitResultHandler>[0]['result'];
+type BeforeNavigate = Parameters<Parameters<typeof beforeNavigate>[0]>[0];
+type Navigation = NonNullable<typeof navigatingState>;
+type Page = typeof pageState;
+
+// End Type definitions for SvelteKit 2 compatibility
 
 export type SuperFormEvents<T extends Record<string, unknown>, M> = Pick<
 	FormOptions<T, M>,

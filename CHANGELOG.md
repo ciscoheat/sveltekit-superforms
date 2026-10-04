@@ -11,7 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Compatibility release that works with SvelteKit `^2.12.0` and `^3.0.0`, and Svelte `^5.56.4`! **No breaking changes** except for these dependencies and the following adapter versions.
 - Arktype dependency moved out of beta to `^2.0.0`.
-- Vine bumped to `^4.0.0`.
+
+### Added
+
+- Vine version `^4.0.0` now supported.
 
 ### Fixed
 

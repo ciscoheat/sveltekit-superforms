@@ -9,9 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Maintainer checklist, guarded compatibility commands, dual-SvelteKit CI and
-  release-tag compatibility synchronization for the single Superforms 3.x package.
-- Main-built package consumer checks for SvelteKit 2.12.0, current Kit 2, and Kit 3.
+- Added direct imports of all the adapters, to fix circular dependency warnings. [#682](https://github.com/ciscoheat/sveltekit-superforms/pull/682)
+- Maintainer checklist, compatibility commands, dual-SvelteKit CI and release-tag compatibility synchronization for the 3.x package. Main-built package checks for SvelteKit 2.12.0, current Kit 2, and Kit 3.
 
 ### Fixed
 

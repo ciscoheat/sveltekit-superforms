@@ -82,6 +82,18 @@ type If<
 			: never
 	: Else;
 
+type IsEqual<A, B> =
+	(<G>() => G extends A ? 1 : 2) extends <G>() => G extends B ? 1 : 2 ? true : false;
+
+type AnyIsEqual<Types, T> = Types extends unknown ? IsEqual<Types, T> : never;
+
+/**
+ * StringPath for a nested type, or never if the type is one of its parents,
+ * which would make the path infinite.
+ */
+type NestedStringPath<T extends object, Options extends StringPathOptions, Parents> =
+	true extends AnyIsEqual<Parents, T> ? never : StringPath<T, Options, Parents>;
+
 type StringPath<
 	T extends object,
 	Options extends StringPathOptions = {
@@ -89,19 +101,21 @@ type StringPath<
 		objAppend: never;
 		path: '';
 		type: never;
-	}
+	},
+	Parents = never
 > = T extends (infer U)[]
 	? | If<Options, 'objAppend', string, Concat<Options['path'], Options['objAppend']>, never, T>
 		| If<Options, 'filter', 'arrays' | 'all', Options['path'], never, T>
 		| (NonNullable<U> extends DictOrArray
-				? StringPath<
+				? NestedStringPath<
 						NonNullable<U>,
 						{
 							filter: Options['filter'];
 							objAppend: Options['objAppend'];
 							path: `${Options['path']}[${number}]`;
 							type: Options['type'];
-						}
+						},
+						Parents | T
 					>
 				: If<Options, 'filter', 'leaves' | 'all', `${Options['path']}[${number}]`, never, T>)
 	: {
@@ -146,14 +160,15 @@ type StringPath<
 											U
 										>)
 						| (NonNullable<U> extends DictOrArray
-								? StringPath<
+								? NestedStringPath<
 										NonNullable<U>,
 										{
 											filter: Options['filter'];
 											objAppend: Options['objAppend'];
 											path: Concat<Options['path'], `${K}[${number}]`>;
 											type: Options['type'];
-										}
+										},
+										Parents | T
 									>
 								: never)
 					: IsAny<T[K]> extends true
@@ -166,14 +181,15 @@ type StringPath<
 									unknown extends T[K] ? Concat<Options['path'], K> : never,
 									T[K]
 							  >
-							| StringPath<
+							| NestedStringPath<
 									NonNullable<T[K]>,
 									{
 										filter: Options['filter'];
 										objAppend: Options['objAppend'];
 										path: Concat<Options['path'], K>;
 										type: Options['type'];
-									}
+									},
+									Parents | T
 							  >
 				: If<Options, 'filter', 'leaves' | 'all', Concat<Options['path'], K>, never, T[K]>;
 		}[Extract<AllKeys<T>, string>];

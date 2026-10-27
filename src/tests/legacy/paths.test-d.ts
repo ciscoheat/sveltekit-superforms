@@ -425,3 +425,26 @@ const exampleSchema = baseExampleSchema.extend({
 });
 
 type ExampleFormPathLeaves = FormPathLeaves<z.infer<typeof exampleSchema>>;
+
+type Recursive = { name: string; children?: Recursive[]; parent?: Recursive };
+type MutualA = { title: string; b?: MutualB };
+type MutualB = { count: number; list?: MutualA[] };
+
+test('FormPath with recursive types', () => {
+	const l1: FormPathLeaves<Recursive> = 'name';
+	// @ts-expect-error incorrect path
+	const l1e: FormPathLeaves<Recursive> = 'nope';
+
+	const p1: FormPath<Recursive> = 'children';
+	const p2: FormPath<Recursive> = 'children[3]';
+	const p3: FormPath<Recursive> = 'parent';
+	// @ts-expect-error incorrect path
+	const p1e: FormPath<Recursive> = 'nope';
+
+	const a1: FormPathArrays<Recursive> = 'children';
+
+	const m1: FormPathLeaves<MutualA> = 'title';
+	const m2: FormPathLeaves<MutualA> = 'b.count';
+	// @ts-expect-error incorrect path
+	const m1e: FormPathLeaves<MutualA> = 'b.nope';
+});

@@ -1,3 +1,5 @@
+// @ts-check
+
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -5,6 +7,10 @@ import { pathToFileURL } from 'node:url';
 
 export const branch = 'v3/sveltekit-2';
 
+/**
+ * @param {string[]} args
+ * @param {string} [cwd]
+ */
 export function git(args, cwd = process.cwd()) {
 	return execFileSync('git', args, {
 		cwd,
@@ -30,15 +36,27 @@ export function check(cwd = process.cwd(), clean = false) {
 	}
 }
 
+/** @param {string} value */
 export function commitSha(value) {
 	if (!/^[a-f0-9]{40}$/.test(value)) throw new Error('Expected a full 40-character commit SHA.');
 	return value;
 }
 
+/**
+ * @param {string} older
+ * @param {string} newer
+ * @param {string} [cwd]
+ */
 export function ancestor(older, newer, cwd = process.cwd()) {
 	return git(['merge-base', older, newer], cwd) === git(['rev-parse', older], cwd);
 }
 
+/**
+ * @param {string} target
+ * @param {string} previous
+ * @param {string} main
+ * @param {string} [cwd]
+ */
 export function assertNotStale(target, previous, main, cwd = process.cwd()) {
 	const base = git(['merge-base', previous, main], cwd);
 	if (!ancestor(base, target, cwd)) {
@@ -48,6 +66,10 @@ export function assertNotStale(target, previous, main, cwd = process.cwd()) {
 	}
 }
 
+/**
+ * @param {string} target
+ * @param {string} [cwd]
+ */
 export function rebase(target, cwd = process.cwd()) {
 	check(cwd, true);
 	commitSha(target);
@@ -58,14 +80,22 @@ export function rebase(target, cwd = process.cwd()) {
 	try {
 		git(['rebase', '--onto', target, base], cwd);
 	} catch (error) {
+		const details = error instanceof Error ? error : new Error(String(error));
+		const stderr = /** @type {Error & { stderr?: Buffer }} */ (details).stderr;
 		throw new Error(
-			`Rebase failed. Inspect git status, resolve and stage conflicts, then git rebase --continue; or git rebase --abort.\n${error.stderr || error.message}`,
+			`Rebase failed. Inspect git status, resolve and stage conflicts, then git rebase --continue; or git rebase --abort.\n${stderr || details.message}`,
 			{ cause: error }
 		);
 	}
 	return { previous, target, head: git(['rev-parse', 'HEAD'], cwd) };
 }
 
+/**
+ * @param {string} target
+ * @param {string} previous
+ * @param {string} next
+ * @param {string} [cwd]
+ */
 export function push(target, previous, next, cwd = process.cwd()) {
 	[target, previous, next].forEach(commitSha);
 	git(['fetch', '--no-tags', 'origin', 'main'], cwd);
@@ -103,14 +133,15 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
 			const target = args[0] || git(['rev-parse', 'refs/remotes/origin/main']);
 			console.log(JSON.stringify(rebase(target), null, 2));
 		} else if (command === 'push' && args.length === 3) {
-			push(...args);
+			const pushArgs = /** @type {[string, string, string]} */ (args);
+			push(...pushArgs);
 		} else {
 			throw new Error(
 				'Usage: compat.mjs check | rebase [commit-sha] | push <target> <old> <validated>'
 			);
 		}
 	} catch (error) {
-		console.error(error.message);
+		console.error(error instanceof Error ? error.message : String(error));
 		process.exitCode = 1;
 	}
 }

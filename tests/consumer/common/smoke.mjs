@@ -1,3 +1,5 @@
+// @ts-check
+
 import { strict as assert } from 'node:assert';
 import { preview } from 'vite';
 
@@ -9,10 +11,11 @@ try {
 	const page = await fetch(origin, { signal: AbortSignal.timeout(15000) });
 	assert.equal(page.status, 200);
 	assert.match(await page.text(), /<form/);
-	for (const [name, status, type] of [
+	const actions = /** @type {[string, number, string][]} */ ([
 		['', 400, 'failure'],
 		['Superforms', 200, 'success']
-	]) {
+	]);
+	for (const [name, status, type] of actions) {
 		const response = await fetch(origin, {
 			method: 'POST',
 			headers: { origin, accept: 'application/json', 'x-sveltekit-action': 'true' },
@@ -26,8 +29,8 @@ try {
 		assert.equal(result.type, type);
 	}
 } finally {
-	server.httpServer.closeAllConnections();
+	/** @type {import('node:http').Server} */ (server.httpServer).closeAllConnections();
 	await new Promise((resolve, reject) => {
-		server.httpServer.close((error) => (error ? reject(error) : resolve()));
+		server.httpServer.close((error) => (error ? reject(error) : resolve(undefined)));
 	});
 }

@@ -19,7 +19,7 @@ export default defineConfig({
 		}
 	},
 	test: {
-		include: ['src/**/*.{test,spec}.{js,ts}']
+		include: ['src/**/*.{test,spec}.{js,ts}', 'scripts/compat.test.mjs']
 	},
 	define: {
 		SUPERFORMS_LEGACY: true

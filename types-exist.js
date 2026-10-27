@@ -1,3 +1,5 @@
+// @ts-check
+
 import { readdirSync, existsSync } from 'fs';
 import { createRequire } from 'module';
 

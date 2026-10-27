@@ -1,3 +1,5 @@
+// @ts-check
+
 /*! clipboard-copy. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 function makeError() {

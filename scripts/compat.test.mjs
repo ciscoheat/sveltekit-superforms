@@ -1,10 +1,11 @@
-import { strict as assert } from 'node:assert';
+// @ts-check
+
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { expect, onTestFinished, test } from 'vitest';
 import {
 	ancestor,
 	assertNotStale,
@@ -16,9 +17,9 @@ import {
 	rebase
 } from './compat.mjs';
 
-function repository(t) {
+function repository() {
 	const root = mkdtempSync(join(tmpdir(), 'superforms-git-test-'));
-	t.after(() => rmSync(root, { recursive: true, force: true }));
+	onTestFinished(() => rmSync(root, { recursive: true, force: true }));
 	const remote = join(root, 'remote.git');
 	const cwd = join(root, 'checkout');
 	git(['init', '--bare', '--initial-branch=main', remote]);
@@ -27,6 +28,7 @@ function repository(t) {
 	git(['config', 'user.email', 'compat@example.invalid'], cwd);
 	git(['config', 'commit.gpgsign', 'false'], cwd);
 	git(['config', 'core.autocrlf', 'false'], cwd);
+	/** @param {string} file @param {string} content */
 	const commit = (file, content) => {
 		writeFileSync(join(cwd, file), content);
 		git(['add', file], cwd);
@@ -46,82 +48,79 @@ function repository(t) {
 	return { root, remote, cwd, base, previous, target, commit };
 }
 
-test('requires the compatibility branch and a clean checkout', (t) => {
-	const { cwd } = repository(t);
+test('requires the compatibility branch and a clean checkout', () => {
+	const { cwd } = repository();
 	check(cwd, true);
 	writeFileSync(join(cwd, 'untracked.txt'), 'work');
-	assert.throws(() => check(cwd, true), /clean/);
+	expect(() => check(cwd, true)).toThrow(/clean/);
 	rmSync(join(cwd, 'untracked.txt'));
 	git(['switch', 'main'], cwd);
-	assert.throws(() => check(cwd), /not main/);
+	expect(() => check(cwd)).toThrow(/not main/);
 });
 
-test('rejects ongoing operations before rebasing', (t) => {
-	const { cwd } = repository(t);
+test('rejects ongoing operations before rebasing', () => {
+	const { cwd } = repository();
 	const state = join(cwd, '.git', 'rebase-merge');
 	mkdirSync(state);
-	assert.throws(() => check(cwd), /Finish or abort/);
+	expect(() => check(cwd)).toThrow(/Finish or abort/);
 	rmSync(state, { recursive: true });
 });
 
 test('validates explicit immutable commit arguments', () => {
 	for (const value of ['main', '--all', '', 'a'.repeat(39)]) {
-		assert.throws(() => commitSha(value), /40-character/);
+		expect(() => commitSha(value)).toThrow(/40-character/);
 	}
-	assert.equal(commitSha('a'.repeat(40)), 'a'.repeat(40));
+	expect(commitSha('a'.repeat(40))).toBe('a'.repeat(40));
 });
 
-test('rebases only compatibility commits and is repeatable', (t) => {
-	const { cwd, previous, target } = repository(t);
+test('rebases only compatibility commits and is repeatable', () => {
+	const { cwd, previous, target } = repository();
 	const result = rebase(target, cwd);
-	assert.equal(result.previous, previous);
-	assert(ancestor(target, result.head, cwd));
-	assert.equal(git(['rev-list', '--count', `${target}..HEAD`], cwd), '1');
-	assert.equal(rebase(target, cwd).head, result.head);
+	expect(result.previous).toBe(previous);
+	expect(ancestor(target, result.head, cwd)).toBeTruthy();
+	expect(git(['rev-list', '--count', `${target}..HEAD`], cwd)).toBe('1');
+	expect(rebase(target, cwd).head).toBe(result.head);
 });
 
-test('conflicts leave the remote unchanged and can be aborted', (t) => {
-	const { cwd, previous, commit } = repository(t);
+test('conflicts leave the remote unchanged and can be aborted', () => {
+	const { cwd, previous, commit } = repository();
 	commit('shared.txt', 'compat change\n');
 	git(['switch', 'main'], cwd);
 	const target = commit('shared.txt', 'main change\n');
 	git(['push', 'origin', 'main'], cwd);
 	git(['switch', branch], cwd);
-	assert.throws(() => rebase(target, cwd), /git rebase --abort/);
-	assert.equal(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0], previous);
+	expect(() => rebase(target, cwd)).toThrow(/git rebase --abort/);
+	expect(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0]).toBe(previous);
 	git(['rebase', '--abort'], cwd);
 	check(cwd, true);
 });
 
-test('a validation failure can stop before the explicit push step', (t) => {
-	const { cwd, target, previous } = repository(t);
+test('a validation failure can stop before the explicit push step', () => {
+	const { cwd, target, previous } = repository();
 	rebase(target, cwd);
-	assert.equal(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0], previous);
+	expect(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0]).toBe(previous);
 });
 
-test('push updates only the leased compatibility ref', (t) => {
-	const { cwd, target, previous } = repository(t);
+test('push updates only the leased compatibility ref', () => {
+	const { cwd, target, previous } = repository();
 	const { head } = rebase(target, cwd);
 	push(target, previous, head, cwd);
-	assert.equal(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0], head);
-	assert.equal(git(['ls-remote', 'origin', 'refs/heads/main'], cwd).split(/\s/)[0], target);
+	expect(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0]).toBe(head);
+	expect(git(['ls-remote', 'origin', 'refs/heads/main'], cwd).split(/\s/)[0]).toBe(target);
 	push(target, head, head, cwd);
 });
 
-test('rejects concurrent branch changes instead of overwriting them', (t) => {
-	const { cwd, target, previous, commit } = repository(t);
+test('rejects concurrent branch changes instead of overwriting them', () => {
+	const { cwd, target, previous, commit } = repository();
 	const { head } = rebase(target, cwd);
 	const concurrent = commit('someone-else.txt', 'external work\n');
 	git(['push', '--force-with-lease', 'origin', branch], cwd);
-	assert.throws(() => push(target, previous, head, cwd), /changed during validation/);
-	assert.equal(
-		git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0],
-		concurrent
-	);
+	expect(() => push(target, previous, head, cwd)).toThrow(/changed during validation/);
+	expect(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0]).toBe(concurrent);
 });
 
-test('the explicit push lease rejects a change after the final fetch', (t) => {
-	const { cwd, remote, target, previous, commit } = repository(t);
+test('the explicit push lease rejects a change after the final fetch', () => {
+	const { cwd, remote, target, previous, commit } = repository();
 	const { head } = rebase(target, cwd);
 	const concurrent = commit('concurrent.txt', 'another update\n');
 	git(['push', 'origin', 'HEAD:refs/heads/race-object'], cwd);
@@ -130,23 +129,20 @@ test('the explicit push lease rejects a change after the final fetch', (t) => {
 		`#!/bin/sh\ngit --git-dir='${remote}' update-ref refs/heads/${branch} ${concurrent}\n`,
 		{ mode: 0o755 }
 	);
-	assert.throws(() => push(target, previous, head, cwd));
-	assert.equal(
-		git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0],
-		concurrent
-	);
+	expect(() => push(target, previous, head, cwd)).toThrow();
+	expect(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0]).toBe(concurrent);
 });
 
-test('rejects attempts to synchronize an older target', (t) => {
-	const { cwd, base, target, previous } = repository(t);
+test('rejects attempts to synchronize an older target', () => {
+	const { cwd, base, target, previous } = repository();
 	const { head } = rebase(target, cwd);
 	push(target, previous, head, cwd);
-	assert.throws(() => assertNotStale(base, head, target, cwd), /refusing rollback/);
-	assert.throws(() => push(base, head, head, cwd), /refusing rollback/);
+	expect(() => assertNotStale(base, head, target, cwd)).toThrow(/refusing rollback/);
+	expect(() => push(base, head, head, cwd)).toThrow(/refusing rollback/);
 });
 
-test('CI resolves exact candidates and rejects invalid release requests', (t) => {
-	const { root, cwd, target, previous } = repository(t);
+test('CI resolves exact candidates and rejects invalid release requests', () => {
+	const { root, cwd, target, previous } = repository();
 	const output = join(root, 'output');
 	const invoke = (env = {}) =>
 		execFileSync(process.execPath, [fileURLToPath(new URL('./resolve-ci.mjs', import.meta.url))], {
@@ -163,10 +159,10 @@ test('CI resolves exact candidates and rejects invalid release requests', (t) =>
 			stdio: 'pipe'
 		});
 	invoke();
-	assert.match(readFileSync(output, 'utf8'), new RegExp(`target=${target}`));
-	assert.throws(() => invoke({ RELEASE_TAG: 'v3.9.9' }), /does not match/);
-	assert.throws(() => invoke({ TARGET_REF: previous }), /commit on main/);
-	assert.throws(() => invoke({ TARGET_REF: '--help' }));
+	expect(readFileSync(output, 'utf8')).toMatch(new RegExp(`target=${target}`));
+	expect(() => invoke({ RELEASE_TAG: 'v3.9.9' })).toThrow(/does not match/);
+	expect(() => invoke({ TARGET_REF: previous })).toThrow(/commit on main/);
+	expect(() => invoke({ TARGET_REF: '--help' })).toThrow();
 	invoke({ TARGET_REF: previous, COMPAT_PUSH: 'true', REQUIRE_MAIN: 'false', RELEASE_TAG: '' });
-	assert.match(readFileSync(output, 'utf8'), new RegExp(`previous=${previous}`));
+	expect(readFileSync(output, 'utf8')).toMatch(new RegExp(`previous=${previous}`));
 });

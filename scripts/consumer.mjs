@@ -1,3 +1,5 @@
+// @ts-check
+
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -19,7 +21,8 @@ const directory = mkdtempSync(join(tmpdir(), 'superforms-consumer-'));
 try {
 	const copyOptions = {
 		recursive: true,
-		filter: (source) => !['.svelte-kit', 'node_modules'].includes(basename(source))
+		filter: (/** @type {string} */ source) =>
+			!['.svelte-kit', 'node_modules'].includes(basename(source))
 	};
 	cpSync(join(root, 'tests', 'consumer', 'common'), directory, copyOptions);
 	cpSync(join(root, 'tests', 'consumer', profile), directory, copyOptions);

@@ -1,3 +1,5 @@
+// @ts-check
+
 import { appendFileSync } from 'node:fs';
 import { ancestor, assertNotStale, commitSha, git } from './compat.mjs';
 
@@ -27,8 +29,11 @@ if (process.env.REQUIRE_MAIN === 'true') {
 	}
 }
 const base = git(['merge-base', previous, main]);
-appendFileSync(process.env.GITHUB_OUTPUT, `target=${target}\nprevious=${previous}\nbase=${base}\n`);
+const output = process.env.GITHUB_OUTPUT;
+const summary = process.env.GITHUB_STEP_SUMMARY;
+if (!output || !summary) throw new Error('GITHUB_OUTPUT and GITHUB_STEP_SUMMARY are required.');
+appendFileSync(output, `target=${target}\nprevious=${previous}\nbase=${base}\n`);
 appendFileSync(
-	process.env.GITHUB_STEP_SUMMARY,
+	summary,
 	`Candidate: \`${target}\`\n\nCompatibility: \`${previous}\`\n\nCompatibility base: \`${base}\`\n`
 );

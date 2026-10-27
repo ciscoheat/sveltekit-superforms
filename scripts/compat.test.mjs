@@ -14,7 +14,8 @@ import {
 	commitSha,
 	git,
 	push,
-	rebase
+	rebase,
+	refresh
 } from './compat.mjs';
 
 function repository() {
@@ -80,6 +81,25 @@ test('rebases only compatibility commits and is repeatable', () => {
 	expect(ancestor(target, result.head, cwd)).toBeTruthy();
 	expect(git(['rev-list', '--count', `${target}..HEAD`], cwd)).toBe('1');
 	expect(rebase(target, cwd).head).toBe(result.head);
+});
+
+test('refreshes the compatibility branch from a clean main checkout', () => {
+	const { cwd, previous, target } = repository();
+	git(['switch', 'main'], cwd);
+	const result = refresh(cwd);
+	expect(git(['branch', '--show-current'], cwd)).toBe(branch);
+	expect(result.previous).toBe(previous);
+	expect(result.target).toBe(target);
+	expect(ancestor(target, result.head, cwd)).toBeTruthy();
+	expect(git(['ls-remote', 'origin', `refs/heads/${branch}`], cwd).split(/\s/)[0]).toBe(previous);
+});
+
+test('refresh refuses a dirty main checkout without switching branches', () => {
+	const { cwd } = repository();
+	git(['switch', 'main'], cwd);
+	writeFileSync(join(cwd, 'uncommitted.txt'), 'work');
+	expect(() => refresh(cwd)).toThrow(/checkout must be clean/);
+	expect(git(['branch', '--show-current'], cwd)).toBe('main');
 });
 
 test('conflicts leave the remote unchanged and can be aborted', () => {

@@ -51,6 +51,7 @@
 		"build": "vite build && pnpm prepack",
 		"validate": "pnpm test:maintenance && pnpm test && pnpm check && pnpm lint && pnpm prepack && pnpm check:adapters",
 		"compat:rebase": "node scripts/compat.mjs rebase",
+		"compat:refresh": "node scripts/compat.mjs refresh",
 		"compat:sveltekit2": "node scripts/compat.mjs check && pnpm install --frozen-lockfile && pnpm validate",
 		"compat:lockfile": "node scripts/compat.mjs check && pnpm install --lockfile-only --no-frozen-lockfile",
 		"compat:consumer": "node scripts/consumer.mjs",

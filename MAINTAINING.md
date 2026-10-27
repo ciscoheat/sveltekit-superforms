@@ -106,26 +106,32 @@ there, and copy back only its reviewed `pnpm-lock.yaml`.
 
 ## Manually refreshing the compatibility branch
 
-Start with a clean checkout, including untracked files:
+From a clean checkout on `main` or `v3/sveltekit-2`, including no untracked
+files, run:
 
 ```powershell
-git fetch origin
-git switch v3/sveltekit-2
-git pull --ff-only origin v3/sveltekit-2
+pnpm compat:refresh
+```
+
+The command fetches both branches, switches to the compatibility branch (tracking
+it if needed), fast-forwards it from origin, and rebases it onto current
+`origin/main`. It leaves you on `v3/sveltekit-2`, prints the previous remote SHA,
+and shows the exact lease-protected push command before rebasing (so it remains
+available if a conflict occurs). It does not validate or push. If your working
+tree is dirty, your branch has unpublished commits, or the branch cannot
+fast-forward, it stops without overwriting them.
+
+`compat:rebase` remains available for an explicit rebase when already on the
+compatibility branch. It requires a clean tree and no active
+rebase/merge/cherry-pick. An optional full commit SHA can select an exact
+candidate: `pnpm compat:rebase FULL_COMMIT_SHA`. It never stashes, switches
+branches, commits, or pushes for you. If using this command instead of
+`compat:refresh`, capture the remote SHA before rebasing:
+
+```powershell
 $previous = git rev-parse origin/v3/sveltekit-2
 pnpm compat:rebase
 ```
-
-If the branch does not exist locally, use
-`git switch --track origin/v3/sveltekit-2` instead. If a previous automated
-rebase makes `git pull --ff-only` fail, stop and inspect your local-only work.
-Do not reset or discard it automatically.
-
-`compat:rebase` requires the compatibility branch, a clean tree, and no active
-rebase/merge/cherry-pick. It fetches main, captures its SHA, and replays only the
-compatibility commits. An optional full commit SHA can select an exact candidate:
-`pnpm compat:rebase FULL_COMMIT_SHA`. It never stashes, switches branches, commits,
-or pushes for you.
 
 On conflict, inspect `git status`, resolve the named files, stage them, and run
 `git rebase --continue`. Use `git rebase --abort` to restore the pre-rebase state.
@@ -142,6 +148,13 @@ Review and commit only the intended preparation changes, then validate:
 
 ```powershell
 pnpm compat:sveltekit2
+```
+
+After validation, run the exact `git push --force-with-lease` command printed by
+`pnpm compat:refresh`. If you used `compat:rebase` directly, use the `$previous`
+value captured before rebasing:
+
+```powershell
 git push "--force-with-lease=refs/heads/v3/sveltekit-2:$previous" origin HEAD:refs/heads/v3/sveltekit-2
 ```
 

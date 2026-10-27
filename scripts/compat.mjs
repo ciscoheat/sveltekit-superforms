@@ -20,20 +20,30 @@ export function git(args, cwd = process.cwd()) {
 	}).trim();
 }
 
-export function check(cwd = process.cwd(), clean = false) {
+/** @param {string} cwd */
+function assertNoOperation(cwd) {
 	for (const state of ['rebase-merge', 'rebase-apply', 'MERGE_HEAD', 'CHERRY_PICK_HEAD']) {
 		if (existsSync(resolve(cwd, git(['rev-parse', '--git-path', state], cwd)))) {
 			throw new Error('Finish or abort the current rebase/merge/cherry-pick first.');
 		}
 	}
-	if (git(['branch', '--show-current'], cwd) !== branch) {
-		throw new Error(`Run this command on ${branch}, not main or a detached HEAD.`);
-	}
-	if (clean && git(['status', '--porcelain', '--untracked-files=normal'], cwd)) {
+}
+
+/** @param {string} cwd */
+function assertClean(cwd) {
+	if (git(['status', '--porcelain', '--untracked-files=normal'], cwd)) {
 		throw new Error(
 			'The checkout must be clean, including untracked files. Commit your work first.'
 		);
 	}
+}
+
+export function check(cwd = process.cwd(), clean = false) {
+	assertNoOperation(cwd);
+	if (git(['branch', '--show-current'], cwd) !== branch) {
+		throw new Error(`Run this command on ${branch}, not main or a detached HEAD.`);
+	}
+	if (clean) assertClean(cwd);
 }
 
 /** @param {string} value */
@@ -90,6 +100,46 @@ export function rebase(target, cwd = process.cwd()) {
 	return { previous, target, head: git(['rev-parse', 'HEAD'], cwd) };
 }
 
+/** @param {string} [cwd] */
+export function refresh(cwd = process.cwd()) {
+	const currentBranch = git(['branch', '--show-current'], cwd);
+	if (currentBranch !== 'main' && currentBranch !== branch) {
+		throw new Error(
+			`Run this command from main or ${branch}, not ${currentBranch || 'detached HEAD'}.`
+		);
+	}
+	assertNoOperation(cwd);
+	assertClean(cwd);
+	git(['fetch', '--no-tags', 'origin'], cwd);
+
+	if (currentBranch === 'main') {
+		const localBranch = git(['branch', '--list', branch], cwd);
+		git(
+			localBranch
+				? ['switch', branch]
+				: ['switch', '--track', '--create', branch, `origin/${branch}`],
+			cwd
+		);
+	}
+
+	check(cwd, true);
+	git(['pull', '--ff-only', 'origin', branch], cwd);
+	const previous = git(['rev-parse', `refs/remotes/origin/${branch}`], cwd);
+	if (git(['rev-parse', 'HEAD'], cwd) !== previous) {
+		throw new Error(
+			`Local ${branch} has unpublished commits. Inspect them before refreshing; refusing to overwrite them.`
+		);
+	}
+	const target = git(['rev-parse', 'refs/remotes/origin/main'], cwd);
+	console.log(`Refreshing ${branch} from ${previous} onto main ${target}.`);
+	console.log('After validation, push with:');
+	console.log(
+		`git push "--force-with-lease=refs/heads/${branch}:${previous}" origin HEAD:refs/heads/${branch}`
+	);
+	const result = rebase(target, cwd);
+	return { previous, target, head: result.head };
+}
+
 /**
  * @param {string} target
  * @param {string} previous
@@ -132,12 +182,17 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
 			git(['fetch', '--no-tags', 'origin', 'main']);
 			const target = args[0] || git(['rev-parse', 'refs/remotes/origin/main']);
 			console.log(JSON.stringify(rebase(target), null, 2));
+		} else if (command === 'refresh' && !args.length) {
+			const { target, head } = refresh();
+			console.log(`Rebased ${branch} to ${head}.`);
+			console.log('Run pnpm compat:sveltekit2 before pushing.');
+			console.log(`Validated target: ${target}`);
 		} else if (command === 'push' && args.length === 3) {
 			const pushArgs = /** @type {[string, string, string]} */ (args);
 			push(...pushArgs);
 		} else {
 			throw new Error(
-				'Usage: compat.mjs check | rebase [commit-sha] | push <target> <old> <validated>'
+				'Usage: compat.mjs check | rebase [commit-sha] | refresh | push <target> <old> <validated>'
 			);
 		}
 	} catch (error) {

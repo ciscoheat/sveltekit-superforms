@@ -88,6 +88,146 @@
 			"types": "./dist/adapters/index.d.ts",
 			"svelte": "./dist/adapters/index.js",
 			"default": "./dist/adapters/index.js"
+		},
+		"./adapters/arktype": {
+			"types": "./dist/adapters/arktype.d.ts",
+			"svelte": "./dist/adapters/arktype.js",
+			"default": "./dist/adapters/arktype.js"
+		},
+		"./adapters/arktype.js": {
+			"types": "./dist/adapters/arktype.d.ts",
+			"svelte": "./dist/adapters/arktype.js",
+			"default": "./dist/adapters/arktype.js"
+		},
+		"./adapters/classvalidator": {
+			"types": "./dist/adapters/classvalidator.d.ts",
+			"svelte": "./dist/adapters/classvalidator.js",
+			"default": "./dist/adapters/classvalidator.js"
+		},
+		"./adapters/classvalidator.js": {
+			"types": "./dist/adapters/classvalidator.d.ts",
+			"svelte": "./dist/adapters/classvalidator.js",
+			"default": "./dist/adapters/classvalidator.js"
+		},
+		"./adapters/effect": {
+			"types": "./dist/adapters/effect.d.ts",
+			"svelte": "./dist/adapters/effect.js",
+			"default": "./dist/adapters/effect.js"
+		},
+		"./adapters/effect.js": {
+			"types": "./dist/adapters/effect.d.ts",
+			"svelte": "./dist/adapters/effect.js",
+			"default": "./dist/adapters/effect.js"
+		},
+		"./adapters/joi": {
+			"types": "./dist/adapters/joi.d.ts",
+			"svelte": "./dist/adapters/joi.js",
+			"default": "./dist/adapters/joi.js"
+		},
+		"./adapters/joi.js": {
+			"types": "./dist/adapters/joi.d.ts",
+			"svelte": "./dist/adapters/joi.js",
+			"default": "./dist/adapters/joi.js"
+		},
+		"./adapters/schemasafe": {
+			"types": "./dist/adapters/schemasafe.d.ts",
+			"svelte": "./dist/adapters/schemasafe.js",
+			"default": "./dist/adapters/schemasafe.js"
+		},
+		"./adapters/schemasafe.js": {
+			"types": "./dist/adapters/schemasafe.d.ts",
+			"svelte": "./dist/adapters/schemasafe.js",
+			"default": "./dist/adapters/schemasafe.js"
+		},
+		"./adapters/standard": {
+			"types": "./dist/adapters/standard.d.ts",
+			"svelte": "./dist/adapters/standard.js",
+			"default": "./dist/adapters/standard.js"
+		},
+		"./adapters/standard.js": {
+			"types": "./dist/adapters/standard.d.ts",
+			"svelte": "./dist/adapters/standard.js",
+			"default": "./dist/adapters/standard.js"
+		},
+		"./adapters/superform": {
+			"types": "./dist/adapters/superform.d.ts",
+			"svelte": "./dist/adapters/superform.js",
+			"default": "./dist/adapters/superform.js"
+		},
+		"./adapters/superform.js": {
+			"types": "./dist/adapters/superform.d.ts",
+			"svelte": "./dist/adapters/superform.js",
+			"default": "./dist/adapters/superform.js"
+		},
+		"./adapters/superstruct": {
+			"types": "./dist/adapters/superstruct.d.ts",
+			"svelte": "./dist/adapters/superstruct.js",
+			"default": "./dist/adapters/superstruct.js"
+		},
+		"./adapters/superstruct.js": {
+			"types": "./dist/adapters/superstruct.d.ts",
+			"svelte": "./dist/adapters/superstruct.js",
+			"default": "./dist/adapters/superstruct.js"
+		},
+		"./adapters/typebox": {
+			"types": "./dist/adapters/typebox.d.ts",
+			"svelte": "./dist/adapters/typebox.js",
+			"default": "./dist/adapters/typebox.js"
+		},
+		"./adapters/typebox.js": {
+			"types": "./dist/adapters/typebox.d.ts",
+			"svelte": "./dist/adapters/typebox.js",
+			"default": "./dist/adapters/typebox.js"
+		},
+		"./adapters/valibot": {
+			"types": "./dist/adapters/valibot.d.ts",
+			"svelte": "./dist/adapters/valibot.js",
+			"default": "./dist/adapters/valibot.js"
+		},
+		"./adapters/valibot.js": {
+			"types": "./dist/adapters/valibot.d.ts",
+			"svelte": "./dist/adapters/valibot.js",
+			"default": "./dist/adapters/valibot.js"
+		},
+		"./adapters/vine": {
+			"types": "./dist/adapters/vine.d.ts",
+			"svelte": "./dist/adapters/vine.js",
+			"default": "./dist/adapters/vine.js"
+		},
+		"./adapters/vine.js": {
+			"types": "./dist/adapters/vine.d.ts",
+			"svelte": "./dist/adapters/vine.js",
+			"default": "./dist/adapters/vine.js"
+		},
+		"./adapters/yup": {
+			"types": "./dist/adapters/yup.d.ts",
+			"svelte": "./dist/adapters/yup.js",
+			"default": "./dist/adapters/yup.js"
+		},
+		"./adapters/yup.js": {
+			"types": "./dist/adapters/yup.d.ts",
+			"svelte": "./dist/adapters/yup.js",
+			"default": "./dist/adapters/yup.js"
+		},
+		"./adapters/zod": {
+			"types": "./dist/adapters/zod.d.ts",
+			"svelte": "./dist/adapters/zod.js",
+			"default": "./dist/adapters/zod.js"
+		},
+		"./adapters/zod.js": {
+			"types": "./dist/adapters/zod.d.ts",
+			"svelte": "./dist/adapters/zod.js",
+			"default": "./dist/adapters/zod.js"
+		},
+		"./adapters/zod4": {
+			"types": "./dist/adapters/zod4.d.ts",
+			"svelte": "./dist/adapters/zod4.js",
+			"default": "./dist/adapters/zod4.js"
+		},
+		"./adapters/zod4.js": {
+			"types": "./dist/adapters/zod4.d.ts",
+			"svelte": "./dist/adapters/zod4.js",
+			"default": "./dist/adapters/zod4.js"
 		}
 	},
 	"typesVersions": {
@@ -106,6 +246,90 @@
 			],
 			"adapters": [
 				"./dist/adapters/index.d.ts"
+			],
+			"adapters/arktype": [
+				"./dist/adapters/arktype.d.ts"
+			],
+			"adapters/arktype.js": [
+				"./dist/adapters/arktype.d.ts"
+			],
+			"adapters/classvalidator": [
+				"./dist/adapters/classvalidator.d.ts"
+			],
+			"adapters/classvalidator.js": [
+				"./dist/adapters/classvalidator.d.ts"
+			],
+			"adapters/effect": [
+				"./dist/adapters/effect.d.ts"
+			],
+			"adapters/effect.js": [
+				"./dist/adapters/effect.d.ts"
+			],
+			"adapters/joi": [
+				"./dist/adapters/joi.d.ts"
+			],
+			"adapters/joi.js": [
+				"./dist/adapters/joi.d.ts"
+			],
+			"adapters/schemasafe": [
+				"./dist/adapters/schemasafe.d.ts"
+			],
+			"adapters/schemasafe.js": [
+				"./dist/adapters/schemasafe.d.ts"
+			],
+			"adapters/standard": [
+				"./dist/adapters/standard.d.ts"
+			],
+			"adapters/standard.js": [
+				"./dist/adapters/standard.d.ts"
+			],
+			"adapters/superform": [
+				"./dist/adapters/superform.d.ts"
+			],
+			"adapters/superform.js": [
+				"./dist/adapters/superform.d.ts"
+			],
+			"adapters/superstruct": [
+				"./dist/adapters/superstruct.d.ts"
+			],
+			"adapters/superstruct.js": [
+				"./dist/adapters/superstruct.d.ts"
+			],
+			"adapters/typebox": [
+				"./dist/adapters/typebox.d.ts"
+			],
+			"adapters/typebox.js": [
+				"./dist/adapters/typebox.d.ts"
+			],
+			"adapters/valibot": [
+				"./dist/adapters/valibot.d.ts"
+			],
+			"adapters/valibot.js": [
+				"./dist/adapters/valibot.d.ts"
+			],
+			"adapters/vine": [
+				"./dist/adapters/vine.d.ts"
+			],
+			"adapters/vine.js": [
+				"./dist/adapters/vine.d.ts"
+			],
+			"adapters/yup": [
+				"./dist/adapters/yup.d.ts"
+			],
+			"adapters/yup.js": [
+				"./dist/adapters/yup.d.ts"
+			],
+			"adapters/zod": [
+				"./dist/adapters/zod.d.ts"
+			],
+			"adapters/zod.js": [
+				"./dist/adapters/zod.d.ts"
+			],
+			"adapters/zod4": [
+				"./dist/adapters/zod4.d.ts"
+			],
+			"adapters/zod4.js": [
+				"./dist/adapters/zod4.d.ts"
 			]
 		}
 	},

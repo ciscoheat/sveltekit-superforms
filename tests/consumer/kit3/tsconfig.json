@@ -1,0 +1,8 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"skipLibCheck": true,
+		"strict": true
+	},
+	"include": ["src", "vite.config.ts"]
+}

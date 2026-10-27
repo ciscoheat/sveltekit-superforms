@@ -51,6 +51,9 @@ You can also watch this excellent introduction video to see what's possible: htt
 
 # Contributing
 
+Maintainers: see [Maintaining SvelteKit 2 and 3 support](MAINTAINING.md) for branch
+synchronization, CI, and the release checklist.
+
 General feedback, feature requests, bug reports, PR:s, are very welcome as a Github [issue](https://github.com/ciscoheat/sveltekit-superforms/issues) or on the [Discord server](https://discord.gg/g5GHjGtU2W)!
 
 # Donating

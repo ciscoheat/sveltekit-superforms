@@ -1,0 +1,171 @@
+name: Verify both SvelteKit versions
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+      compatibility-push:
+        type: boolean
+        default: false
+      require-main:
+        type: boolean
+        default: false
+      release-tag:
+        type: string
+        default: ''
+    outputs:
+      target:
+        value: ${{ jobs.resolve.outputs.target }}
+      previous:
+        value: ${{ jobs.resolve.outputs.previous }}
+      next:
+        value: ${{ jobs.kit2.outputs.next }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.refs.outputs.target }}
+      previous: ${{ steps.refs.outputs.previous }}
+      base: ${{ steps.refs.outputs.base }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - id: refs
+        env:
+          TARGET_REF: ${{ inputs.ref }}
+          COMPAT_PUSH: ${{ inputs.compatibility-push }}
+          REQUIRE_MAIN: ${{ inputs.require-main }}
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: node scripts/resolve-ci.mjs
+
+  package:
+    needs: resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.target }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm validate
+      - run: pnpm pack --out superforms.tgz
+      - run: sha256sum superforms.tgz >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: package
+          path: superforms.tgz
+          if-no-files-found: error
+
+  kit2:
+    needs: resolve
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.result.outputs.next }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.previous }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Rebase compatibility patch onto exact candidate
+        env:
+          TARGET: ${{ needs.resolve.outputs.target }}
+          BASE: ${{ needs.resolve.outputs.base }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags origin "$TARGET"
+          git switch -C v3/sveltekit-2
+          git rebase --onto "$TARGET" "$BASE" || {
+            git status --short
+            echo "::error::Resolve the compatibility rebase locally; see MAINTAINING.md. Remote branch was not changed."
+            exit 1
+          }
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: pnpm
+      - name: Prepare and persist only the compatibility lockfile
+        run: |
+          pnpm compat:lockfile
+          git diff --exit-code -- . ':!pnpm-lock.yaml'
+          git diff --cached --exit-code -- . ':!pnpm-lock.yaml'
+          test -z "$(git ls-files --others --exclude-standard)"
+          git add pnpm-lock.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m "Update compatibility lockfile" -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
+          fi
+      - run: pnpm compat:sveltekit2
+      - name: Reject unexpected validation output
+        run: |
+          git diff --exit-code
+          test -z "$(git ls-files --others --exclude-standard)"
+      - id: result
+        run: |
+          echo "next=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Validated compatibility: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          git bundle create compatibility.bundle HEAD
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: compatibility
+          path: compatibility.bundle
+          if-no-files-found: error
+
+  consumer:
+    needs: [resolve, package]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [kit2-min, kit2, kit3]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.target }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: tests/consumer/${{ matrix.profile }}/pnpm-lock.yaml
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: package
+      - env:
+          PROFILE: ${{ matrix.profile }}
+        run: pnpm compat:consumer "$PROFILE" superforms.tgz
+
+  gate:
+    if: always()
+    needs: [resolve, package, kit2, consumer]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          if [[ "$RESULTS" != "success,success,success,success" ]]; then
+            echo "::error::Both SvelteKit checkouts and all package consumers must pass: $RESULTS"
+            exit 1
+          fi

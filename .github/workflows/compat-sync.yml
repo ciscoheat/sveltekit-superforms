@@ -1,0 +1,56 @@
+name: Release compatibility
+
+on:
+  push:
+    tags: ['v3.*']
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Main commit, branch, or release tag to validate and synchronize
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: superforms-compatibility-sync
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name == 'push' || github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/verify.yml
+    with:
+      ref: ${{ inputs.target || github.sha }}
+      require-main: true
+      release-tag: ${{ github.event_name == 'push' && github.ref_name || '' }}
+
+  synchronize:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.verify.outputs.target }}
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: compatibility
+      - name: Update only the validated compatibility branch
+        shell: bash
+        env:
+          TARGET: ${{ needs.verify.outputs.target }}
+          PREVIOUS: ${{ needs.verify.outputs.previous }}
+          NEXT: ${{ needs.verify.outputs.next }}
+        run: |
+          git bundle verify compatibility.bundle
+          git fetch compatibility.bundle HEAD
+          test "$(git rev-parse FETCH_HEAD)" = "$NEXT"
+          node scripts/compat.mjs push "$TARGET" "$PREVIOUS" "$NEXT"
+          echo "Compatibility updated from $PREVIOUS to $NEXT for $TARGET." >> "$GITHUB_STEP_SUMMARY"

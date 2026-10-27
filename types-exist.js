@@ -2,6 +2,7 @@ import { readdirSync, existsSync } from 'fs';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
+/** @type {{ exports: Record<string, { types?: string, svelte?: string, default?: string }>, typesVersions: Record<string, Record<string, string[]>> }} */
 const pkg = require('./package.json');
 
 const path = './dist/adapters/';
@@ -22,6 +23,11 @@ const publicAdapters = [
 	'zod4'
 ];
 
+/**
+ * @param {unknown} condition
+ * @param {string} message
+ * @returns {asserts condition}
+ */
 function assert(condition, message) {
 	if (!condition) {
 		console.error(message);

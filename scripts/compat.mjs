@@ -1,0 +1,116 @@
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+export const branch = 'v3/sveltekit-2';
+
+export function git(args, cwd = process.cwd()) {
+	return execFileSync('git', args, {
+		cwd,
+		encoding: 'utf8',
+		env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_EDITOR: 'true' },
+		stdio: ['ignore', 'pipe', 'pipe']
+	}).trim();
+}
+
+export function check(cwd = process.cwd(), clean = false) {
+	for (const state of ['rebase-merge', 'rebase-apply', 'MERGE_HEAD', 'CHERRY_PICK_HEAD']) {
+		if (existsSync(resolve(cwd, git(['rev-parse', '--git-path', state], cwd)))) {
+			throw new Error('Finish or abort the current rebase/merge/cherry-pick first.');
+		}
+	}
+	if (git(['branch', '--show-current'], cwd) !== branch) {
+		throw new Error(`Run this command on ${branch}, not main or a detached HEAD.`);
+	}
+	if (clean && git(['status', '--porcelain', '--untracked-files=normal'], cwd)) {
+		throw new Error(
+			'The checkout must be clean, including untracked files. Commit your work first.'
+		);
+	}
+}
+
+export function commitSha(value) {
+	if (!/^[a-f0-9]{40}$/.test(value)) throw new Error('Expected a full 40-character commit SHA.');
+	return value;
+}
+
+export function ancestor(older, newer, cwd = process.cwd()) {
+	return git(['merge-base', older, newer], cwd) === git(['rev-parse', older], cwd);
+}
+
+export function assertNotStale(target, previous, main, cwd = process.cwd()) {
+	const base = git(['merge-base', previous, main], cwd);
+	if (!ancestor(base, target, cwd)) {
+		throw new Error(
+			`Target ${target} does not include compatibility base ${base}; refusing rollback.`
+		);
+	}
+}
+
+export function rebase(target, cwd = process.cwd()) {
+	check(cwd, true);
+	commitSha(target);
+	const previous = git(['rev-parse', 'HEAD'], cwd);
+	const main = git(['rev-parse', 'refs/remotes/origin/main'], cwd);
+	assertNotStale(target, previous, main, cwd);
+	const base = git(['merge-base', previous, main], cwd);
+	try {
+		git(['rebase', '--onto', target, base], cwd);
+	} catch (error) {
+		throw new Error(
+			`Rebase failed. Inspect git status, resolve and stage conflicts, then git rebase --continue; or git rebase --abort.\n${error.stderr || error.message}`,
+			{ cause: error }
+		);
+	}
+	return { previous, target, head: git(['rev-parse', 'HEAD'], cwd) };
+}
+
+export function push(target, previous, next, cwd = process.cwd()) {
+	[target, previous, next].forEach(commitSha);
+	git(['fetch', '--no-tags', 'origin', 'main'], cwd);
+	const main = git(['rev-parse', 'refs/remotes/origin/main'], cwd);
+	if (!ancestor(target, main, cwd) || !ancestor(target, next, cwd)) {
+		throw new Error(
+			'The target must be on main and included in the validated compatibility commit.'
+		);
+	}
+	git(['fetch', '--no-tags', 'origin', `refs/heads/${branch}`], cwd);
+	const live = git(['rev-parse', 'FETCH_HEAD'], cwd);
+	if (live !== previous) throw new Error('Compatibility branch changed during validation; rerun.');
+	assertNotStale(target, live, main, cwd);
+	if (previous !== next) {
+		git(
+			[
+				'push',
+				`--force-with-lease=refs/heads/${branch}:${previous}`,
+				'origin',
+				`${next}:refs/heads/${branch}`
+			],
+			cwd
+		);
+	}
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+	try {
+		const [command, ...args] = process.argv.slice(2);
+		if (command === 'check' && !args.length) {
+			check();
+		} else if (command === 'rebase' && args.length <= 1) {
+			check(process.cwd(), true);
+			git(['fetch', '--no-tags', 'origin', 'main']);
+			const target = args[0] || git(['rev-parse', 'refs/remotes/origin/main']);
+			console.log(JSON.stringify(rebase(target), null, 2));
+		} else if (command === 'push' && args.length === 3) {
+			push(...args);
+		} else {
+			throw new Error(
+				'Usage: compat.mjs check | rebase [commit-sha] | push <target> <old> <validated>'
+			);
+		}
+	} catch (error) {
+		console.error(error.message);
+		process.exitCode = 1;
+	}
+}

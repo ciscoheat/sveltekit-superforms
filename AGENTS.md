@@ -390,6 +390,11 @@ type FormPathLeaves<T> = string; // Only leaf paths
 
 ## Building & Publishing
 
+For Superforms 3.x, follow [MAINTAINING.md](MAINTAINING.md): publish one package
+from main after both SvelteKit environments and the main-built package consumers
+pass. `v3/sveltekit-2` is a rebased test branch, never a separate publication.
+Use `pnpm validate` for the shared validation gate; publishing remains manual.
+
 **Build:** `pnpm run build`
 
 - Runs `vite build` and `pnpm run prepack`

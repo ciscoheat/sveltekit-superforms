@@ -5,6 +5,18 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Maintainer checklist, guarded compatibility commands, dual-SvelteKit CI and
+  release-tag compatibility synchronization for the single Superforms 3.x package.
+- Main-built package consumer checks for SvelteKit 2.12.0, current Kit 2, and Kit 3.
+
+### Fixed
+
+- Type checking for the adapter export checker and cross-platform formatting checks.
+
 ## [3.0.0] - 2026-10-04
 
 ### Changed

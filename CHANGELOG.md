@@ -5,13 +5,13 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.0] - 2026-10-29
 
 ### Added
 
 - Added direct imports of all the adapters, to fix circular dependency warnings. [#682](https://github.com/ciscoheat/sveltekit-superforms/pull/682)
-- Stop `FormPath` types at a recursive type, preventing the "possibly infinite" type error.
-- Maintainer checklist, compatibility commands and dual-SvelteKit CI workflows for the 3.x package. Main-built package checks for SvelteKit 2.12.0, current Kit 2, and Kit 3.
+- Stop `FormPath` types at a recursive type, preventing the "possibly infinite" type error. [#703](https://github.com/ciscoheat/sveltekit-superforms/pull/703)
+- Compatibility checks with CI workflows for the 3.x package. Main-built package checks for SvelteKit 2.12.0, current Kit 2, and Kit 3.
 
 ### Fixed
 

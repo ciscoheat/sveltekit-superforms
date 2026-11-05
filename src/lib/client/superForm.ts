@@ -1278,7 +1278,13 @@ export function superForm<
 			shouldRedirect = false;
 		}
 
-		if (shouldRedirect && nav.to) {
+		if (shouldRedirect && nav.to && nav.willUnload) {
+			// External url, goto can't be used for it. Skip the beforeunload
+			// prompt since the user has already confirmed leaving.
+			Tainted.forceRedirection = true;
+			if (isTaintedFunction) window.location.href = nav.to.url.href;
+			return;
+		} else if (shouldRedirect && nav.to) {
 			try {
 				Tainted.forceRedirection = true;
 				await goto(nav.to.url);

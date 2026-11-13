@@ -125,9 +125,16 @@ export function parseSearchParams<T extends Record<string, unknown>>(
 ): ParsedData {
 	if (data instanceof URL) data = data.searchParams;
 
+	// Only read the params in the schema, so SvelteKit doesn't track the other ones
+	const keys = options?.strict
+		? new Set(data.keys())
+		: [...formDataKeys(data, schemaData), '__superform_id', '__superform_json'];
+
 	const convert = new FormData();
-	for (const [key, value] of data.entries()) {
-		convert.append(key, value);
+	for (const key of keys) {
+		for (const value of data.getAll(key)) {
+			convert.append(key, value);
+		}
 	}
 
 	const output = parseFormData(convert, schemaData, options, true);
@@ -193,6 +200,25 @@ export function parseFormData<T extends Record<string, unknown>>(
 			};
 }
 
+function schemaUnion(schema: JSONSchema) {
+	return schema.anyOf || schema.oneOf ? schemaInfo(schema, false, []).union : undefined;
+}
+
+function formDataKeys(
+	data: FormData | URLSearchParams,
+	schema: JSONSchema,
+	union = schemaUnion(schema)
+) {
+	return new Set(
+		[
+			// Special fix for (discriminated) union schemas, then the keys must be gathered from the objects in the union
+			...(union?.flatMap((s) => Object.keys(s.properties ?? {})) ?? []),
+			...Object.keys(schema.properties ?? {}),
+			...(schema.additionalProperties ? data.keys() : [])
+		].filter((key) => !key.startsWith('__superform_'))
+	);
+}
+
 function _parseFormData<T extends Record<string, unknown>>(
 	formData: FormData,
 	schema: JSONSchema,
@@ -207,23 +233,19 @@ function _parseFormData<T extends Record<string, unknown>>(
 	if (options?.strict) {
 		schemaKeys = new Set([...formData.keys()].filter((key) => !key.startsWith('__superform_')));
 	} else {
-		let unionKeys: string[] = [];
+		const union = schemaUnion(schema);
 
-		// Special fix for (discriminated) union schemas, then the keys must be gathered from the objects in the union
-		if (schema.anyOf || schema.oneOf) {
-			const info = schemaInfo(schema, false, []);
-			if (info.union?.some((s) => s.type !== 'object')) {
+		if (union) {
+			if (union.some((s) => s.type !== 'object')) {
 				throw new SchemaError('All form types must be an object if schema is a union.');
 			}
 
-			unionKeys = info.union?.flatMap((s) => Object.keys(s.properties ?? {})) ?? [];
-
 			// For discriminated unions, find the matching variant based on field values in FormData
-			if (info.union && info.union.length > 1) {
+			if (union.length > 1) {
 				// Try to match which union variant we're dealing with by checking their properties
 				// against the FormData entries
 
-				for (const variant of info.union) {
+				for (const variant of union) {
 					const variantProps = variant.properties ?? {};
 					const variantPropKeys = Object.keys(variantProps);
 
@@ -251,13 +273,7 @@ function _parseFormData<T extends Record<string, unknown>>(
 			}
 		}
 
-		schemaKeys = new Set(
-			[
-				...unionKeys,
-				...Object.keys(schema.properties ?? {}),
-				...(schema.additionalProperties ? formData.keys() : [])
-			].filter((key) => !key.startsWith('__superform_'))
-		);
+		schemaKeys = formDataKeys(formData, schema, union);
 	}
 
 	function parseSingleEntry(key: string, entry: FormDataEntryValue | undefined, info: SchemaInfo) {

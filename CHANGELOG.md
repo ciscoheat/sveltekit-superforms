@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- `superValidate(url)` now only reads the search params that exist in the schema, so SvelteKit doesn't rerun the load function when other params change. [#706](https://github.com/ciscoheat/sveltekit-superforms/issues/706)
+
 ## [3.1.0] - 2026-10-29
 
 ### Added

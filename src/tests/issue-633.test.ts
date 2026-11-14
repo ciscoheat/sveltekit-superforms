@@ -186,10 +186,8 @@ describe('Issue #633 - Boolean default value with URL vs FormData validation', (
 		});
 
 		// FormData tests - different behavior expected
-		// This is a breaking change between Zod 3 and 4:
-		// See https://github.com/colinhacks/zod/issues/4883
 		describe('FormData validation', () => {
-			it('should return true for boolean field with .default(true) when validating empty FormData', async () => {
+			it('should return false for boolean field with .default(true) when validating empty FormData', async () => {
 				// Schema with boolean default set to true
 				const formSchema = z4.object({
 					orderby: z4.boolean().default(true)
@@ -202,7 +200,7 @@ describe('Issue #633 - Boolean default value with URL vs FormData validation', (
 				const form = await superValidate(formData, zod4(formSchema));
 
 				// For FormData, missing boolean should return false (HTML form behavior)
-				expect(form.data.orderby).toBe(true);
+				expect(form.data.orderby).toBe(false);
 			});
 
 			it('should respect explicit false value in FormData', async () => {
@@ -239,9 +237,7 @@ describe('Issue #633 - Boolean default value with URL vs FormData validation', (
 				expect(form.data.orderby).toBe(true);
 			});
 
-			// This is a breaking change between Zod 3 and 4:
-			// See https://github.com/colinhacks/zod/issues/4883
-			it('should return true when FormData has other fields but not orderby', async () => {
+			it('should return false when FormData has other fields but not orderby', async () => {
 				// Schema with boolean default set to true
 				const formSchema = z4.object({
 					orderby: z4.boolean().default(true),
@@ -260,7 +256,7 @@ describe('Issue #633 - Boolean default value with URL vs FormData validation', (
 				const form = await superValidate(formData, adapter);
 
 				// For FormData, missing boolean should return false (HTML form behavior)
-				expect(form.data.orderby).toBe(true);
+				expect(form.data.orderby).toBe(false);
 				expect(form.data.search).toBe('test');
 			});
 		});

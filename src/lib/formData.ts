@@ -363,7 +363,7 @@ function parseFormDataEntry(
 		//console.log(`No FormData for "${key}" (${type}).`, info); //debug
 
 		// Special case for booleans with default value true, *when posted* (not from URL)
-		if (!fromURL && type == 'boolean' && info.isOptional && info.schema.default === true) {
+		if (!fromURL && type == 'boolean' && info.schema.default === true) {
 			return false;
 		}
 

@@ -350,6 +350,17 @@ function _parseFormData<T extends Record<string, unknown>>(
 	return output;
 }
 
+const numberFormat = /^[+-]?(?:Infinity|(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)$/i;
+
+/**
+ * Unlike parseInt and parseFloat, the whole string must be a number,
+ * so "1.9" isn't truncated for an integer and "12abc" isn't parsed as 12.
+ */
+function parseNumber(value: string): number {
+	const number = value.trim();
+	return numberFormat.test(number) ? Number(number) : NaN;
+}
+
 function parseFormDataEntry(
 	key: string,
 	value: string | undefined,
@@ -404,9 +415,8 @@ function parseFormDataEntry(
 		case 'any':
 			return value;
 		case 'integer':
-			return parseInt(value ?? '', 10);
 		case 'number':
-			return parseFloat(value ?? '');
+			return parseNumber(value ?? '');
 		case 'boolean':
 			return Boolean(value == 'false' ? '' : value).valueOf();
 		case 'stringbool':
@@ -420,7 +430,12 @@ function parseFormDataEntry(
 		}
 		case 'int64':
 		case 'bigint':
-			return BigInt(value ?? '.');
+			try {
+				return BigInt(value ?? '.');
+			} catch {
+				// Let the validation library report the invalid value
+				return NaN;
+			}
 		case 'symbol':
 			return Symbol(String(value));
 

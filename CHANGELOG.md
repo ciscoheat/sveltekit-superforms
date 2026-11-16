@@ -5,6 +5,12 @@ Headlines: Added, Changed, Deprecated, Removed, Fixed, Security
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Posted numbers are now parsed as a whole, so `1.9` isn't truncated to `1` for an integer field and `12abc` isn't accepted as `12`. An invalid `bigint` value gives a validation error instead of throwing. [#708](https://github.com/ciscoheat/sveltekit-superforms/issues/708)
+
 ## [3.1.0] - 2026-10-29
 
 ### Added

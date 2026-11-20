@@ -74,8 +74,15 @@ async function _validate<T extends type.Any>(
 		};
 	}
 	const issues = [];
-	for (const error of result) {
-		issues.push({ message: error.problem, path: Array.from(error.path) });
+	// arktype 3's ArkErrors isn't an array: its errors are `issues`, and the
+	// text without the path, which arktype 2 called `problem`, is `message`.
+	const errors = 'issues' in result ? result.issues : result;
+	for (const error of errors) {
+		issues.push({
+			message:
+				'problem' in error && typeof error.problem === 'string' ? error.problem : error.message,
+			path: Array.from(error.path)
+		});
 	}
 	return {
 		issues,

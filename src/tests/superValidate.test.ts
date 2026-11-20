@@ -386,6 +386,13 @@ describe('Arktype', () => {
 		expect(form.data).toEqual({ name: 'Test' });
 	});
 
+	it('should return each error message without its path', async () => {
+		const adapter = arktype(type({ name: 'string >= 3' }));
+		const form = await superValidate({ name: 'x' }, adapter);
+		expect(form.valid).toBe(false);
+		expect(form.errors.name?.[0]).toMatch(/^must be at least length 3/);
+	});
+
 	it('should handle bigint', async () => {
 		const schema = type({
 			id: 'bigint'
